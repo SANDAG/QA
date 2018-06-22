@@ -37,6 +37,9 @@ unittype_jur<-aggregate(N~unittype+yr+jurisdiction_id, data=unittype, sum)
 #if Andy's geography file doesn't include the jurisdiction you could exclude this statement or use it to exclude NULL
 unittype_cpa <- subset(unittype_cpa, jcpa > 19)
 
+# plot only Household unit type "0"
+unittype_jur <-subset(unittype_jur,unittype==0)
+
 unittype_jur$N_chg <- ave(unittype_jur$N, factor(unittype_jur$jurisdiction_id), FUN=function(x) c(NA,diff(x)))
 unittype_jur$N_pct <- (unittype_jur$N_chg / lag(unittype_jur$N))*100
 
