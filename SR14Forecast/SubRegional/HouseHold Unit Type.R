@@ -117,9 +117,9 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
 
 for(i in 1:length(jur_list)){
   plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
-               aes(x=yr, y=N_chg, group=as.factor(unittype), color=as.factor(unittype))) +
+               aes(x=yr, y=N_chg)) +
     geom_bar(stat = "identity") +
-    labs(title=paste("Households by Jurisdiction by Unit Type\n", jur_list2[i]), y="Households by Unit Type category", x="Year",
+    labs(title=paste("Absolute Change: No. of Households ", jur_list2[i],', 2016-2050',sep=''), y="Households by Unit Type category", x="Year",
         caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
     #expand_limits(y = c(1, 300000))+
     #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i])))))+
