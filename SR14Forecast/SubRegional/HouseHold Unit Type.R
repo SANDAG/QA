@@ -119,11 +119,12 @@ for(i in 1:length(jur_list)){
   plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
                aes(x=yr, y=N_chg)) +
     geom_bar(stat = "identity") +
-    labs(title=paste("Absolute Change: No. of Households ", jur_list2[i],', 2016-2050',sep=''), y="Households by Unit Type category", x="Year",
+    labs(title=paste("Absolute Change: No. of Households\n ", jur_list2[i],' and Region, 2016-2050',sep=''), 
+         y="Households", x="Year",
         caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
     #expand_limits(y = c(1, 300000))+
     #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i])))))+
-    theme_bw(base_size = 16)+
+    theme_bw(base_size = 16)+  theme(plot.title = element_text(hjust = 0.5)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
   # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
