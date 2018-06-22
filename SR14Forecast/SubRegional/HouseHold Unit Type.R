@@ -109,14 +109,15 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
               "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
 
 #this is the loop with the subset, the ggplot and the ggsave commands
+
 for(i in 1:length(jur_list)){
   plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
                aes(x=yr, y=N, group=as.factor(unittype), color=as.factor(unittype))) +
-    geom_line(size=1.25) +
+    geom_bar(stat = "identity") +
     labs(title=paste("Households by Jurisdiction by Unit Type\n", jur_list2[i]), y="Households by Unit Type category", x="Year",
         caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
-    expand_limits(y = c(1, 300000))+
-    scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i])))))+
+    #expand_limits(y = c(1, 300000))+
+    #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i])))))+
     theme_bw(base_size = 16)+
     theme(legend.position = "bottom",
           legend.title=element_blank())
