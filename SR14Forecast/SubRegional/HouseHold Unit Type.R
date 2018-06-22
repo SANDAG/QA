@@ -1,13 +1,21 @@
-
-library(scales)
-library(sqldf)
-library(rstudioapi)
-library(RODBC)
-library(dplyr)
-library(reshape2)
-library(ggplot2)
-library(data.table)
-library(stringr)
+pkgTest <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dep = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
+              "stringr")
+pkgTest(packages)
+# library(scales)
+# library(sqldf)
+# library(rstudioapi)
+# library(RODBC)
+# library(dplyr)
+# library(reshape2)
+# library(ggplot2)
+# library(data.table)
+# library(stringr)
 #library(wesanderson)
 #library(RColorBrewer)
 
