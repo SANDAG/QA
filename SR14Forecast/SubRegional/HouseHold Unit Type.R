@@ -39,8 +39,11 @@ unittype_cpa <- subset(unittype_cpa, jcpa > 19)
 
 # plot only Household unit type "0"
 unittype_jur <-subset(unittype_jur,unittype==0)
+unittype_reg <-subset(unittype_reg,unittype==0)
 
 unittype_jur$N_chg <- ave(unittype_jur$N, factor(unittype_jur$jurisdiction_id), FUN=function(x) c(NA,diff(x)))
+unittype_reg$N_chg <- ave(unittype_reg$N, FUN=function(x) c(NA,diff(x)))
+
 unittype_jur$N_pct <- (unittype_jur$N_chg / lag(unittype_jur$N))*100
 
 unittype_cpa_cast <- dcast(unittype_cpa, jcpa+unittype~yr, value.var="N")
