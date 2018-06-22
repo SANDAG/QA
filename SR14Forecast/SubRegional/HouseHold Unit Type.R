@@ -77,20 +77,29 @@ unittype_cpa_omit<-na.omit(unittype_cpa)
 #graphs save here
 results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
 
-
-
 #household Unit Type region
-unittype_region<-ggplot(data=unittype_reg, aes(x=yr, stat="count",colour=unittype), lab=c("0","1")) +
-  geom_bar (size =1)+
-  labs(title="SD Regionwide Households by Unit Type", y="Households by Unit Type", x=" Year",
-       caption="Source: isam.xpef03.household")+
-  expand_limits(y = c(1, 3000000))+
-  scale_y_continuous(labels= comma, limits = c(1000,500000))+
-  theme_bw(base_size = 16)+
-  theme(legend.position = "bottom",
+unittype_region <- ggplot(data=unittype_reg,  aes(x=yr, y=N_chg,group=1)) + geom_line(size=1.25)
+    labs(title=paste("Absolute Change: No. of Households\n ", jur_list2[i],' and Region, 2016-2050',sep=''), 
+         y="Households", x="Year",
+         caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13") +
+        theme_bw(base_size = 16)+  theme(plot.title = element_text(hjust = 0.5)) +
+        theme(legend.position = "bottom",
         legend.title=element_blank())
+  ggsave(unittype_region, file= paste(results, 'unittype_region', ".png", sep=''), scale=2)
 
-ggsave(unittype_region, file=paste(results, "Unit Type_reg.pdf"))
+
+# 
+# unittype_region<-ggplot(data=unittype_reg, aes(x=yr, stat="count",colour=unittype), lab=c("0","1")) +
+#   geom_bar (size =1)+
+#   labs(title="SD Regionwide Households by Unit Type", y="Households by Unit Type", x=" Year",
+#        caption="Source: isam.xpef03.household")+
+#   expand_limits(y = c(1, 3000000))+
+#   scale_y_continuous(labels= comma, limits = c(1000,500000))+
+#   theme_bw(base_size = 16)+
+#   theme(legend.position = "bottom",
+#         legend.title=element_blank())
+# 
+# ggsave(unittype_region, file=paste(results, "Unit Type_reg.pdf"))
 
 
 # #household Unit Type region

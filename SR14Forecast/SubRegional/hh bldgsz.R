@@ -4,6 +4,11 @@
 #jurisdiction_2015 column name will need to change when Andy's geography file is updated
 #bri and Lisbeth tested omit to fix the cpa plots - maybe delete that out
 
+# Install the car package
+install.packages("car")
+
+# Load the car package
+library(car)
 
 library(scales)
 library(sqldf)
@@ -22,6 +27,8 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 #read in files
 
 HH_Building_size<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Data Files\\HH_Building Size\\HH_BuildingSize.csv',stringsAsFactors = FALSE,fileEncoding="UTF-8-BOM")
+
+
 
 
 #add y characterto year
