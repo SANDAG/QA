@@ -37,6 +37,8 @@ unittype_jur<-aggregate(N~unittype+yr+jurisdiction_id, data=unittype, sum)
 #if Andy's geography file doesn't include the jurisdiction you could exclude this statement or use it to exclude NULL
 unittype_cpa <- subset(unittype_cpa, jcpa > 19)
 
+unittype_jur$N_chg <- ave(unittype_jur$N, factor(unittype_jur$jurisdiction_id), FUN=function(x) c(NA,diff(x)))
+unittype_jur$N_pct <- (unittype_jur$N_chg / lag(unittype_jur$N))*100
 
 unittype_cpa_cast <- dcast(unittype_cpa, jcpa+unittype~yr, value.var="N")
 unittype_jur_cast <- dcast(unittype_jur, jurisdiction_id+unittype~yr, value.var="N")
