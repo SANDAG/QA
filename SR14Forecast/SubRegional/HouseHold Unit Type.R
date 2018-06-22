@@ -123,7 +123,8 @@ for(i in 1:length(jur_list)){
     theme_bw(base_size = 16)+
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''), scale=2)
 }
 
 #household Unit Type cpa
