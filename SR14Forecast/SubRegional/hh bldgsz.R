@@ -6,10 +6,10 @@
 
 # Install the car package
 install.packages("car")
-
+install.packages("anchors")
 # Load the car package
 library(car)
-
+library(anchors)
 library(scales)
 library(sqldf)
 library(rstudioapi)
@@ -26,10 +26,11 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 #read in files
 
+
 HH_Building_size<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Data Files\\HH_Building Size\\HH_BuildingSize.csv',stringsAsFactors = FALSE,fileEncoding="UTF-8-BOM")
 
 
-
+HH_Building_size<- replace.value(HH_Building_size,"bldgsz", 2,3)
 
 #add y characterto year
 HH_Building_size$year<- "y"
