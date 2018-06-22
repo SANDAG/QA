@@ -9,7 +9,7 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
 results2<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\Building Size\\"
 
 
-HH_Building_size_jur$bldgsz <- factor(HH_Building_size_jur$bldgsz, levels=c(1, 3, 8, 9), labels=c("Mobile Home","Single Family Household","Apartments","Group Quarters"))
+HH_Building_size_jur$bldgsz <- factor(HH_Building_size_jur$bldgsz, levels=c(1, 3, 8), labels=c("Mobile Home","Single Family","Apartments"))
 
 
 
@@ -19,12 +19,12 @@ hhsize_jur1<-ggplot(subset(HH_Building_size_jur, HH_Building_size_jur$jurisdicti
   labs(title=paste("Number of Households by Jurisdiction by Building Size\n                           ", jur_list2[1]), y="Number of Households by Building Size", x="Year",
        caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
   expand_limits(y = c(1, 300000))+
-  scale_y_continuous(labels= comma, limits = c(1000,30000))+
+  scale_y_continuous(labels= comma, limits = c(min(HH_Building_size_jur$N)*.75,max(HH_Building_size_jur$N)*1.25))+
   theme_bw(base_size = 16)+
   theme(legend.position = "bottom",
         legend.title=element_blank())
 
-ggsave(hhsize_jur1, file= paste(results2, "hhsize_jur1.pdf"))
+ggsave(hhsize_jur1, file="hhsize_jur1.pdf")
 
 
 

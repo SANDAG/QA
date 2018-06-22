@@ -31,6 +31,7 @@ HH_Building_size<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Sub 
 
 
 HH_Building_size<- replace.value(HH_Building_size,"bldgsz", 2,3)
+HH_Building_size<- subset(HH_Building_size, bldgsz !=9)
 
 #add y characterto year
 HH_Building_size$year<- "y"
