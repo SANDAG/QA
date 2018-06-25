@@ -178,10 +178,17 @@ for(i in 1:length(jur_list)){
 output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
 setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg","Region abs. chg"))
 
+
+library(grid)
+library(lattice)
+
 tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
 tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-grid.arrange(plot,tbl,nrow=2,as.table=TRUE,heights=c(3,.5))
+plotlh<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,heights=c(3,.10))
 
+
+
+ggsave(plotlh, file= paste(results, 'plot_lh', ".png", sep=''))
 #household Unit Type cpa
 
 # double axis test
