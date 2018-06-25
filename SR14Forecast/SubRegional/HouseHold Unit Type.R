@@ -5,10 +5,12 @@ pkgTest <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr")
+              "stringr","gridExtra","grid","lattice")
 pkgTest(packages)
-install.packages("gridExtra")
-library("gridExtra")
+
+#library("gridExtra")
+#library(grid)
+#library(lattice)
 # library(scales)
 # library(sqldf)
 # library(rstudioapi)
@@ -16,7 +18,7 @@ library("gridExtra")
 # library(dplyr)
 # library(reshape2)
 # library(ggplot2)
-# library(data.table)
+#library(data.table)
 # library(stringr)
 #library(wesanderson)
 #library(RColorBrewer)
@@ -171,24 +173,20 @@ for(i in 1:length(jur_list)){
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg.","Reg abs. chg."))
+  tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,2,2),
+               c(1,1,1,2,2),
+               c(1,1,1,2,2))
+  output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  ggsave(output, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
 
-output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
-setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg","Region abs. chg"))
 
-
-library(grid)
-library(lattice)
-
-tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
-tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-plotlh<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,heights=c(3,.10))
-
-
-
-ggsave(plotlh, file= paste(results, 'plot_lh', ".png", sep=''))
 #household Unit Type cpa
 
 # double axis test
