@@ -64,9 +64,18 @@ unittype_jur_cast$abs_chg <- unittype_jur_cast$y2050-unittype_jur_cast$y2018
 unittype_cpa_cast$pct_chg <- round(unittype_cpa_cast$pct_chg * 100, 2)
 unittype_jur_cast$pct_chg <- round(unittype_jur_cast$pct_chg * 100, 2)
 
+
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+dataout<-"data\\unittype\\"
+ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dataout), showWarnings = TRUE, recursive=TRUE))
+
 write.csv(unittype_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype cpa freq.csv" )
 write.csv(unittype_jur_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype jur freq.csv" )
 write.csv(unittype_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype reg freq.csv" )
+
+# write.csv(unittype_cpa_cast,paste(dataout,unittype_cpa_freq.csv"))
+#write.csv(unittype_jur_cast,"unittype_jur_freq.csv" )
+#write.csv(unittype_reg,"reg_freq.csv" )
 
 unittype_cpa_omit<-na.omit(unittype_cpa)
 
@@ -76,7 +85,6 @@ unittype_cpa_omit<-na.omit(unittype_cpa)
 ##################################################
 #save plots locally
 # results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
-maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\unittype\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE))
 
