@@ -5,8 +5,12 @@ pkgTest <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr")
+              "stringr","gridExtra","grid","lattice")
 pkgTest(packages)
+
+#library("gridExtra")
+#library(grid)
+#library(lattice)
 # library(scales)
 # library(sqldf)
 # library(rstudioapi)
@@ -14,7 +18,7 @@ pkgTest(packages)
 # library(dplyr)
 # library(reshape2)
 # library(ggplot2)
-# library(data.table)
+#library(data.table)
 # library(stringr)
 #library(wesanderson)
 #library(RColorBrewer)
@@ -67,11 +71,11 @@ unittype_jur_cast$pct_chg <- round(unittype_jur_cast$pct_chg * 100, 2)
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 dataout<-"data\\unittype\\"
-ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dataout), showWarnings = TRUE, recursive=TRUE))
+ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dataout), showWarnings = TRUE, recursive=TRUE),0)
 
-write.csv(unittype_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype cpa freq.csv" )
-write.csv(unittype_jur_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype jur freq.csv" )
-write.csv(unittype_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype reg freq.csv" )
+#write.csv(unittype_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype cpa freq.csv" )
+#write.csv(unittype_jur_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype jur freq.csv" )
+#write.csv(unittype_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype reg freq.csv" )
 
 write.csv(unittype_cpa_cast,paste(dataout,"unittype_cpa_freq.csv"))
 write.csv(unittype_jur_cast,paste(dataout,"unittype_jur_freq.csv"))
@@ -86,7 +90,7 @@ write.csv(unittype_reg,paste(dataout,"reg_freq.csv"))
 #save plots locally
 # results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
 results<-"plots\\unittype\\"
-ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE))
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 #household Unit Type region
 region_plot <- ggplot(data=unittype_reg, aes(x=yr, y=N_chg, group=1)) +
@@ -169,9 +173,19 @@ for(i in 1:length(jur_list)){
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg.","Reg abs. chg."))
+  tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,2,2),
+               c(1,1,1,2,2),
+               c(1,1,1,2,2))
+  output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  ggsave(output, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
+
 
 #household Unit Type cpa
 
@@ -204,7 +218,7 @@ for(i in 1:length(jur_list)){
 
 
 #this creates the list for "i" which is what the loop relies on - like x in a do repeat
-cpa_list<- c(1401, 
+cpa_list<- c(# 1401, 
              1402, 
              1403, 
              1404, 
@@ -236,7 +250,7 @@ cpa_list<- c(1401,
              1434, 
              1435, 
              1438, 
-             1439, 
+             # 1439, 
              1440, 
              1441, 
              1442, 
@@ -293,8 +307,38 @@ cpa_list<- c(1401,
              
 )
 
+unittype_cpa <-subset(unittype_cpa,unittype==0)
+unittype_cpa$N_chg <- ave(unittype_cpa$N, factor(unittype_cpa$jcpa), FUN=function(x) c(NA,diff(x)))
+unittype_cpa$reg<-unittype_reg[match(unittype_cpa$yr, unittype_reg$yr),4]
 
-unittype_cpa_omit<-order(unittype_cpa_omit$yr)
+for(i in 1:length(cpa_list)){
+  plotdat = subset(unittype_cpa, unittype_cpa$jcpa==cpa_list[i])
+  plotdat$ratio = plotdat$reg/plotdat$N_chg
+  plotdat$ratio[is.na(plotdat$ratio)] <- 0
+  ravg = median(plotdat[["ratio"]])
+  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill='cpa')) +
+    geom_bar(stat = "identity") +
+    geom_line(aes(y = reg/ravg, group=1,colour = "Region")) +
+    scale_y_continuous(label=comma,sec.axis = 
+                         sec_axis(~.*ravg, name = "Region HH [abs chg]",label=comma)) +
+    labs(title=paste("Absolute Change: No. of Households\n ", cpa_list[i],' and Region, 2016-2050',sep=''), 
+         y=paste(cpa_list[i]," HH [abs chg]",sep=''), x="Year",
+         caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
+    scale_colour_manual(values = c("blue", "red")) +
+    #expand_limits(y = c(1, 300000))+
+    #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i])))))+
+    theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.position = "bottom",
+          legend.title=element_blank())
+  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  ggsave(plot, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
+}
+
+
+#unittype_cpa_omit<-order(unittype_cpa_omit$yr)
 
 #this is the loop with the subset, the ggplot and the ggsave commands
 for(i in cpa_list){
