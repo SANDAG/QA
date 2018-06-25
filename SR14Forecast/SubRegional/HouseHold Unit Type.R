@@ -77,7 +77,7 @@ write.csv(unittype_cpa_cast,paste(dataout,"unittype_cpa_freq.csv"))
 write.csv(unittype_jur_cast,paste(dataout,"unittype_jur_freq.csv"))
 write.csv(unittype_reg,paste(dataout,"reg_freq.csv"))
 
-unittype_cpa_omit<-na.omit(unittype_cpa)
+#unittype_cpa_omit<-na.omit(unittype_cpa)
 
 #add figure script and write out file
 ##################################################

@@ -1,12 +1,19 @@
-
+pkgTest <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dep = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
+              "stringr")
 
 #Jennifer can clean up graph - change plot color for region
 #jurisdiction_2015 column name will need to change when Andy's geography file is updated
 #bri and Lisbeth tested omit to fix the cpa plots - maybe delete that out
 
 # Install the car package
-install.packages("car")
-install.packages("anchors")
+#install.packages("car")
+#install.packages("anchors")
 # Load the car package
 library(car)
 library(anchors)
@@ -29,7 +36,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 HH_Building_size<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Data Files\\HH_Building Size\\HH_BuildingSize.csv',stringsAsFactors = FALSE,fileEncoding="UTF-8-BOM")
 
-
+#Collape Family HH and remove GQ
 HH_Building_size<- replace.value(HH_Building_size,"bldgsz", 2,3)
 HH_Building_size<- subset(HH_Building_size, bldgsz !=9)
 
@@ -44,12 +51,25 @@ HH_Building_size_jur<-aggregate(N~bldgsz+yr+jurisdiction_id, data=HH_Building_si
 #if Andy's geography file doesn't include the jurisdiction you could exclude this statement or use it to exclude NULL
 HH_Building_size_cpa <- subset(HH_Building_size_cpa, jcpa > 19)
 
+HH_Building_size_jur<- HH_Building_size_jur[order(HH_Building_size_jur$jurisdiction_id, HH_Building_size_jur$bldgsz,HH_Building_size_jur$yr),]
+HH_Building_size_reg<- HH_Building_size_reg[order(HH_Building_size_reg$bldgsz,HH_Building_size_reg$yr),]
+
+HH_Building_size_jur$N_chg <- abs(ave(HH_Building_size_jur$N, factor(HH_Building_size_jur$bldgsz), factor(HH_Building_size_jur$jurisdiction_id), FUN=function(x) c(NA,diff(x))))
+HH_Building_size_reg$N_chg <- abs(ave(HH_Building_size_reg$N, factor(HH_Building_size_jur$bldgsz), FUN=function(x) c(NA,diff(x))))
+
+HH_Building_size_jur$N_pct <- (HH_Building_size_jur$N_chg / lag(HH_Building_size_jur$N))*100
+HH_Building_size_reg$N_pct <- (HH_Building_size_reg$N_chg / lag(HH_Building_size_reg$N))*100
 
 HH_Building_size_cpa_cast <- dcast(HH_Building_size_cpa, jcpa+bldgsz~yr, value.var="N")
 HH_Building_size_cpa_cast <- dcast(HH_Building_size_jur, jurisdiction_id+bldgsz~yr, value.var="N")
 
 
 head(HH_Building_size_cpa_cast)
+
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+dataout<-"data\\bldgsz\\"
+ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dataout), showWarnings = TRUE, recursive=TRUE),0)
+
 
 #################
 #add percent change and absolute change and save as csv
@@ -67,62 +87,69 @@ write.csv(HH_Building_size_cpa_cast,"M:\\Technical Services\\QA Documents\\Proje
 write.csv(HH_Building_size_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz jur freq.csv" )
 write.csv(HH_Building_size_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz reg freq.csv" )
 
-write.csv(HH_Building_size_Jur,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz jur freq.csv" )
+write.csv(HH_Building_size_jur,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz jur freq.csv" )
 
 
 
-bldgsz_cpa_omit<-na.omit(bldgsz_cpa)
+#bldgsz_cpa_omit<-na.omit(bldgsz_cpa)
 
 #add figure script and write out file
 ##################################################
 #graphs
 ##################################################
 #graphs save here
-results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
+#results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
+#household Unit Type jurisdiction
+results<-"plots\\bldgsz\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE))
 
 #this creates the list for "i" which is what the loop relies on - like x in a do repeat
 jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
+jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinitas","Escondido","Imperial Beach","La Mesa","Lemon Grove",
+              "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
 
-#this is the loop with the subset, the ggplot and the ggsave commands
+citynames <- data.frame(jur_list, jur_list2)
+HH_Building_size_jur$cityname<-citynames[match(HH_Building_size_jur$jurisdiction_id, citynames$jur_list),2]
+HH_Building_size_jur$reg<-HH_Building_size_reg[match(HH_Building_size_jur$yr, HH_Building_size_reg$yr),4]
 
-for(i in jur_list){
-  plot<-ggplot(subset(HH_Building_size_jur, HH_Building_size_jur$jurisdiction_id==jur_list[i]),  
-               aes(x=yr, y=N, group=bldgsz, color=bldgsz)) +
-    geom_line(size=1.25) +
-    labs(title("Households by Jurisdiction by Household Size/N                        ", jur_list[i], y="Households by HH Size", x="Year",
-                     caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
-           expand_limits(y = c(1, 300000))+
-           scale_y_continuous(labels= comma, limits = c(1000,50000))+
-           theme_bw(base_size = 16)+
-           theme(legend.position = "bottom",
-                 legend.title=element_blank()))
-    ggsave(plot, file= paste(results, 'hhsize_jur', jur_list[i], ".pdf", sep=''), scale=2)
-}
+#household Building size Type jurisdiction
 
-
-
-#this is the loop with the subset, the ggplot and the ggsave commands
-for(i in jur_list){
-  plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
-               aes(x=yr, y=N, group=unittype, color=unittype)) +
-    geom_line(size=1.25) +
-    labs(title="Households by Jurisdiction by Unit Type", y="Households by Unit Type category", x="Year",
-         caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
-    expand_limits(y = c(1, 3000000))+
-    scale_y_continuous(labels= comma, limits = c(1000,50000))+
-    theme_bw(base_size = 16)+
+for(i in 1:length(jur_list)){
+  plotdat = subset(HH_Building_size_jur, HH_Building_size_jur$jurisdiction_id==jur_list[i])
+  plotdat$ratio = plotdat$reg/plotdat$N_chg
+  plotdat$ratio[is.na(plotdat$ratio)] <- 0
+  ravg = median(plotdat[["ratio"]])
+  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,group= bldgsz, fill=bldgsz)) +
+    geom_bar(stat = "identity", position = "dodge") + #, #colour= "bldgsz") + 
+    geom_line(aes(y = reg/ravg, group=bldgsz,colour = "Region")) + 
+    scale_y_continuous(label=comma,sec.axis = 
+                         sec_axis(~.*ravg, name = "Region HH [abs chg]",label=comma)) +
+    #scale_x_discrete(breaks= "yr")+
+    labs(title=paste("Absolute Change: No. of Structures\n ", jur_list2[i],' and Region, 2016-2050',sep=''), 
+         y=paste(jur_list2[i]," HH [abs chg]",sep=''), x="Year",
+         caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
+    #scale_fill_brewer(palette="Set1")+
+    #scale_colour_manual(values = c("blue", "red", "yellow")) +
+    #scale_fill_manual(values = c("blue","red", "yellow")) +
+    #expand_limits(y = c(1, 300000))+
+    #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i])))))+
+    theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  # ggsave(plot, file= paste(results, 'bldgsz_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  ggsave(plot, file= paste(results, 'bldgsz_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
 
 
 
 #########################################################################################################
-#household Unit Type region
-unittype_region<-ggplot(data=unittype_reg, aes(x=yr, stat="count",colour=unittype), lab=c("0","1")) +
+#Building Size Unit Type region
+#bldgsz_region<-ggplot(data=HH_Building_size_reg, aes(x=yr, stat="count",colour=bldgsz), lab=c("0","1")) +
   geom_histogram ()+
-  labs(title="SD Regionwide Households by Unit Type", y="Households by Unit Type", x=" Year",
+  labs(title="SD Regionwide Households by Building Size", y="Households by HH size", x=" Year",
        caption="Source: isam.xpef03.household")+
   expand_limits(y = c(1, 3000000))+
   scale_y_continuous(labels= comma, limits = c(1000,500000))+
@@ -130,43 +157,32 @@ unittype_region<-ggplot(data=unittype_reg, aes(x=yr, stat="count",colour=unittyp
   theme(legend.position = "bottom",
         legend.title=element_blank())
 
-ggsave(unittype_region, file=paste(results, "Unit Type_reg.pdf"))
+#ggsave(bldgsz_region, file=paste(results, "Building Size_reg.pdf"))
 
+results<-"plots\\building size type\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-#household Unit Type region
-unittype_region<-ggplot(data=unittype_reg, aes(x=yr, y=N, group=unittype, colour=unittype)) +
-  geom_bar(size=1) +
-  labs(title="SD Regionwide Households by Unit Type", y="Households by Unit Type", x=" Year",
-       caption="Source: isam.xpef03.household")+
-  expand_limits(y = c(1, 3000000))+
-  scale_y_continuous(labels= comma, limits = c(1000,500000))+
-  theme_bw(base_size = 16)+
+#Building Size Region
+bldgsz_region <- ggplot(data=HH_Building_size_reg, aes(x=yr, y=N_chg, group=1)) +
+  geom_line(size=1.25) +
+  geom_point() +
+  xlab("Year") + ylab("Households") +
+  ggtitle("Absolute Change: No. of Building Structure for Region, 2016-2050") +
+  labs(caption = "Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13") +
+  theme_bw(base_size = 14) +  
+  theme(plot.title = element_text(hjust = 0.5)) +
   theme(legend.position = "bottom",
-        legend.title=element_blank())
+        plot.margin = margin(15, 15, 15, 15),
+        plot.caption = element_text(size = 10, hjust = 0))
+bldgsz_region
+ggsave(buildingsize_region , file= paste(results, 'buildingsize_region', ".png", sep=''))
 
-ggsave(unittype_region, file=paste(results, "Unit Type_reg.pdf"))
 
 
 
 
-#household Unit Type jurisdiction
 
-#this creates the list for "i" which is what the loop relies on - like x in a do repeat
-jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
 
-#this is the loop with the subset, the ggplot and the ggsave commands
-for(i in jur_list){
-  plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
-               aes(x=yr, y=N, group=unittype, color=unittype)) +
-    geom_line(size=1.25) +
-    labs(title="Households by Jurisdiction by Unit Type", y="Households by Unit Type category", x="Year",
-         caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
-    expand_limits(y = c(1, 3000000))+
-    scale_y_continuous(labels= comma, limits = c(1000,50000))+
-    theme_bw(base_size = 16)+
-    theme(legend.position = "bottom",
-          legend.title=element_blank())
-  ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
 }
 
 
