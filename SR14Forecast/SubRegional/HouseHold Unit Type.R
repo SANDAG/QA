@@ -175,11 +175,12 @@ for(i in 1:length(jur_list)){
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
 
-outputtable<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
+output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
+setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg","Region abs. chg"))
 
 tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
-tbl <- tableGrob(outputtable, rows=NULL, theme=tt)
-grid.arrange(plot,tbl,nrow=2,as.table=TRUE,heights=c(3,1))
+tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+grid.arrange(plot,tbl,nrow=2,as.table=TRUE,heights=c(3,.5))
 
 #household Unit Type cpa
 
