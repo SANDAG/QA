@@ -74,8 +74,11 @@ unittype_cpa_omit<-na.omit(unittype_cpa)
 ##################################################
 #graphs
 ##################################################
-#graphs save here
-results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
+#save plots locally
+# results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+results<-"plots\\unittype\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE))
 
 #household Unit Type region
 region_plot <- ggplot(data=unittype_reg, aes(x=yr, y=N_chg, group=1)) +
