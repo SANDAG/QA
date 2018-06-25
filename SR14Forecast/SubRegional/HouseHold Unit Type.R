@@ -220,7 +220,7 @@ ggsave(plotlh, file= paste(results, 'plot_lh', ".png", sep=''))
 
 
 #this creates the list for "i" which is what the loop relies on - like x in a do repeat
-cpa_list<- c(1401, 
+cpa_list<- c(# 1401, 
              1402, 
              1403, 
              1404, 
@@ -252,7 +252,7 @@ cpa_list<- c(1401,
              1434, 
              1435, 
              1438, 
-             1439, 
+             # 1439, 
              1440, 
              1441, 
              1442, 
@@ -308,6 +308,36 @@ cpa_list<- c(1401,
              1999
              
 )
+
+unittype_cpa <-subset(unittype_cpa,unittype==0)
+unittype_cpa$N_chg <- ave(unittype_cpa$N, factor(unittype_cpa$jcpa), FUN=function(x) c(NA,diff(x)))
+unittype_cpa$reg<-unittype_reg[match(unittype_cpa$yr, unittype_reg$yr),4]
+
+for(i in 1:length(cpa_list)){
+  plotdat = subset(unittype_cpa, unittype_cpa$jcpa==cpa_list[i])
+  plotdat$ratio = plotdat$reg/plotdat$N_chg
+  plotdat$ratio[is.na(plotdat$ratio)] <- 0
+  ravg = median(plotdat[["ratio"]])
+  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill='cpa')) +
+    geom_bar(stat = "identity") +
+    geom_line(aes(y = reg/ravg, group=1,colour = "Region")) +
+    scale_y_continuous(label=comma,sec.axis = 
+                         sec_axis(~.*ravg, name = "Region HH [abs chg]",label=comma)) +
+    labs(title=paste("Absolute Change: No. of Households\n ", cpa_list[i],' and Region, 2016-2050',sep=''), 
+         y=paste(cpa_list[i]," HH [abs chg]",sep=''), x="Year",
+         caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
+    scale_colour_manual(values = c("blue", "red")) +
+    #expand_limits(y = c(1, 300000))+
+    #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i])))))+
+    theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.position = "bottom",
+          legend.title=element_blank())
+  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  ggsave(plot, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
+}
 
 
 #unittype_cpa_omit<-order(unittype_cpa_omit$yr)
