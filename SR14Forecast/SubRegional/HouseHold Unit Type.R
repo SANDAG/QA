@@ -7,6 +7,8 @@ pkgTest <- function(pkg){
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
               "stringr")
 pkgTest(packages)
+install.packages("gridExtra")
+library("gridExtra")
 # library(scales)
 # library(sqldf)
 # library(rstudioapi)
@@ -172,6 +174,12 @@ for(i in 1:length(jur_list)){
   # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
+
+outputtable<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
+
+tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+tbl <- tableGrob(outputtable, rows=NULL, theme=tt)
+grid.arrange(plot,tbl,nrow=2,as.table=TRUE,heights=c(3,1))
 
 #household Unit Type cpa
 
