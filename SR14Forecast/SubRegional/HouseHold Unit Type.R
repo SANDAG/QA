@@ -69,9 +69,9 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 dataout<-"data\\unittype\\"
 ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dataout), showWarnings = TRUE, recursive=TRUE))
 
-write.csv(unittype_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype cpa freq.csv" )
-write.csv(unittype_jur_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype jur freq.csv" )
-write.csv(unittype_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype reg freq.csv" )
+#write.csv(unittype_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype cpa freq.csv" )
+#write.csv(unittype_jur_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype jur freq.csv" )
+#write.csv(unittype_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype reg freq.csv" )
 
 write.csv(unittype_cpa_cast,paste(dataout,"unittype_cpa_freq.csv"))
 write.csv(unittype_jur_cast,paste(dataout,"unittype_jur_freq.csv"))
