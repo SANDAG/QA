@@ -88,7 +88,7 @@ write.csv(unittype_reg,paste(dataout,"reg_freq.csv"))
 #save plots locally
 # results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
 results<-"plots\\unittype\\"
-ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE))
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 #household Unit Type region
 region_plot <- ggplot(data=unittype_reg, aes(x=yr, y=N_chg, group=1)) +
