@@ -3,9 +3,13 @@ pkgTest <- function(pkg){
   if (length(new.pkg))
     install.packages(new.pkg, dep = TRUE)
   sapply(pkg, require, character.only = TRUE)
+  
+  
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr")
+              "stringr","gridExtra","grid","lattice")
+pkgTest(packages)
+
 
 #Jennifer can clean up graph - change plot color for region
 #jurisdiction_2015 column name will need to change when Andy's geography file is updated
@@ -26,6 +30,7 @@ library(reshape2)
 library(ggplot2)
 library(data.table)
 library(stringr)
+library()
 #library(wesanderson)
 #library(RColorBrewer)
 
@@ -55,7 +60,7 @@ HH_Building_size_jur<- HH_Building_size_jur[order(HH_Building_size_jur$jurisdict
 HH_Building_size_reg<- HH_Building_size_reg[order(HH_Building_size_reg$bldgsz,HH_Building_size_reg$yr),]
 
 HH_Building_size_jur$N_chg <- abs(ave(HH_Building_size_jur$N, factor(HH_Building_size_jur$bldgsz), factor(HH_Building_size_jur$jurisdiction_id), FUN=function(x) c(NA,diff(x))))
-HH_Building_size_reg$N_chg <- abs(ave(HH_Building_size_reg$N, factor(HH_Building_size_jur$bldgsz), FUN=function(x) c(NA,diff(x))))
+HH_Building_size_reg$N_chg <- abs(ave(HH_Building_size_reg$N, factor(HH_Building_size_reg$bldgsz), FUN=function(x) c(NA,diff(x))))
 
 HH_Building_size_jur$N_pct <- (HH_Building_size_jur$N_chg / lag(HH_Building_size_jur$N))*100
 HH_Building_size_reg$N_pct <- (HH_Building_size_reg$N_chg / lag(HH_Building_size_reg$N))*100
@@ -83,13 +88,15 @@ ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dat
 #unittype_cpa_cast$pct_chg <- round(unittype_cpa_cast$pct_chg * 100, 2)
 #unittype_jur_cast$pct_chg <- round(unittype_jur_cast$pct_chg * 100, 2)
 
-write.csv(HH_Building_size_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz cpa freq.csv" )
-write.csv(HH_Building_size_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz jur freq.csv" )
-write.csv(HH_Building_size_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz reg freq.csv" )
+#write.csv(HH_Building_size_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz cpa freq.csv" )
+#write.csv(HH_Building_size_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz jur freq.csv" )
+#write.csv(HH_Building_size_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz reg freq.csv" )
 
-write.csv(HH_Building_size_jur,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz jur freq.csv" )
+#write.csv(HH_Building_size_jur,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\bldgsz jur freq.csv" )
 
-
+#write.csv(HH_Building_size_cast,paste(dataout,"HH_Building_size_cast.csv"))
+#write.csv(HH_Building_size_jur,paste(dataout,"HH_Building_size_jur.csv"))
+#write.csv(HH_Building_size_reg,paste(dataout,"HH_Building_size_reg.csv"))
 
 #bldgsz_cpa_omit<-na.omit(bldgsz_cpa)
 
@@ -101,7 +108,7 @@ write.csv(HH_Building_size_jur,"M:\\Technical Services\\QA Documents\\Projects\\
 #results<-"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\"
 #household Unit Type jurisdiction
 results<-"plots\\bldgsz\\"
-ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE))
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 #this creates the list for "i" which is what the loop relies on - like x in a do repeat
 jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
@@ -139,6 +146,16 @@ for(i in 1:length(jur_list)){
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg.","Reg abs. chg."))
+  tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,2,2),
+               c(1,1,1,2,2),
+               c(1,1,1,2,2))
+  output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  #ggsave(output, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
   # ggsave(plot, file= paste(results, 'bldgsz_jur', jur_list[i], ".pdf", sep=''), scale=2)
   ggsave(plot, file= paste(results, 'bldgsz_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
