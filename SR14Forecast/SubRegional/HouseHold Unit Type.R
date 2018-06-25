@@ -131,6 +131,7 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
 
 citynames <- data.frame(jur_list, jur_list2)
 unittype_jur$cityname<-citynames[match(unittype_jur$jurisdiction_id, citynames$jur_list),2]
+unittype_jur$reg<-unittype_reg[match(unittype_jur$yr, unittype_reg$yr),4]
 
 #this is the loop with the subset, the ggplot and the ggsave commands
 
@@ -139,6 +140,9 @@ for(i in 1:length(jur_list)){
   plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
                aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
+    geom_line(aes(y = reg/1.5, group=1,colour = "Region")) +
+    scale_y_continuous(label=comma,sec.axis = 
+                                  sec_axis(~.*1.5, name = "Region",label=comma))
     labs(title=paste("Absolute Change: No. of Households\n ", jur_list2[i],' and Region, 2016-2050',sep=''), 
          y="Households", x="Year",
         caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
