@@ -137,52 +137,57 @@ unittype_jur$reg<-unittype_reg[match(unittype_jur$yr, unittype_reg$yr),4]
 
 
 for(i in 1:length(jur_list)){
-  plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
-               aes(x=yr, y=N_chg,fill=cityname)) +
+  plotdat = subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i])
+  plotdat$ratio = plotdat$reg/plotdat$N_chg
+  plotdat$ratio[is.na(plotdat$ratio)] <- 0
+  ravg = median(plotdat[["ratio"]])
+  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
-    geom_line(aes(y = reg/1.5, group=1,colour = "Region")) +
+    geom_line(aes(y = reg/ravg, group=1,colour = "Region")) +
     scale_y_continuous(label=comma,sec.axis = 
-                                  sec_axis(~.*1.5, name = "Region",label=comma))
+                                  sec_axis(~.*ravg, name = "Region HH [abs chg]",label=comma)) +
     labs(title=paste("Absolute Change: No. of Households\n ", jur_list2[i],' and Region, 2016-2050',sep=''), 
-         y="Households", x="Year",
-        caption="Source: isam.xpef03.household+data_cafe.regional_forecast.sr13_final.mgra13")+
+         y=paste(jur_list2[i]," HH [abs chg]",sep=''), x="Year",
+        caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
+    scale_colour_manual(values = c("blue", "red")) +
     #expand_limits(y = c(1, 300000))+
-    #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, unittype_jur$jurisdiction_id==jur_list[i])))))+
-    theme_bw(base_size = 16)+  theme(plot.title = element_text(hjust = 0.5)) +
+    #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
+    #unittype_jur$jurisdiction_id==jur_list[i])))))+
+    theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
   # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
-  ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''), scale=2)
+  ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
 
 #household Unit Type cpa
 
-# double axis
+# double axis test
  
-jur1 = subset(unittype_jur, unittype_jur$jurisdiction_id==1)
-jur14 = subset(unittype_jur, unittype_jur$jurisdiction_id==14)
-unittype_reg$jur1 = jur1$N_chg
-unittype_reg$jur14 = jur14$N_chg
-unittype_reg$ratio = unittype_reg$N_chg/unittype_reg$jur14
-sapply(jur14, class)
-
-
-p <- ggplot(unittype_reg, aes(x = yr,y = jur14))
-p <- p +  geom_bar(stat="identity")
-# note divide 1.5
-p <- p + geom_line(aes(y = N_chg/1.5, group=1,colour = "Region"))
-# now adding the secondary axis, 
-# and, very important, reverting the above transformation (1.5)
-p <- p + scale_y_continuous(label=comma,sec.axis = 
-                              sec_axis(~.*1.5, name = "Region",label=comma))
-p <- p + scale_colour_manual(values = c("blue", "red"))
-p <- p + labs(y = "San Diego",
-              x = "yr"
-              #,colour = "Parameter"
-              )
-p <- p + theme(legend.position = c(0.8, 0.9))
-ggsave(p, file= paste(results, '2yaxis_unittype_jur', jur_list[14], ".png", sep='')) # , scale=2)
-p
+# jur1 = subset(unittype_jur, unittype_jur$jurisdiction_id==1)
+# jur14 = subset(unittype_jur, unittype_jur$jurisdiction_id==14)
+# unittype_reg$jur1 = jur1$N_chg
+# unittype_reg$jur14 = jur14$N_chg
+# unittype_reg$ratio = unittype_reg$N_chg/unittype_reg$jur14
+# sapply(jur14, class)
+# p <- ggplot(unittype_reg, aes(x = yr,y = jur14))
+# p <- p +  geom_bar(stat="identity")
+# # note divide 1.5
+# p <- p + geom_line(aes(y = N_chg/1.5, group=1,colour = "Region"))
+# # now adding the secondary axis, 
+# # and, very important, reverting the above transformation (1.5)
+# p <- p + scale_y_continuous(label=comma,sec.axis = 
+#                               sec_axis(~.*1.5, name = "Region",label=comma))
+# p <- p + scale_colour_manual(values = c("blue", "red"))
+# p <- p + labs(y = "San Diego",
+#               x = "yr"
+#               #,colour = "Parameter"
+#               )
+# p <- p + theme(legend.position = c(0.8, 0.9))
+# ggsave(p, file= paste(results, '2yaxis_unittype_jur', jur_list[14], ".png", sep='')) # , scale=2)
+# p
 
 #############
 
