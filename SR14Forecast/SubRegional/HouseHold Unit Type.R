@@ -67,7 +67,7 @@ unittype_jur_cast$pct_chg <- round(unittype_jur_cast$pct_chg * 100, 2)
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 dataout<-"data\\unittype\\"
-ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dataout), showWarnings = TRUE, recursive=TRUE))
+ifelse(!dir.exists(file.path(maindir,dataout)), dir.create(file.path(maindir,dataout), showWarnings = TRUE, recursive=TRUE),0)
 
 #write.csv(unittype_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype cpa freq.csv" )
 #write.csv(unittype_jur_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype jur freq.csv" )
