@@ -73,9 +73,9 @@ write.csv(unittype_cpa_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub
 write.csv(unittype_jur_cast,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype jur freq.csv" )
 write.csv(unittype_reg,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Scripts\\output\\unittype reg freq.csv" )
 
-# write.csv(unittype_cpa_cast,paste(dataout,unittype_cpa_freq.csv"))
-#write.csv(unittype_jur_cast,"unittype_jur_freq.csv" )
-#write.csv(unittype_reg,"reg_freq.csv" )
+write.csv(unittype_cpa_cast,paste(dataout,"unittype_cpa_freq.csv"))
+write.csv(unittype_jur_cast,paste(dataout,"unittype_jur_freq.csv"))
+write.csv(unittype_reg,paste(dataout,"reg_freq.csv"))
 
 unittype_cpa_omit<-na.omit(unittype_cpa)
 
