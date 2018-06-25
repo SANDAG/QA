@@ -77,7 +77,7 @@ write.csv(unittype_cpa_cast,paste(dataout,"unittype_cpa_freq.csv"))
 write.csv(unittype_jur_cast,paste(dataout,"unittype_jur_freq.csv"))
 write.csv(unittype_reg,paste(dataout,"reg_freq.csv"))
 
-unittype_cpa_omit<-na.omit(unittype_cpa)
+#unittype_cpa_omit<-na.omit(unittype_cpa)
 
 #add figure script and write out file
 ##################################################
@@ -294,7 +294,7 @@ cpa_list<- c(1401,
 )
 
 
-unittype_cpa_omit<-order(unittype_cpa_omit$yr)
+#unittype_cpa_omit<-order(unittype_cpa_omit$yr)
 
 #this is the loop with the subset, the ggplot and the ggsave commands
 for(i in cpa_list){
