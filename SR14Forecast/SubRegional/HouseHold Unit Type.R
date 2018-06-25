@@ -149,6 +149,36 @@ for(i in 1:length(jur_list)){
 
 #household Unit Type cpa
 
+# double axis
+ 
+jur1 = subset(unittype_jur, unittype_jur$jurisdiction_id==1)
+jur14 = subset(unittype_jur, unittype_jur$jurisdiction_id==14)
+unittype_reg$jur1 = jur1$N_chg
+unittype_reg$jur14 = jur14$N_chg
+unittype_reg$ratio = unittype_reg$N_chg/unittype_reg$jur14
+sapply(jur14, class)
+
+
+p <- ggplot(unittype_reg, aes(x = yr,y = jur14))
+p <- p +  geom_bar(stat="identity")
+# note divide 1.5
+p <- p + geom_line(aes(y = N_chg/1.5, group=1,colour = "Region"))
+# now adding the secondary axis, 
+# and, very important, reverting the above transformation (1.5)
+p <- p + scale_y_continuous(label=comma,sec.axis = 
+                              sec_axis(~.*1.5, name = "Region",label=comma))
+p <- p + scale_colour_manual(values = c("blue", "red"))
+p <- p + labs(y = "San Diego",
+              x = "yr"
+              #,colour = "Parameter"
+              )
+p <- p + theme(legend.position = c(0.8, 0.9))
+ggsave(p, file= paste(results, '2yaxis_unittype_jur', jur_list[14], ".png", sep='')) # , scale=2)
+p
+
+#############
+
+
 #this creates the list for "i" which is what the loop relies on - like x in a do repeat
 cpa_list<- c(1401, 
              1402, 
