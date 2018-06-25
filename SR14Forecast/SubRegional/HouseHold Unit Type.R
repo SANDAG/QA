@@ -129,11 +129,15 @@ jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
 jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinitas","Escondido","Imperial Beach","La Mesa","Lemon Grove",
               "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
 
+citynames <- data.frame(jur_list, jur_list2)
+unittype_jur$cityname<-citynames[match(unittype_jur$jurisdiction_id, citynames$jur_list),2]
+
 #this is the loop with the subset, the ggplot and the ggsave commands
+
 
 for(i in 1:length(jur_list)){
   plot<-ggplot(subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i]),  
-               aes(x=yr, y=N_chg)) +
+               aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
     labs(title=paste("Absolute Change: No. of Households\n ", jur_list2[i],' and Region, 2016-2050',sep=''), 
          y="Households", x="Year",
