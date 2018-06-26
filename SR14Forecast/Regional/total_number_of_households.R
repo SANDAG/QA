@@ -10,6 +10,7 @@ packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC",
               "stringr","gridExtra","grid","lattice")
 pkgTest(packages)
 
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
@@ -42,7 +43,8 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-hh_jur$yr <-  hh_jur$yr_id
+hh_jur$year<- "y"
+hh_jur$yr <- as.factor(paste(hh_jur$year, hh_jur$yr, sep = ""))
 hh_jur$N <-  hh_jur$households
 
 jur_list = unique(hh_jur[["cityname"]])
