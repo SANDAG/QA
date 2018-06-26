@@ -38,6 +38,9 @@ colnames(hh_region)[colnames(hh_region)=="geozone"] <- "SanDiegoRegion"
 hh_jur$reg<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),7]
 hh_cpa$reg<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),7]
 
+hh_jur$regN<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),4]
+hh_cpa$regN<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),4]
+
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\"
