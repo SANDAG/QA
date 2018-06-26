@@ -9,20 +9,6 @@ packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC",
               "stringr","gridExtra","grid","lattice")
 pkgTest(packages)
 
-#library("gridExtra")
-#library(grid)
-#library(lattice)
-# library(scales)
-# library(sqldf)
-# library(rstudioapi)
-# library(RODBC)
-# library(dplyr)
-# library(reshape2)
-# library(ggplot2)
-#library(data.table)
-# library(stringr)
-#library(wesanderson)
-#library(RColorBrewer)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
@@ -174,7 +160,6 @@ for(i in 1:length(jur_list)){
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,unittype_reg$N,plotdat$reg)
-  output_table$reg_pct_chg<-
   setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat$N_pct","unittype_reg$N","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Total", "Reg Abs Chg"))
   tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
