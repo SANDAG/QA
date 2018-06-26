@@ -155,7 +155,8 @@ for(i in 1:length(jur_list)){
   plotdat = subset(unittype_jur, unittype_jur$jurisdiction_id==jur_list[i])
   plotdat$ratio = plotdat$reg/plotdat$N_chg
   plotdat$ratio[is.na(plotdat$ratio)] <- 0
-  ravg = median(plotdat[["ratio"]])
+  # ravg = median(plotdat[["ratio"]])
+  ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
     geom_line(aes(y = reg/ravg, group=1,colour = "Region")) +
@@ -315,7 +316,8 @@ for(i in 1:length(cpa_list)){
   plotdat = subset(unittype_cpa, unittype_cpa$jcpa==cpa_list[i])
   plotdat$ratio = plotdat$reg/plotdat$N_chg
   plotdat$ratio[is.na(plotdat$ratio)] <- 0
-  ravg = median(plotdat[["ratio"]])
+  # ravg = median(plotdat[["ratio"]])
+  ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill='cpa')) +
     geom_bar(stat = "identity") +
     geom_line(aes(y = reg/ravg, group=1,colour = "Region")) +
