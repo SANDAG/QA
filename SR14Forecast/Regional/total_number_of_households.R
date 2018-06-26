@@ -10,6 +10,7 @@ packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC",
               "stringr","gridExtra","grid","lattice")
 pkgTest(packages)
 
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
