@@ -1,3 +1,8 @@
+#graphs don't work but almost need three line for region and fix color and get table to show
+
+
+
+
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -6,7 +11,7 @@ pkgTest <- function(pkg){
   
   
 }
-packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
+packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
               "stringr","gridExtra","grid","lattice")
 pkgTest(packages)
 
@@ -119,6 +124,10 @@ citynames <- data.frame(jur_list, jur_list2)
 HH_Building_size_jur$cityname<-citynames[match(HH_Building_size_jur$jurisdiction_id, citynames$jur_list),2]
 HH_Building_size_jur$reg<-HH_Building_size_reg[match(HH_Building_size_jur$yr, HH_Building_size_reg$yr),4]
 
+HH_Building_size_jur$bldgsz<-as.factor(HH_Building_size_jur$bldgsz)
+HH_Building_size_jur$bldgsz<-revalue(HH_Building_size_jur$bldgsz, c("1"="mob home","3"="fam home","8"="apt"))
+
+
 #household Building size Type jurisdiction
 
 for(i in 1:length(jur_list)){
@@ -126,9 +135,9 @@ for(i in 1:length(jur_list)){
   plotdat$ratio = plotdat$reg/plotdat$N_chg
   plotdat$ratio[is.na(plotdat$ratio)] <- 0
   ravg = median(plotdat[["ratio"]])
-  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,group= bldgsz, fill=bldgsz)) +
-    geom_bar(stat = "identity", position = "dodge") + #, #colour= "bldgsz") + 
-    geom_line(aes(y = reg/ravg, group=bldgsz,colour = "Region")) + 
+  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,group= bldgsz, colour=bldgsz, fill=bldgsz)) +
+    geom_bar (stat = "identity", position = "dodge") + #, #colour= "bldgsz") + 
+    geom_line(aes(y = reg/ravg, group=bldgsz, colour = bldgsz)) + 
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Region HH [abs chg]",label=comma)) +
     #scale_x_discrete(breaks= "yr")+
@@ -136,7 +145,7 @@ for(i in 1:length(jur_list)){
          y=paste(jur_list2[i]," HH [abs chg]",sep=''), x="Year",
          caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
     #scale_fill_brewer(palette="Set1")+
-    #scale_colour_manual(values = c("blue", "red", "yellow")) +
+    scale_colour_manual(values = c("blue", "red", "yellow")) +
     #scale_fill_manual(values = c("blue","red", "yellow")) +
     #expand_limits(y = c(1, 300000))+
     #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
@@ -146,8 +155,8 @@ for(i in 1:length(jur_list)){
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
-  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg.","Reg abs. chg."))
+  output_table<-data.frame(plotdat$bldgsz,plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
+  setnames(output_table, old=c("plotdat.bldgsz","plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Structure Type","Year","Total","Abs. Chg.","Reg abs.chg."))
   tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,2,2),
