@@ -55,9 +55,6 @@ jur_list2 = unique(hh_jur[["cityname"]])
 
 for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   plotdat = subset(hh_jur, hh_jur$cityname==i)
-  # plotdat$ratio = plotdat$reg/plotdat$N_chg
-  # plotdat$ratio[is.na(plotdat$ratio)] <- 0
-  # ravg = median(plotdat[["ratio"]])
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
@@ -68,23 +65,18 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
          y=paste(i," HH [abs chg]",sep=''), x="Year",
          caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
     scale_colour_manual(values = c("blue", "red")) +
-    #expand_limits(y = c(1, 300000))+
-    #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
-    #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
-    #unittype_jur$jurisdiction_id==jur_list[i])))))+
     theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  ggsave(plot, file= paste(results, 'households', i, ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
-  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg.","Reg abs. chg."))
+  # ggsave(plot, file= paste(results, 'households', i, ".png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg,plotdat$regN)
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg","plotdat.regN"),new=c("Year","Total","Abs. Chg.","Reg abs. chg.","Reg Total"))
   tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,2,2),
                c(1,1,1,2,2),
                c(1,1,1,2,2))
   output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
-  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
   ggsave(output, file= paste(results, 'households', i, ".png", sep=''))#, scale=2)
 }
