@@ -201,7 +201,7 @@ for(i in 1:length(jur_list)){
 
 #############
 
-
+#cpa with missing data for one or more years - 1401, 1439, 1491, 1911,1483
 #this creates the list for "i" which is what the loop relies on - like x in a do repeat
 cpa_list<- c(# 1401, 
              1402, 
@@ -260,11 +260,11 @@ cpa_list<- c(# 1401,
              1469, 
              1481, 
              1482, 
-             1483, 
+             #1483, 
              1485, 
              1486, 
              1488, 
-             1491, 
+             #1491, 
              1901, 
              1902, 
              1903, 
@@ -273,7 +273,7 @@ cpa_list<- c(# 1401,
              1907, 
              1908, 
              1909, 
-             1911, 
+             #1911, 
              1912, 
              1914, 
              1915, 
