@@ -131,6 +131,7 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
 citynames <- data.frame(jur_list, jur_list2)
 unittype_jur$cityname<-citynames[match(unittype_jur$jurisdiction_id, citynames$jur_list),2]
 unittype_jur$reg<-unittype_reg[match(unittype_jur$yr, unittype_reg$yr),4]
+unittype_jur$regN<-unittype_reg[match(unittype_jur$yr, unittype_reg$yr),3]
 
 #this is the loop with the subset, the ggplot and the ggsave commands
 
@@ -159,8 +160,8 @@ for(i in 1:length(jur_list)){
     theme(legend.position = "bottom",
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,unittype_reg$N,plotdat$reg)
-  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat$N_pct","unittype_reg$N","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Total", "Reg Abs Chg"))
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg)
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Total", "Reg Abs Chg"))
   tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,2,2),
