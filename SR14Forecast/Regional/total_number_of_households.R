@@ -42,7 +42,8 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-hh_jur$yr <-  hh_jur$yr_id
+hh_jur$year<- "y"
+hh_jur$yr <- as.factor(paste(hh_jur$year, hh_jur$yr, sep = ""))
 hh_jur$N <-  hh_jur$households
 
 jur_list = unique(hh_jur[["cityname"]])
