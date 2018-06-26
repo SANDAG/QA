@@ -48,13 +48,15 @@ unittype_reg <-subset(unittype_reg,unittype==0)
 unittype_jur$N_chg <- ave(unittype_jur$N, factor(unittype_jur$jurisdiction_id), FUN=function(x) c(NA,diff(x)))
 unittype_reg$N_chg <- ave(unittype_reg$N, FUN=function(x) c(NA,diff(x)))
 
+unittype_jur <- unittype_jur[order(unittype_jur$yr,unittype_jur$jurisdiction_id),]
 unittype_jur$N_pct <- (unittype_jur$N_chg / lag(unittype_jur$N))*100
+
+unittype_reg <- unittype_reg[order(unittype_reg$yr),]
+unittype_reg$N_pct <- (unittype_reg$N_chg / lag(unittype_reg$N))*100
 
 unittype_cpa_cast <- dcast(unittype_cpa, jcpa+unittype~yr, value.var="N")
 unittype_jur_cast <- dcast(unittype_jur, jurisdiction_id+unittype~yr, value.var="N")
 
-
-head(unittype_cpa_cast)
 
 #################
 #add percent change and absolute change and save as csv
@@ -171,8 +173,9 @@ for(i in 1:length(jur_list)){
     theme(legend.position = "bottom",
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg)
-  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg"),new=c("Year","Total","Abs. Chg.","Reg abs. chg."))
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,unittype_reg$N,plotdat$reg)
+  output_table$reg_pct_chg<-
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat$N_pct","unittype_reg$N","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Total", "Reg Abs Chg"))
   tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,2,2),
