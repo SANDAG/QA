@@ -199,6 +199,26 @@ ORDER BY yr_id, mgra.geotype, mgra.geozone
 
 --hh (get from first query)
 --emp (coming from Dmitry soon)
+SELECT jobs.yr_id
+	,mgra.geotype
+	,mgra.geozone
+	,jobs.employment_type_id
+	,employment_type.full_name
+	,SUM(jobs.jobs) as jobs
+FROM fact.jobs
+	INNER JOIN dim.mgra
+	ON mgra.mgra_id = jobs.mgra_id
+	AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
+		INNER JOIN dim.employment_type
+		ON employment_type.employment_type_id = jobs.employment_type_id
+WHERE jobs.datasource_id = 14
+GROUP BY jobs.yr_id
+	,mgra.geotype
+	,mgra.geozone
+	,jobs.employment_type_id
+	,employment_type.short_name
+ORDER BY yr_id, mgra.geotype, mgra.geozone, jobs.employment_type_id
+
 
 
 
