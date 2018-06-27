@@ -44,7 +44,7 @@ hh_cpa$regN<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),4]
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\"
+results<-"plots\\Jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 ##Jurisdiction
@@ -61,12 +61,13 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
-    geom_line(aes(y = reg/ravg, group=1,colour = "Region")) +
+    geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
     scale_y_continuous(label=comma,sec.axis = 
-                         sec_axis(~.*ravg, name = "Region HH [abs chg]",label=comma)) +
-    labs(title=paste("Absolute Change: No. of Total Household Pop\n ", i,' and Region, 2016-2050',sep=''), 
-         y=paste(i," HH [abs chg]",sep=''), x="Year",
-         caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
+                         sec_axis(~.*ravg, name = "Region HH",label=comma)) +
+    labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
+         y=paste("Chg in ",i,sep=''), x="Year")+
+         #y=paste(i," HH [abs chg]",sep=''), x="Year",
+         #caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -83,11 +84,14 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   lay<- rbind(c(1,1,1,1,1),
               c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''))#, scale=2)
+  ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''),
+         width=6, height=8, dpi=100)#, scale=2)
 }
 
 
 ####CPA
+
+
 
 hh_cpa$N_pct[is.nan(hh_cpa$N_pct)] <- 1
 
@@ -100,17 +104,25 @@ cpa_list3 = unique(hh_cpa[["cpaname"]])
 cpa_list4 = unique(hh_cpa[["cpaname"]])
 
 
+cpa_list = unique(hh_cpa[["cpaname"]])
+
+results<-"plots\\cpa\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+
 for(i in cpa_list3) { #1:length(unique(hh_cpa[["cpaname"]]))){
   plotdat = subset(hh_cpa, hh_cpa$cpaname==i)
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
+  ravg[which(!is.finite(ravg))] <- 1
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cpaname)) +
     geom_bar(stat = "identity") +
-    geom_line(aes(y = reg/ravg, group=1,colour = "Region")) +
+    geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
     scale_y_continuous(label=comma,sec.axis = 
-                         sec_axis(~.*ravg, name = "Region HH [abs chg]",label=comma)) +
-    labs(title=paste("Absolute Change: No. of Total Household Pop\n ", i,' and Region, 2016-2050',sep=''), 
-         y=paste(i," HH [abs chg]",sep=''), x="Year",
-         caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
+                         sec_axis(~.*ravg, name = "Region HH",label=comma)) +
+    labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
+         y=paste("Chg in ",i,sep=''), x="Year") +
+         #y=paste(i," HH [abs chg]",sep=''), x="Year",
+         #caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -126,12 +138,15 @@ for(i in cpa_list3) { #1:length(unique(hh_cpa[["cpaname"]]))){
   lay <- rbind(c(1,1,1,2,2),
                c(1,1,1,2,2),
                c(1,1,1,2,2))
-  lay<- rbind(c(1,1,1,1,1,),
+  lay<- rbind(c(1,1,1,1,1),
                 c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
-    i = gsub("\\*","",i)
-     ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''))#, scale=2)
-}
+  i = gsub("\\*","",i)
+  i = gsub("\\-","_",i)
+  i = gsub("\\:","_",i)
+          ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''),
+            width=6, height=8, dpi=100)#, scale=2)
+     }
 
 
 
