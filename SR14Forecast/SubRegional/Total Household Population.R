@@ -74,11 +74,12 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
     theme(legend.position = "bottom",
           legend.title=element_blank())
   # ggsave(plot, file= paste(results, 'Total Household Pop',  i, ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$reg,plotdat$regN)
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$regN,plotdat$reg)
   output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2016'] <- ''
   output_table$plotdat.reg[output_table$plotdat.yr == 'y2016'] <- ''
   hhtitle = paste("Households Pop ",i,sep='')
-  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg","plotdat.regN"),new=c("Year","Total","Abs. Chg.","Reg abs. chg.","Reg Total"))
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.regN","plotdat.reg"),
+           new=c("Year",hhtitle,"Chg","Households Region","Chg"))
   tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,2,2),
