@@ -88,6 +88,9 @@ for(i in cpa_list) {
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year")
   i = gsub("\\*","",i)
+  i = gsub("\\-","_",i)
+  i = gsub("\\:","_",i)
   ggsave(plot, file= paste(results, 'hhsize', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
+
