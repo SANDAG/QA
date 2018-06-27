@@ -19,9 +19,9 @@ hh<-sqlQuery(channel,hh_sql)
 odbcClose(channel)
 
 CPA_pop<-aggregate(hh~yr_id+geozone, data=hh, sum)
-HH_CPA <- match(hh, CPA_pop, by.a=c("yr_id", "geozone"), by.b=c("yr_id", "geozone"), all=TRUE)
 hh$tot_pop<-CPA_pop[match(paste(hh$yr_id, hh$geozone),paste(CPA_pop$yr_id, CPA_pop$geozone)),3]
-hh_jur$reg<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),7]
+
+hh$N_pct <- hh$hh/ hh$tot_pop *100
 
 hh_jur = subset(hh,geotype=='jurisdiction')
 colnames(hh_jur)[colnames(hh_jur)=="geozone"] <- "cityname"

@@ -44,7 +44,7 @@ hh_cpa$regN<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),4]
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\Jur\\"
+results<-"plots\\hh_pop\\Jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 ##Jurisdiction
@@ -110,7 +110,7 @@ cpa_list4 = unique(hh_cpa[["cpaname"]])
 
 cpa_list = unique(hh_cpa[["cpaname"]])
 
-results<-"plots\\cpa\\"
+results<-"plots\\hh_pop\\cpa\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 

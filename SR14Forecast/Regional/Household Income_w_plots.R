@@ -18,8 +18,8 @@ hh_sql = getSQL("../Queries/Household Income (HHINC).sql")
 hh<-sqlQuery(channel,hh_sql)
 odbcClose(channel)
 
-CPA_pop<-aggregate(hh~yr_id+geozone, data=hh, sum)
-hh$tot_pop<-CPA_pop[match(paste(hh$yr_id, hh$geozone),paste(CPA_pop$yr_id, CPA_pop$geozone)),3]
+Geo_totals<-aggregate(hh~yr_id+geozone, data=hh, sum)
+hh$tot_pop<-Geo_totals[match(paste(hh$yr_id, hh$geozone),paste(CPA_pop$yr_id, CPA_pop$geozone)),3]
 hh$tot_pop[hh$tot_pop==0] <- NA
 hh$percent_income = hh$hh/hh$tot_pop * 100
 
@@ -38,12 +38,16 @@ hh$name <- factor(hh$name, levels = c("Less than $15,000",
                     "$150,000 to $199,999",
                     "$200,000 or more"))
 
-hh$income_id2 <-ifelse(hh$income_group_id>=11 &hh$income_group_id<=12, '1',
-                ifelse(hh$income_group_id>=13 &hh$income_group_id<=14, '2',
-                ifelse(hh$income_group_id>=15 &hh$income_group_id<=16, '3',
-                ifelse(hh$income_group_id>=17 &hh$income_group_id<=18, '4',
-                ifelse(hh$income_group_id>=19 &hh$income_group_id<=20, '5', NA)))))
+#hh$income_id2 <-ifelse(hh$income_group_id>=11 &hh$income_group_id<=12, '1',
+                #ifelse(hh$income_group_id>=13 &hh$income_group_id<=14, '2',
+                #ifelse(hh$income_group_id>=15 &hh$income_group_id<=16, '3',
+                #ifelse(hh$income_group_id>=17 &hh$income_group_id<=18, '4',
+                #ifelse(hh$income_group_id>=19 &hh$income_group_id<=20, '5', NA)))))
                                    
+Cat_agg<-aggregate(hh~yr_id+geozone+, data=hh, sum)
+hh$tot_pop<-CPA_pop[match(paste(hh$yr_id, hh$geozone),paste(CPA_pop$yr_id, CPA_pop$geozone)),3]
+hh$tot_pop[hh$tot_pop==0] <- NA
+hh$percent_income = hh$hh/hh$tot_pop * 100
 
 hh_jur = subset(hh,geotype=='jurisdiction')
 
@@ -64,6 +68,10 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 jur_list = unique(hh_jur[["geozone"]])
  
+results<-"plots\\Household Income\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+
 
 for(i in jur_list) {
   plotdat = subset(hh_jur, hh_jur$geozone==i)
@@ -77,6 +85,7 @@ for(i in jur_list) {
          width=6, height=8, dpi=100)#, scale=2)
 }
 
+
 results<-"plots\\Household Income\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
@@ -94,25 +103,32 @@ for(i in jur_list) {
 
 }
 
-results<-"plots\\Household Income\\"
+results<-"plots\\Household Income\\CPA\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
 
-cpa_list = unique(hh_cpa[["cpaname"]])
+cpa_list = unique(hh_cpa[["geozone"]])
 
 
 for(i in cpa_list) {
-  plotdat = subset(hh_cpa, hh_jur$geozone==i)
+  plotdat = subset(hh_cpa, hh_cpa$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
   plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name,color=name)) +
     geom_line(size=1.25) +  facet_grid(. ~ geozone) + 
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  i = gsub("\\*","",i)
+  i = gsub("\\-","_",i)
+  i = gsub("\\:","_",i)
   ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
+
+
+
+
 
 
 for(i in cpa_list) {
@@ -126,5 +142,7 @@ for(i in cpa_list) {
   ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 
-}
+}results<-"plots\\Household Income\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
 
