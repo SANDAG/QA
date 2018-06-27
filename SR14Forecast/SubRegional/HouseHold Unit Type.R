@@ -6,7 +6,7 @@ pkgTest <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice")
+              "stringr","gridExtra","grid","lattice","gtable")
 pkgTest(packages)
 
 
