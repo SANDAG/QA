@@ -43,7 +43,7 @@ hh_cpa$regN<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),4]
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\"
+results<-"plots\\hh\\jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 hh_jur$year<- "y"
@@ -96,7 +96,7 @@ hh_cpa$N <-  hh_cpa$households
 
 cpa_list = unique(hh_cpa[["cpaname"]])
 
-results<-"plots\\cpa\\"
+results<-"plots\\hh\\cpa\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
@@ -133,6 +133,8 @@ for(i in cpa_list) {
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
   i = gsub("\\*","",i)
+  i = gsub("\\-","_",i)
+  i = gsub("\\:","_",i)
   ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
