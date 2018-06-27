@@ -6,7 +6,7 @@ pkgTest <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice")
+              "stringr","gridExtra","grid","lattice","gtable")
 pkgTest(packages)
 
 
@@ -43,6 +43,8 @@ unittype_reg$N_pct <- (unittype_reg$N_chg / lag(unittype_reg$N))*100
 unittype_cpa_cast <- dcast(unittype_cpa, jcpa+unittype~yr, value.var="N")
 unittype_jur_cast <- dcast(unittype_jur, jurisdiction_id+unittype~yr, value.var="N")
 
+unittype_reg$N_pct <- sprintf("%.2f",unittype_reg$N_pct)
+unittype_jur$N_pct <- sprintf("%.2f",unittype_jur$N_pct)
 
 #################
 #add percent change and absolute change and save as csv
@@ -131,7 +133,6 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
 citynames <- data.frame(jur_list, jur_list2)
 unittype_jur$cityname<-citynames[match(unittype_jur$jurisdiction_id, citynames$jur_list),2]
 unittype_jur$reg<-unittype_reg[match(unittype_jur$yr, unittype_reg$yr),4]
-unittype_jur$regN<-unittype_reg[match(unittype_jur$yr, unittype_reg$yr),3]
 
 #this is the loop with the subset, the ggplot and the ggsave commands
 
@@ -155,20 +156,19 @@ for(i in 1:length(jur_list)){
     #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
     #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
     #unittype_jur$jurisdiction_id==jur_list[i])))))+
-    theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg)
-  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Total", "Reg Abs Chg"))
-  tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,unittype_reg$N, plotdat$reg)
+  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.N_pct","unittype_reg.N","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Total", "Reg Abs Chg"))
+  tt <- ttheme_default(base_size=7,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,2,2),
                c(1,1,1,2,2),
                c(1,1,1,2,2))
-  output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
-  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
+  output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
   ggsave(output, file= paste(results, 'unittype_jur', jur_list[i], ".png", sep=''))#, scale=2)
 }
 
@@ -293,9 +293,13 @@ cpa_list<- c(# 1401,
              
 )
 
+
 unittype_cpa <-subset(unittype_cpa,unittype==0)
 unittype_cpa$N_chg <- ave(unittype_cpa$N, factor(unittype_cpa$jcpa), FUN=function(x) c(NA,diff(x)))
 unittype_cpa$reg<-unittype_reg[match(unittype_cpa$yr, unittype_reg$yr),4]
+unittype_cpa <- unittype_cpa[order(unittype_cpa$yr,unittype_cpa$jcpa),]
+unittype_cpa$N_pct <- (unittype_cpa$N_chg / lag(unittype_cpa$N))*100
+unittype_cpa$N_pct <- sprintf("%.2f",unittype_cpa$N_pct)
 
 for(i in 1:length(cpa_list)){
   plotdat = subset(unittype_cpa, unittype_cpa$jcpa==cpa_list[i])
@@ -316,14 +320,23 @@ for(i in 1:length(cpa_list)){
     #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
     #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
     #unittype_jur$jurisdiction_id==jur_list[i])))))+
-    theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
-  ggsave(plot, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
+    ggsave(plot, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
+   output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$reg)
+   setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Abs Chg"))
+   tt <- ttheme_default(base_size=7,colhead=list(fg_params = list(parse=TRUE)))
+   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+   lay <- rbind(c(1,1,1,2,2),
+                c(1,1,1,2,2),
+                c(1,1,1,2,2))
+   output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+   ggsave(output, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
 }
-
+  
+  
 
 #unittype_cpa_omit<-order(unittype_cpa_omit$yr)
 
