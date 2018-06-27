@@ -103,7 +103,7 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 for(i in cpa_list) { 
   plotdat = subset(hh_cpa, hh_cpa$cpaname==i)
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
-  ravg[which(!is.finite(ravg))] <- 0
+  ravg[which(!is.finite(ravg))] <- 1
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cpaname)) +
     geom_bar(stat = "identity") +
     geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
