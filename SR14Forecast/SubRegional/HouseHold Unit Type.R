@@ -320,14 +320,23 @@ for(i in 1:length(cpa_list)){
     #scale_y_continuous(labels= comma, limits = c((.75 * min(subset(unittype_jur$N, 
     #unittype_jur$jurisdiction_id==jur_list[i]))),(1.5 * max(subset(unittype_jur$N, 
     #unittype_jur$jurisdiction_id==jur_list[i])))))+
-    theme_bw(base_size = 16) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
-  # ggsave(plot, file= paste(results, 'unittype_jur', jur_list[i], ".pdf", sep=''), scale=2)
-  ggsave(plot, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
+    ggsave(plot, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
+   output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$reg)
+   setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.reg"),new=c("Year","SR Total","SR Abs Chg","SR Pct Chg","Reg Abs Chg"))
+   tt <- ttheme_default(base_size=7,colhead=list(fg_params = list(parse=TRUE)))
+   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+   lay <- rbind(c(1,1,1,2,2),
+                c(1,1,1,2,2),
+                c(1,1,1,2,2))
+   output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+   ggsave(output, file= paste(results, 'unittype_cpa', cpa_list[i], ".png", sep=''))#, scale=2)
 }
-
+  
+  
 
 #unittype_cpa_omit<-order(unittype_cpa_omit$yr)
 
