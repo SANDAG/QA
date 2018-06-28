@@ -25,6 +25,7 @@ hh$N_pct <- (hh$N_chg / lag(hh$households))*100
 hh$N_pct<-sprintf("%.2f",hh$N_pct)
 hh$geozone<-revalue(hh$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 
+
 hh$N_chg[hh$yr_id == 2016] <- 0
 hh$N_pct[hh$yr_id == 2016] <- 0
 
@@ -118,7 +119,7 @@ for(i in cpa_list) {
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
     caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
-    scale_fill_manual(values = c("red", "blue"))+
+    scale_fill_manual(values = c("blue", "red"))+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -127,11 +128,11 @@ for(i in cpa_list) {
           plot.caption=element_text(size=7))
   output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
   output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2016'] <- ''
-  output_table$plotdat.reg[output_table$plotdat.yr == 'y2016'] <- ''
+  output_table$plotdat.regN_chg[output_table$plotdat.yr == 'y2016'] <- ''
   hhtitle = paste("HH", "\n","in ",i)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
                                "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
-  tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+  tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
                c(1,1,1,1,1),
