@@ -35,7 +35,7 @@ hh_cpa$reg<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),6]
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\hhsize\\"
+results<-"plots\\hhsize\\jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 hh_jur$year<- "y"
@@ -71,7 +71,7 @@ hh_cpa$N <-  hh_cpa$households
 
 cpa_list = unique(hh_cpa[["cpaname"]])
 
-results<-"plots\\cpa\\hhsize\\"
+results<-"plots\\hhsize\\cpa\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
@@ -79,14 +79,18 @@ for(i in cpa_list) {
   plotdat = subset(hh_cpa, hh_cpa$cpaname==i)
   plot<-ggplot(plotdat, aes(yr)) + 
     geom_line(aes(y = reg, colour = "region",group=0),size=1.5) +
-    geom_point(aes(y=reg)) +
+    geom_point(size=3,aes(y=reg,color="region")) +
+    theme(legend.position = "bottom",
+          legend.title=element_blank()) +
     geom_line(aes(y = hhs, colour = cpaname,group=0),size=1.5) + 
-    geom_point(aes(y=hhs)) +
-    scale_y_continuous(limits = c(2, 3.75)) +
+    geom_point(size=3,aes(y=hhs,colour=cpaname)) +
+    scale_y_continuous(limits = c(1.90, 4.32)) +
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.position = "bottom",
+          legend.title=element_blank()) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year")
   i = gsub("\\*","",i)
@@ -96,3 +100,5 @@ for(i in cpa_list) {
          width=6, height=8, dpi=100)#, scale=2)
 }
 
+
+ 
