@@ -35,7 +35,7 @@ hh_cpa$reg<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),6]
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\"
+results<-"plots\\hhsize\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 hh_jur$year<- "y"
@@ -47,14 +47,16 @@ for(i in jur_list) {
   plotdat = subset(hh_jur, hh_jur$cityname==i)
   plot<-ggplot(plotdat, aes(yr)) + 
     geom_line(aes(y = reg, colour = "region",group=0),size=1.5) +
-    geom_point(aes(y=reg)) +
-    geom_line(aes(y = hhs, colour = cityname,group=0),size=1.5) + 
-    geom_point(aes(y=hhs)) +
-    scale_y_continuous(limits = c(2, 3.75)) +
+    geom_point(size=3,aes(y=reg,color="region")) +
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
+    geom_line(aes(y = hhs, colour = cityname,group=0),size=1.5) + 
+    geom_point(size=3,aes(y=hhs,colour=cityname)) +
+    scale_y_continuous(limits = c(2, 3.5)) +
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.position = "bottom",
+          legend.title=element_blank()) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year")
   ggsave(plot, file= paste(results, 'hhsize', i, ".png", sep=''),
