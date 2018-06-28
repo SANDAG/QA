@@ -61,13 +61,15 @@ hh_jur$N <-  hh_jur$hhp
 jur_list = unique(hh_jur[["cityname"]])
 jur_list2 = unique(hh_jur[["cityname"]])
 
+
+
 for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   plotdat = subset(hh_jur, hh_jur$cityname==i)
-  ravg = max(plotdat$regN,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
+  ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
-    geom_line(aes(y = regN/ravg, group=1,colour = "Region"),size=2) +
+    geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
     labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
@@ -121,6 +123,49 @@ cpa_list = unique(hh_cpa[["cpaname"]])
 
 results<-"plots\\hh_pop\\cpa\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+
+
+for(i in cpa_list) { #1:length(unique(hh_jur[["cityname"]]))){
+  plotdat = subset(hh_cpa, hh_cpa$cpaname==i)
+  ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
+  ravg[which(!is.finite(ravg))] <- 0
+  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cpaname)) +
+    geom_bar(stat = "identity") +
+    geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
+    scale_y_continuous(label=comma,sec.axis = 
+                         sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
+    labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
+         y=paste("Chg in ",i,sep=''), x="Year",
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
+    scale_fill_manual(values = c("blue", "red")) +
+    guides(fill = guide_legend(order = 1))+
+    theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.position = "bottom",
+          legend.title=element_blank())
+  # ggsave(plot, file= paste(results, 'Total Household Pop',  i, ".png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct)
+  output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2016'] <- ''
+  output_table$plotdat.reg[output_table$plotdat.yr == 'y2016'] <- ''
+  hhtitle = paste("HH Pop ",i,sep='')
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.hhp","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg",
+                               "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Pop Region","Chg","Pct"))
+  tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(2,2,2,2,2),
+               c(2,2,2,2,2))
+  output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+  i = gsub("\\*","",i)
+  i = gsub("\\-","_",i)
+  i = gsub("\\:","_",i)
+  ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''),
+         width=6, height=8, dpi=100)#, scale=2)
+}
+
 
 
 for(i in cpa_list3) { #1:length(unique(hh_cpa[["cpaname"]]))){
