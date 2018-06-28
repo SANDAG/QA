@@ -96,16 +96,29 @@ jur_list = unique(hh_jur[["geozone"]])
 results<-"plots\\Household Income\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-
+# colours = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026')
+colours = c('#ffffcc','#ffeda0','#fd8d3c','#bd0026','#800026')
 
 for(i in jur_list) {
   plotdat = subset(hh_jur, hh_jur$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
   plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name2,color=name2)) +
-    geom_line(size=1.25) +  facet_grid(. ~ geozone) + 
+    geom_line(size=2) + geom_point(size=1.5, colour="white")   +
+    facet_grid(. ~ geozone) + 
+    theme(plot.title = element_text(hjust = 0.5,size=16)) + 
+    labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
+         y=paste("Percent"), x="",
+         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 14") +
     theme(legend.position = "bottom",
         legend.title=element_blank()) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+    scale_colour_manual(values=colours) +
+    ylim(0, 41) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1,size=14)) +
+    theme(axis.text.y = element_text(size=14)) +
+    theme(axis.title.y = element_text(face="bold", size=20)) +
+    theme(legend.text=element_text(size=12)) +
+    theme(strip.text.x = element_text(size = 14)) 
+    
   # output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
   # output_table$plotdat.N_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
   # output_table$plotdat.regN_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
@@ -120,7 +133,7 @@ for(i in jur_list) {
   # ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
   #        width=6, height=8, dpi=100)#, scale=2)
   ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
-         width=8, height=6, dpi=100)#, scale=2)
+         width=10, height=6, dpi=100)#, scale=2)
 }
 
 
