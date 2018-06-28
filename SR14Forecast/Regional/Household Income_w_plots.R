@@ -18,11 +18,22 @@ hh_sql = getSQL("../Queries/Household Income (HHINC).sql")
 hh<-sqlQuery(channel,hh_sql)
 odbcClose(channel)
 
+# unique(hh[["geozone"]])
+# note city of san diego and san diego region are both named san diego
+# this causes problems with the aggregation
+# rename San Diego region to 'San Diego Region' and then aggregate
+levels(hh$geozone) <- c(levels(hh$geozone), "San Diego Region")
+hh$geozone[hh$geotype=='region'] <- 'San Diego Region'
+sd = subset(hh,geozone=='San Diego')
+sd2 = subset(hh,geozone=='San Diego Region')
+#write.csv(sd,'cityofsandiego.csv')
+#write.csv(sd2,'regionofsandiego.csv')
+
 Geo_totals<-aggregate(hh~yr_id+geozone, data=hh, sum)
 hh$tot_pop<-Geo_totals[match(paste(hh$yr_id, hh$geozone),paste(Geo_totals$yr_id, Geo_totals$geozone)),3]
 hh$tot_pop[hh$tot_pop==0] <- NA
 hh$percent_income = hh$hh/hh$tot_pop * 100
-
+#write.csv(Geo_totals,'geototals.csv')
 
 # specify order of levels for plotting
 hh$name <- factor(hh$name, levels = c("Less than $15,000", 
@@ -71,8 +82,7 @@ hh_cpa = subset(Cat_agg,geotype=='cpa')
 
 
 hh_region = subset(Cat_agg,geotype=='region')
-
-hh_region$geozone = 'San Diego Region'
+# write.csv(hh_region,'SanDiego_region.csv')
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
