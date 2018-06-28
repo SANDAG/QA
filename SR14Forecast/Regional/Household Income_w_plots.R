@@ -98,12 +98,13 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 # colours = c('#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026')
 colours = c('#ffffcc','#ffeda0','#fd8d3c','#bd0026','#800026')
+colours = c('#ffeda0','#fd8d3c','#bd0026','#800026','#561B07')
 
 for(i in jur_list) {
   plotdat = subset(hh_jur, hh_jur$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
   plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name2,color=name2)) +
-    geom_line(size=2) + geom_point(size=1.5, colour="white")   +
+    geom_line(size=2) + geom_point(size=3, aes(colour=name2))  +
     facet_grid(. ~ geozone) + 
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
@@ -178,7 +179,7 @@ for(i in cpa_list) {
   plotdat = subset(hh_cpa, hh_cpa$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
   plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name2,color=name2)) +
-    geom_line(size=2) + geom_point(size=1.5, colour="white")   +
+    geom_line(size=2) + aes(colour=name2)) +
     facet_grid(. ~ geozone) + 
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
@@ -198,5 +199,37 @@ for(i in cpa_list) {
     i = gsub("\\:","_",i)
   ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
          width=10, height=6, dpi=100)#, scale=2)
+
+
+preoutput1<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$hh)
+setnames(preoutput1, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.hh"),
+         new=c("Year","income","hh"))
+preoutput2<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$percent_income)
+setnames(preoutput2, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.percent_income"),
+         new=c("Year","income","pct"))
+hh_by_income = reshape(preoutput1, idvar = "Year", timevar = "income", direction = "wide")
+percents = reshape(preoutput2, idvar = "Year", timevar = "income", direction = "wide")
+# round
+percents[] <- lapply(percents, function(x) if(is.numeric(x)) round(x, 0) else x)
+total_pop_sub = subset(plotdat,income_id2==1)
+setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste(i,"_hh_pop",sep='')))
+totals <- merge(total_pop_sub[,c("Year",paste(i,"_hh_pop",sep=''))],hh_by_income, by="Year")
+output_table<- merge(totals,percents, by="Year")
+
+hhtitle = paste("HH ",i,sep='')
+tt <- ttheme_default(base_size=10,colhead=list(fg_params = list(parse=TRUE)))
+tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
+                     colhead = list(fg_params=list(cex = 1.0)),
+                     rowhead = list(fg_params=list(cex = 1.0)))
+tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+lay <- rbind(c(1,1,1,1,1),
+             c(2,2,2,2,2))
+output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
+ggsave(tbl, file= paste(results, i,'_table', ".png", sep=''),
+       width=10, height=6, dpi=100)#, scale=2)
+ggsave(plot, file= paste(results,i, '_hh_income', ".png", sep=''),
+       width=10, height=6, dpi=100)#, scale=2)
 }
+
+
 
