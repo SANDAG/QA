@@ -67,9 +67,9 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
                          sec_axis(~.*ravg, name = "Chg in Region",label=comma)) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14") +
-    #scale_colour_manual(values = c("blue", "red")) +
-    scale_fill_manual(values=c("blue", "red"), name=NULL, breaks=c(jur_list[i],"Region"))+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
+    scale_fill_manual(values = c("red", "blue"))+
+    guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
@@ -88,7 +88,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
                  c(1,1,1,1,1),
                  c(1,1,1,1,1),
                  c(2,2,2,2,2),
-               c(2,2,2,2,2))
+                 c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
   ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
@@ -116,27 +116,29 @@ for(i in cpa_list) {
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg in Region",label=comma)) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
-         y=paste("Chg in ",i,sep=''), x="Year") +
-    #,caption="Sources: isam.xpef03.household\ndata_cafe.regional_forecast.sr13_final.mgra13") +
-    scale_colour_manual(values = c("blue", "red")) +
+         y=paste("Chg in ",i,sep=''), x="Year",
+    caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
+    scale_fill_manual(values = c("red", "blue"))+
+    guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
-          legend.title=element_blank())
-  output_table<-data.frame(plotdat$yr,plotdat$N,plotdat$N_chg,plotdat$regN,plotdat$reg)
+          legend.title=element_blank(),
+          plot.caption=element_text(size=7))
+  output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
   output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2016'] <- ''
   output_table$plotdat.reg[output_table$plotdat.yr == 'y2016'] <- ''
-  hhtitle = paste("Households", "\n","in ",i)
-  setnames(output_table, old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.regN",
-                               "plotdat.reg"),new=c("Year",hhtitle,"Chg",
-                                                    "Households in Region","Chg"))
+  hhtitle = paste("HH", "\n","in ",i)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
+                               "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
   tt <- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-  lay <- rbind(c(1,1,1,2,2),
-               c(1,1,1,2,2),
-               c(1,1,1,2,2))
   lay <- rbind(c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(2,2,2,2,2),
                c(2,2,2,2,2))
+ 
   output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
