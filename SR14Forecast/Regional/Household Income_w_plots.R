@@ -118,32 +118,52 @@ for(i in jur_list) {
     theme(axis.title.y = element_text(face="bold", size=20)) +
     theme(legend.text=element_text(size=12)) +
     theme(strip.text.x = element_text(size = 14)) 
-    
-  # output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
-  # output_table$plotdat.N_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
-  # output_table$plotdat.regN_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
-  # hhtitle = paste("HH ",i,sep='')
-  # setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
-  #                              "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
-  # tt <- ttheme_default(base_size=7,colhead=list(fg_params = list(parse=TRUE)))
-  # tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-  # lay <- rbind(c(1,1,1,1,1),
-  #              c(2,2,2,2,2))
-  # output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-  # ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
-  #        width=6, height=8, dpi=100)#, scale=2)
-  ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
+  
+    preoutput1<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$hh)
+    setnames(preoutput1, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.hh"),
+           new=c("Year","income","hh"))
+    preoutput2<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$percent_income)
+    setnames(preoutput2, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.percent_income"),
+           new=c("Year","income","pct"))
+    hh_by_income = reshape(preoutput1, idvar = "Year", timevar = "income", direction = "wide")
+    percents = reshape(preoutput2, idvar = "Year", timevar = "income", direction = "wide")
+    # round
+    percents[] <- lapply(percents, function(x) if(is.numeric(x)) round(x, 0) else x)
+    total_pop_sub = subset(plotdat,income_id2==1)
+    setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste(i,"_hh_pop",sep='')))
+    totals <- merge(total_pop_sub[,c("Year",paste(i,"_hh_pop",sep=''))],hh_by_income, by="Year")
+    output_table<- merge(totals,percents, by="Year")
+  
+    hhtitle = paste("HH ",i,sep='')
+    tt <- ttheme_default(base_size=10,colhead=list(fg_params = list(parse=TRUE)))
+    tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
+      colhead = list(fg_params=list(cex = 1.0)),
+      rowhead = list(fg_params=list(cex = 1.0)))
+    tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+    lay <- rbind(c(1,1,1,1,1),
+                 c(2,2,2,2,2))
+    output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
+    ggsave(tbl, file= paste(results, i,'_table', ".png", sep=''),
+           width=10, height=6, dpi=100)#, scale=2)
+    ggsave(plot, file= paste(results,i, '_hh_income', ".png", sep=''),
          width=10, height=6, dpi=100)#, scale=2)
 }
 
 
-
-head(plotdat)
 preoutput1<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$hh)
+setnames(preoutput1, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.hh"),
+         new=c("Year","income","hh"))
 preoutput2<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$percent_income)
-
-reshape(preoutput1, idvar = "plotdat.yr_id", timevar = "plotdat.income_id2", direction = "wide")
-reshape(preoutput2, idvar = "plotdat.yr_id", timevar = "plotdat.income_id2", direction = "wide")
+setnames(preoutput2, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.percent_income"),
+new=c("Year","income","pct"))
+hh = reshape(preoutput1, idvar = "Year", timevar = "income", direction = "wide")
+percents = reshape(preoutput2, idvar = "Year", timevar = "income", direction = "wide")
+# round
+percents[] <- lapply(percents, function(x) if(is.numeric(x)) round(x, 0) else x)
+total_pop_sub = subset(plotdat,income_id2==1)
+setnames(total_pop_sub, old=c("yr_id"),new=c("Year"))
+totals <- merge(total_pop_sub[,c("Year","tot_pop")],hh, by="Year")
+output_table<- merge(totals,percents, by="Year")
 
 results<-"plots\\Household Income\\CPA\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
