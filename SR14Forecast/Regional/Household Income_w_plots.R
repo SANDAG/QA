@@ -43,7 +43,7 @@ hh$income_id2 <-ifelse(hh$income_group_id>=11 &hh$income_group_id<=12, '1',
                 ifelse(hh$income_group_id>=19 &hh$income_group_id<=20, '5', NA)))))
 
 
-hh$name2[hh$income_id2=="1"]<- "$Less than $30,000"
+hh$name2[hh$income_id2=="1"]<- "Less than $30,000"
 hh$name2[hh$income_id2=="2"]<- "$30,000 to $59,999"
 hh$name2[hh$income_id2=="3"]<- "$60,000 to $99,999"
 hh$name2[hh$income_id2=="4"]<- "$100,000 to $149,999"
@@ -51,7 +51,7 @@ hh$name2[hh$income_id2=="5"]<- "$150,000 or more"
 
 hh$name2<- as.factor(hh$name2)
 
-hh$name2<- factor(hh$name2, levels = c("$Less than $30,000",
+hh$name2<- factor(hh$name2, levels = c("Less than $30,000",
 "$30,000 to $59,999","$60,000 to $99,999", "$100,000 to $149,999", "$150,000 or more"))
 
                                    
