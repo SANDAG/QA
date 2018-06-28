@@ -43,23 +43,24 @@ hh_jur$yr <- as.factor(paste(hh_jur$year, hh_jur$yr, sep = ""))
 
 jur_list = unique(hh_jur[["cityname"]])
 
-for(i in jur_list) { 
+for(i in jur_list) {
   plotdat = subset(hh_jur, hh_jur$cityname==i)
   plot<-ggplot(plotdat, aes(yr)) + 
     geom_line(aes(y = reg, colour = "region",group=0),size=1.5) +
     geom_point(size=3,aes(y=reg,color="region")) +
-    theme(legend.position = "bottom",
-          legend.title=element_blank()) +
     geom_line(aes(y = hhs, colour = cityname,group=0),size=1.5) + 
     geom_point(size=3,aes(y=hhs,colour=cityname)) +
     scale_y_continuous(limits = c(2, 3.5)) +
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
-          legend.title=element_blank()) +
+        legend.title=element_blank(),
+        plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
-         y="Household size", x="Year")
-  ggsave(plot, file= paste(results, 'hhsize', i, ".png", sep=''),
+         y="Household size", x="Year",
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=14")
+    results<-"plots\\hhsize\\jur\\"
+    ggsave(plot, file= paste(results, 'hhsize', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
@@ -85,20 +86,21 @@ for(i in cpa_list) {
     geom_line(aes(y = hhs, colour = cpaname,group=0),size=1.5) + 
     geom_point(size=3,aes(y=hhs,colour=cpaname)) +
     scale_y_continuous(limits = c(1.90, 4.32)) +
-    theme(legend.position = "bottom",
-          legend.title=element_blank()) +
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
-          legend.title=element_blank()) +
+          legend.title=element_blank(),
+          plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
-         y="Household size", x="Year")
+         y="Household size", x="Year",
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=14") 
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
   i = gsub("\\:","_",i)
+  results<-"plots\\hhsize\\cpa\\"
   ggsave(plot, file= paste(results, 'hhsize', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
-
+ 
  
