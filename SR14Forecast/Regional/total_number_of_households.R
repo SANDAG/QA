@@ -23,14 +23,7 @@ hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 hh$N_chg <- ave(hh$households, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
 hh$N_pct <- (hh$N_chg / lag(hh$households))*100
 hh$N_pct<-sprintf("%.2f",hh$N_pct)
-#hh$geozone<-as.character(hh$geozone)
-#hh$geozone[hh$geozone=="Los Penasquitos Canyon Preserve"]<-"Los Penas. Can. Pres."
-#hh$geozone <- iris %>%
-#  mutate(hh = recode(geozone, Los Penasquitos Canyon Preserve="Los Penas. Can. Pres."))
-
-#hh$geozone<-mutate(hh, hh$geozone = revalue(hh$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres.")))
-
-
+hh$geozone<-revalue(hh$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 
 hh$N_chg[hh$yr_id == 2016] <- 0
 hh$N_pct[hh$yr_id == 2016] <- 0
