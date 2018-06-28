@@ -179,7 +179,7 @@ for(i in cpa_list) {
   plotdat = subset(hh_cpa, hh_cpa$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
   plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name2,color=name2)) +
-    geom_line(size=2) + aes(colour=name2)) +
+    geom_line(size=2) + geom_point(size=3, aes(colour=name2)) +
     facet_grid(. ~ geozone) + 
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
