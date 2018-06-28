@@ -6,7 +6,7 @@ pkgTest <- function(pkg){
   
   
 }
-packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
+packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
               "stringr","gridExtra","grid","lattice","gtable")
 pkgTest(packages)
 
@@ -23,14 +23,7 @@ hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 hh$N_chg <- ave(hh$households, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
 hh$N_pct <- (hh$N_chg / lag(hh$households))*100
 hh$N_pct<-sprintf("%.2f",hh$N_pct)
-#hh$geozone<-as.character(hh$geozone)
-#hh$geozone[hh$geozone=="Los Penasquitos Canyon Preserve"]<-"Los Penas. Can. Pres."
-#hh$geozone <- iris %>%
-#  mutate(hh = recode(geozone, Los Penasquitos Canyon Preserve="Los Penas. Can. Pres."))
-
-#hh$geozone<-mutate(hh, hh$geozone = revalue(hh$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres.")))
-
-
+hh$geozone<-revalue(hh$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 
 hh$N_chg[hh$yr_id == 2016] <- 0
 hh$N_pct[hh$yr_id == 2016] <- 0
@@ -65,7 +58,7 @@ jur_list = unique(hh_jur[["cityname"]])
 
 for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   plotdat = subset(hh_jur, hh_jur$cityname==i)
-  ravg = max(plotdat$regN_chg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
+  ravg = max(plotdat$regN,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
@@ -76,7 +69,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
          y=paste("Chg in ",i,sep=''), x="Year",
          caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14") +
     #scale_colour_manual(values = c("blue", "red")) +
-    scale_fill_manual(values=c("blue", "red"), name=NULL, breaks=c(i,"Region"), labels=c(i,"Region"))+
+    scale_fill_manual(values=c("blue", "red"), name=NULL, breaks=c(jur_list[i],"Region"))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
@@ -89,9 +82,12 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   hhtitle = paste("HH ",i,sep='')
   setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
                                "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
-  tt <- ttheme_default(base_size=7,colhead=list(fg_params = list(parse=TRUE)))
+  tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
     lay <- rbind(c(1,1,1,1,1),
+                 c(1,1,1,1,1),
+                 c(1,1,1,1,1),
+                 c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
   ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
@@ -112,11 +108,11 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 for(i in cpa_list) { 
   plotdat = subset(hh_cpa, hh_cpa$cpaname==i)
-  ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
+  ravg = max(plotdat$regN,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 1
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cpaname)) +
     geom_bar(stat = "identity") +
-    geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
+    geom_line(aes(y = regN/ravg, group=1,colour = "Region"),size=2) +
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg in Region",label=comma)) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
