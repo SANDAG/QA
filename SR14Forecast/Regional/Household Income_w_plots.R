@@ -96,28 +96,23 @@ for(i in jur_list) {
     theme(legend.position = "bottom",
         legend.title=element_blank()) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  # output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
+  # output_table$plotdat.N_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
+  # output_table$plotdat.regN_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
+  # hhtitle = paste("HH ",i,sep='')
+  # setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
+  #                              "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
+  # tt <- ttheme_default(base_size=7,colhead=list(fg_params = list(parse=TRUE)))
+  # tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  # lay <- rbind(c(1,1,1,1,1),
+  #              c(2,2,2,2,2))
+  # output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
+  # ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
+  #        width=6, height=8, dpi=100)#, scale=2)
   ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
-         width=6, height=8, dpi=100)#, scale=2)
+         width=8, height=6, dpi=100)#, scale=2)
 }
 
-
-
-#for(i in jur_list) {
-  #plotdat = subset(hh_jur, hh_jur$geozone==i)
-  #pltwregion <- rbind(plotdat, hh_region)
-  #plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name,color=name)) +
-    #geom_line(size=1.25) +  facet_grid(. ~ geozone) + 
-    #theme(legend.position = "bottom",
-          #legend.title=element_blank()) +
-    #theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
-  #ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
-         #width=6, height=8, dpi=100)#, scale=2)
-
-
-results<-"plots\\Household Income\\"
-ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
-
-}
 
 results<-"plots\\Household Income\\CPA\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
