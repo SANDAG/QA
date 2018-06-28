@@ -66,7 +66,7 @@ hh$name2<- factor(hh$name2, levels = c("Less than $30,000",
 "$30,000 to $59,999","$60,000 to $99,999", "$100,000 to $149,999", "$150,000 or more"))
 
                                    
-Cat_agg<-aggregate(hh~yr_id+geozone+name2+geotype, data=hh, sum)
+Cat_agg<-aggregate(hh~yr_id+geozone+name2+geotype+income_id2, data=hh, sum)
 Cat_agg$tot_pop<-Geo_totals[match(paste(Cat_agg$yr_id, Cat_agg$geozone),paste(Geo_totals$yr_id, Geo_totals$geozone)),3]
 Cat_agg$tot_pop[Cat_agg$tot_pop==0] <- NA
 Cat_agg$percent_income = Cat_agg$hh/Cat_agg$tot_pop * 100
@@ -137,43 +137,42 @@ for(i in jur_list) {
 }
 
 
+
+head(plotdat)
+preoutput1<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$hh)
+preoutput2<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$percent_income)
+
+reshape(preoutput1, idvar = "plotdat.yr_id", timevar = "plotdat.income_id2", direction = "wide")
+reshape(preoutput2, idvar = "plotdat.yr_id", timevar = "plotdat.income_id2", direction = "wide")
+
 results<-"plots\\Household Income\\CPA\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-
-
 cpa_list = unique(hh_cpa[["geozone"]])
 
-
-#for(i in cpa_list) {
-  #plotdat = subset(hh_cpa, hh_cpa$geozone==i)
-  ##pltwregion <- rbind(plotdat, hh_region)
-  #plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name,color=name)) +
-   # geom_line(size=1.25) +  facet_grid(. ~ geozone) + 
-    #theme(legend.position = "bottom",
-          #legend.title=element_blank()) +
-   # theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
-  #i = gsub("\\*","",i)
- # i = gsub("\\-","_",i)
-  #ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
-         #width=6, height=8, dpi=100)#, scale=2)
-#}
-
 for(i in cpa_list) {
-  plotdat = subset(hh_cpa, hh_jur$geozone==i)
+  plotdat = subset(hh_cpa, hh_cpa$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
-  plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=income_id2,color=income_id2)) +
-    geom_line(size=1.25) +  facet_grid(. ~ geozone) + 
+  plot <- ggplot(data=pltwregion, aes(x=yr, y=percent_income,group=name2,color=name2)) +
+    geom_line(size=2) + geom_point(size=1.5, colour="white")   +
+    facet_grid(. ~ geozone) + 
+    theme(plot.title = element_text(hjust = 0.5,size=16)) + 
+    labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
+         y=paste("Percent"), x="",
+         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 14") +
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
-  i = gsub("\\*","",i)
-  i = gsub("\\-","_",i)
-  i = gsub("\\:","_",i)
+    scale_colour_manual(values=colours) +
+    ylim(0, 64) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1,size=14)) +
+    theme(axis.text.y = element_text(size=14)) +
+    theme(axis.title.y = element_text(face="bold", size=20)) +
+    theme(legend.text=element_text(size=12)) +
+    theme(strip.text.x = element_text(size = 14)) 
+    i = gsub("\\*","",i)
+    i = gsub("\\-","_",i)
+    i = gsub("\\:","_",i)
   ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
-         width=6, height=8, dpi=100)#, scale=2)
-
-}results<-"plots\\Household Income\\"
-ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
-
+         width=10, height=6, dpi=100)#, scale=2)
+}
 
