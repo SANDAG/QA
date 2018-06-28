@@ -149,21 +149,25 @@ for(i in jur_list) {
          width=10, height=6, dpi=100)#, scale=2)
 }
 
-
-preoutput1<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$hh)
-setnames(preoutput1, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.hh"),
+# region output table
+preoutput1<-data.frame(hh_region$yr_id,hh_region$income_id2,hh_region$hh)
+setnames(preoutput1, old=c("hh_region.yr_id","hh_region.income_id2","hh_region.hh"),
          new=c("Year","income","hh"))
-preoutput2<-data.frame(plotdat$yr_id,plotdat$income_id2,plotdat$percent_income)
-setnames(preoutput2, old=c("plotdat.yr_id","plotdat.income_id2","plotdat.percent_income"),
+preoutput2<-data.frame(hh_region$yr_id,hh_region$income_id2,hh_region$percent_income)
+setnames(preoutput2, old=c("hh_region.yr_id","hh_region.income_id2","hh_region.percent_income"),
 new=c("Year","income","pct"))
 hh = reshape(preoutput1, idvar = "Year", timevar = "income", direction = "wide")
 percents = reshape(preoutput2, idvar = "Year", timevar = "income", direction = "wide")
 # round
 percents[] <- lapply(percents, function(x) if(is.numeric(x)) round(x, 0) else x)
-total_pop_sub = subset(plotdat,income_id2==1)
-setnames(total_pop_sub, old=c("yr_id"),new=c("Year"))
-totals <- merge(total_pop_sub[,c("Year","tot_pop")],hh, by="Year")
+total_pop_sub = subset(hh_region,income_id2==1)
+setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste("Region","_hh_pop",sep='')))
+totals <- merge(total_pop_sub[,c("Year",paste("Region","_hh_pop",sep=''))],hh, by="Year")
 output_table<- merge(totals,percents, by="Year")
+tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+ggsave(tbl, file= paste(results, "ARegion",'_table', ".png", sep=''),
+       width=10, height=6, dpi=100)#, scale=2)
+
 
 results<-"plots\\Household Income\\CPA\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
