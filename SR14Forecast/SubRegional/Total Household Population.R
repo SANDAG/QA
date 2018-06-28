@@ -73,18 +73,18 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
     labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
          caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
-    scale_fill_manual(values = c("red", "blue")) +
+    scale_fill_manual(values = c("blue", "red")) +
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank())
   # ggsave(plot, file= paste(results, 'Total Household Pop',  i, ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
+  output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct)
   output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2016'] <- ''
-  output_table$plotdat.regN_chg[output_table$plotdat.yr == 'y2016'] <- ''
+  output_table$plotdat.reg[output_table$plotdat.yr == 'y2016'] <- ''
   hhtitle = paste("HH Pop ",i,sep='')
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.hhp","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg",
                                "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Pop Region","Chg","Pct"))
   tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
@@ -94,6 +94,9 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
                c(2,2,2,2,2),
                c(2,2,2,2,2))
     output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+    i = gsub("\\*","",i)
+    i = gsub("\\-","_",i)
+    i = gsub("\\:","_",i)
   ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
@@ -140,12 +143,12 @@ for(i in cpa_list3) { #1:length(unique(hh_cpa[["cpaname"]]))){
           legend.title=element_blank(),
           plot.caption=element_text(size=7))
   # ggsave(plot, file= paste(results, 'Total Household Pop',  i, ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
+  output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct)
   output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2016'] <- ''
   output_table$plotdat.regN_chg[output_table$plotdat.yr == 'y2016'] <- ''
   hhtitle = paste("HH Pop ",i,sep='')
   setnames(output_table, 
-           old=c("plotdat.yr","plotdat.N","plotdat.N_chg","plotdat.reg","plotdat.regN"),new=c("Year","Total","Abs. Chg.",
+           old=c("plotdat.yr_id","plotdat.hhp","plotdat.N_chg","plotdat.reg","plotdat.regN"),new=c("Year","Total","Abs. Chg.",
               "Reg abs. chg.","Reg Total"))
   tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
