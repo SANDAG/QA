@@ -1,3 +1,4 @@
+--vacancy rates
 SELECT
 	housing.yr_id
 	,mgra.geotype
