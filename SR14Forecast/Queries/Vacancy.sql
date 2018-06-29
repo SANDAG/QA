@@ -22,3 +22,4 @@ housing.yr_id
 	,housing.structure_type_id
 	,structure_type.short_name
 ORDER BY 1,2,3,4
+
