@@ -131,8 +131,8 @@ for(i in jur_list) {
     # round
     percents[] <- lapply(percents, function(x) if(is.numeric(x)) round(x, 0) else x)
     total_pop_sub = subset(plotdat,income_id2==1)
-    setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste(i,"_hh_pop",sep='')))
-    totals <- merge(total_pop_sub[,c("Year",paste(i,"_hh_pop",sep=''))],hh_by_income, by="Year")
+    setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste(i,"_hh",sep='')))
+    totals <- merge(total_pop_sub[,c("Year",paste(i,"_hh",sep=''))],hh_by_income, by="Year")
     output_table<- merge(totals,percents, by="Year")
   
     hhtitle = paste("HH ",i,sep='')
@@ -162,8 +162,8 @@ percents = reshape(preoutput2, idvar = "Year", timevar = "income", direction = "
 # round
 percents[] <- lapply(percents, function(x) if(is.numeric(x)) round(x, 0) else x)
 total_pop_sub = subset(hh_region,income_id2==1)
-setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste("Region","_hh_pop",sep='')))
-totals <- merge(total_pop_sub[,c("Year",paste("Region","_hh_pop",sep=''))],hh, by="Year")
+setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste("Region","_hh",sep='')))
+totals <- merge(total_pop_sub[,c("Year",paste("Region","_hh",sep=''))],hh, by="Year")
 output_table<- merge(totals,percents, by="Year")
 tbl <- tableGrob(output_table, rows=NULL, theme=tt)
 ggsave(tbl, file= paste(results, "ARegion",'_table', ".png", sep=''),
@@ -212,8 +212,8 @@ percents = reshape(preoutput2, idvar = "Year", timevar = "income", direction = "
 # round
 percents[] <- lapply(percents, function(x) if(is.numeric(x)) round(x, 0) else x)
 total_pop_sub = subset(plotdat,income_id2==1)
-setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste(i,"_hh_pop",sep='')))
-totals <- merge(total_pop_sub[,c("Year",paste(i,"_hh_pop",sep=''))],hh_by_income, by="Year")
+setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste(i,"_hh",sep='')))
+totals <- merge(total_pop_sub[,c("Year",paste(i,"_hh",sep=''))],hh_by_income, by="Year")
 output_table<- merge(totals,percents, by="Year")
 
 hhtitle = paste("HH ",i,sep='')
