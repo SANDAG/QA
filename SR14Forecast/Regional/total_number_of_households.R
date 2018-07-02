@@ -57,19 +57,19 @@ hh_jur$N <-  hh_jur$households
 
 jur_list = unique(hh_jur[["cityname"]])
 
-for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
+for(i in jur_list[1:2]) { #1:length(unique(hh_jur[["cityname"]]))){
   plotdat = subset(hh_jur, hh_jur$cityname==i)
-  ravg = max(plotdat$regN,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
+  ravg = max(plotdat$regN_chg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") +
-    geom_line(aes(y = regN/ravg, group=1,colour = "Region"),size=2) +
+    geom_line(aes(y = regN_chg/ravg, group=1,colour = "Region"),size=2) +
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg in Region",label=comma)) +
+    scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
          caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
-    scale_fill_manual(values = c("red", "blue"))+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -83,7 +83,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   hhtitle = paste("HH ",i,sep='')
   setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
                                "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
-  tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
+  tt <- ttheme_default(base_size=12,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
     lay <- rbind(c(1,1,1,1,1),
                  c(1,1,1,1,1),
