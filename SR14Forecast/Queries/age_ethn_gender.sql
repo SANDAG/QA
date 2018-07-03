@@ -1,6 +1,3 @@
-USE demographic_warehouse
-GO
-
 --age, sex, eth
 SELECT
 	age_sex_ethnicity.yr_id
