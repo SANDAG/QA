@@ -18,43 +18,98 @@ dem_sql = getSQL("../Queries/age_ethn_gender.sql")
 dem<-sqlQuery(channel,dem_sql)
 odbcClose(channel)
 
-head(dem)
+tail(dem)
 dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
-write.csv(dem, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_test.csv" )
 
 dem$geozone<-revalue(dem$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 
-#aggregate total counts by year for age, gender and ethnicity
-dem_age<-aggregate(pop~age_group_id+yr_id, data=dem, sum)
-dem_gender<-aggregate(pop~sex_id+yr_id, data=dem, sum)
-dem_ethn<-aggregate(pop~ethnicity_id+yr_id, data=dem, sum)
+levels(dem$geozone)<-c(levels(dem$geozone), "Region")
+dem$geozone[dem$geotype =="region"]<- "Region"
 
-#calculate total change and percent change by year for age, gender and ethnicity
-dem_age <- dem_age[order(dem_age$age_group_id,dem_age$yr_id),]
+#recode age groups
+dem$age_group_rc <- ifelse(dem$age_group_id==1|
+                           dem$age_group_id==2|
+                           dem$age_group_id==3|
+                           dem$age_group_id==4,1,
+                           ifelse(dem$age_group_id==5|
+                                    dem$age_group_id==6|
+                                    dem$age_group_id==7|
+                                    dem$age_group_id==8|
+                                    dem$age_group_id==9,2,
+                                  ifelse(dem$age_group_id==10|
+                                           dem$age_group_id==11|
+                                           dem$age_group_id==12|
+                                           dem$age_group_id==13|
+                                           dem$age_group_id==14|
+                                           dem$age_group_id==15,3,
+                                         ifelse(dem$age_group_id==16|
+                                                  dem$age_group_id==17|
+                                                  dem$age_group_id==18|
+                                                  dem$age_group_id==19|
+                                                  dem$age_group_id==20,4,NA))))
+                                                  
+                                        
+dem$age_group_name_rc<- ifelse(dem$age_group_rc==1,"<18",
+                               ifelse(dem$age_group_rc==2,"18-44",
+                                      ifelse(dem$age_group_rc==3,"45-64",
+                                             ifelse(dem$age_group_rc==4,"65+",NA))))
+
+#recode ethnicity/race
+#1 Hispanic
+#2	White
+#3	Black
+#4	American Indian
+#5	Asian
+#6	Pacific Islander
+#7	Other
+#8	Two or More
+
+head(dem_age)  
+#aggregate total counts by year for age, gender and ethnicity
+dem_age<-aggregate(pop~age_group_name_rc+geotype+geozone+yr_id, data=dem, sum)
+dem_gender<-aggregate(pop~sex_id+geotype+geozone+yr_id, data=dem, sum)
+dem_ethn<-aggregate(pop~short_name+geotype+geozone+yr_id, data=dem, sum)
+
+#calculate percent of the total population, total change, percent change by year for age, gender and ethnicity
+dem_age <- dem_age[order(dem_age$age_group_name_rc,dem_age$geotype,dem_age$geozone,dem_age$yr_id),]
 dem_age$N_chg <- dem_age$pop - lag(dem_age$pop)
 dem_age$N_pct <- (dem_age$N_chg / lag(dem_age$pop))*100
 dem_age$N_pct<-sprintf("%.2f",dem_age$N_pct)
 
 head(dem_gender)
-dem_gender <- dem_gender[order(dem_gender$sex_id,dem_gender$yr_id),]
+dem_gender <- dem_gender[order(dem_gender$sex_id,dem_gender$geotype,dem_gender$geozone,dem_gender$yr_id),]
 dem_gender$N_chg <- dem_gender$pop - lag(dem_gender$pop)
 dem_gender$N_pct <- (dem_gender$N_chg / lag(dem_gender$pop))*100
 dem_gender$N_pct<-sprintf("%.2f",dem_gender$N_pct)
 
 head(dem_ethn)
-dem_ethn <- dem_ethn[order(dem_ethn$ethnicity_id,dem_ethn$yr_id),]
+dem_ethn <- dem_ethn[order(dem_ethn$short_name,dem_ethn$geotype,dem_ethn$geozone,dem_ethn$yr_id),]
 dem_ethn$N_chg <- dem_ethn$pop - lag(dem_ethn$pop)
 dem_ethn$N_pct <- (dem_ethn$N_chg / lag(dem_ethn$pop))*100
 dem_ethn$N_pct<-sprintf("%.2f",dem_ethn$N_pct)
-
 
 
 #recode NA values for 2016 perchange
 dem_age$N_chg[dem_age$yr_id == 2016] <- 0
 dem_age$N_pct[dem_age$yr_id == 2016] <- 0
 
+dem_gender$N_chg[dem_gender$yr_id == 2016] <- 0
+dem_gender$N_pct[dem_gender$yr_id == 2016] <- 0
+
+dem_ethn$N_chg[dem_ethn$yr_id == 2016] <- 0
+dem_ethn$N_pct[dem_ethn$yr_id == 2016] <- 0
+
+write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age.csv" )
+write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender.csv" )
+write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn.csv" )
+
+table(dem$geotype)
+
+dem_geo_reg<-subset(dem,geotype == "region") 
+table(dem_geo_reg$geozone)
 
 
+head(dem_geo_reg)
 
 dem_jur = subset(dem,geotype=='jurisdiction')
 colnames(dem_jur)[colnames(dem_jur)=="geozone"] <- "cityname"
