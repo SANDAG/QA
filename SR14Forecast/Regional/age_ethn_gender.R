@@ -14,51 +14,84 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-hh_sql = getSQL("../Queries/hh_hhp_hhs.sql")
-hh<-sqlQuery(channel,hh_sql)
+dem_sql = getSQL("../Queries/age_ethn_gender.sql")
+dem<-sqlQuery(channel,dem_sql)
 odbcClose(channel)
 
-head(hh)
-hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
-hh$N_chg <- ave(hh$households, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
-hh$N_pct <- (hh$N_chg / lag(hh$households))*100
-hh$N_pct<-sprintf("%.2f",hh$N_pct)
-hh$geozone<-revalue(hh$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
+head(dem)
+dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
+write.csv(dem, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_test.csv" )
+
+dem$geozone<-revalue(dem$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
+
+#aggregate total counts by year for age, gender and ethnicity
+dem_age<-aggregate(pop~age_group_id+yr_id, data=dem, sum)
+dem_gender<-aggregate(pop~sex_id+yr_id, data=dem, sum)
+dem_ethn<-aggregate(pop~ethnicity_id+yr_id, data=dem, sum)
+
+#calculate total change and percent change by year for age, gender and ethnicity
+dem_age <- dem_age[order(dem_age$age_group_id,dem_age$yr_id),]
+dem_age$N_chg <- dem_age$pop - lag(dem_age$pop)
+dem_age$N_pct <- (dem_age$N_chg / lag(dem_age$pop))*100
+dem_age$N_pct<-sprintf("%.2f",dem_age$N_pct)
+
+head(dem_gender)
+dem_gender <- dem_gender[order(dem_gender$sex_id,dem_gender$yr_id),]
+dem_gender$N_chg <- dem_gender$pop - lag(dem_gender$pop)
+dem_gender$N_pct <- (dem_gender$N_chg / lag(dem_gender$pop))*100
+dem_gender$N_pct<-sprintf("%.2f",dem_gender$N_pct)
+
+head(dem_ethn)
+dem_ethn <- dem_ethn[order(dem_ethn$ethnicity_id,dem_ethn$yr_id),]
+dem_ethn$N_chg <- dem_ethn$pop - lag(dem_ethn$pop)
+dem_ethn$N_pct <- (dem_ethn$N_chg / lag(dem_ethn$pop))*100
+dem_ethn$N_pct<-sprintf("%.2f",dem_ethn$N_pct)
 
 
-hh$N_chg[hh$yr_id == 2016] <- 0
-hh$N_pct[hh$yr_id == 2016] <- 0
 
-hh_jur = subset(hh,geotype=='jurisdiction')
-colnames(hh_jur)[colnames(hh_jur)=="geozone"] <- "cityname"
+#recode NA values for 2016 perchange
+dem_age$N_chg[dem_age$yr_id == 2016] <- 0
+dem_age$N_pct[dem_age$yr_id == 2016] <- 0
 
-hh_cpa = subset(hh,geotype=='cpa')
-colnames(hh_cpa)[colnames(hh_cpa)=="geozone"] <- "cpaname"
 
-hh_region = subset(hh,geotype=='region')
-colnames(hh_region)[colnames(hh_region)=="geozone"] <- "SanDiegoRegion"
 
-hh_jur$regN_chg<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),7]
-hh_cpa$regN_chg<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),7]
 
-hh_jur$regN<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),4]
-hh_cpa$regN<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),4]
+dem_jur = subset(dem,geotype=='jurisdiction')
+colnames(dem_jur)[colnames(dem_jur)=="geozone"] <- "cityname"
 
-hh_jur$regN_pct<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),8]
-hh_cpa$regN_pct<-hh_region[match(hh_cpa$yr_id, hh_region$yr_id),8]
+dem_cpa = subset(dem,geotype=='cpa')
+colnames(dem_cpa)[colnames(dem_cpa)=="geozone"] <- "cpaname"
+
+dem_region = subset(dem,geotype=='region')
+colnames(dem_region)[colnames(dem_region)=="geozone"] <- "SanDiegoRegion"
+
+dem_jur$regN_chg<-dem_region[match(dem_jur$yr_id, dem_region$yr_id),7]
+dem_cpa$regN_chg<-dem_region[match(dem_cpa$yr_id, dem_region$yr_id),7]
+
+dem_jur$regN<-dem_region[match(dem_jur$yr_id, dem_region$yr_id),4]
+dem_cpa$regN<-dem_region[match(dem_cpa$yr_id, dem_region$yr_id),4]
+
+dem_jur$regN_pct<-dem_region[match(dem_jur$yr_id, dem_region$yr_id),8]
+dem_cpa$regN_pct<-dem_region[match(dem_cpa$yr_id, dem_region$yr_id),8]
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\hh\\jur\\"
+results<-"plots\\dem\\jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-hh_jur$year<- "y"
-hh_jur$yr <- as.factor(paste(hh_jur$year, hh_jur$yr, sep = ""))
-hh_jur$N <-  hh_jur$households
+dem_jur$year<- "y"
+dem_jur$yr <- as.factor(paste(dem_jur$year, dem_jur$yr, sep = ""))
+dem_jur$N <-  dem_jur$households
 
-jur_list = unique(hh_jur[["cityname"]])
 
-for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
-  plotdat = subset(hh_jur, hh_jur$cityname==i)
+write.csv(dem_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_region.csv" )
+write.csv(dem_jur, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_jur.csv" )
+write.csv(dem_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_cpa.csv" )
+
+
+jur_list = unique(dem_jur[["cityname"]])
+
+for(i in jur_list) { #1:length(unique(dem_jur[["cityname"]]))){
+  plotdat = subset(dem_jur, dem_jur$cityname==i)
   ravg = max(plotdat$regN,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
@@ -80,9 +113,9 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
   output_table$plotdat.N_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
   output_table$plotdat.regN_chg[output_table$plotdat.yr_id == 'y2016'] <- ''
-  hhtitle = paste("HH ",i,sep='')
+  demtitle = paste("dem ",i,sep='')
   setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
-                               "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
+                               "plotdat.regN_pct"),new=c("Year",demtitle,"Chg", "Pct","dem Region","Chg","Pct"))
   tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
     lay <- rbind(c(1,1,1,1,1),
@@ -97,18 +130,18 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
 
 
 
-hh_cpa$year<- "y"
-hh_cpa$yr <- as.factor(paste(hh_cpa$year, hh_cpa$yr, sep = ""))
-hh_cpa$N <-  hh_cpa$households
+dem_cpa$year<- "y"
+dem_cpa$yr <- as.factor(paste(dem_cpa$year, dem_cpa$yr, sep = ""))
+dem_cpa$N <-  dem_cpa$households
 
-cpa_list = unique(hh_cpa[["cpaname"]])
+cpa_list = unique(dem_cpa[["cpaname"]])
 
-results<-"plots\\hh\\cpa\\"
+results<-"plots\\dem\\cpa\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
 for(i in cpa_list) { 
-  plotdat = subset(hh_cpa, hh_cpa$cpaname==i)
+  plotdat = subset(dem_cpa, dem_cpa$cpaname==i)
   ravg = max(plotdat$regN,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 1
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cpaname)) +
@@ -129,9 +162,9 @@ for(i in cpa_list) {
   output_table<-data.frame(plotdat$yr_id,plotdat$N,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$regN_chg,plotdat$regN_pct)
   output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2016'] <- ''
   output_table$plotdat.regN_chg[output_table$plotdat.yr == 'y2016'] <- ''
-  hhtitle = paste("HH", "\n","in ",i)
+  demtitle = paste("dem", "\n","in ",i)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.N","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.regN_chg",
-                               "plotdat.regN_pct"),new=c("Year",hhtitle,"Chg", "Pct","HH Region","Chg","Pct"))
+                               "plotdat.regN_pct"),new=c("Year",demtitle,"Chg", "Pct","dem Region","Chg","Pct"))
   tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
