@@ -10,6 +10,7 @@ packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC",
               "stringr","gridExtra","grid","lattice","gtable")
 pkgTest(packages)
 
+
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
@@ -19,11 +20,13 @@ dem<-sqlQuery(channel,dem_sql)
 odbcClose(channel)
 
 tail(dem)
+
+#change all factors to character for ease of coding
+options(stringsAsFactors=FALSE)
+
 dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
 
 dem$geozone<-revalue(dem$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
-
-levels(dem$geozone)<-c(levels(dem$geozone), "Region")
 dem$geozone[dem$geotype =="region"]<- "Region"
 
 #recode age groups
@@ -64,20 +67,34 @@ dem$age_group_name_rc<- ifelse(dem$age_group_rc==1,"<18",
 #7	Other
 #8	Two or More
 
-head(dem_age)  
+head(dem)
+
+  
 #aggregate total counts by year for age, gender and ethnicity
 dem_age<-aggregate(pop~age_group_name_rc+geotype+geozone+yr_id, data=dem, sum)
-dem_gender<-aggregate(pop~sex_id+geotype+geozone+yr_id, data=dem, sum)
+dem_gender<-aggregate(pop~sex+geotype+geozone+yr_id, data=dem, sum)
 dem_ethn<-aggregate(pop~short_name+geotype+geozone+yr_id, data=dem, sum)
 
+#creates file with pop totals by geozone and year
+geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem, sum)
+
+tail(geozone_pop)
+
+
+
 #calculate percent of the total population, total change, percent change by year for age, gender and ethnicity
+
+head(dem_age)
 dem_age <- dem_age[order(dem_age$age_group_name_rc,dem_age$geotype,dem_age$geozone,dem_age$yr_id),]
 dem_age$N_chg <- dem_age$pop - lag(dem_age$pop)
 dem_age$N_pct <- (dem_age$N_chg / lag(dem_age$pop))*100
 dem_age$N_pct<-sprintf("%.2f",dem_age$N_pct)
+dem_age$geozone_pop<-geozone_pop[match(c(geozone_pop$yr_id, geozone_pop$geozone), c(dem_age$yr_id, dem_age$geozone)), 4]
+dem_age$pct_of_total<-(dem_age$pop / dem_age$geozone_pop)*100
+dem_age$pct_of_total<-round(dem_age$pct_of_total,digits=2)
 
 head(dem_gender)
-dem_gender <- dem_gender[order(dem_gender$sex_id,dem_gender$geotype,dem_gender$geozone,dem_gender$yr_id),]
+dem_gender <- dem_gender[order(dem_gender$sex,dem_gender$geotype,dem_gender$geozone,dem_gender$yr_id),]
 dem_gender$N_chg <- dem_gender$pop - lag(dem_gender$pop)
 dem_gender$N_pct <- (dem_gender$N_chg / lag(dem_gender$pop))*100
 dem_gender$N_pct<-sprintf("%.2f",dem_gender$N_pct)
@@ -89,9 +106,10 @@ dem_ethn$N_pct <- (dem_ethn$N_chg / lag(dem_ethn$pop))*100
 dem_ethn$N_pct<-sprintf("%.2f",dem_ethn$N_pct)
 
 
-#recode NA values for 2016 perchange
+#recode NA values for 2016 change
 dem_age$N_chg[dem_age$yr_id == 2016] <- 0
 dem_age$N_pct[dem_age$yr_id == 2016] <- 0
+
 
 dem_gender$N_chg[dem_gender$yr_id == 2016] <- 0
 dem_gender$N_pct[dem_gender$yr_id == 2016] <- 0
@@ -99,17 +117,36 @@ dem_gender$N_pct[dem_gender$yr_id == 2016] <- 0
 dem_ethn$N_chg[dem_ethn$yr_id == 2016] <- 0
 dem_ethn$N_pct[dem_ethn$yr_id == 2016] <- 0
 
+#create files for the region
+dem_age_region = subset(dem_age,geotype=='region')
+dem_gender_region = subset(dem_gender,geotype=='region')
+dem_ethn_region = subset(dem_ethn,geotype=='region')
+
+
+
 write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age.csv" )
 write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender.csv" )
 write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn.csv" )
 
-table(dem$geotype)
-
-dem_geo_reg<-subset(dem,geotype == "region") 
-table(dem_geo_reg$geozone)
 
 
-head(dem_geo_reg)
+
+
+
+
+
+
+
+
+
+
+
+#script updated to here.
+
+####################
+####################
+
+
 
 dem_jur = subset(dem,geotype=='jurisdiction')
 colnames(dem_jur)[colnames(dem_jur)=="geozone"] <- "cityname"
