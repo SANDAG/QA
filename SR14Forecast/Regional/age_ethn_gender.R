@@ -99,6 +99,7 @@ dem_age$pct_of_total<-round(dem_age$pct_of_total,digits=2)
 setnames(dem_age, old=c("age_group_name_rc", "yr_id", "pop"),new=c("Age_Group", "Year", "Population"))
 
 
+
 head(dem_gender)
 dem_gender <- dem_gender[order(dem_gender$sex,dem_gender$geotype,dem_gender$geozone,dem_gender$yr_id),]
 dem_gender$N_chg <- dem_gender$pop - lag(dem_gender$pop)
@@ -107,7 +108,8 @@ dem_gender$N_pct<-round(dem_gender$N_pct,digits=2)
 dem_gender$geozone_pop<-geozone_pop[match(paste(dem_gender$yr_id, dem_gender$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 dem_gender$pct_of_total<-(dem_gender$pop / dem_gender$geozone_pop)*100
 dem_gender$pct_of_total<-round(dem_gender$pct_of_total,digits=2)
-
+setnames(dem_age, old=c("sex", "yr_id", "pop"),new=c("Gender", "Year", "Population"))
+dem_gender <- rename(dem_gender, c("F"="Female", "M"="Male"))
 
 
 head(dem_ethn)
@@ -118,6 +120,7 @@ dem_ethn$N_pct<-round(dem_ethn$N_pct,digits=2)
 dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 dem_ethn$pct_of_total<-(dem_ethn$pop / dem_ethn$geozone_pop)*100
 dem_ethn$pct_of_total<-round(dem_ethn$pct_of_total,digits=2)
+setnames(dem_age, old=c("short_name", "yr_id", "pop"),new=c("Ethnicity", "Year", "Population"))
 
 
 #recode NA values for 2016 change
@@ -149,6 +152,11 @@ dem_ethn_region = subset(dem_ethn,geotype=='region')
 write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age.csv" )
 write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender.csv" )
 write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn.csv" )
+
+write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age_region.csv" )
+write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender_region.csv" )
+write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn_region.csv" )
+
 
 results<-"data\\demographics\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
