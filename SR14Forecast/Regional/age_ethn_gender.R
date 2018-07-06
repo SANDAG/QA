@@ -96,6 +96,7 @@ dem_age$N_pct<-round(dem_age$N_pct,digits=2)
 dem_age$geozone_pop<-geozone_pop[match(paste(dem_age$yr_id, dem_age$geozone),paste(geozone_pop$yr_id, geozone_pop$geozone)),4]
 dem_age$pct_of_total<-(dem_age$pop / dem_age$geozone_pop)*100
 dem_age$pct_of_total<-round(dem_age$pct_of_total,digits=2)
+setnames(dem_age, old=c("age_group_name_rc", "yr_id", "pop"),new=c("Age_Group", "Year", "Population"))
 
 
 head(dem_gender)
