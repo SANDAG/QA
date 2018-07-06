@@ -69,13 +69,10 @@ hh_jur$cap_type[hh_jur$capacity_type=='tc'] <- 'sgoa'
 hh_jur$cap_type[hh_jur$capacity_type=='tco'] <- 'sgoa'
 hh_jur$cap_type[hh_jur$capacity_type=='uc'] <- 'sgoa'
 
-
-
-
 jur_list = unique(hh_jur[["cityname"]])
 
 for(i in jur_list) { 
-  plotdat = subset(hh_jur, hh_jur$cityname=='i')
+  plotdat = subset(hh_jur, hh_jur$cityname==i)
   ravg = max(plotdat$regN_chg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
   plot <- ggplot() + geom_bar(aes(y = N_chg, x = yr_id, fill = cap_type), 
@@ -94,6 +91,7 @@ for(i in jur_list) {
          width=6, height=8, dpi=100)#, scale=2)
 }
 
+write.csv(plotdat,'test.csv')
 
 hh_cpa$year<- "y"
 hh_cpa$yr <- as.factor(paste(hh_cpa$year, hh_cpa$yr, sep = ""))
