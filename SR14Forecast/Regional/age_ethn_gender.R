@@ -44,9 +44,9 @@ dem$age_group_rc <- ifelse(dem$age_group_id==1|
                                     dem$age_group_id==6|
                                     dem$age_group_id==7|
                                     dem$age_group_id==8|
-                                    dem$age_group_id==9,2,
-                                  ifelse(dem$age_group_id==10|
-                                           dem$age_group_id==11|
+                                    dem$age_group_id==9|
+                                    dem$age_group_id==10,2,
+                                  ifelse(dem$age_group_id==11|
                                            dem$age_group_id==12|
                                            dem$age_group_id==13|
                                            dem$age_group_id==14|
@@ -161,7 +161,6 @@ dem_ethn_jurisdiction = subset(dem_ethn,geotype=='jurisdiction')
 dem_age_cpa = subset(dem_age,geotype=='cpa')
 dem_gender_cpa = subset(dem_gender,geotype=='cpa')
 dem_ethn_cpa = subset(dem_ethn,geotype=='cpa')
-
 
 
 write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age.csv" )
