@@ -63,19 +63,8 @@ dem$age_group_name_rc<- ifelse(dem$age_group_rc==1,"<18",
                                       ifelse(dem$age_group_rc==3,"45-64",
                                              ifelse(dem$age_group_rc==4,"65+",NA))))
 
-#recode ethnicity/race
-#1 Hispanic
-#2	White
-#3	Black
-#4	American Indian
-#5	Asian
-#6	Pacific Islander
-#7	Other
-#8	Two or More
-
 head(dem)
 
-  
 #aggregate total counts by year for age, gender and ethnicity
 dem_age<-aggregate(pop~age_group_name_rc+geotype+geozone+yr_id, data=dem, sum)
 dem_gender<-aggregate(pop~sex+geotype+geozone+yr_id, data=dem, sum)
@@ -85,8 +74,6 @@ dem_ethn<-aggregate(pop~short_name+geotype+geozone+yr_id, data=dem, sum)
 geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem, sum)
 
 tail(geozone_pop)
-
-
 
 #calculate percent of the total population, total change, percent change by year for age, gender and ethnicity
 
@@ -184,4 +171,5 @@ write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Reg
 #ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 #write.csv(dem_age, file= paste(results, 'dem_age.csv"))
+
 
