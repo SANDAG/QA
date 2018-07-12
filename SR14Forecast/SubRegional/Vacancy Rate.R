@@ -31,16 +31,6 @@ vacancy$long_name[vacancy$short_name=="mh"]<- "Mobile Home"
 vacancy$long_name[vacancy$short_name=="sf"]<- "Single Family"
 vacancy$long_name[vacancy$short_name=="sfmu"]<- "Single Family Multi Unit"
 
-
-# Collapse housing types to make plots 
-
-Vacancy_ALL <-aggregate(cbind(units, hh) ~yr_id + geozone, data= vacancy, sum,na.rm = TRUE)
-Vacancy_ALL$Diff<- Vacancy_ALL$units - Vacancy_ALL$hh
-Vacancy_ALL$VAC_RATE <- Vacancy_ALL$Diff/Vacancy_ALL$units
-Vacancy_ALL$VAC_RATE<-round(Vacancy_ALL$VAC_RAT,digits=2)
-
-
-
 vacancy$long_name<- factor(vacancy$long_name, levels = c("Multi Family",
                                        "Mobile Home","Single Family", "Single Family Multi Unit"))
 
