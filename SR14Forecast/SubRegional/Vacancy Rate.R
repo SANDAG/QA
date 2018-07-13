@@ -14,7 +14,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-vacancy = getSQL("../Queries/vacancy.sql")
+vacancy = getSQL("../Queries/Vacancy.sql")
 vacancy<-sqlQuery(channel,vacancy)
 odbcClose(channel)
 
@@ -24,15 +24,15 @@ odbcClose(channel)
 levels(vacancy$geozone) <- c(levels(vacancy$geozone), "San Diego Region")
 vacancy$geozone[vacancy$geotype=='region'] <- 'San Diego Region'
 
-vacancy$long_name<-' '
+#vacancy$long_name<-' '
 
-vacancy$long_name[vacancy$short_name=="mf"]<- "Multi Family"
-vacancy$long_name[vacancy$short_name=="mh"]<- "Mobile Home"
-vacancy$long_name[vacancy$short_name=="sf"]<- "Single Family"
-vacancy$long_name[vacancy$short_name=="sfmu"]<- "Single Family Multi Unit"
+#vacancy$long_name[vacancy$short_name=="mf"]<- "Multi Family"
+#vacancy$long_name[vacancy$short_name=="mh"]<- "Mobile Home"
+#vacancy$long_name[vacancy$short_name=="sf"]<- "Single Family"
+#vacancy$long_name[vacancy$short_name=="sfmu"]<- "Single Family Multi Unit"
 
-vacancy$long_name<- factor(vacancy$long_name, levels = c("Multi Family",
-                                       "Mobile Home","Single Family", "Single Family Multi Unit"))
+#vacancy$long_name<- factor(vacancy$long_name, levels = c("Multi Family",
+                                       #"Mobile Home","Single Family", "Single Family Multi Unit"))
 
 vacancy$year<- "y"
 vacancy$yr <- as.factor(paste(vacancy$year, vacancy$yr, sep = ""))
@@ -61,8 +61,8 @@ jur_list = unique(hh_jur[["geozone"]])
 for(i in jur_list) {
   plotdat = subset(hh_jur, hh_jur$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
-  plot <- ggplot(data=pltwregion, aes(x=yr, y=vac,group=long_name,color=long_name)) +
-    geom_line(size=2) + geom_point(size=3, aes(colour=long_name))  +
+  plot <- ggplot(data=pltwregion, aes(x=yr, y=vac,group=geozone,color=geozone)) +
+    geom_line(size=2) + geom_point(size=3, aes(colour=geozone))  +
     facet_grid(. ~ geozone) + 
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Vacancy Rate by Unit Type\n ", i,' and Region',sep=''), 
@@ -77,8 +77,8 @@ for(i in jur_list) {
     theme(axis.title.y = element_text(face="bold", size=20)) +
     theme(legend.text=element_text(size=12)) +
     theme(strip.text.x = element_text(size = 14)) 
-  sortdat <- plotdat[order(plotdat$long_name,plotdat$yr_id),]
-  output_table<-sortdat[,c("yr_id","geozone","long_name","units","vac")]
+  sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
+  output_table<-sortdat[,c("yr_id","geozone","units","vac")]
 
   hhtitle = paste("HH ",i,sep='')
   tt <- ttheme_default(base_size=12,colhead=list(fg_params = list(parse=TRUE)))

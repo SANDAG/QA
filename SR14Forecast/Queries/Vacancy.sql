@@ -3,11 +3,12 @@ SELECT
 	housing.yr_id
 	,mgra.geotype
 	,mgra.geozone
-	,housing.structure_type_id
-	,structure_type.short_name
+	--,housing.structure_type_id
+	--,structure_type.short_name
+	,unoccupiable
 	,SUM(housing.occupied) as hh
 	,SUM(housing.units) as units
-	,ROUND(CASE WHEN SUM(housing.occupied) = 0 THEN 0 ELSE 1.0 - SUM(housing.occupied) / CAST(SUM(housing.units) as float) END, 2) as vac
+	,ROUND(CASE WHEN SUM(housing.occupied) = 0 THEN 0 ELSE 1.0 - SUM(housing.occupied) / CAST(SUM(housing.units - housing.unoccupiable) as float) END, 2) as vac
 FROM fact.housing
 	INNER JOIN dim.mgra
 	ON mgra.mgra_id = housing.mgra_id
@@ -19,7 +20,7 @@ GROUP BY
 housing.yr_id
 	,mgra.geotype
 	,mgra.geozone
-	,housing.structure_type_id
-	,structure_type.short_name
+	--,housing.structure_type_id
+	--,structure_type.short_name
+	,unoccupiable
 ORDER BY 1,2,3,4
-
