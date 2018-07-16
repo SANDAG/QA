@@ -13,9 +13,9 @@ pkgTest(packages)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
-channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-vacancy = getSQL("../Queries/Vacancy.sql")
-vacancy<-sqlQuery(channel,vacancy)
+channel <- odbcDriverConnect('driver={SQL Server};server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+Vacancy_sql = getSQL("../Queries/Vacancy.sql")
+vacancy<-sqlQuery(channel,Vacancy_sql)
 odbcClose(channel)
 
 
@@ -58,14 +58,51 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 jur_list = unique(hh_jur[["geozone"]])
 
+for(i in jur_list [1:2]) { 
+plotdat = subset(hh_jur, hh_jur$geozone==i)
+pltwregion <- rbind(plotdat, hh_region)
+plot<- ggplot(data=pltwregion, aes(x=yr, y= vac, group=geozone, colour=geozone))+
+ geom_line(size=1.5)+
+  labs(title="SD Regionwide Vacancy Rate",
+       caption="Source: isam.xpef02.household_population",
+       y="Vacancy Rate", 
+       x="Year",
+       colour="Vacancy")+
+  expand_limits(y = c(1, 300000))+
+  scale_y_continuous(labels = comma, limits=c(.00,.06))+ 
+  theme_bw(base_size = 16)+
+  theme(legend.position = "bottom",
+        legend.title=element_blank())
+sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
+output_table<-sortdat[,c("yr_id","geozone","units","vac")]
+
+hhtitle = paste("Vacancy Rate ",i,sep='')
+tt <- ttheme_default(base_size=12,colhead=list(fg_params = list(parse=TRUE)))
+tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
+                     colhead = list(fg_params=list(cex = 1.0)),
+                     rowhead = list(fg_params=list(cex = 1.0)))
+tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+lay <- rbind(c(1,1,1,1,1),
+             c(2,2,2,2,2))
+output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
+ggsave(tbl, file= paste(results, i,'_table', ".png", sep=''),
+       width=10, height=12, dpi=100)#, scale=2)
+results<-"plots\\Vacancy\\Jur\\"
+ggsave(plot, file= paste(results,i,'.3', 'vacancy', ".png", sep=''),
+       width=10, height=6, dpi=100)#, scale=2)
+}
+
+ 
+
+
 for(i in jur_list) {
   plotdat = subset(hh_jur, hh_jur$geozone==i)
   pltwregion <- rbind(plotdat, hh_region)
-  plot <- ggplot(data=pltwregion, aes(x=yr, y=vac,group=geozone,color=geozone)) +
+  plot <- ggplot(data=pltwregion, aes(x=yr, y=vac,group=geotype,color=geozone)) +
     geom_line(size=2) + geom_point(size=3, aes(colour=geozone))  +
-    facet_grid(. ~ geozone) + 
+    #facet_grid(. ~ geozone) + 
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
-    labs(title=paste("Vacancy Rate by Unit Type\n ", i,' and Region',sep=''), 
+    labs(title=paste("Vacancy Rate\n ", i,' and Region',sep=''), 
          y=paste("Vacancy Rate"), x="",
          caption="Sources: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\n housing.datasource_id = 14") +
     theme(legend.position = "bottom",
@@ -96,6 +133,7 @@ for(i in jur_list) {
          width=10, height=6, dpi=100)#, scale=2)
 }
 
+head(vacancy)
 
 
 results<-"plots\\Vacancy\\CPA\\"
