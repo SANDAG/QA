@@ -88,7 +88,6 @@ dem_age$pct_of_total<-round(dem_age$pct_of_total,digits=2)
 setnames(dem_age, old=c("age_group_name_rc", "yr_id", "pop"),new=c("Age_Group", "Year", "Population"))
 
 
-
 head(dem_gender)
 dem_gender <- dem_gender[order(dem_gender$sex,dem_gender$geotype,dem_gender$geozone,dem_gender$yr_id),]
 dem_gender$N_chg <- dem_gender$pop - lag(dem_gender$pop)
@@ -113,9 +112,11 @@ dem_ethn$pct_of_total<-round(dem_ethn$pct_of_total,digits=2)
 setnames(dem_ethn, old=c("short_name", "yr_id", "pop"),new=c("Ethnicity", "Year", "Population"))
 
 
-#recode NA values for 2016 change
+#recode wrong values for 2016 because of lag calculation from 2050-2016 records
 dem_age$N_chg[dem_age$yr_id == 2016] <- 0
 dem_age$N_pct[dem_age$yr_id == 2016] <- 0
+
+#recode NA values for 2016 change
 dem_age$N_pct[dem_age$N_chg == "NA"] <- 0
 dem_age$N_pct[dem_age$N_pct == "NA"] <- 0
 dem_age$pct_of_total[dem_age$pct_of_total == "NaN"] <- 0
@@ -173,3 +174,11 @@ write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Reg
 #write.csv(dem_age, file= paste(results, 'dem_age.csv"))
 
 
+#file review only - not for file preparation - compare cpas included here to median age cpa records
+dem_age_0<- subset(dem_age, geozone_pop == 0)
+dem_age_1<- subset(dem_age, geozone == "Ncfua Reserve")
+unique(dem_age_0$geozone)
+tail(dem_age_1)
+dem_age_2<- subset(dem_age, geozone == "Scripps Reserve")
+unique(dem_age_2$geozone)
+head(dem_age_2)
