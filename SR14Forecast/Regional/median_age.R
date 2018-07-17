@@ -25,9 +25,9 @@ odbcClose(channel)
 
 tail(median_age_region)
 
-write.csv(median_age_cpa, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\median_age_cpa_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
-write.csv(median_age_jur, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\median_age_jur_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
-write.csv(median_age_region, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\median_age_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(median_age_cpa, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\median_age_cpa_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(median_age_jur, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\median_age_jur_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(median_age_region, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\median_age_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
 
 #change all factors to character for ease of coding
