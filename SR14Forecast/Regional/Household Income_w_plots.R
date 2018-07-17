@@ -18,6 +18,8 @@ hh_sql = getSQL("../Queries/Household Income (HHINC).sql")
 hh<-sqlQuery(channel,hh_sql)
 odbcClose(channel)
 
+write.csv(hh, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\hh_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+
 # unique(hh[["geozone"]])
 # note city of san diego and san diego region are both named san diego
 # this causes problems with the aggregation
