@@ -21,7 +21,7 @@ odbcClose(channel)
 
 tail(dem)
 
-write.csv(dem, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(dem, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\dem_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
 #change all factors to character for ease of coding
 options(stringsAsFactors=FALSE)
