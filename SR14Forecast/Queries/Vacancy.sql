@@ -5,7 +5,7 @@ SELECT
 	,mgra.geozone
 	--,housing.structure_type_id
 	--,structure_type.short_name
-	,unoccupiable
+	,SUM(housing.unoccupiable) as unoccupiable
 	,SUM(housing.occupied) as hh
 	,SUM(housing.units) as units
 	,ROUND(CASE WHEN SUM(housing.occupied) = 0 THEN 0 ELSE 1.0 - SUM(housing.occupied) / CAST(SUM(housing.units - housing.unoccupiable) as float) END, 2) as vac
