@@ -63,6 +63,45 @@ vac_cpa = subset(vac,geotype=='cpa')
 vac_region = subset(vac,geotype=='region')
 
 
+##Region plot and table
+
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+results<-"plots\\Vacancy\\Region\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+plot<- ggplot(data=vac_region, aes(x=yr, y=rate))+
+  geom_point(size=1.5)+
+  labs(title="San Diego Region Vacancy Rate",
+       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 14",
+       y="Vacancy Rate", 
+       x="Year")+
+  expand_limits(y = c(1, 300000))+
+  scale_y_continuous(labels = comma, limits=c(.00,.15))+ 
+  theme_bw(base_size = 14)+
+  theme(legend.position = "bottom",
+        legend.title=element_blank(),
+        plot.caption = element_text(size = 7))
+sortdat <- vac_region[order(vac_region$geozone,vac_region$yr_id),]
+output_table<-sortdat[,c("yr_id","geozone","units","unoccupiable","rate")]
+vactitle = paste("San Diego Region Vacancy Rate")
+tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
+#tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
+#                    colhead = list(fg_params=list(cex = 1.0)),
+#                   rowhead = list(fg_params=list(cex = 1.0)))
+tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+lay <- rbind(c(1,1,1,1,1),
+             c(1,1,1,1,1),
+             c(1,1,1,1,1),
+             c(2,2,2,2,2),
+             c(2,2,2,2,2))
+output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
+results<-"plots\\Vacancy\\Jur\\"
+ggsave(output,file=paste(results,'Region Vacancy Rate.png",sep='')
+       width=6, height=8, dpi=100)
+
+
+tail(vac_region)
+
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\Vacancy\\Jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
@@ -78,19 +117,18 @@ plotdat = subset(vac_jur, vac_jur$geozone==i)
 pltwregion <- rbind(plotdat, vac_region)
 plot<- ggplot(data=pltwregion, aes(x=yr, y=rate, group=geozone, colour=geozone))+
  geom_line(size=1.5)+
-  labs(title=paste("Vacancy Rate\n ", i,' and Region',sep=''),
-       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 14",
+  labs(title=paste("Vacancy Rate\n ", i,' and Region',sep=""),
+       caption="Source: Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 14",
        y="Vacancy Rate", 
        x="Year")+
-       #colour="Vacancy")+
-  expand_limits(y = c(1, 300000))+
+      expand_limits(y = c(1, 300000))+
   scale_y_continuous(labels = comma, limits=c(.00,.15))+ 
   theme_bw(base_size = 14)+
   theme(legend.position = "bottom",
         legend.title=element_blank(),
         plot.caption = element_text(size = 7))
 sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
-output_table<-sortdat[,c("yr_id","geozone","units","rate")]
+output_table<-sortdat[,c("yr_id","geozone","units","unoccupiable","rate")]
 vactitle = paste("Vacancy Rate ",i,sep='')
 tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
 #tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
@@ -125,7 +163,7 @@ for(i in cpa_list) {
   plot<- ggplot(data=pltwregion, aes(x=yr, y=rate, group=geozone, colour=geozone))+
     geom_line(size=1.5)+
     labs(title=paste("Vacancy Rate\n ", i,' and Region',sep=''),
-         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 14",
+         caption="Source: Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 14",
          y="Vacancy Rate", 
          x="Year")+
     #colour="Vacancy")+
@@ -136,7 +174,7 @@ for(i in cpa_list) {
           legend.title=element_blank(),
           plot.caption = element_text(size = 7))
   sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
-  output_table<-sortdat[,c("yr_id","geozone","units","rate")]
+  output_table<-sortdat[,c("yr_id","geozone","units","unoccupiable","rate")]
   vactitle = paste("Vacancy Rate ",i,sep='')
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   #tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
