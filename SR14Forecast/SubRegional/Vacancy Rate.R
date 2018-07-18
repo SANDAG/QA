@@ -32,10 +32,16 @@ vacancy$geozone <- gsub("\\:","_",vacancy$geozone)
 
 
 vac <-aggregate(cbind(units, hh, unoccupiable) ~yr_id + geozone + geotype, data= vacancy, sum,na.rm = TRUE)
+
 vac$occupiable_unit<-vac$units-vac$unoccupiable
 vac$available <-(vac$occupiable_unit-vac$hh)
 vac$rate <-vac$available/vac$occupiable_unit
 
+#vac$rate2<-1-(vac$hh/(vac$units-57000))
+
+head(vac)
+
+tail(vac)
 
 
 #vacancy$long_name<-' '
@@ -48,7 +54,6 @@ vac$rate <-vac$available/vac$occupiable_unit
 #vacancy$long_name<- factor(vacancy$long_name, levels = c("Multi Family",
                                        #"Mobile Home","Single Family", "Single Family Multi Unit"))
 
-head(vac)
 
 vac$year<- "y"
 vac$yr <- as.factor(paste(vac$year, vac$yr, sep = ""))
