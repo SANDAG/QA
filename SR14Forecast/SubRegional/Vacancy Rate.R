@@ -83,11 +83,11 @@ plot<- ggplot(data=vac_region, aes(x=yr, y=rate))+
         plot.caption = element_text(size = 7))
 sortdat <- vac_region[order(vac_region$geozone,vac_region$yr_id),]
 output_table<-sortdat[,c("yr_id","geozone","units","unoccupiable","rate")]
-vactitle = paste("San Diego Region Vacancy Rate")
+#vactitle = "San Diego Region Vacancy Rate"
 tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
-#tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
-#                    colhead = list(fg_params=list(cex = 1.0)),
-#                   rowhead = list(fg_params=list(cex = 1.0)))
+tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
+                    colhead = list(fg_params=list(cex = 1.0)),
+                   rowhead = list(fg_params=list(cex = 1.0)))
 tbl <- tableGrob(output_table, rows=NULL, theme=tt)
 lay <- rbind(c(1,1,1,1,1),
              c(1,1,1,1,1),
@@ -95,9 +95,8 @@ lay <- rbind(c(1,1,1,1,1),
              c(2,2,2,2,2),
              c(2,2,2,2,2))
 output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-results<-"plots\\Vacancy\\Jur\\"
-ggsave(output,file=paste(results,'Region Vacancy Rate.png",sep='')
-       width=6, height=8, dpi=100)
+results<-"plots\\Vacancy\\Region\\"
+ggsave(output,file=paste(results,"Region Vacancy Rate.png",sep=""), width=6, height=8, dpi=100)
 
 
 tail(vac_region)
