@@ -7,7 +7,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice","gtable")
+              "stringr","gridExtra","grid","lattice","gtable", "openxlsx")
 pkgTest(packages)
 
 
