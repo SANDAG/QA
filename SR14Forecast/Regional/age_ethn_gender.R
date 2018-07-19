@@ -19,7 +19,6 @@ dem_sql = getSQL("../Queries/age_ethn_gender.sql")
 dem<-sqlQuery(channel,dem_sql)
 odbcClose(channel)
 
-tail(dem)
 
 write.csv(dem, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\dem_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
@@ -151,21 +150,78 @@ dem_gender_cpa = subset(dem_gender,geotype=='cpa')
 dem_ethn_cpa = subset(dem_ethn,geotype=='cpa')
 
 
-write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age.csv" )
-write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender.csv" )
-write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn.csv" )
 
-write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age_region.csv" )
-write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender_region.csv" )
-write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn_region.csv" )
+write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age.csv" )
+write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender.csv" )
+write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn.csv" )
 
-write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age_jurisdiction.csv" )
-write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender_jurisdiction.csv" )
-write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn_jurisdiction.csv" )
+write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age_region.csv" )
+write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender_region.csv" )
+write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn_region.csv" )
 
-write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_age_cpa.csv" )
-write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_gender_cpa.csv" )
-write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\dem_ethn_cpa.csv" )
+write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age_jurisdiction.csv" )
+write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender_jurisdiction.csv" )
+write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn_jurisdiction.csv" )
+
+write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age_cpa.csv" )
+write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender_cpa.csv" )
+write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn_cpa.csv" )
+
+
+#internal integrity checks
+
+ic_1<-summary(dem)
+dem_reg<-subset(dem, geotype=="region")
+dem_reg<-aggregate(pop~yr_id, data=dem_reg, sum)
+
+write.csv(dem_reg, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\dem_region_totals_ic.csv" )
+
+#check age sums across 3 geotype files
+dem_age_cpa_ic<-aggregate(Population~Age_Group+Year+geotype, data=dem_age_cpa, sum)
+dem_age_jur_ic<-aggregate(Population~Age_Group+Year+geotype, data=dem_age_jurisdiction, sum)
+dem_age_reg_ic<-aggregate(Population~Age_Group+Year+geotype, data=dem_age_region, sum)
+
+
+head(dem_reg)  
+age_ic<-rbind(dem_age_cpa_ic,dem_age_jur_ic, dem_age_reg_ic)
+age_ic_wide<-dcast(age_ic, Age_Group+Year~geotype, value.var="Population")
+
+age_ic_wide$CPA2Region<-age_ic_wide$cpa-age_ic_wide$region
+age_ic_wide$Jur2Region<-age_ic_wide$jurisdiction-age_ic_wide$region
+
+head(age_ic_wide)
+write.csv(age_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\age_group_ic.csv" )
+
+#check gender sums across 3 geotype files
+dem_gender_cpa_ic<-aggregate(Population~Gender+Year+geotype, data=dem_gender_cpa, sum)
+dem_gender_jur_ic<-aggregate(Population~Gender+Year+geotype, data=dem_gender_jurisdiction, sum)
+dem_gender_reg_ic<-aggregate(Population~Gender+Year+geotype, data=dem_gender_region, sum)
+
+gender_ic<-rbind(dem_gender_cpa_ic,dem_gender_jur_ic, dem_gender_reg_ic)
+gender_ic_wide<-dcast(gender_ic, Gender+Year~geotype, value.var="Population")
+
+gender_ic_wide$CPA2Region<-gender_ic_wide$cpa-gender_ic_wide$region
+gender_ic_wide$Jur2Region<-gender_ic_wide$jurisdiction-gender_ic_wide$region
+
+head(gender_ic_wide)
+write.csv(gender_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\gender_ic.csv" )
+
+#check ethnicity sums across 3 geotype files
+
+
+dem_ethn_cpa_ic<-aggregate(Population~Ethnicity+Year+geotype, data=dem_ethn_cpa, sum)
+dem_ethn_jur_ic<-aggregate(Population~Ethnicity+Year+geotype, data=dem_ethn_jurisdiction, sum)
+dem_ethn_reg_ic<-aggregate(Population~Ethnicity+Year+geotype, data=dem_ethn_region, sum)
+
+ethn_ic<-rbind(dem_ethn_cpa_ic,dem_ethn_jur_ic, dem_ethn_reg_ic)
+ethn_ic_wide<-dcast(ethn_ic, Ethnicity+Year~geotype, value.var="Population")
+
+ethn_ic_wide$CPA2Region<-ethn_ic_wide$cpa-ethn_ic_wide$region
+ethn_ic_wide$Jur2Region<-ethn_ic_wide$jurisdiction-ethn_ic_wide$region
+
+head(ethn_ic_wide)
+write.csv(ethn_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\ethn_ic.csv" )
+
 
 #the save to the sourcetree location needs to be fixed
 #results<-"data\\demographics\\"
