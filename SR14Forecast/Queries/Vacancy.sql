@@ -15,7 +15,7 @@ FROM fact.housing
 	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
 		INNER JOIN dim.structure_type
 		ON structure_type.structure_type_id = housing.structure_type_id
-WHERE housing.datasource_id = 14
+WHERE housing.datasource_id = 15
 GROUP BY 
 housing.yr_id
 	,mgra.geotype
