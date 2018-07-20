@@ -3,8 +3,8 @@ SELECT
 	housing.yr_id
 	,mgra.geotype
 	,mgra.geozone
-	--,housing.structure_type_id
-	--,structure_type.short_name
+	,housing.structure_type_id
+	,structure_type.short_name
 	,SUM(housing.unoccupiable) as unoccupiable
 	,SUM(housing.occupied) as hh
 	,SUM(housing.units) as units
@@ -20,7 +20,6 @@ GROUP BY
 housing.yr_id
 	,mgra.geotype
 	,mgra.geozone
-	--,housing.structure_type_id
-	--,structure_type.short_name
-	,unoccupiable
+	,housing.structure_type_id
+	,structure_type.short_name
 ORDER BY 1,2,3,4
