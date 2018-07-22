@@ -229,7 +229,7 @@ dem_gender_tot_ic$source<-"Gender"
 dem_ethn_tot_ic$source<-"Ethnicity"
 
 dem_reg_ic<-subset(dem, geotype=="region")
-dem_reg_ic<-aggregate(pop~yr_id, data=dem_reg, sum)
+dem_reg_ic<-aggregate(pop~yr_id, data=dem_reg_ic, sum)
 dem_reg_ic$source<-"Region_SQLscript"
 setnames(dem_reg_ic, old = c("yr_id","pop"), new =c("Year","Population"))
 head(dem_reg_ic)  
@@ -241,16 +241,17 @@ dem_tot_ic_wide<-dcast(dem_tot_ic, Year~source, value.var="Population")
 tail(dem_tot_ic_wide)
 dem_tot_ic_wide$Age2Region<-dem_tot_ic_wide$Age-dem_tot_ic_wide$Region_SQLscript
 dem_tot_ic_wide$Ethnicity2Region<-dem_tot_ic_wide$Age-dem_tot_ic_wide$Region_SQLscript
+dem_tot_ic_wide$Gender2Region<-dem_tot_ic_wide$Gender-dem_tot_ic_wide$Region_SQLscript
 
-dem_tot_ic_wide$Totals_Equal<-
+
 
 write.csv(dem_tot_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\dem_region_totals_ic.csv" )
 
-require(openxlsx)
-list_of_datasets <- list("AgeTotal" = age_ic_wide,  "GenderTotal" = gender_ic_wide, "EthnicityTotal" = ethn_ic_wide)
-write.xlsx(list_of_datasets, file = "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\internal integrity results.xlsx")
+#require(openxlsx)
+#list_of_datasets <- list("AgeTotal" = age_ic_wide,  "GenderTotal" = gender_ic_wide, "EthnicityTotal" = ethn_ic_wide)
+#write.xlsx(list_of_datasets, file = "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\internal integrity results.xlsx")
 
-"DemRegionTotal" = dem_reg_ic, 
+ 
 #the save to the sourcetree location needs to be fixed
 #results<-"data\\demographics\\"
 #ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
