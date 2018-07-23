@@ -113,22 +113,26 @@ setnames(dem_ethn, old=c("short_name", "yr_id", "pop"),new=c("Ethnicity", "Year"
 
 
 #recode wrong values for 2016 because of lag calculation from 2050-2016 records
-dem_age$N_chg[dem_age$yr_id == 2016] <- 0
-dem_age$N_pct[dem_age$yr_id == 2016] <- 0
+dem_age$N_chg[dem_age$Year == "2016"] <- 0
+dem_age$N_pct[dem_age$Year == "2016"] <- 0
+
+dem_ag_test<-subset(dem_age, Year=="2016")
+
+head(dem_ag_test)
 
 #recode NA values for 2016 change
 dem_age$N_pct[dem_age$N_chg == "NA"] <- 0
 dem_age$N_pct[dem_age$N_pct == "NA"] <- 0
 dem_age$pct_of_total[dem_age$pct_of_total == "NaN"] <- 0
 
-dem_gender$N_chg[dem_gender$yr_id == 2016] <- 0
-dem_gender$N_pct[dem_gender$yr_id == 2016] <- 0
+dem_gender$N_chg[dem_gender$Year == "2016"] <- 0
+dem_gender$N_pct[dem_gender$Year == "2016"] <- 0
 dem_gender$N_pct[dem_gender$N_chg == "NA"] <- 0
 dem_gender$N_pct[dem_gender$N_pct == "NA"] <- 0
 dem_gender$pct_of_total[dem_gender$pct_of_total == "NaN"] <- 0
 
-dem_ethn$N_chg[dem_ethn$yr_id == 2016] <- 0
-dem_ethn$N_pct[dem_ethn$yr_id == 2016] <- 0
+dem_ethn$N_chg[dem_ethn$Year == "2016"] <- 0
+dem_ethn$N_pct[dem_ethn$yr_id == "2016"] <- 0
 dem_ethn$N_pct[dem_ethn$N_chg == "NA"] <- 0
 dem_ethn$N_pct[dem_ethn$N_pct == "NA"] <- 0
 dem_ethn$pct_of_total[dem_ethn$pct_of_total == "NaN"] <- 0
