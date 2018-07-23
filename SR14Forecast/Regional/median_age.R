@@ -115,7 +115,7 @@ for(i in 1:length(jur_list)){
 #############
 head(median_age_cpa)
 #cpa with missing data for one or more years - 1401, 1439, 1491, 1911,1483
-#this creates the list for "i" which is what the loop relies on - like x in a do repeat
+#this creates the list for "i" which is what the loop relies on 
 
 cpa_list<-unique(median_age_cpa$geozone)
 
