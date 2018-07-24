@@ -57,7 +57,7 @@ hh_jur$N <-  hh_jur$households
 
 jur_list = unique(hh_jur[["cityname"]])
 
-for(i in jur_list[1:2]) { #1:length(unique(hh_jur[["cityname"]]))){
+for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   plotdat = subset(hh_jur, hh_jur$cityname==i)
   ravg = max(plotdat$regN_chg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
@@ -69,7 +69,7 @@ for(i in jur_list[1:2]) { #1:length(unique(hh_jur[["cityname"]]))){
     scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=15")+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -107,20 +107,20 @@ results<-"plots\\hh\\cpa\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
-for(i in cpa_list[1:2]) { 
+for(i in cpa_list) { 
   plotdat = subset(hh_cpa, hh_cpa$cpaname==i)
-  ravg = max(plotdat$regN_chg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
-  ravg[which(!is.finite(ravg))] <- 0
+  ravg = max(plotdat$regN,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
+  ravg[which(!is.finite(ravg))] <- 1
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cpaname)) +
     geom_bar(stat = "identity") +
-    geom_line(aes(y = regN_chg/ravg, group=1,colour = "Region"),size=2) +
+    geom_line(aes(y = regN/ravg, group=1,colour = "Region"),size=2) +
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg in Region",label=comma)) +
-    scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-    caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
+    caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=15")+
     scale_fill_manual(values = c("blue", "red"))+
+    #scale_colour_manual(values = c("blue")) +
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -148,3 +148,4 @@ for(i in cpa_list[1:2]) {
   ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
+
