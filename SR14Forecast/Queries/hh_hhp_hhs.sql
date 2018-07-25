@@ -1,4 +1,5 @@
 --HH, HHP, HHS
+
 SELECT
 	population.yr_id
 	,mgra.geotype
@@ -23,7 +24,7 @@ FROM fact.population
 		ON hh.yr_id = population.yr_id
 		AND hh.geozone = mgra.geozone
 		AND hh.geotype = mgra.geotype
-WHERE datasource_id = 14
+WHERE datasource_id = 15
 AND population.housing_type_id = 1
 GROUP BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh
 ORDER BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh
