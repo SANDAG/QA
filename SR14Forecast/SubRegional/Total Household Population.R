@@ -74,7 +74,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
     labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=14")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=15")+
     scale_fill_manual(values = c("blue", "red")) +
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
