@@ -24,7 +24,7 @@ hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 hh$N_chg <- ave(hh$hhp, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
 hh$N_pct <- (hh$N_chg / lag(hh$hhp))*100
 hh$N_pct<-sprintf("%.2f",hh$N_pct)
-hh$geozone<-revalue(hh$geozone, c("Los Peï¿½asquitos Canyon Preserve" = "Los Penas. Can. Pres."))
+hh$geozone<-revalue(hh$geozone, c("Los Peñasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 
 
 hh$N_chg[hh$yr_id == 2016] <- 0
