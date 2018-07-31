@@ -1,1 +1,1 @@
-EXECUTE dbo.compute_median_age_all_zones 15, 'region'
+EXECUTE dbo.compute_median_age_all_zones 16, 'region'

@@ -23,7 +23,7 @@ hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 hh$N_chg <- ave(hh$households, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
 hh$N_pct <- (hh$N_chg / lag(hh$households))*100
 hh$N_pct<-sprintf("%.2f",hh$N_pct)
-hh$geozone<-revalue(hh$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
+hh$geozone<-revalue(hh$geozone, c("Los Pe�asquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 
 
 hh$N_chg[hh$yr_id == 2016] <- 0
@@ -57,7 +57,7 @@ hh_jur$N <-  hh_jur$households
 
 jur_list = unique(hh_jur[["cityname"]])
 
-for(i in jur_list[1:2]) { #1:length(unique(hh_jur[["cityname"]]))){
+for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
   plotdat = subset(hh_jur, hh_jur$cityname==i)
   ravg = max(plotdat$regN_chg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
@@ -69,7 +69,7 @@ for(i in jur_list[1:2]) { #1:length(unique(hh_jur[["cityname"]]))){
     scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=15")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=16")+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -119,7 +119,7 @@ for(i in cpa_list) {
     scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=15")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=16")+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -149,4 +149,4 @@ for(i in cpa_list) {
 }
 
 
-hh_cpa$cpa_list <-unique(hh_cpa$cpaname)
+unique(hh_cpa$cpaname)
