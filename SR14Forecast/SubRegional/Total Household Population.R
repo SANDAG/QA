@@ -99,7 +99,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
     i = gsub("\\*","",i)
     i = gsub("\\-","_",i)
     i = gsub("\\:","_",i)
-  ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''),
+  ggsave(output, file= paste(results, 'total household pop', i, "15.png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
@@ -168,6 +168,13 @@ for(i in cpa_list) { #1:length(unique(hh_jur[["cityname"]]))){
 
 
 
+###Per Anne's request
+hh_jur = subset(hh,geotype=='jurisdiction')
+hh_region = subset(hh,geotype=='region')
+hh_region$geozone = 'Region'
+hh_plot <- rbind(hh_jur,hh_region)
+sp<-ggplot(hh_plot,aes(x=yr_id,y=hhp)) + geom_point(shape=1) + geom_line()
+sp + facet_wrap(~geozone,ncol=3,scales="free")
 
 
 
