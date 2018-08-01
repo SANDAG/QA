@@ -49,7 +49,7 @@ median_age_region<- median_age_region[order(median_age_region$geotype,median_age
 head(median_age_cpa)
 
 #these revisions only apply to cpa names
-median_age_cpa$geozone<-revalue(median_age_cpa$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
+#median_age_cpa$geozone<-revalue(median_age_cpa$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 median_age_cpa$geozone[median_age_cpa$geotype =="region"]<- "Region"
 median_age_cpa$geozone <- gsub("\\*","",median_age_cpa$geozone)
 median_age_cpa$geozone <- gsub("\\-","_",median_age_cpa$geozone)
@@ -61,7 +61,7 @@ write.csv(median_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Su
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\Median_Age\\plots"
+results<-"plots\\Median_Age\\jur"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
@@ -88,7 +88,7 @@ for(i in 1:length(jur_list)){
     scale_y_continuous(label=comma,limits=c(30.0,47.0))+ 
     labs(title=paste("Median Age ", jur_list2[i],' and\n Region, 2016-2050',sep=''), 
          y=" median age", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 15\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
+         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 16\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -119,7 +119,8 @@ head(median_age_cpa)
 
 cpa_list<-unique(median_age_cpa$geozone)
 
-
+results<-"plots\\Median_Age\\cpa
+"
 #median_age_cpa <-subset(unittype_cpa,unittype==0)
 
 median_age_cpa$reg<-median_age_region[match(median_age_cpa$yr_id, median_age_region$yr_id),3]
@@ -132,7 +133,7 @@ for(i in 1:length(cpa_list)){
     scale_y_continuous(label=comma,limits=c(25.0,48.0))+ 
     labs(title=paste("Median Age ", cpa_list[i],' and\n Region, 2016-2050',sep=''), 
          y=" median age", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 15\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
+         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 16\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +

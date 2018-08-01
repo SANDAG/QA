@@ -111,7 +111,7 @@ for(i in jur_list) {
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
          y=paste("Percent"), x="",
-         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 14") +
+         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 16") +
     theme(legend.position = "bottom",
         legend.title=element_blank()) +
     scale_colour_manual(values=colours) +
@@ -186,7 +186,7 @@ for(i in cpa_list) {
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
          y=paste("Percent"), x="",
-         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 14") +
+         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 16") +
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
     scale_colour_manual(values=colours) +

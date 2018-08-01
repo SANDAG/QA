@@ -87,7 +87,7 @@ plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
   geom_line(aes(x=yr_id, y=reg, colour="Region")) +
   scale_y_continuous(labels = comma, limits=c(0,10))+
   labs(title=paste("Vacancy Rate ", jur_list2[i],'\nand Region, 2016-2050',sep=""),
-       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 15",
+       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 16",
        y="Vacancy Rate", 
        x="Year")+
   theme_bw(base_size = 12)+
@@ -135,7 +135,7 @@ for(i in 1:length(cpa_list)) {
     geom_line(aes(x=yr_id, y=reg, colour="Region")) +
     scale_y_continuous(labels = comma, limits=c(0,10))+
     labs(title=paste("Vacancy Rate ", cpa_list[i],'\nand Region, 2016-2050',sep=""),
-         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 15\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.",
+         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 16\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.",
          y="Vacancy Rate", 
          x="Year")+
     theme_bw(base_size = 12)+
