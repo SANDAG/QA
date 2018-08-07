@@ -96,8 +96,8 @@ plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
         plot.caption = element_text(size = 7))
 ggsave(plot, file= paste(results, 'vacancy ', jur_list2[i], ".png", sep=''))#, scale=2)
 #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
-output_table<-data.frame(plotdat$yr_id,plotdat$rate,plotdat$reg)
-setnames(output_table, old=c("plotdat.yr_id","plotdat.rate","plotdat.reg"),new=c("Year","Jurisdiction Vacancy Rate","Region Vacancy Rate"))
+output_table<-data.frame(plotdat$yr_id,plotdat$unoccupiable,plotdat$rate,plotdat$reg)
+setnames(output_table, old=c("plotdat.yr_id","plotdat.unoccupiable","plotdat.rate","plotdat.reg"),new=c("Year","Unoccupiable","Jur Vac Rate","Reg Vac Rate"))
 tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
 #tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
  #                    colhead = list(fg_params=list(cex = 1.0)),
@@ -111,7 +111,7 @@ output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
 ggsave(output, file= paste(results,'vacancy ',jur_list2[i], ".png", sep=''))#, scale=2))
 }
 
-
+head(plotdat)
 
 #####################
 #CPA plots and tables
