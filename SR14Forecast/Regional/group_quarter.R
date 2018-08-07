@@ -46,7 +46,7 @@ gq_region = subset(gq,geotype=='region')
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\group quarter\\Jur\\"
+results<-"plots\\group quarter\\jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
@@ -54,26 +54,27 @@ tail(gq_region)
 
 ##Jurisdiction plots and tables
 
-
-#jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
-#jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinitas","Escondido","Imperial Beach","La Mesa","Lemon Grove",
-              "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
-
-#citynames <- data.frame(jur_list, jur_list2)
-#gq_jur$jurisdiction_id<-citynames[match(gq_jur$geozone, citynames$jur_list2),1]
-
-jur_list=unique(gq_jur["geozone"])
+jur_list=unique(gq_jur[["geozone"]])
 
 #create a copy of the data frame for the output table
-gq_jur_tbl<-data.frame(gq_jur)
-gq_jur_tbl$reg<-gq_region[match(paste(gq_jur$yr_id, gq_jur$housing_type_id), paste(gq_region$yr_id, gq_region$housing_type_id)),6]
+gq_wide<-data.frame(gq_jur)
+gq_wide$reg<-gq_region[match(paste(gq_jur$yr_id, gq_jur$housing_type_id), paste(gq_region$yr_id, gq_region$housing_type_id)),6]
+
+write.csv(gq_jur, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\GQ\\gq_jur.csv")
+write.csv(gq_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\GQ\\gq_cpa.csv")
+write.csv(gq_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\GQ\\gq_region.csv")
+
+
+################
+#plots below don't work
+################
 
 
 for(i in jur_list) { 
   plotdat = subset(gq_jur, gq_jur$jurisdiction_id==i)
   pltwregion<- rbind(plotdat, gq_region)
-  plot<- ggplot(pltwregion, aes(x=yr_id, y=pop, group=geozone, fill=housing_type_id))+
-    geom_bar(stat = "identity")+
+  plot<- ggplot(pltwregion, aes(x=yr, y=pop, group=geozone, fill=housing_type_id))+
+    geom_bar(stat = "identity", position="stack")+
     facet_grid(. ~ geozone)+
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Group Quarter Pop ", i,'\nand Region, 2016-2050',sep=""),
@@ -90,22 +91,50 @@ for(i in jur_list) {
     theme(axis.title.y = element_text(face="bold", size=14)) +
     theme(legend.text=element_text(size=12)) +
     theme(strip.text.x = element_text(size = 14)) 
-  ggsave(plot, file= paste(results, 'gq pop ', i, ".png", sep=''))#, scale=2)
-  #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
-  output_table<-data.frame(gq_jur_tbl$yr_id,gq_jur_tbl$short_name,gq_jur_tbl$pop, gq_jur_tbl$reg)
-  setnames(output_table, old=c("gq_jur_tbl$yr_id","gq_jur_tbl$short_name","gq_jur_tbl$pop", "gq_jur_tbl$reg"),new=c("Year","Group Quarter Type", "Jur Pop", "Region Pop"))
+  ggsave(plot, filename= paste(results, 'gq pop ', i, ".png", sep=''))#, scale=2)
+  #sortdat <- pltwregion[order(pltwregion$geozone,pltwregion$yr_id,pltwregion$housing_type_id),]
+  #gq_wide<-dcast(pltwregion, yr_id+geotype+geozone~short_name, value.var = "pop")
+  output_table<-data.frame(gq_wide$yr_id,gq_wide$short_name,gq_wide$pop, gq_wide$reg)
+  #setnames(output_table, old=c("yr_id", "short_name", "pop", "reg"), new=c("Year", "Group Quarter Type", "Jur Pop", "Region Pop"))
+  #rename(output_table, yr_id=Year, short_name=GQ.type)
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
-  #tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
-  #                    colhead = list(fg_params=list(cex = 1.0)),
-  #                   rowhead = list(fg_params=list(cex = 1.0)))
+  tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
+                      colhead = list(fg_params=list(cex = 1.0)),
+                     rowhead = list(fg_params=list(cex = 1.0)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
-               c(1,1,1,1,1),
-               c(3,3,,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results,'gq pop ', i, ".png", sep=''))#, scale=2))
+  ggsave(output, file= paste(results,"gq pop ", i, ".png", sep=''))#, scale=2))
 }
 
 
+head(gq_wide)
 
+for(i in jur_list) { 
+  plotdat = subset(gq_jur, gq_jur$jurisdiction_id==i)
+  plot<- ggplot(plotdat, aes(x=yr, y=pop, fill=housing_type_id))+
+    geom_bar(stat = "identity", position="stack")+
+    scale_y_continuous(labels = comma, limits=c(0,100000))+  
+    labs(title=paste("Group Quarter Pop ", i,'\nand Region, 2016-2050',sep=""),
+         caption="Source: demographic_warehouse: fact.population,dim.mgra, dim.housing_type\npopulation.datasource_id = 16",
+         y="GQ pop", x="Year")+
+    theme_bw(base_size = 12)+
+    theme(legend.position = "bottom",
+          legend.title=element_blank(),
+          plot.caption = element_text(size = 7))+
+    scale_colour_manual(values=colours) +
+    ggsave(plot, file= paste(results, 'gq pop ', i, ".png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr_id,plotdat$short_name,plotdat$pop, plotdat$reg)
+  #setnames(output_table, old=c("yr_id", "short_name", "pop", "reg"), new=c("Year", "Group Quarter Type", "Jur Pop", "Region Pop"))
+  #rename(output_table, yr_id=Year, short_name=GQ.type)
+  tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,1,1),
+               c(2,2,2,2,2))
+  output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
+  ggsave(output, file= paste(results,"gq pop ", i, ".png", sep=''))#, scale=2))
+}
+
+
+                                  
