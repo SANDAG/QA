@@ -156,21 +156,21 @@ dem_ethn_cpa = subset(dem_ethn,geotype=='cpa')
 
 
 
-write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age.csv" )
-write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender.csv" )
-write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn.csv" )
+write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_age.csv" )
+write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_gender.csv" )
+write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_ethn.csv" )
 
-write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age_region.csv" )
-write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender_region.csv" )
-write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn_region.csv" )
+write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_age_region.csv" )
+write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_gender_region.csv" )
+write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_ethn_region.csv" )
 
-write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age_jurisdiction.csv" )
-write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender_jurisdiction.csv" )
-write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn_jurisdiction.csv" )
+write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_age_jurisdiction.csv" )
+write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_gender_jurisdiction.csv" )
+write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_ethn_jurisdiction.csv" )
 
-write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_age_cpa.csv" )
-write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_gender_cpa.csv" )
-write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 2\\dem_ethn_cpa.csv" )
+write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_age_cpa.csv" )
+write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_gender_cpa.csv" )
+write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_ethn_cpa.csv" )
 
 
 #internal integrity checks
@@ -191,7 +191,7 @@ age_ic_wide$CPA2Region<-age_ic_wide$cpa-age_ic_wide$region
 age_ic_wide$Jur2Region<-age_ic_wide$jurisdiction-age_ic_wide$region
 
 head(age_ic_wide)
-write.csv(age_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\age_group_ic.csv" )
+write.csv(age_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 3\\internal integrity\\age_group_ic.csv" )
 
 #check gender sums across 3 geotype files
 dem_gender_cpa_ic<-aggregate(Population~Gender+Year+geotype, data=dem_gender_cpa, sum)
@@ -205,7 +205,7 @@ gender_ic_wide$CPA2Region<-gender_ic_wide$cpa-gender_ic_wide$region
 gender_ic_wide$Jur2Region<-gender_ic_wide$jurisdiction-gender_ic_wide$region
 
 head(gender_ic_wide)
-write.csv(gender_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\gender_ic.csv" )
+write.csv(gender_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 3\\internal integrity\\gender_ic.csv" )
 
 #check ethnicity sums across 3 geotype files
 
@@ -221,7 +221,7 @@ ethn_ic_wide$CPA2Region<-ethn_ic_wide$cpa-ethn_ic_wide$region
 ethn_ic_wide$Jur2Region<-ethn_ic_wide$jurisdiction-ethn_ic_wide$region
 
 head(ethn_ic_wide)
-write.csv(ethn_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\ethn_ic.csv" )
+write.csv(ethn_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 3\\internal integrity\\ethn_ic.csv" )
 
 #check pop sums to total of original downloaded file
 dem_age_tot_ic<-aggregate(Population~Year, data=dem_age_region, sum)
@@ -249,7 +249,7 @@ dem_tot_ic_wide$Gender2Region<-dem_tot_ic_wide$Gender-dem_tot_ic_wide$Region_SQL
 
 
 
-write.csv(dem_tot_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\dem_region_totals_ic.csv" )
+write.csv(dem_tot_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 3\\internal integrity\\dem_region_totals_ic.csv" )
 
 #require(openxlsx)
 #list_of_datasets <- list("AgeTotal" = age_ic_wide,  "GenderTotal" = gender_ic_wide, "EthnicityTotal" = ethn_ic_wide)
