@@ -1,3 +1,5 @@
+#Series 13
+
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -15,12 +17,12 @@ source("../Queries/readSQL.R")
 
 #bring data in from SQL
 channel <- odbcDriverConnect('driver={SQL Server};server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-Vacancy_sql = getSQL("../Queries/Vacancy.sql")
+Vacancy_sql = getSQL("../Queries/Vacancy_13.sql")
 vacancy<-sqlQuery(channel,Vacancy_sql)
 odbcClose(channel)
 
 #save a time stamped verion of the raw file from SQL
-write.csv(vacancy, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\vacancy_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(vacancy, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\vacancy_sql 13",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
 
 # note city of san diego and san diego region are both named san diego
@@ -86,15 +88,15 @@ plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
  geom_line(size=1)+
   geom_line(aes(x=yr_id, y=reg, colour="Region")) +
   scale_y_continuous(labels = comma, limits=c(0,10))+
-  labs(title=paste("Vacancy Rate ", jur_list2[i],'\nand Region, 2016-2050',sep=""),
-       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 16",
+  labs(title=paste("Vacancy Rate ", jur_list2[i],'\nand Region, 2012-2050',sep=""),
+       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 13",
        y="Vacancy Rate", 
        x="Year")+
   theme_bw(base_size = 12)+
   theme(legend.position = "bottom",
         legend.title=element_blank(),
         plot.caption = element_text(size = 7))
-ggsave(plot, file= paste(results, 'vacancy', jur_list2[i], "16.png", sep=''))#, scale=2)
+ggsave(plot, file= paste(results, 'vacancy ', jur_list2[i], "13.png", sep=''))#, scale=2)
 #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
 output_table<-data.frame(plotdat$yr_id,plotdat$unoccupiable,plotdat$rate,plotdat$reg)
 setnames(output_table, old=c("plotdat.yr_id","plotdat.unoccupiable","plotdat.rate","plotdat.reg"),new=c("Year","Unoccupiable","Jur Vac Rate","Reg Vac Rate"))
@@ -108,7 +110,7 @@ lay <- rbind(c(1,1,1,1,1),
              c(2,2,2,2,2),
              c(2,2,2,2,2))
 output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-ggsave(output, file= paste(results,'vacancy',jur_list2[i], "16.png", sep=''))#, scale=2))
+ggsave(output, file= paste(results,'vacancy',jur_list2[i], "13.png", sep=''))#, scale=2))
 }
 
 head(plotdat)
@@ -134,15 +136,15 @@ for(i in 1:length(cpa_list)) {
     geom_line(size=1)+
     geom_line(aes(x=yr_id, y=reg, colour="Region")) +
     scale_y_continuous(labels = comma, limits=c(0,10))+
-    labs(title=paste("Vacancy Rate ", cpa_list[i],'\nand Region, 2016-2050',sep=""),
-         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 16\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.",
+    labs(title=paste("Vacancy Rate ", cpa_list[i],'\nand Region, 2012-2050',sep=""),
+         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 13\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.",
          y="Vacancy Rate", 
          x="Year")+
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
           legend.title=element_blank(),
           plot.caption = element_text(size = 7))
-  ggsave(plot, file= paste(results, 'vacancy', cpa_list[i], "16.png", sep=''))#, scale=2)
+  ggsave(plot, file= paste(results, 'vacancy', cpa_list[i], "13.png", sep=''))#, scale=2)
   #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
   output_table<-data.frame(plotdat$yr_id,plotdat$rate,plotdat$reg)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.rate","plotdat.reg"),new=c("Year","CPA Vacancy Rate","Region Vacancy Rate"))
@@ -156,7 +158,7 @@ for(i in 1:length(cpa_list)) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results,'vacancy',cpa_list[i], "16.png", sep=''))#, scale=2))
+  ggsave(output, file= paste(results,'vacancy',cpa_list[i], "13.png", sep=''))#, scale=2))
 }
 
 
