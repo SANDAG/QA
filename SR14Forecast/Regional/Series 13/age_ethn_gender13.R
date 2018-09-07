@@ -1,13 +1,14 @@
+
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
     install.packages(new.pkg, dep = TRUE)
   sapply(pkg, require, character.only = TRUE)
   
-  
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice","gtable", "openxlsx")
+              "stringr","gridExtra","grid","lattice", "gtable")
+
 pkgTest(packages)
 
 
@@ -15,12 +16,12 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-dem_sql = getSQL("../Queries/Queries - 13/age_ethn_gender.sql")
+dem_sql = getSQL("../Queries/age_ethn_gender_13.sql")
 dem<-sqlQuery(channel,dem_sql)
 odbcClose(channel)
 
 
-write.csv(dem, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\dem_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(dem, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\dem_sql13",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
 
 #change all factors to character for ease of coding

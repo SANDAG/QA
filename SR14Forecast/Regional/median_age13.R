@@ -66,6 +66,7 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 
 
+
 #this creates the list for "i" which is what the loop relies on - like x in a do repeat
 jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
 jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinitas","Escondido","Imperial Beach","La Mesa","Lemon Grove",
@@ -86,9 +87,9 @@ for(i in 1:length(jur_list)){
      geom_line(size=1)+ 
     geom_line(aes(x=yr_id, y = reg, colour = "Region")) +
     scale_y_continuous(label=comma,limits=c(30.0,47.0))+ 
-    labs(title=paste("Median Age ", jur_list2[i],' and\n Region, 2016-2050',sep=''), 
+    labs(title=paste("Median Age ", jur_list2[i],' and\n Region, 2012-2050',sep=''), 
          y=" median age", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 16\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
+         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 13\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -119,8 +120,8 @@ head(median_age_cpa)
 
 cpa_list<-unique(median_age_cpa$geozone)
 
-results<-"plots\\Median_Age\\cpa
-"
+results<-"plots\\Median_Age\\cpa"
+
 #median_age_cpa <-subset(unittype_cpa,unittype==0)
 
 median_age_cpa$reg<-median_age_region[match(median_age_cpa$yr_id, median_age_region$yr_id),3]
@@ -131,9 +132,9 @@ for(i in 1:length(cpa_list)){
     geom_line(size=1)+ 
     geom_line(aes(x=yr_id, y = reg, colour = "Region")) +
     scale_y_continuous(label=comma,limits=c(25.0,48.0))+ 
-    labs(title=paste("Median Age ", cpa_list[i],' and\n Region, 2016-2050',sep=''), 
+    labs(title=paste("Median Age ", cpa_list[i],' and\n Region, 2012-2050',sep=''), 
          y=" median age", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 16\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
+         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 13\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -152,6 +153,5 @@ for(i in 1:length(cpa_list)){
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
   ggsave(output, file= paste(results, 'median_age', cpa_list[i], ".png", sep=''))#, scale=2)
 }
-
 
 

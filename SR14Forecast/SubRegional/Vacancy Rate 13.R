@@ -36,8 +36,8 @@ vacancy$geozone <- gsub("\\:","_",vacancy$geozone)
 #This aggregates from type of units
 vac <-aggregate(cbind(units, hh, unoccupiable) ~yr_id + geozone + geotype, data= vacancy, sum,na.rm = TRUE)
 
-#calculate the vacancy rate
-vac$occupiable_unit<-vac$units-vac$unoccupiable
+calculate the vacancy rate
+#vac$occupiable_unit<-vac$units-vac$unoccupiable
 vac$available <-(vac$occupiable_unit-vac$hh)
 vac$rate <-(vac$available/vac$occupiable_unit)*100
 vac$rate <-round(vac$rate,digits=2)
@@ -96,7 +96,7 @@ plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
   theme(legend.position = "bottom",
         legend.title=element_blank(),
         plot.caption = element_text(size = 7))
-ggsave(plot, file= paste(results, 'vacancy ', jur_list2[i], "13.png", sep=''))#, scale=2)
+ggsave(plot, file= paste(results, 'vacancy', jur_list2[i], "13.png", sep=''))#, scale=2)
 #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
 output_table<-data.frame(plotdat$yr_id,plotdat$unoccupiable,plotdat$rate,plotdat$reg)
 setnames(output_table, old=c("plotdat.yr_id","plotdat.unoccupiable","plotdat.rate","plotdat.reg"),new=c("Year","Unoccupiable","Jur Vac Rate","Reg Vac Rate"))
