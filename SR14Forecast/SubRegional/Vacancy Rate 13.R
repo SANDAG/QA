@@ -36,10 +36,16 @@ vacancy$geozone <- gsub("\\:","_",vacancy$geozone)
 #This aggregates from type of units
 vac <-aggregate(cbind(units, hh, unoccupiable) ~yr_id + geozone + geotype, data= vacancy, sum,na.rm = TRUE)
 
+<<<<<<< HEAD
 calculate the vacancy rate
 #vac$occupiable_unit<-vac$units-vac$unoccupiable
 vac$available <-(vac$occupiable_unit-vac$hh)
 vac$rate <-(vac$available/vac$occupiable_unit)*100
+=======
+#calculate the vacancy rate including unoccupiable
+vac$available <-(vac$units-vac$hh)
+vac$rate <-(vac$available/vac$units)*100
+>>>>>>> 197a9366ccea37f4f0c764a5b97458ba2f8894da
 vac$rate <-round(vac$rate,digits=2)
 
 head(vac)
@@ -67,7 +73,7 @@ results<-"plots\\Vacancy\\Jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
-tail(vac_jur)
+tail(vac_region)
 
 ##Jurisdiction plots and tables
 
@@ -79,7 +85,7 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
 
 citynames <- data.frame(jur_list, jur_list2)
 vac_jur$jurisdiction_id<-citynames[match(vac_jur$geozone, citynames$jur_list2),1]
-vac_jur$reg<-vac_region[match(vac_jur$yr_id, vac_region$yr_id),9]
+vac_jur$reg<-vac_region[match(vac_jur$yr_id, vac_region$yr_id),8]
 
 
 for(i in jur_list) { 
@@ -88,8 +94,8 @@ plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
  geom_line(size=1)+
   geom_line(aes(x=yr_id, y=reg, colour="Region")) +
   scale_y_continuous(labels = comma, limits=c(0,10))+
-  labs(title=paste("Vacancy Rate ", jur_list2[i],'\nand Region, 2012-2050',sep=""),
-       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 13",
+  labs(title=paste("SR13 Vacancy Rate ", jur_list2[i],'\nand Region, 2012-2050',sep=""),
+       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 13\nNote: Unoccupiable units are included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
        y="Vacancy Rate", 
        x="Year")+
   theme_bw(base_size = 12)+
@@ -98,8 +104,8 @@ plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
         plot.caption = element_text(size = 7))
 ggsave(plot, file= paste(results, 'vacancy', jur_list2[i], "13.png", sep=''))#, scale=2)
 #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
-output_table<-data.frame(plotdat$yr_id,plotdat$unoccupiable,plotdat$rate,plotdat$reg)
-setnames(output_table, old=c("plotdat.yr_id","plotdat.unoccupiable","plotdat.rate","plotdat.reg"),new=c("Year","Unoccupiable","Jur Vac Rate","Reg Vac Rate"))
+output_table<-data.frame(plotdat$yr_id,plotdat$rate,plotdat$reg)
+setnames(output_table, old=c("plotdat.yr_id","plotdat.rate","plotdat.reg"),new=c("Year","Jur Vac Rate","Reg Vac Rate"))
 tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
 #tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
  #                    colhead = list(fg_params=list(cex = 1.0)),
@@ -125,7 +131,7 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 cpa_list = unique(vac_cpa[["geozone"]])
 
 #vac_jur$jurisdiction_id<-citynames[match(vac_jur$geozone, citynames$jur_list2),1]
-vac_cpa$reg<-vac_region[match(vac_cpa$yr_id, vac_region$yr_id),9]
+vac_cpa$reg<-vac_region[match(vac_cpa$yr_id, vac_region$yr_id),8]
 
 
 head(vac_cpa)
@@ -136,8 +142,8 @@ for(i in 1:length(cpa_list)) {
     geom_line(size=1)+
     geom_line(aes(x=yr_id, y=reg, colour="Region")) +
     scale_y_continuous(labels = comma, limits=c(0,10))+
-    labs(title=paste("Vacancy Rate ", cpa_list[i],'\nand Region, 2012-2050',sep=""),
-         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 13\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.",
+    labs(title=paste("SR13 Vacancy Rate ", cpa_list[i],'\nand Region, 2012-2050',sep=""),
+         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 13\nNote: Unoccupiable units are included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
          y="Vacancy Rate", 
          x="Year")+
     theme_bw(base_size = 12)+
