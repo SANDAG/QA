@@ -46,12 +46,13 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
               "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
 
 citynames <- data.frame(jur_list, jur_list2)
-vac_jur$jurisdiction_id<-citynames[match(vac_jur$geozone, citynames$jur_list2),1]
-vac_jur$reg<-vac_region[match(vac_jur$yr_id, vac_region$yr_id),9]
+age_jur$jurisdiction_id<-citynames[match(age_jur$geozone, citynames$jur_list2),1]
+
+
 
 
 for(i in jur_list) { 
-  plotdat = subset(vac_jur, vac_jur$jurisdiction_id==jur_list[i])
+  plotdat = subset(age_jur, age_jur$jurisdiction_id==jur_list[i])
   plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
     geom_line(size=1)+
     geom_line(aes(x=yr_id, y=reg, colour="Region")) +
