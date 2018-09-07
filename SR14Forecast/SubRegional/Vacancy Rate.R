@@ -60,6 +60,12 @@ vac_cpa = subset(vac,geotype=='cpa')
 vac_region = subset(vac,geotype=='region')
 
 
+jur_unoccupiable<-data.frame(vac_jur$yr_id, vac_jur$geozone, vac_jur$unoccupiable)
+jur_unoccupiable<-subset(jur_unoccupiable, vac_jur.yr_id=="2018")
+
+write.csv(jur_unoccupiable,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\unoccupiable by jurisdiction.csv")
+
+
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\Vacancy\\Jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
