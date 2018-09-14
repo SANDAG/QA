@@ -16,7 +16,26 @@ pkgTest(packages)
 age_cpa<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_age_cpa.csv" )
 age_jur<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_age_jurisdiction.csv" )
 age_reg<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\dem_age_region.csv" )
+age_cpa_13<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\dem_age13_cpa.csv" )
+age_jur_13<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\dem_age13_jurisdiction.csv" )
+age_reg_13<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\dem_age13_region.csv" )
 
+head(age_jur)
+head(age_reg)
+head(age_jur_13)
+head(age_reg_13)
+table(age_jur$Year)
+head(age_reg)
+table(age_jur_13$Year)
+head(age_reg_13)
+
+
+
+#check column number for region number
+age_jur$reg<-age_reg[match(age_jur$yr_id, age_reg$yr_id),9]
+
+
+vac_jur$reg<-vac_region[match(vac_jur$yr_id, vac_region$yr_id),8]
 
 ##Jurisdiction plots and tables
 
@@ -27,12 +46,13 @@ jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinita
               "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
 
 citynames <- data.frame(jur_list, jur_list2)
-vac_jur$jurisdiction_id<-citynames[match(vac_jur$geozone, citynames$jur_list2),1]
-vac_jur$reg<-vac_region[match(vac_jur$yr_id, vac_region$yr_id),9]
+age_jur$jurisdiction_id<-citynames[match(age_jur$geozone, citynames$jur_list2),1]
+
+
 
 
 for(i in jur_list) { 
-  plotdat = subset(vac_jur, vac_jur$jurisdiction_id==jur_list[i])
+  plotdat = subset(age_jur, age_jur$jurisdiction_id==jur_list[i])
   plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
     geom_line(size=1)+
     geom_line(aes(x=yr_id, y=reg, colour="Region")) +

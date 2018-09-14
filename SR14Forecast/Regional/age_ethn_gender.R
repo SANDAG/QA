@@ -271,3 +271,7 @@ tail(dem_age_1)
 dem_age_2<- subset(dem_age, geozone == "Scripps Reserve")
 unique(dem_age_2$geozone)
 head(dem_age_2)
+
+
+
+
