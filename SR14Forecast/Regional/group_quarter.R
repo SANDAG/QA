@@ -60,9 +60,9 @@ jur_list=unique(gq_jur[["geozone"]])
 gq_wide<-data.frame(gq_jur)
 gq_wide$reg<-gq_region[match(paste(gq_jur$yr_id, gq_jur$housing_type_id), paste(gq_region$yr_id, gq_region$housing_type_id)),6]
 
-write.csv(gq_jur, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\GQ\\gq_jur.csv")
-write.csv(gq_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\GQ\\gq_cpa.csv")
-write.csv(gq_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 3\\GQ\\gq_region.csv")
+write.csv(gq_jur, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\GQ\\gq_jur.csv")
+write.csv(gq_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\GQ\\gq_cpa.csv")
+write.csv(gq_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\GQ\\gq_region.csv")
 
 
 ################
@@ -78,7 +78,7 @@ for(i in jur_list) {
     facet_grid(. ~ geozone)+
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Group Quarter Pop ", i,'\nand Region, 2016-2050',sep=""),
-         caption="Source: demographic_warehouse: fact.population,dim.mgra, dim.housing_type\npopulation.datasource_id = 16",
+         caption="Source: demographic_warehouse: fact.population,dim.mgra, dim.housing_type\npopulation.datasource_id = 17",
          y=paste("GQ pop"), x="Year")+
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
@@ -117,7 +117,7 @@ for(i in jur_list) {
     geom_bar(stat = "identity", position="stack")+
     scale_y_continuous(labels = comma, limits=c(0,100000))+  
     labs(title=paste("Group Quarter Pop ", i,'\nand Region, 2016-2050',sep=""),
-         caption="Source: demographic_warehouse: fact.population,dim.mgra, dim.housing_type\npopulation.datasource_id = 16",
+         caption="Source: demographic_warehouse: fact.population,dim.mgra, dim.housing_type\npopulation.datasource_id = 17",
          y="GQ pop", x="Year")+
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
