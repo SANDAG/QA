@@ -85,6 +85,7 @@ vacancy_cpa = subset(vacancy,geotype=='cpa')
 vacancy_region = subset(vacancy,geotype=='region')
 
 
+#create list of city names and merge in for plot formatting
 jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
 jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinitas","Escondido","Imperial Beach","La Mesa","Lemon Grove",
               "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
@@ -93,17 +94,40 @@ citynames <- data.frame(jur_list, jur_list2)
 vacancy_jur$jurisdiction_id<-citynames[match(vacancy_jur$geozone, citynames$jur_list2),1]
 vacancy13_jur$jurisdiction_id<-citynames[match(vacancy13_jur$geozone, citynames$jur_list2),1]
 
-setnames(vacancy13_jur, old=c("rate"), new=c("rate13"))
-setnames(vacancy_jur, old=c("rate"), new=c("rate14"))
-
+#match region rate into jur 13 and 14 data
 vacancy13_jur$reg13<-vacancy13_region[match(vacancy13_jur$yr_id, vacancy13_region$yr_id),"rate"]
 vacancy_jur$reg14<-vacancy_region[match(vacancy_jur$yr_id, vacancy_region$yr_id),"rate"]
+
+#rename jur rate to include year
+setnames(vacancy13_jur, old=c("rate"), new=c("rate13"))
+setnames(vacancy_jur, old=c("rate"), new=c("rate14"))
 
 #merge 14 and 13 rates for jur and region 
 vacancy_jur<- merge(select(vacancy_jur, yr_id, year, geotype, geozone, jurisdiction_id, rate14, reg14), (select (vacancy13_jur, yr_id, year, geotype, geozone, jurisdiction_id, rate13, reg13)), by.a=c("yr_id","geotype", "geozone"), by.b=c("yr_id","geotype","geozone"),all = TRUE)
 
 #select years 2020 and later - exlcudes 2012 in 13 file and 2016 and 2018 in 14 file
 vacancy_jur= subset(vacancy_jur,yr_id>='2020')
+
+#cpa 
+
+
+
+#match region rate into cpa 13 and 14 data
+vacancy13_cpa$reg13<-vacancy13_region[match(vacancy13_cpa$yr_id, vacancy13_region$yr_id),"rate"]
+vacancy_cpa$reg14<-vacancy_region[match(vacancy_cpa$yr_id, vacancy_region$yr_id),"rate"]
+
+#rename cpa rate to include year
+setnames(vacancy13_cpa, old=c("rate"), new=c("rate13"))
+setnames(vacancy_cpa, old=c("rate"), new=c("rate14"))
+
+#merge 14 and 13 rates for cpa and region 
+vacancy_cpa<- merge(select(vacancy_cpa, yr_id, year, geotype, geozone, rate14, reg14), (select (vacancy13_cpa, yr_id, year, geotype, geozone, rate13, reg13)), by.a=c("yr_id","geotype", "geozone"), by.b=c("yr_id","geotype","geozone"),all = TRUE)
+
+#select years 2020 and later - exlcudes 2012 in 13 file and 2016 and 2018 in 14 file
+vacancy_cpa= subset(vacancy_cpa,yr_id>='2020')
+
+#creates a list for reference by the ggplot for loop
+cpa_list = unique(vacancy_cpa[["geozone"]])
 
 
 ###############################
@@ -170,10 +194,6 @@ results<-"plots\\Vacancy\\CPA\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 cpa_list = unique(vacancy_cpa[["geozone"]])
-
-#vacancy_jur$jurisdiction_id<-citynames[match(vacancy_jur$geozone, citynames$jur_list2),1]
-vacancy_cpa$reg<-vacancy_region[match(vacancy_cpa$yr_id, vacancy_region$yr_id),8]
-
 
 head(vacancy_cpa)
 
