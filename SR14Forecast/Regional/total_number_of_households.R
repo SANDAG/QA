@@ -69,7 +69,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
     scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=16")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=17")+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -119,7 +119,7 @@ for(i in cpa_list) {
     scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=16")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=17")+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -149,4 +149,4 @@ for(i in cpa_list) {
 }
 
 
-unique(hh_cpa$cpaname)
+
