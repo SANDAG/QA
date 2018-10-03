@@ -18,6 +18,12 @@ hh_sql = getSQL("../Queries/hh_hhp_hhs.sql")
 hh<-sqlQuery(channel,hh_sql)
 odbcClose(channel)
 
+
+#save a time stamped verion of the raw file from SQL
+write.csv(hh, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\hh_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+
+
+
 head(hh)
 hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 
@@ -63,7 +69,7 @@ for(i in jur_list) {
         plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year",
-         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=16")
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=17")
     results<-"plots\\hhsize\\jur\\"
     output_table<-plotdat[,c("yr_id","hhp","households","hhs","reg_hhp","reg_hh","reg_hhs")]
     colnames(output_table)[colnames(output_table)=="households"] <- "hh"
@@ -103,7 +109,7 @@ for(i in cpa_list) {
           plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year",
-         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=16") 
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=17") 
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
   i = gsub("\\:","_",i)
