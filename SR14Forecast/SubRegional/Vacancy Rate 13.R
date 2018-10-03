@@ -15,7 +15,7 @@ pkgTest(packages)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
-#bring data in from SQL
+#bring data in from SQL test again
 channel <- odbcDriverConnect('driver={SQL Server};server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 Vacancy_sql = getSQL("../Queries/Vacancy_13.sql")
 vacancy<-sqlQuery(channel,Vacancy_sql)

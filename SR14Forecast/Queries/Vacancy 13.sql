@@ -20,7 +20,7 @@ FROM fact.housing
 	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
 		INNER JOIN dim.structure_type
 		ON structure_type.structure_type_id = housing.structure_type_id
-WHERE housing.datasource_id = 17
+WHERE housing.datasource_id = 13
 GROUP BY 
 housing.yr_id
 	,mgra.geotype
@@ -28,5 +28,3 @@ housing.yr_id
 	,housing.structure_type_id
 	,structure_type.short_name
 ORDER BY 1,2,3,4
-
-

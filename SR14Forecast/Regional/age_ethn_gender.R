@@ -1,3 +1,5 @@
+
+
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -156,6 +158,7 @@ dem_ethn_cpa = subset(dem_ethn,geotype=='cpa')
 
 
 
+<<<<<<< HEAD
 write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\dem_age.csv" )
 write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\dem_gender.csv" )
 write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\dem_ethn.csv" )
@@ -177,6 +180,31 @@ write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Reg
 #################################################
 #################################################
 #internal integrity checks
+=======
+write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_age17.csv" )
+write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_gender17.csv" )
+write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_ethn17.csv" )
+
+write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_age_region17.csv" )
+write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_gender_region17.csv" )
+write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_ethn_region17.csv" )
+
+write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_age_jurisdiction17.csv" )
+write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_gender_jurisdiction17.csv" )
+write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_ethn_jurisdiction17.csv" )
+
+write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_age_cpa17.csv" )
+write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_gender_cpa17.csv" )
+write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Dem\\dem_ethn_cpa17.csv" )
+
+
+
+
+
+
+
+#Internal Integrity Checks
+>>>>>>> 09d3390a75abe7adc4cdaa8e9a2877a6e8ade4d8
 
 ic_1<-summary(dem)
 
@@ -194,7 +222,11 @@ age_ic_wide$CPA2Region<-age_ic_wide$cpa-age_ic_wide$region
 age_ic_wide$Jur2Region<-age_ic_wide$jurisdiction-age_ic_wide$region
 
 head(age_ic_wide)
+<<<<<<< HEAD
 write.csv(age_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\internal integrity\\age_group_ic.csv" )
+=======
+write.csv(age_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\Internal Integrity\\Age_ic.csv" )
+>>>>>>> 09d3390a75abe7adc4cdaa8e9a2877a6e8ade4d8
 
 #check gender sums across 3 geotype files
 dem_gender_cpa_ic<-aggregate(Population~Gender+Year+geotype, data=dem_gender_cpa, sum)
@@ -208,7 +240,11 @@ gender_ic_wide$CPA2Region<-gender_ic_wide$cpa-gender_ic_wide$region
 gender_ic_wide$Jur2Region<-gender_ic_wide$jurisdiction-gender_ic_wide$region
 
 head(gender_ic_wide)
+<<<<<<< HEAD
 write.csv(gender_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\internal integrity\\gender_ic.csv" )
+=======
+write.csv(gender_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\Internal Integrity\\Gender_ic.csv" )
+>>>>>>> 09d3390a75abe7adc4cdaa8e9a2877a6e8ade4d8
 
 #check ethnicity sums across 3 geotype files
 
@@ -224,7 +260,11 @@ ethn_ic_wide$CPA2Region<-ethn_ic_wide$cpa-ethn_ic_wide$region
 ethn_ic_wide$Jur2Region<-ethn_ic_wide$jurisdiction-ethn_ic_wide$region
 
 head(ethn_ic_wide)
+<<<<<<< HEAD
 write.csv(ethn_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\internal integrity\\ethn_ic.csv" )
+=======
+write.csv(ethn_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\Internal Integrity\\Ethn_ic.csv" )
+>>>>>>> 09d3390a75abe7adc4cdaa8e9a2877a6e8ade4d8
 
 #check pop sums to total of original downloaded file
 dem_age_tot_ic<-aggregate(Population~Year, data=dem_age_region, sum)
@@ -252,7 +292,11 @@ dem_tot_ic_wide$Gender2Region<-dem_tot_ic_wide$Gender-dem_tot_ic_wide$Region_SQL
 
 
 
+<<<<<<< HEAD
 write.csv(dem_tot_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\internal integrity\\dem_region_totals_ic.csv" )
+=======
+write.csv(dem_tot_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\Internal Integrity\\Dem_region_total_ic.csv" )
+>>>>>>> 09d3390a75abe7adc4cdaa8e9a2877a6e8ade4d8
 
 #require(openxlsx)
 #list_of_datasets <- list("AgeTotal" = age_ic_wide,  "GenderTotal" = gender_ic_wide, "EthnicityTotal" = ethn_ic_wide)
