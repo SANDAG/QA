@@ -24,9 +24,12 @@ Income14_2025<-read.csv("T:\\ABM\\release\\ABM\\version_14_0_0\\input\\2025\\hou
 Income14_2035<-read.csv("T:\\ABM\\release\\ABM\\version_14_0_0\\input\\2035\\households.csv", stringsAsFactors = FALSE)
 Income14_2050<-read.csv("T:\\ABM\\release\\ABM\\version_14_0_0\\input\\2050\\households.csv", stringsAsFactors = FALSE)
 
+head(geography)
+
 geography<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\GEO for DCO.csv", stringsAsFactors = FALSE)
-# setnames(geography, old=c("?..mgra"),new=c("mgra"))
-setnames(geography, old=c("ï..mgra"),new=c("mgra"))
+
+#column name for geography$mgra comes across different ways so rename using the column number reference
+colnames(geography)[1]<-"mgra"
 
 
 Income14_2016$yr = 2016
@@ -71,9 +74,7 @@ head(income17_agg)
 
 INCOME <- merge(income14_agg, income17_agg, by.a=c("MGRA","yr","hinccat1"), by.b=c("MGRA","yr","hinccat1"), all=TRUE)
 
-
-rm(list=c(Income17_2016, Income17_2020, Income17_2025, Income17_2035 ,Income17_2050,Income14_2016, Income14_2020, Income14_2025, Income14_2035 ,Income14_2050))
-
+rm(Income17_2016, Income17_2020, Income17_2025, Income17_2035 ,Income17_2050,Income14_2016, Income14_2020, Income14_2025, Income14_2035 ,Income14_2050)
 
 #Merge in geography
 
@@ -82,7 +83,7 @@ income_Geo <- merge(INCOME, geography, by.x="MGRA",by.y="mgra", all=TRUE)
 rm(INCOME, Income17, Income14, income17_agg ,income14_agg)
 
 
-###Here is where I save the files by geography for graphing. I don't know how to incorporate the loop for the ggplots
+###files saved by geography for graphing. 
 
 Income_CPA<- aggregate(cbind(POP_17, POP_14)~yr+cpa_id+hinccat1+cpa + unittype , data=income_Geo, sum)
 Income_Jur<- aggregate(cbind(POP_17, POP_14)~yr+jurisdiction_id+hinccat1+jurisdiction + unittype , data=income_Geo, sum)
