@@ -35,9 +35,7 @@ hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 hh$hh_numchg<- (hh$households)-lag(hh$households)
 hh$hhp_numchg<- (hh$hhp)-lag(hh$hhp)
 hh$hhs_numchg<- (hh$hhs)-lag(hh$hhs)
-hh$hh_numchg[hh$yr_id=="2016"]<-0
-hh$hhp_numchg[hh$yr_id=="2016"]<-0
-hh$hhs_numchg[hh$yr_id=="2016"]<-0
+
 
 hh$hh_pctchg<- (hh$households-lag(hh$households))/lag(hh$households)*100
 hh$hhp_pctchg<- (hh$hhp-lag(hh$hhp))/lag(hh$hhp)*100
@@ -68,14 +66,14 @@ vac<- vac[order(vac$geotype,vac$geozone,vac$yr_id),]
 
 vac$vac_numchg<- (vac$rate)-lag(vac$rate)
 
-#vac$vac_numchg[hh$yr_id=="2016"]<-0
+
 
 vac$vac_pctchg<- (vac$rate-lag(vac$rate))/lag(vac$rate)*100
 vac$vac_pctchg<-round(vac$vac_pctchg,digits=2)
 
 vac$units_numchg<- (vac$units)-lag(vac$units)
 
-#vac$vac_numchg[hh$yr_id=="2016"]<-0
+
 
 vac$units_pctchg<- (vac$units-lag(vac$units)/lag(vac$units))*100
 vac$units_pctchg<-round(vac$units_pctchg,digits=2)
@@ -109,4 +107,16 @@ hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","uni
 
 
 hh_merge<- hh_merge[order(hh_merge$geotype,hh_merge$geozone,hh_merge$yr_id),]
+hh$hh_numchg[hh$yr_id=="2016"]<-NA
+hh$hhp_numchg[hh$yr_id=="2016"]<-NA
+hh$hhs_numchg[hh$yr_id=="2016"]<-NA
+hh$vac_numchg[hh$yr_id=="2016"]<-NA
+hh$units_numchg[hh$yr_id=="2016"]<-NA
+hh$hh_pctchg[hh$yr_id=="2016"]<-NA
+hh$hhp_pctchg[hh$yr_id=="2016"]<-NA
+hh$hhs_pctchg[hh$yr_id=="2016"]<-NA
+hh$vac_pctchg[hh$yr_id=="2016"]<-NA
+hh$units_pctchg[hh$yr_id=="2016"]<-NA
+
+
 write.csv(hh_merge,("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\hh_hhp_hhs_hu_vac_age_comparison.csv"))
