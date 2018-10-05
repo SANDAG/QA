@@ -20,13 +20,13 @@ FROM fact.population
 				INNER JOIN dim.mgra
 				ON mgra.mgra_id = housing.mgra_id
 				AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
-			WHERe housing.datasource_id = 16
+			WHERe housing.datasource_id = 18
 			GROUP BY yr_id, mgra.geotype, mgra.geozone
 		) hh
 		ON hh.yr_id = population.yr_id
 		AND hh.geozone = mgra.geozone
 		AND hh.geotype = mgra.geotype
-WHERE datasource_id = 16
+WHERE datasource_id = 18
 AND population.housing_type_id = 1
 GROUP BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh
 ORDER BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh
@@ -45,7 +45,7 @@ FROM fact.population
 	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
 		INNER JOIN dim.housing_type
 		ON housing_type.housing_type_id = population.housing_type_id
-WHERE population.datasource_id = 16
+WHERE population.datasource_id = 18
 GROUP BY 
 	population.yr_id
 	,mgra.geotype
@@ -73,7 +73,7 @@ FROM fact.household_income
 	AND mgra.mgra_id = household_income.mgra_id
 		INNER JOIN dim.income_group
 		ON income_group.income_group_id = household_income.income_group_id
-WHERE household_income.datasource_id = 16
+WHERE household_income.datasource_id = 18
 GROUP BY 
 	household_income.yr_id
 	,mgra.geotype
@@ -97,7 +97,7 @@ FROM fact.age
 	AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
 		INNER JOIN dim.age_group
 		ON age_group.age_group_id = age.age_group_id
-WHERE age.datasource_id = 16
+WHERE age.datasource_id = 18
 GROUP BY age.yr_id
 	,mgra.geotype
 	,mgra.geozone
@@ -122,7 +122,7 @@ FROM fact.sex
 	AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
 		INNER JOIN dim.sex as dim_sex
 		ON sex.sex_id = dim_sex.sex_id
-WHERE sex.datasource_id = 16
+WHERE sex.datasource_id = 18
 GROUP BY sex.yr_id
 	,mgra.geotype
 	,mgra.geozone
@@ -155,7 +155,7 @@ FROM fact.age_sex_ethnicity
 			ON sex.sex_id = age_sex_ethnicity.sex_id
 				INNER JOIN dim.ethnicity
 				ON ethnicity.ethnicity_id = age_sex_ethnicity.ethnicity_id
-WHERE age_sex_ethnicity.datasource_id = 16
+WHERE age_sex_ethnicity.datasource_id = 18
 AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
 GROUP BY age_sex_ethnicity.yr_id
 	,mgra.geotype
@@ -173,16 +173,17 @@ ORDER BY age_sex_ethnicity.yr_id
 	,age_sex_ethnicity.sex_id
 	,age_sex_ethnicity.ethnicity_id
 
+--Did not update below 10-5-2018 DCO (should 14 be updated to 18)
 
 --median income
-EXECUTE dbo.compute_median_income_all_zones 14, 'jurisdiction'
-EXECUTE dbo.compute_median_income_all_zones 14, 'cpa'
-EXECUTE dbo.compute_median_income_all_zones 14, 'region'
+--EXECUTE dbo.compute_median_income_all_zones 14, 'jurisdiction'
+--EXECUTE dbo.compute_median_income_all_zones 14, 'cpa'
+--EXECUTE dbo.compute_median_income_all_zones 14, 'region'
 
 --median age
-EXECUTE dbo.compute_median_age_all_zones 14, 'jurisdiction'
-EXECUTE dbo.compute_median_age_all_zones 14, 'cpa'
-EXECUTE dbo.compute_median_age_all_zones 14, 'region'
+--EXECUTE dbo.compute_median_age_all_zones 14, 'jurisdiction'
+--EXECUTE dbo.compute_median_age_all_zones 14, 'cpa'
+--EXECUTE dbo.compute_median_age_all_zones 14, 'region'
 
 --pop
 SELECT yr_id
@@ -193,7 +194,7 @@ FROM fact.population
 	INNER JOIN dim.mgra
 	ON mgra.mgra_id = population.mgra_id
 	AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
-WHERE datasource_id = 16
+WHERE datasource_id = 18
 GROUP BY yr_id, mgra.geotype, mgra.geozone
 ORDER BY yr_id, mgra.geotype, mgra.geozone
 
@@ -211,7 +212,7 @@ FROM fact.jobs
 	AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
 		INNER JOIN dim.employment_type
 		ON employment_type.employment_type_id = jobs.employment_type_id
-WHERE jobs.datasource_id = 16
+WHERE jobs.datasource_id = 18
 GROUP BY jobs.yr_id
 	,mgra.geotype
 	,mgra.geozone
@@ -238,7 +239,7 @@ FROM fact.housing
 	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
 		INNER JOIN dim.structure_type
 		ON structure_type.structure_type_id = housing.structure_type_id
-WHERE housing.datasource_id = 14
+WHERE housing.datasource_id = 18
 GROUP BY 
 housing.yr_id
 	,mgra.geotype

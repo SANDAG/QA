@@ -19,7 +19,7 @@ FROM fact.age_sex_ethnicity
 			ON sex.sex_id = age_sex_ethnicity.sex_id
 				INNER JOIN dim.ethnicity
 				ON ethnicity.ethnicity_id = age_sex_ethnicity.ethnicity_id
-WHERE age_sex_ethnicity.datasource_id = 17
+WHERE age_sex_ethnicity.datasource_id = 18
 AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
 GROUP BY age_sex_ethnicity.yr_id
 	,mgra.geotype
