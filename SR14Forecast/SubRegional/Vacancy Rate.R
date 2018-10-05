@@ -67,7 +67,7 @@ write.csv(jur_unoccupiable,"M:\\Technical Services\\QA Documents\\Projects\\Sub 
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\Vacancy\\Jur\\"
+results<-"plots\\Vacancy\\Jur_Eff\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
@@ -93,14 +93,14 @@ plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
   geom_line(aes(x=yr_id, y=reg, colour="Region")) +
   scale_y_continuous(labels = comma, limits=c(0,10))+
   labs(title=paste("Effective Vacancy Rate ", jur_list2[i],'\nand Region, 2016-2050',sep=""),
-       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 16\nNotes:Unoccupiable units are not included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
+       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 18\nNotes:Unoccupiable units are not included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
        y="Vacancy Rate", 
        x="Year")+
   theme_bw(base_size = 12)+
   theme(legend.position = "bottom",
         legend.title=element_blank(),
         plot.caption = element_text(size = 7))
-ggsave(plot, file= paste(results, 'vacancy', jur_list2[i], "16 Effective.png", sep=''))#, scale=2)
+ggsave(plot, file= paste(results, 'vacancy', jur_list2[i], "18 Effective.png", sep=''))#, scale=2)
 #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
 output_table<-data.frame(plotdat$yr_id,plotdat$unoccupiable,plotdat$rate,plotdat$reg)
 setnames(output_table, old=c("plotdat.yr_id","plotdat.unoccupiable","plotdat.rate","plotdat.reg"),new=c("Year","Unoccupiable","Jur Vac Rate","Reg Vac Rate"))
@@ -114,7 +114,7 @@ lay <- rbind(c(1,1,1,1,1),
              c(2,2,2,2,2),
              c(2,2,2,2,2))
 output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-ggsave(output, file= paste(results,'vacancy',jur_list2[i], "16 Effective.png", sep=''))#, scale=2))
+ggsave(output, file= paste(results,'vacancy',jur_list2[i], "18 Effective.png", sep=''))#, scale=2))
 }
 
 head(plotdat)
@@ -123,7 +123,7 @@ head(plotdat)
 #CPA plots and tables
 
 
-results<-"plots\\Vacancy\\CPA\\"
+results<-"plots\\Vacancy\\CPA_Eff\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 cpa_list = unique(vac_cpa[["geozone"]])
@@ -141,14 +141,14 @@ for(i in 1:length(cpa_list)) {
     geom_line(aes(x=yr_id, y=reg, colour="Region")) +
     scale_y_continuous(labels = comma, limits=c(0,10))+
     labs(title=paste("Effective Vacancy Rate ", cpa_list[i],'\nand Region, 2016-2050',sep=""),
-         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 16\nNote: Unoccupiable units are not included. Out of range data may not appear on the plot. Refer to the table below for those related data results.",
+         caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 18\nNote: Unoccupiable units are not included. Out of range data may not appear on the plot. Refer to the table below for those related data results.",
          y="Vacancy Rate", 
          x="Year")+
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
           legend.title=element_blank(),
           plot.caption = element_text(size = 7))
-  ggsave(plot, file= paste(results, 'vacancy', cpa_list[i], "16 Effective.png", sep=''))#, scale=2)
+  ggsave(plot, file= paste(results, 'vacancy', cpa_list[i], "18 Effective.png", sep=''))#, scale=2)
   #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
   output_table<-data.frame(plotdat$yr_id,plotdat$unoccupiable,plotdat$rate,plotdat$reg)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.unoccupiable","plotdat.rate","plotdat.reg"),new=c("Year","Unoccupiable","CPA Vacancy Rate","Region Vacancy Rate"))
@@ -162,7 +162,7 @@ for(i in 1:length(cpa_list)) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results,'vacancy',cpa_list[i], "16 Effective.png", sep=''))#, scale=2))
+  ggsave(output, file= paste(results,'vacancy',cpa_list[i], "18 Effective.png", sep=''))#, scale=2))
 }
 
 tail(vac_cpa)

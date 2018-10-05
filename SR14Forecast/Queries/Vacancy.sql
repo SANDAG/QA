@@ -1,4 +1,4 @@
-Use demographic_warehouse
+--Use demographic_warehouse
 
 
 SELECT
