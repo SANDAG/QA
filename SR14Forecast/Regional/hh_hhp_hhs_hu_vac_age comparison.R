@@ -123,10 +123,15 @@ hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","uni
 hh_merge<- hh_merge %>% gather(hh_var, value, households:median_age)
 hh_merge<- hh_merge %>% gather(hh_pctchg, pct_chg, hh_pctchg:vac_pctchg)
 hh_merge<- hh_merge %>% gather(hh_numchg, num_chg, hh_numchg:vac_numchg)
-head(hh_merge_jur)
+
+hh_merge$pct_chg=as.numeric(hh_merge$pct_chg)
 
 hh_merge_jur<-subset(hh_merge, geotype=="jurisdiction")
 hh_merge_cpa<-subset(hh_merge, geotype=="cpa")
+
+head(hh_merge_jur)
+
+class(hh_merge_jur$pctchg)
 
 jur_list = unique(hh_merge_jur[["geozone"]])
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
@@ -148,6 +153,10 @@ for(i in jur_list) {
 }
 
 
+
+gg + geom_text(aes(label=large_county), size=2, data=midwest_sub) + labs(subtitle="With ggplot2::geom_text") + theme(legend.position = "None")   # text
+
+gg + geom_label(aes(label=large_county), size=2, data=midwest_sub, alpha=0.25) + labs(subtitle="With ggplot2::geom_label") + theme(legend.position = "None")  # label
 
 
 for(i in jur_list) {
