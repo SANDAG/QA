@@ -69,7 +69,7 @@ for(i in jur_list) {
         plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year",
-         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=17")
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=18")
     results<-"plots\\hhsize\\jur\\"
     output_table<-plotdat[,c("yr_id","hhp","households","hhs","reg_hhp","reg_hh","reg_hhs")]
     colnames(output_table)[colnames(output_table)=="households"] <- "hh"
@@ -109,7 +109,7 @@ for(i in cpa_list) {
           plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year",
-         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=17") 
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=18") 
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
   i = gsub("\\:","_",i)
