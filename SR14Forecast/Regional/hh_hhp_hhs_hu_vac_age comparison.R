@@ -10,7 +10,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice","ggpubr")
+              "stringr","gridExtra","grid","lattice")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -58,7 +58,7 @@ vac<- vac[order(vac$geotype,vac$geozone,vac$yr_id),]
 
 #calculate number and percent changes
 vac$vac_numchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
-vac$vac_pctchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)/x*100))
+vac$vac_pctchg<- vac$rate
 vac$vac_pctchg<-round(vac$vac_pctchg,digits=2)
 
 vac$units_numchg<- ave(vac$units, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
@@ -152,24 +152,27 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 # Convert all NaN to 0, allows plots to start at base year.
 hh_merge_jur[is.na(hh_merge_jur)] <- 0
-min_pct = round(min(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)-5
-max_pct = round(max(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)+3
+#min_pct = round(min(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)
+#max_pct = round(max(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)
 
 for(i in jur_list) {
   plotdat = subset(hh_merge_jur,hh_merge_jur$geozone==i)
-  #min_pct = round(min(plotdat$pctchg, na.rm=TRUE),digits=0)-1
-  #max_pct = round(max(plotdat$pctchg, na.rm=TRUE),digits=0)+1
+  min_pct = round(min(plotdat$pctchg, na.rm=TRUE),digits=0)
+  max_pct = round(max(plotdat$pctchg, na.rm=TRUE),digits=0)
   plot <- ggplot(plotdat, aes(x=yr_id, y=pctchg,group=measure)) + 
     geom_point(aes(color=measure)) +
-    geom_text(aes(label=paste(values,"\n",round(numchg,2),sep="")),check_overlap=TRUE) +
-    facet_grid(measure ~ .,scales="free_y") + 
+    geom_text(aes(label=paste(round(numchg,2),"\n",values,sep="")),
+              check_overlap=TRUE, size=3) +
+    facet_grid(measure ~ .) + 
     geom_line(aes(color=measure),size=1) + 
-    theme(plot.title = element_text(hjust = 0.5,size=16)) + 
+    theme(plot.title=element_text(hjust = 0.5,size=16), panel.spacing=unit(1,"lines")) + 
     labs(title=paste(i,": Household variable comparison\n (datasource_id=17)",sep='')) +
-    scale_y_continuous(limits=c(min(0,min_pct),max(5,max_pct))) +
+    scale_y_continuous(limits=c(-5,10)) +
     geom_hline(yintercept=0,linetype="dashed",color="red")
   #plot
-  ggsave(plot, file= paste(results,i, '_hh_var_17', ".png", sep=''),
+  gt = ggplot_gtable(ggplot_build(plot))
+  gt$layout$clip = "off"
+  ggsave(gt, file= paste(results,i, '_hh_var_17', ".png", sep=''),
          width=10, height=6, dpi=100)
 }
 
