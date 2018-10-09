@@ -45,12 +45,12 @@ hh$geozone <- gsub("\\*","",hh$geozone)
 hh$geozone <- gsub("\\-","_",hh$geozone)
 hh$geozone <- gsub("\\:","_",hh$geozone)
 
-write.csv(hh,("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\hh_hhp_hhs with change.csv"))
+write.csv(hh,("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 5\\hh_hhp_hhs with change.csv"))
 
 #read in vacancy and median age file
-vac<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Traditional vacancy_17.csv",stringsAsFactors = FALSE)
-median_age_cpa<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\median_age_cpa17.csv",stringsAsFactors = FALSE)
-median_age_jur<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\median_age_jur17.csv",stringsAsFactors = FALSE)
+vac<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 5\\Traditional vacancy_18.csv",stringsAsFactors = FALSE)
+median_age_cpa<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 5\\Median Age\\median_age_cpa18.csv",stringsAsFactors = FALSE)
+median_age_jur<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 5\\Median Age\\median_age_jur18.csv",stringsAsFactors = FALSE)
 median_age<-rbind(median_age_cpa, median_age_jur)
 
 tail(vac)
@@ -103,7 +103,7 @@ hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","uni
 hh_merge<- hh_merge[order(hh_merge$geotype,hh_merge$geozone,hh_merge$yr_id),]
 
 #save out csv
-write.csv(hh_merge,("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\hh_hhp_hhs_hu_vac_age_comparison.csv"))
+write.csv(hh_merge,("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 5\\hh_hhp_hhs_hu_vac_age_comparison.csv"))
 
 head(hh_merge)
 
@@ -166,13 +166,13 @@ for(i in jur_list) {
     facet_grid(measure ~ .) + 
     geom_line(aes(color=measure),size=1) + 
     theme(plot.title=element_text(hjust = 0.5,size=16), panel.spacing=unit(1,"lines")) + 
-    labs(title=paste(i,": Household variable comparison\n (datasource_id=17)",sep='')) +
+    labs(title=paste(i,": Household variable comparison\n (datasource_id=18)",sep='')) +
     scale_y_continuous(limits=c(-5,10)) +
     geom_hline(yintercept=0,linetype="dashed",color="red")
   #plot
   gt = ggplot_gtable(ggplot_build(plot))
   gt$layout$clip = "off"
-  ggsave(gt, file= paste(results,i, '_hh_var_17', ".png", sep=''),
+  ggsave(gt, file= paste(results,i, '_hh_var_18', ".png", sep=''),
          width=10, height=6, dpi=100)
 }
 
@@ -186,6 +186,6 @@ for(i in jur_list) {
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste(i,": Pop by 5 Income Categories\n (unit type 0 and 1)",sep=''))
   #plot
-  ggsave(plot, file= paste(results,i, '_datasource_14_17_income', ".png", sep=''),
+  ggsave(plot, file= paste(results,i, '_datasource_14_18_income', ".png", sep=''),
          width=10, height=6, dpi=100)#, scale=2)
 }
