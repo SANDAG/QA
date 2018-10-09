@@ -10,7 +10,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice")
+              "stringr","gridExtra","grid","lattice","cowplot")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -58,7 +58,7 @@ vac<- vac[order(vac$geotype,vac$geozone,vac$yr_id),]
 
 #calculate number and percent changes
 vac$vac_numchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
-vac$vac_pctchg<- vac$rate
+vac$vac_pctchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)/x*100))
 vac$vac_pctchg<-round(vac$vac_pctchg,digits=2)
 
 vac$units_numchg<- ave(vac$units, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
@@ -151,7 +151,7 @@ results<-"plots\\hh_variable_comparison\\Jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 # Convert all NaN to 0, allows plots to start at base year.
-hh_merge_jur[is.na(hh_merge_jur)] <- 0
+#hh_merge_jur[is.na(hh_merge_jur)] <- 0
 #min_pct = round(min(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)
 #max_pct = round(max(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)
 
@@ -177,15 +177,41 @@ for(i in jur_list) {
 }
 
 
+results<-"plots\\hh_variable_comparison\\Jur_vacs\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
+theme_set(theme_grey())
 for(i in jur_list) {
-  plotdat = subset(Income_Jur,Income_Jur$jurisdiction==i)
-  plotd <- plotdat %>% gather(datasource, POP, POP_17:POP_14)
-  plot <- ggplot(plotd, aes(x=yr, y=POP,group=datasource)) + geom_point(aes(color=datasource)) +
-    facet_grid(hinccat1 ~ unittype,scales="free_y") + geom_line(aes(color=datasource),size=1) + 
-    theme(plot.title = element_text(hjust = 0.5,size=16)) + 
-    labs(title=paste(i,": Pop by 5 Income Categories\n (unit type 0 and 1)",sep=''))
-  #plot
-  ggsave(plot, file= paste(results,i, '_datasource_14_18_income', ".png", sep=''),
-         width=10, height=6, dpi=100)#, scale=2)
+  plotdat <- subset(hh_merge_jur,hh_merge_jur$geozone==i)
+  #plotdat[(plotdat$measure %in% c("households","housing_units","vacancy")),]
+  plot1 <- ggplot(plotdat[(plotdat$measure %in% c("households","housing_units")),], 
+                  aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),"")),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    scale_y_continuous(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plot2 <- ggplot(plotdat[(plotdat$measure %in% c("vacancy")),], aes(x=yr_id, y=values)) +
+    geom_point(aes(color="measure")) +
+    geom_line(aes(color="measure"),size=1) +
+    geom_text(aes(label=ifelse(!is.na(values),paste(round(values,2),"\n",sep=""),"")),size=3) +
+    scale_color_manual(name="",values=c("measure"="green4")) +
+    theme(plot.title=element_blank(),
+      legend.justification = "left") +
+    scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
+  gt1 <- ggplot_gtable(ggplot_build(plot1))
+  gt1$layout$clip = "off"
+  gt2 <- ggplot_gtable(ggplot_build(plot2))
+  gt2$layout$clip = "off"
+  plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
+  ggsave(plotout, file=paste(results,i,"_hh_units_17.png",sep=""),
+         width=12,height=8,dpi=100)
 }
+
+
