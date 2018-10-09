@@ -30,11 +30,6 @@ vacancy13<-sqlQuery(channel,vacancy13_sql)
 write.csv(vacancy, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\vacancy_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 write.csv(vacancy13, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\vacancy_sql13",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
-#read in files in case there is trouble with reading the data in from SQL
-#vacancytest<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Vacancy.csv",stringsAsFactors = FALSE,fileEncoding="UTF-8-BOM")
-#vacancy13<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Vacancy13.csv",stringsAsFactors = FALSE,fileEncoding="UTF-8-BOM")
-
-
 # note city of san diego and san diego region are both named san diego
 # rename San Diego region to 'San Diego Region' and then aggregate
 levels(vacancy$geozone) <- c(levels(vacancy$geozone), "San Diego Region")
@@ -106,7 +101,7 @@ setnames(vacancy_jur, old=c("rate"), new=c("rate14"))
 vacancy_jur<- merge(select(vacancy_jur, yr_id, year, geotype, geozone, jurisdiction_id, rate14, reg14), (select (vacancy13_jur, yr_id, year, geotype, geozone, jurisdiction_id, rate13, reg13)), by.a=c("yr_id","geotype", "geozone"), by.b=c("yr_id","geotype","geozone"),all = TRUE)
 
 #select years 2020 and later - exlcudes 2012 in 13 file and 2016 and 2018 in 14 file
-vacancy_jur= subset(vacancy_jur,yr_id>='2020')
+vacancy_jur= subset(vacancy_jur,yr_id>='2016')
 
 #cpa 
 
@@ -124,7 +119,7 @@ setnames(vacancy_cpa, old=c("rate"), new=c("rate14"))
 vacancy_cpa<- merge(select(vacancy_cpa, yr_id, year, geotype, geozone, rate14, reg14), (select (vacancy13_cpa, yr_id, year, geotype, geozone, rate13, reg13)), by.a=c("yr_id","geotype", "geozone"), by.b=c("yr_id","geotype","geozone"),all = TRUE)
 
 #select years 2020 and later - exlcudes 2012 in 13 file and 2016 and 2018 in 14 file
-vacancy_cpa= subset(vacancy_cpa,yr_id>='2020')
+vacancy_cpa= subset(vacancy_cpa,yr_id>='2016')
 
 #creates a list for reference by the ggplot for loop
 cpa_list = unique(vacancy_cpa[["geozone"]])
@@ -166,7 +161,7 @@ for(i in jur_list[]) {
   #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
   output_table<-data.frame(plotdat$yr_id,plotdat$rate14,plotdat$rate13,plotdat$reg14,plotdat$reg13)
   setnames(output_table, old=c("plotdat.yr_id", "plotdat.rate14","plotdat.rate13","plotdat.reg14","plotdat.reg13"),new=c("Year","Jur Vac 14","Jur Vac 13","Reg Vac 14", "Reg Vac 13"))
-  tt <- ttheme_default(base_size=6,colhead=list(fg_params = list(parse=TRUE)))#Katie: made the table font size smaller 
+  tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE))) 
   #tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
   #colhead = list(fg_params=list(cex = 1.0)),
   #rowhead = list(fg_params=list(cex = 1.0)))
@@ -174,7 +169,7 @@ for(i in jur_list[]) {
   lay <- rbind(c(1,1,1,1,1),
                c(1,1,1,1,1),
                c(1,1,1,1,1),
-               c(2,2,2,2,2),        #I took out one of these to respace it from moving the caption
+               c(2,2,2,2,2),
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
@@ -214,7 +209,7 @@ topbottom <- data.frame(cpa_list_top, cpa_list_bottom)
 names(topbottom) <- c("CPA", "Highest Vacancy Rates SR14", "CPA", "Lowest Vacancy Rates SR14")
 topbottom
 #write into csv 
-write.csv(topbottom, file = "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 4\\Trends\\Vacancy\\vacancyrateshighlow.csv",row.names=FALSE, na="")
+write.csv(topbottom, file = "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 5\\Trends\\Vacancy\\vacancyrateshighlow.csv",row.names=FALSE, na="")
 
 
 
@@ -227,7 +222,7 @@ for(i in 1:length(cpa_list)) {
     geom_line(aes(y=reg13, color="Reg13", linetype="Reg13")) +
     scale_color_manual("",values =c(CPA14="red", Reg14="blue", CPA13="red", Reg13="blue"))+
     scale_linetype_manual("",values=c(CPA14="solid",Reg14="solid",CPA13="longdash",Reg13="longdash"))+
-    scale_y_continuous(labels = comma, limits=c(0, max_y_val))+  #dynamic y scale 
+    scale_y_continuous(labels = comma, limits=c(0, 12))+  #dynamic y scale 
     labs(title=paste(cpa_list[i],' SR14 to 13 Vacancy Rate\nand Region, 2016-2050',sep=""),
               y="Vacancy Rate", 
               x="Year")+
@@ -239,7 +234,7 @@ for(i in 1:length(cpa_list)) {
   #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
   output_table<-data.frame(plotdat$yr_id,plotdat$rate14,plotdat$rate13,plotdat$reg14,plotdat$reg13)
   setnames(output_table, old=c("plotdat.yr_id", "plotdat.rate14","plotdat.rate13","plotdat.reg14","plotdat.reg13"),new=c("Year","CPA Vac 14","CPA Vac 13","Reg Vac 14", "Reg Vac 13"))
-  tt <- ttheme_default(base_size=6,colhead=list(fg_params = list(parse=TRUE)))# made table font size smaller
+  tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   #tt <- ttheme_default(core = list(fg_params=list(cex = 1.0)),
   #                    colhead = list(fg_params=list(cex = 1.0)),
   #                   rowhead = list(fg_params=list(cex = 1.0)))
@@ -247,7 +242,7 @@ for(i in 1:length(cpa_list)) {
   lay <- rbind(c(1,1,1,1,1),
                c(1,1,1,1,1),
                c(1,1,1,1,1),
-               c(2,2,2,2,2),        #I took out one of these to respace it from moving the caption
+               c(2,2,2,2,2),
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
