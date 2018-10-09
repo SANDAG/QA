@@ -69,7 +69,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
     scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=17")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=18")+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -91,7 +91,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
                  c(2,2,2,2,2),
                  c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
+  ggsave(output, file= paste(results, 'households', i, "18.png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
@@ -119,7 +119,7 @@ for(i in cpa_list) {
     scale_colour_manual(values = c("blue")) +
     labs(title=paste("Change in Number of Households\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=17")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=18")+
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -144,7 +144,7 @@ for(i in cpa_list) {
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
   i = gsub("\\:","_",i)
-  ggsave(output, file= paste(results, 'households', i, ".png", sep=''),
+  ggsave(output, file= paste(results, 'households', i, "18.png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
