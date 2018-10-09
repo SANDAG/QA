@@ -190,21 +190,21 @@ for(i in jur_list) {
     geom_line(aes(color=measure),size=1) +
     geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),"")),size=3) +
     theme(plot.title=element_text(hjust = 0.5,size=16),
-          panel.spacing=unit(1,"lines"),
+          #panel.spacing=unit(1,"lines"),
           legend.justification = "left",
           axis.title.x=element_blank(),
           axis.text.x=element_blank(),
           axis.ticks.x=element_blank()) + 
-    scale_y_continuous(limits=c(.9*min(values),1.1*max(values))) +
+    #(limits=c(.9*min(values),1.1*max(values))) +
     labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
   plot2 <- ggplot(plotdat[(plotdat$measure %in% c("vacancy")),], aes(x=yr_id, y=values)) +
-    geom_point(aes(color="measure")) +
-    geom_line(aes(color="measure"),size=1) +
+    geom_point(aes(color="vacancy_rate")) +
+    geom_line(aes(color="vacancy_rate"),size=1) +
     geom_text(aes(label=ifelse(!is.na(values),paste(round(values,2),"\n",sep=""),"")),size=3) +
-    scale_color_manual(name="",values=c("measure"="green4")) +
+    scale_color_manual(name="",values=c("vacancy_rate"="green4")) +
     theme(plot.title=element_blank(),
-      legend.justification = "left") +
-    scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
+      legend.justification = "left") #+
+    #scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
   gt1 <- ggplot_gtable(ggplot_build(plot1))
   gt1$layout$clip = "off"
   gt2 <- ggplot_gtable(ggplot_build(plot2))
