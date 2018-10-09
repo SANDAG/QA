@@ -67,7 +67,7 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\Vacancy\\Jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-write.csv(vac,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\Traditional vacancy_17.csv")
+write.csv(vac,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 5\\Traditional vacancy_18.csv")
 
 tail(vac_region)
 
