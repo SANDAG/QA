@@ -188,7 +188,7 @@ for(i in jur_list) {
                   aes(x=yr_id, y=values, group=measure)) +
     geom_point(aes(color=measure)) +
     geom_line(aes(color=measure),size=1) +
-    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),"")),size=3) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
     theme(plot.title=element_text(hjust = 0.5,size=16),
           #panel.spacing=unit(1,"lines"),
           legend.justification = "left",
@@ -214,4 +214,39 @@ for(i in jur_list) {
          width=12,height=8,dpi=100)
 }
 
+results<-"plots\\hh_variable_comparison\\Jur_hhs\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
+
+for(i in jur_list) {
+  plotdat <- subset(hh_merge_jur,hh_merge_jur$geozone==i)
+  #plotdat[(plotdat$measure %in% c("households","hh_pop","vacancy")),]
+  plot1 <- ggplot(plotdat[(plotdat$measure %in% c("households","hh_pop")),], 
+                  aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          #panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    #(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plot2 <- ggplot(plotdat[(plotdat$measure %in% c("hh_size")),], aes(x=yr_id, y=values)) +
+    geom_point(aes(color="hh_size")) +
+    geom_line(aes(color="hh_size"),size=1) +
+    geom_text(aes(label=ifelse(!is.na(values),paste(round(values,2),"\n",sep=""),"")),size=3) +
+    scale_color_manual(name="",values=c("hh_size"="green4")) +
+    theme(plot.title=element_blank(),
+          legend.justification = "left") #+
+  #scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
+  gt1 <- ggplot_gtable(ggplot_build(plot1))
+  gt1$layout$clip = "off"
+  gt2 <- ggplot_gtable(ggplot_build(plot2))
+  gt2$layout$clip = "off"
+  plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
+  ggsave(plotout, file=paste(results,i,"_hh_units_17.png",sep=""),
+         width=12,height=8,dpi=100)
+}
