@@ -96,8 +96,14 @@ hh_merge<-merge(hh_merge, median_age, by.x=c("yr_id", "geotype", "geozone"), by.
 #delete unneeded columns
 hh_merge[c("X.x", "hh", "available", "year", "yr", "X.y")]<-list(NULL)
 
+# add theoretical household pop based on household size of 2.5
+hh_merge$hhp2.5.values = hh_merge$households * 2.5
+hh_merge$hhp2.5.numchg = NA
+hh_merge$hhp2.5.pctchg = NA
 #reorder columns
-hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","units","unoccupiable","vac_rate","median_age","hh_numchg","hhp_numchg","hhs_numchg","hh_pctchg","hhp_pctchg","hhs_pctchg","units_numchg","units_pctchg","vac_numchg","vac_pctchg","age_numchg","age_pctchg")]
+hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","units","unoccupiable","vac_rate","median_age","hhp2.5.values",
+                       "hh_numchg","hhp_numchg","hhs_numchg","hh_pctchg","hhp_pctchg","hhs_pctchg","hhp2.5.numchg",
+                       "units_numchg","units_pctchg","vac_numchg","vac_pctchg","age_numchg","age_pctchg","hhp2.5.pctchg")]
 
 #sort file
 hh_merge<- hh_merge[order(hh_merge$geotype,hh_merge$geozone,hh_merge$yr_id),]
@@ -110,24 +116,27 @@ head(hh_merge)
 #delete unneeded columns
 hh_merge["unoccupiable"]<-list(NULL)
 #reorder columns
-hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","units","vac_rate","median_age","hh_numchg","hhp_numchg","hhs_numchg","units_numchg","vac_numchg","age_numchg","hh_pctchg","hhp_pctchg","hhs_pctchg","units_pctchg","vac_pctchg","age_pctchg")]
+hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","units","vac_rate","median_age","hhp2.5.values",
+                       "hh_numchg","hhp_numchg","hhs_numchg","units_numchg","vac_numchg","age_numchg","hhp2.5.numchg", 
+                       "hh_pctchg","hhp_pctchg","hhs_pctchg","units_pctchg","vac_pctchg","age_pctchg","hhp2.5.pctchg")]
 
 #Convert all values to NaN (numerical missing value)
 hh_merge[is.na(hh_merge)] <- NaN
 
 # Rename columns to help reshape function work properly
-names(hh_merge)[4:21] <- c("hh.values","hhp.values","hhs.values","units.values","vac.values","age.values",
-                           "hh.numchg","hhp.numchg","hhs.numchg","units.numchg","vac.numchg","age.numchg",
-                           "hh.pctchg","hhp.pctchg","hhs.pctchg","units.pctchg","vac.pctchg","age.pctchg")
+names(hh_merge)[4:24] <- c("hh.values","hhp.values","hhs.values","units.values","vac.values","age.values","hhp2.5.values",
+                           "hh.numchg","hhp.numchg","hhs.numchg","units.numchg","vac.numchg","age.numchg","hhp2.5.numchg",
+                           "hh.pctchg","hhp.pctchg","hhs.pctchg","units.pctchg","vac.pctchg","age.pctchg","hhp2.5.pctchg")
+
 
 #Reshape data from wide to long
 hh_merge_long <- reshape(hh_merge,
                          direction="long",
                          idvar=c("yr_id","geozone","geotype"),
-                         varying=list(c(4:9),c(10:15),c(16:21)),
+                         varying=list(c(4:10),c(11:17),c(18:24)),
                          timevar="measure", 
                          v.names=c("values","numchg","pctchg"),
-                         times=c("households","hh_pop","hh_size","housing_units","vacancy","median_age"))
+                         times=c("households","hh_pop","hh_size","housing_units","vacancy","median_age","hhp2.5"))
 
 #Fill NaN pctchg (occurs when there is never a value change) with 0 when numchg = 0
 hh_merge_long$pctchg <- ifelse(hh_merge_long$numchg==0,0,hh_merge_long$pctchg)
@@ -250,3 +259,59 @@ for(i in jur_list) {
   ggsave(plotout, file=paste(results,i,"_hh_units_17.png",sep=""),
          width=12,height=8,dpi=100)
 }
+
+
+# with theoretical pop with household size of 2.5
+results<-"plots\\hh_variable_comparison\\Jur_hhs_2.5\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+for(i in jur_list) {
+  plotdat <- subset(hh_merge_jur,hh_merge_jur$geozone==i)
+  #plotdat[(plotdat$measure %in% c("households","hh_pop","vacancy")),]
+  plot1 <- ggplot(plotdat[(plotdat$measure %in% c("households","hh_pop","hhp2.5")),], 
+                  aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    #geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),'')),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          #panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    #(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plot1b <- ggplot(plotdat[(plotdat$measure %in% c("households")),], 
+                   aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    #geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),'')),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          #panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    #(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plot2 <- ggplot(plotdat[(plotdat$measure %in% c("hh_size")),], aes(x=yr_id, y=values)) +
+    geom_point(aes(color="hh_size")) +
+    geom_line(aes(color="hh_size"),size=1) +
+    geom_text(aes(label=ifelse(!is.na(values),paste(round(values,2),"\n",sep=""),"")),size=3) +
+    scale_color_manual(name="",values=c("hh_size"="green4")) +
+    theme(plot.title=element_blank(),
+          legend.justification = "left") #+
+  #scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
+  gt1 <- ggplot_gtable(ggplot_build(plot1))
+  gt1$layout$clip = "off"
+  gt1b <- ggplot_gtable(ggplot_build(plot1b))
+  gt1b$layout$clip = "off"
+  gt2 <- ggplot_gtable(ggplot_build(plot2))
+  gt2$layout$clip = "off"
+  #plotout <- plot_grid(gt1b,gt1,gt2,align="hv",ncol=1,rel_heights=c(1,1,1))
+  plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
+  ggsave(plotout, file=paste(results,i,"_hh_units_17.png",sep=""),
+         width=12,height=8,dpi=100)
+}
+
