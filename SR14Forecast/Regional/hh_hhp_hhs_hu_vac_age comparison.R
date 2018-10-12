@@ -24,6 +24,12 @@ odbcClose(channel)
 #save a time stamped verion of the raw file from SQL
 write.csv(hh, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\hh_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
+#rename region value for match
+hh$geozone[hh$geotype =="region"]<- "Region"
+hh$geozone <- gsub("\\*","",hh$geozone)
+hh$geozone <- gsub("\\-","_",hh$geozone)
+hh$geozone <- gsub("\\:","_",hh$geozone)
+
 #sort file
 hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 
@@ -39,11 +45,7 @@ hh$hh_pctchg<-round(hh$hh_pctchg,digits=2)
 hh$hhp_pctchg<-round(hh$hhp_pctchg,digits=2)
 hh$hhs_pctchg<-round(hh$hhs_pctchg,digits=2)
 
-#rename region value for match
-hh$geozone[hh$geotype =="region"]<- "Region"
-hh$geozone <- gsub("\\*","",hh$geozone)
-hh$geozone <- gsub("\\-","_",hh$geozone)
-hh$geozone <- gsub("\\:","_",hh$geozone)
+
 
 write.csv(hh,("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 5\\hh_hhp_hhs with change.csv"))
 
@@ -120,7 +122,7 @@ hh_merge<-hh_merge[, c("yr_id","geotype","geozone","households","hhp","hhs","uni
                        "hh_numchg","hhp_numchg","hhs_numchg","units_numchg","vac_numchg","age_numchg","hhp2.5.numchg", 
                        "hh_pctchg","hhp_pctchg","hhs_pctchg","units_pctchg","vac_pctchg","age_pctchg","hhp2.5.pctchg")]
 
-#Convert all values to NaN (numerical missing value)
+#Convert all missing values to NaN (numerical missing value)
 hh_merge[is.na(hh_merge)] <- NaN
 
 # Rename columns to help reshape function work properly
@@ -144,12 +146,18 @@ hh_merge_long$pctchg <- ifelse(hh_merge_long$numchg==0,0,hh_merge_long$pctchg)
 #Reconvert all values to NaN (numerical missing value, above line converted to NA)
 hh_merge_long[is.na(hh_merge_long)] <- NaN
 
+# Reorder index starting at 1
 rownames(hh_merge_long) <- NULL
 
 head(hh_merge_long)
 
 hh_merge_jur<-subset(hh_merge_long, geotype=="jurisdiction")
 hh_merge_cpa<-subset(hh_merge_long, geotype=="cpa")
+hh_merge_region<-subset(hh_merge_long, geotype=="region")
+
+#############################################################################################
+### JURISDICTIONS ### JURISDICTIONS ### JURISDICTIONS ### JURISDICTIONS ### JURISDICTIONS ###
+#############################################################################################
 
 head(hh_merge_jur)
 
@@ -163,6 +171,8 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 #hh_merge_jur[is.na(hh_merge_jur)] <- 0
 #min_pct = round(min(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)
 #max_pct = round(max(hh_merge_jur$pctchg, na.rm=TRUE),digits=0)
+
+theme_set(theme_grey())
 
 for(i in jur_list) {
   plotdat = subset(hh_merge_jur,hh_merge_jur$geozone==i)
@@ -189,7 +199,7 @@ for(i in jur_list) {
 results<-"plots\\hh_variable_comparison\\Jur_vacs\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-theme_set(theme_grey())
+
 for(i in jur_list) {
   plotdat <- subset(hh_merge_jur,hh_merge_jur$geozone==i)
   #plotdat[(plotdat$measure %in% c("households","housing_units","vacancy")),]
@@ -197,7 +207,7 @@ for(i in jur_list) {
                   aes(x=yr_id, y=values, group=measure)) +
     geom_point(aes(color=measure)) +
     geom_line(aes(color=measure),size=1) +
-    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",values,sep=""),values)),size=3) +
     theme(plot.title=element_text(hjust = 0.5,size=16),
           #panel.spacing=unit(1,"lines"),
           legend.justification = "left",
@@ -219,7 +229,7 @@ for(i in jur_list) {
   gt2 <- ggplot_gtable(ggplot_build(plot2))
   gt2$layout$clip = "off"
   plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
-  ggsave(plotout, file=paste(results,i,"_hh_units_17.png",sep=""),
+  ggsave(plotout, file=paste(results,i,"_hh_units_18.png",sep=""),
          width=12,height=8,dpi=100)
 }
 
@@ -312,6 +322,175 @@ for(i in jur_list) {
   #plotout <- plot_grid(gt1b,gt1,gt2,align="hv",ncol=1,rel_heights=c(1,1,1))
   plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
   ggsave(plotout, file=paste(results,i,"_hh_units_17.png",sep=""),
+         width=12,height=8,dpi=100)
+}
+
+#############################################################################################
+### CPAS ### CPAS ### CPAS ### CPAS ### CPAS ### CPAS ### CPAS ### CPAS ### CPAS ### CPAS ###
+#############################################################################################
+
+head(hh_merge_cpa)
+
+cpa_list = unique(hh_merge_cpa[["geozone"]])
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+
+results<-"plots\\hh_variable_comparison\\cpa\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+theme_set(theme_grey())
+
+for(i in cpa_list) {
+  plotdat = subset(hh_merge_cpa,hh_merge_cpa$geozone==i)
+  min_pct = round(min(plotdat$pctchg, na.rm=TRUE),digits=0)
+  max_pct = round(max(plotdat$pctchg, na.rm=TRUE),digits=0)
+  plot <- ggplot(plotdat, aes(x=yr_id, y=pctchg,group=measure)) + 
+    geom_point(aes(color=measure)) +
+    geom_text(aes(label=paste(round(numchg,2),"\n",values,sep="")),
+              check_overlap=TRUE, size=3) +
+    facet_grid(measure ~ .) + 
+    geom_line(aes(color=measure),size=1) + 
+    theme(plot.title=element_text(hjust = 0.5,size=16), panel.spacing=unit(1,"lines")) + 
+    labs(title=paste(i,": Household variable comparison\n (datasource_id=18)",sep='')) +
+    scale_y_continuous(limits=c(-5,10)) +
+    geom_hline(yintercept=0,linetype="dashed",color="red")
+  #plot
+  gt = ggplot_gtable(ggplot_build(plot))
+  gt$layout$clip = "off"
+  ggsave(gt, file= paste(results,i, '_hh_var_18', ".png", sep=''),
+         width=10, height=6, dpi=100)
+}
+
+
+results<-"plots\\hh_variable_comparison\\cpa_vacs\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+
+for(i in cpa_list) {
+  plotdat <- subset(hh_merge_cpa,hh_merge_cpa$geozone==i)
+  # plotdat <- merge(plotdat, hh_merge_region, by.x=c("yr_id", "measure"), by.y=c("yr_id", "measure"), all=TRUE, suffixes=c(".zone",".region"))
+  # plotdat <- plotdat[order(plotdat$measure,plotdat$yr_id),]
+  #plotdat[(plotdat$measure %in% c("households","housing_units","vacancy")),]
+  plot1 <- ggplot(plotdat[(plotdat$measure %in% c("households","housing_units")),], 
+                  aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          #panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    #(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plotdat <- rbind(plotdat,hh_merge_region)
+  plot2 <- ggplot(plotdat[(plotdat$measure %in% c("vacancy")),], aes(x=yr_id, y=values, group=geozone)) +
+    geom_point(aes(color=geozone)) +
+    geom_line(aes(color=geozone),size=1) +
+    #geom_text(aes(label=ifelse(!is.na(values),paste(round(values,2),"\n",sep=""),"")),size=3) +
+    #scale_color_manual(name="",values=c("vacancy_rate"="green4")) +
+    theme(legend.justification = "left") +
+    ggtitle("Vacancy Rate") +
+    scale_color_manual(values=c("green4","gold"))
+  #scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
+  gt1 <- ggplot_gtable(ggplot_build(plot1))
+  gt1$layout$clip = "off"
+  gt2 <- ggplot_gtable(ggplot_build(plot2))
+  gt2$layout$clip = "off"
+  plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
+  ggsave(plotout, file=paste(results,i,"_hh_units_18.png",sep=""),
+         width=12,height=8,dpi=100)
+}
+
+results<-"plots\\hh_variable_comparison\\cpa_hhs\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+
+for(i in cpa_list) {
+  plotdat <- subset(hh_merge_cpa,hh_merge_cpa$geozone==i)
+  #plotdat[(plotdat$measure %in% c("households","hh_pop","vacancy")),]
+  plot1 <- ggplot(plotdat[(plotdat$measure %in% c("households","hh_pop")),], 
+                  aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          #panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    #(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plot2 <- ggplot(plotdat[(plotdat$measure %in% c("hh_size")),], aes(x=yr_id, y=values)) +
+    geom_point(aes(color="hh_size")) +
+    geom_line(aes(color="hh_size"),size=1) +
+    geom_text(aes(label=ifelse(!is.na(values),paste(round(values,2),"\n",sep=""),"")),size=3) +
+    scale_color_manual(name="",values=c("hh_size"="green4")) +
+    theme(plot.title=element_blank(),
+          legend.justification = "left") #+
+  #scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
+  gt1 <- ggplot_gtable(ggplot_build(plot1))
+  gt1$layout$clip = "off"
+  gt2 <- ggplot_gtable(ggplot_build(plot2))
+  gt2$layout$clip = "off"
+  plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
+  ggsave(plotout, file=paste(results,i,"_hh_units_18.png",sep=""),
+         width=12,height=8,dpi=100)
+}
+
+
+# with theoretical pop with household size of 2.5
+results<-"plots\\hh_variable_comparison\\cpa_hhs_2.5\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+for(i in cpa_list) {
+  plotdat <- subset(hh_merge_cpa,hh_merge_cpa$geozone==i)
+  #plotdat[(plotdat$measure %in% c("households","hh_pop","vacancy")),]
+  plot1 <- ggplot(plotdat[(plotdat$measure %in% c("households","hh_pop","hhp2.5")),], 
+                  aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    #geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),'')),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          #panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    #(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plot1b <- ggplot(plotdat[(plotdat$measure %in% c("households")),], 
+                   aes(x=yr_id, y=values, group=measure)) +
+    geom_point(aes(color=measure)) +
+    geom_line(aes(color=measure),size=1) +
+    #geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),values)),size=3) +
+    geom_text(aes(label=ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),'')),size=3) +
+    theme(plot.title=element_text(hjust = 0.5,size=16),
+          #panel.spacing=unit(1,"lines"),
+          legend.justification = "left",
+          axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank()) + 
+    #(limits=c(.9*min(values),1.1*max(values))) +
+    labs(title=paste(i,": Household and Housing Units Comparison\n (datasource_id=18)",sep=''))
+  plot2 <- ggplot(plotdat[(plotdat$measure %in% c("hh_size")),], aes(x=yr_id, y=values)) +
+    geom_point(aes(color="hh_size")) +
+    geom_line(aes(color="hh_size"),size=1) +
+    geom_text(aes(label=ifelse(!is.na(values),paste(round(values,2),"\n",sep=""),"")),size=3) +
+    scale_color_manual(name="",values=c("hh_size"="green4")) +
+    theme(plot.title=element_blank(),
+          legend.justification = "left") #+
+  #scale_y_continuous(limits=c(.9*min(values),1.1*max(values)))
+  gt1 <- ggplot_gtable(ggplot_build(plot1))
+  gt1$layout$clip = "off"
+  gt1b <- ggplot_gtable(ggplot_build(plot1b))
+  gt1b$layout$clip = "off"
+  gt2 <- ggplot_gtable(ggplot_build(plot2))
+  gt2$layout$clip = "off"
+  #plotout <- plot_grid(gt1b,gt1,gt2,align="hv",ncol=1,rel_heights=c(1,1,1))
+  plotout <- plot_grid(gt1,gt2,align="hv",ncol=1,rel_heights=c(2,1))
+  ggsave(plotout, file=paste(results,i,"_hh_units_18.png",sep=""),
          width=12,height=8,dpi=100)
 }
 
