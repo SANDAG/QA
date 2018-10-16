@@ -58,21 +58,6 @@ median_age<-rbind(median_age_cpa, median_age_jur)
 tail(vac)
 vac<- vac[order(vac$geotype,vac$geozone,vac$yr_id),]
 
-#calculate number and percent changes
-vac$vac_numchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
-vac$vac_pctchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)/x*100))
-vac$vac_pctchg<-round(vac$vac_pctchg,digits=2)
-
-vac$units_numchg<- ave(vac$units, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
-vac$units_pctchg<- ave(vac$units, factor(vac$geozone), FUN=function(x) c(NA,diff(x)/x*100))
-vac$units_pctchg<-round(vac$units_pctchg,digits=2)
-
-median_age$age_numchg<- ave(median_age$median_age, factor(median_age$geozone), FUN=function(x) c(NA,diff(x)))
-median_age$age_pctchg<- ave(median_age$median_age, factor(median_age$geozone), FUN=function(x) c(NA,diff(x)/x*100))
-median_age$age_pctchg<-round(median_age$age_pctchg,digits=2)
-
-setnames(vac, old=c("rate"),new=c("vac_rate"))
-
 #rename region value for match
 vac$geozone[vac$geotype =="region"]<- "Region"
 
@@ -88,6 +73,21 @@ median_age$geozone[median_age$geotype =="region"]<- "Region"
 median_age$geozone <- gsub("\\*","",median_age$geozone)
 median_age$geozone <- gsub("\\-","_",median_age$geozone)
 median_age$geozone <- gsub("\\:","_",median_age$geozone)
+
+#calculate number and percent changes
+vac$vac_numchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
+vac$vac_pctchg<- ave(vac$rate, factor(vac$geozone), FUN=function(x) c(NA,diff(x)/x*100))
+vac$vac_pctchg<-round(vac$vac_pctchg,digits=2)
+
+vac$units_numchg<- ave(vac$units, factor(vac$geozone), FUN=function(x) c(NA,diff(x)))
+vac$units_pctchg<- ave(vac$units, factor(vac$geozone), FUN=function(x) c(NA,diff(x)/x*100))
+vac$units_pctchg<-round(vac$units_pctchg,digits=2)
+
+median_age$age_numchg<- ave(median_age$median_age, factor(median_age$geozone), FUN=function(x) c(NA,diff(x)))
+median_age$age_pctchg<- ave(median_age$median_age, factor(median_age$geozone), FUN=function(x) c(NA,diff(x)/x*100))
+median_age$age_pctchg<-round(median_age$age_pctchg,digits=2)
+
+setnames(vac, old=c("rate"),new=c("vac_rate"))
 
 #merge hh with vacancy
 hh_merge<-merge(hh, vac, by.x=c("yr_id", "geotype", "geozone"), by.y=c("yr_id", "geotype", "geozone"),all=TRUE)
@@ -154,6 +154,7 @@ head(hh_merge_long)
 hh_merge_jur<-subset(hh_merge_long, geotype=="jurisdiction")
 hh_merge_cpa<-subset(hh_merge_long, geotype=="cpa")
 hh_merge_region<-subset(hh_merge_long, geotype=="region")
+hh_merge_region$geozone <- "~Region"
 
 #############################################################################################
 ### JURISDICTIONS ### JURISDICTIONS ### JURISDICTIONS ### JURISDICTIONS ### JURISDICTIONS ###
