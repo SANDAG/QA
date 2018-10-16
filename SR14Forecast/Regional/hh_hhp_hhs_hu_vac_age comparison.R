@@ -176,8 +176,8 @@ theme_set(theme_grey())
 
 for(i in jur_list) {
   plotdat = subset(hh_merge_jur,hh_merge_jur$geozone==i)
-  min_pct = round(min(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, na.rm=TRUE),digits=2)
-  max_pct = round(max(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, na.rm=TRUE),digits=2)
+  min_pct = round(range(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, finite=TRUE)[1],digits=2)
+  max_pct = round(range(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, finite=TRUE)[2],digits=2)
   plot <- ggplot(plotdat, aes(x=yr_id, y=pctchg,group=measure)) + 
     geom_point(aes(color=measure)) +
     geom_text(aes(label=paste(round(numchg,2),"\n",values,sep="")),
@@ -344,9 +344,8 @@ theme_set(theme_grey())
 
 for(i in cpa_list) {
   plotdat = subset(hh_merge_cpa,hh_merge_cpa$geozone==i)
-  min_pct = round(min(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, na.rm=TRUE),digits=2)
-  #this currently fails when it hits east elliot because max_pct = Inf
-  max_pct = round(max(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, na.rm=TRUE),digits=2)
+  min_pct = round(range(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, finite=TRUE)[1],digits=2)
+  max_pct = round(range(plotdat[!(plotdat$measure %in% c("vacancy")),]$pctchg, finite=TRUE)[2],digits=2)
   plot <- ggplot(plotdat, aes(x=yr_id, y=pctchg,group=measure)) + 
     geom_point(aes(color=measure)) +
     geom_text(aes(label=paste(round(numchg,2),"\n",values,sep="")),
