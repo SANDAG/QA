@@ -25,9 +25,9 @@ mi_region<-sqlQuery(channel,median_income_region_sql,stringsAsFactors = FALSE)
 odbcClose(channel)
 
 #save a time stamped verion of the raw file from SQL
-write.csv(mi_jur, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\mijur_sql_17",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
-write.csv(mi_cpa, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\micpa_sql_17",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
-write.csv(mi_region, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\miregion_sql_17",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(mi_jur, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\mijur_sql_18",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(mi_cpa, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\micpa_sql_18",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+write.csv(mi_region, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\miregion_sql_18",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
 head(mi_region)
 #remove unneeded characters from geozone values.
@@ -75,10 +75,10 @@ for(i in 1:length(jur_list)){
   plot<-ggplot(plotdat,aes(x=yr_id, y=median_inc, colour=geozone)) +
     geom_line(size=1)+ 
     geom_line(aes(x=yr_id, y = reg, colour = "Region")) +
-    scale_y_continuous(label=comma,limits=c(41000,95000))+ 
+    scale_y_continuous(label=comma,limits=c(50000,100000))+ 
     labs(title=paste("Median Income ", jur_list2[i],' and\n Region, 2016-2050',sep=''), 
          y=" median income", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_income_all_zones 17
+         caption="Sources: demographic warehouse: dbo.compute_median_income_all_zones 18
          \nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
@@ -86,7 +86,7 @@ for(i in 1:length(jur_list)){
     theme(legend.position = "bottom",
           legend.title=element_blank(),
           plot.caption = element_text(size = 7))
-  ggsave(plot, file= paste(results, 'median_inc', jur_list2[i],'17', ".png", sep=''))#, scale=2)
+  ggsave(plot, file= paste(results, 'median_inc', jur_list2[i],'18', ".png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$median_inc,plotdat$mi_numchg,plotdat$mi_pctchg,plotdat$reg)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.median_inc","plotdat.mi_numchg","plotdat.mi_pctchg","plotdat.reg"),new=c("Year","Median Inc","Num Chg","Pct Chg","Region Median Inc"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
@@ -96,7 +96,7 @@ for(i in 1:length(jur_list)){
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results, 'median_inc', jur_list2[i],'17', ".png", sep=''))#, scale=2)
+  ggsave(output, file= paste(results, 'median_inc', jur_list2[i],'18', ".png", sep=''))#, scale=2)
 }
 
 
@@ -114,17 +114,17 @@ for(i in 1:length(cpa_list)){
   plot<-ggplot(plotdat,aes(x=yr_id, y=median_inc, colour=geozone)) +
     geom_line(size=1)+ 
     geom_line(aes(x=yr_id, y = reg, colour = "Region")) +
-    scale_y_continuous(label=comma,limits=c(41000,95000))+ 
+    scale_y_continuous(label=comma,limits=c(50000,100000))+ 
     labs(title=paste("Median Income ", cpa_list[i],' and\n Region, 2016-2050',sep=''), 
          y=" median income", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_income_all_zones 17\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
+         caption="Sources: demographic warehouse: dbo.compute_median_income_all_zones 18\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank(),
           plot.caption = element_text(size = 7))
-  ggsave(plot, file= paste(results, 'median_income', cpa_list[i], '17', ".png", sep=''))#, scale=2)
+  ggsave(plot, file= paste(results, 'median_income', cpa_list[i], '18', ".png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$median_inc,plotdat$mi_numchg,plotdat$mi_pctchg,plotdat$reg)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.median_inc","plotdat.mi_numchg","plotdat.mi_pctchg","plotdat.reg"),new=c("Year","Median Inc","Num Chg","Pct Chg","Region Median Inc"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
@@ -134,9 +134,10 @@ for(i in 1:length(cpa_list)){
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results, 'median_income', cpa_list[i],'17', ".png", sep=''))#, scale=2)
+  ggsave(output, file= paste(results, 'median_income', cpa_list[i],'18', ".png", sep=''))#, scale=2)
 }
 
-
-
-
+cpa_high<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc > 100000])
+unique(cpa_high$geozone)
+cpa_subset<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc < 50000]) 
+unique(cpa_subset$geozone)
