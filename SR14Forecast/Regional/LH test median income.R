@@ -14,7 +14,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 
-inc_2020<-read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.3\\input\\2020\\households.csv")
+inc_2020<-read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.3\\input\\2020\\mgra13_based_input2020.csv")
 
 colnames(inc_2020)
 
@@ -43,3 +43,11 @@ mi_cpa$geozone <- gsub("\\:","_",mi_cpa$geozone)
 
 mi_jur$reg<-mi_region[match(mi_jur$yr_id, mi_region$yr_id),"median_inc"]
 mi_cpa$reg<-mi_region[match(mi_cpa$yr_id, mi_region$yr_id),"median_inc"]
+
+head(mi_region,9)
+
+head(inc_2020)
+
+
+
+median(inc_2020$hh)
