@@ -116,13 +116,46 @@ head(cum_dist,15)
 
 cum_dist$med_inc<-cum_dist$lower_bound+((cum_dist$hh_half-(cum_dist$cum_sum-cum_dist$hh))/cum_dist$hh)*cum_dist$interval_width
 
-cum_dist$flag<-0
-cum_dist$flag[cum_dist$cum_sum>cum_dist$hh_half]<-1
+cum_dist$flag <- NA
+cum_dist$flag <- 0
+cum_dist$flag[cum_dist$cum_sum>cum_dist$hh_half] <- 1
 
 cum_dist<- subset(cum_dist, cum_dist$flag==1)
 
-cum_dist<-cum_dist %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc=first(med_inc))
+cum_dist<-cum_dist %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc_13.2.2=first(med_inc))
 
+
+# add series 14 median income
+
+datasource_id = 17
+
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+
+median_income_cpa_sql = getSQL("../Queries/median_income_cpa_ds_id.sql")
+median_income_cpa_sql <- gsub("ds_id", datasource_id, median_income_cpa_sql)
+mi_cpa<-sqlQuery(channel,median_income_cpa_sql,stringsAsFactors = FALSE)
+# get cpa_id that corresponds to cpa_name
+cpa_id_sql = 'SELECT  distinct(cpa_id),[cpa] FROM [demographic_warehouse].[dim].[mgra_denormalize] WHERE series = 14'
+cpa_id<-sqlQuery(channel,cpa_id_sql,stringsAsFactors = FALSE)
+odbcClose(channel)
+
+mi_cpa$cpa_id<-cpa_id[match(mi_cpa$geozone,cpa_id$cpa),"cpa_id"]
+
+names(mi_cpa)[names(mi_cpa) == 'median_inc'] <- paste('med_inc_ds_id_',datasource_id)
+
+mi_cpa<- subset(mi_cpa, mi_cpa$cpa_id!=0)
+
+mi_cpa = subset(mi_cpa, !(yr_id %in% c(2016,2018,2030,2040,2045)))
+
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+tempdir<-"temp_files\\"
+ifelse(!dir.exists(file.path(maindir,tempdir)), dir.create(file.path(maindir,tempdir), showWarnings = TRUE, recursive=TRUE),0)
+write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",".csv",sep=""))
+write.csv(cum_dist, paste(tempdir,"mi_cpa_abm",".csv",sep=""))
+# write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+
+
+################################################################
 
 
 median_inc<-aggregate(income_group_id~yr+cpa_13, data = cum_dist, min)
