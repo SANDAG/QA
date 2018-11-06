@@ -109,6 +109,62 @@ cum_dist$hh_half<-num_hh_cpa[match(paste(cum_dist$cpa_13, cum_dist$yr), paste(nu
 head(inc_dist)
 head(cum_dist,15)
 
+#######################################
+#######################################
+#jur
+
+#should we match to jurisdiction_2015 or 2016
+inc_abm_13_jur <- aggregate (cbind(cat1, cat2, cat3, cat4, cat5)~jurisdiction_2015+yr, data=inc_abm_13, sum)
+inc_abm_13_jur <- melt(inc_abm_13_jur, id.vars=c("jurisdiction_2015", "yr"))
+setnames(inc_abm_13_jur,old=c("variable","value"),new=c("income_group_id","hh"))
+
+
+inc_abm_13_jur$income_group_id <-as.character(inc_abm_13_jur$income_group_id)
+inc_abm_13_jur$income_group_id[inc_abm_13_jur$income_group_id=="cat1"]<- "1"
+inc_abm_13_jur$income_group_id[inc_abm_13_jur$income_group_id=="cat2"]<- "2"
+inc_abm_13_jur$income_group_id[inc_abm_13_jur$income_group_id=="cat3"]<- "3"
+inc_abm_13_jur$income_group_id[inc_abm_13_jur$income_group_id=="cat4"]<- "4"
+inc_abm_13_jur$income_group_id[inc_abm_13_jur$income_group_id=="cat5"]<- "5"
+
+inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="1"]<- 0
+inc_abm_13_jur$upper_bound[inc_abm_13_jur$income_group_id=="1"]<- 29999
+inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="2"]<- 30000
+inc_abm_13_jur$upper_bound[inc_abm_13_jur$income_group_id=="2"]<- 59999
+inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="3"]<- 60000
+inc_abm_13_jur$upper_bound[inc_abm_13_jur$income_group_id=="3"]<- 99999
+inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="4"]<- 100000
+inc_abm_13_jur$upper_bound[inc_abm_13_jur$income_group_id=="4"]<- 149999
+inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="5"]<- 150000
+inc_abm_13_jur$upper_bound[inc_abm_13_jur$income_group_id=="5"]<- 349999
+
+
+inc_abm_13_jur$interval_width<-inc_abm_13_jur$upper_bound-inc_abm_13_jur$lower_bound +1
+
+inc_abm_13_jur<- inc_abm_13_jur[order(inc_abm_13_jur$jurisdiction_2015,inc_abm_13_jur$yr),]
+
+inc_abm_13_jur <- data.table(inc_abm_13_jur)
+inc_abm_13_jur[, cum_sum := cumsum(hh), by=list(yr, jurisdiction_2015)]
+
+inc_abm_13_jur<-as.data.frame.matrix(inc_abm_13_jur) 
+
+num_hh_jur<-aggregate(hh~jurisdiction_2015+yr, data = inc_abm_13_jur, sum)
+
+inc_dist<-inc_abm_13_jur
+
+num_hh_jur$hh_half<-num_hh_jur$hh/2.0
+
+cum_dist<-inc_dist
+
+cum_dist$hh_full<-num_hh_jur[match(paste(cum_dist$jurisdiction_2015, cum_dist$yr), paste(num_hh_jur$jurisdiction_2015, num_hh_jur$yr)),"hh"]
+
+cum_dist$hh_half<-num_hh_jur[match(paste(cum_dist$jurisdiction_2015, cum_dist$yr), paste(num_hh_jur$jurisdiction_2015, num_hh_jur$yr)),"hh_half"]
+
+head(inc_dist)
+head(cum_dist,15)
+
+##########################################
+##########################################
+
 
 ##########
 #add formula for median income and exclude records of income groups below the group where the median will be found
@@ -122,7 +178,7 @@ cum_dist$flag[cum_dist$cum_sum>cum_dist$hh_half] <- 1
 
 cum_dist<- subset(cum_dist, cum_dist$flag==1)
 
-cum_dist<-cum_dist %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc_13.2.2=first(med_inc))
+cum_dist<-cum_dist %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc=first(med_inc))
 
 
 # add series 14 median income
