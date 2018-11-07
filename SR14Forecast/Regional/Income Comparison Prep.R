@@ -56,7 +56,7 @@ head(geography)
 
 inc_abm_13 <- merge(inc_abm_13, geography, by.x="mgra", by.y="mgra_13")
 #areas not in a CPA are coded as 9
-inc_abm_13$cpa_[is.na(inc_abm_13$cpa_13)]<- 9
+inc_abm_13$cpa_[is.na(inc_abm_13$cpa_13)]<- 0
 
 inc_abm_13_cpa <- aggregate (cbind(cat1, cat2, cat3, cat4, cat5)~cpa_13+yr, data=inc_abm_13, sum)
 inc_abm_13_cpa <- melt(inc_abm_13_cpa, id.vars=c("cpa_13", "yr"))
@@ -108,6 +108,136 @@ cum_dist$hh_half<-num_hh_cpa[match(paste(cum_dist$cpa_13, cum_dist$yr), paste(nu
 
 head(inc_dist)
 head(cum_dist,15)
+
+
+##########
+#calculate median income
+cum_dist$med_inc<-cum_dist$lower_bound+((cum_dist$hh_half-(cum_dist$cum_sum-cum_dist$hh))/cum_dist$hh)*cum_dist$interval_width
+
+cum_dist$keep <- NA
+cum_dist$keep <- 0
+cum_dist$keep[cum_dist$cum_sum>cum_dist$hh_half] <- 1
+
+cum_dist<- subset(cum_dist, cum_dist$keep==1)
+
+cum_dist<-cum_dist %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc.13.2.2=first(med_inc))
+
+#change class to data frame after the group by command
+cum_dist= as.data.frame(cum_dist)
+
+rm(inc_abm_13_2020,inc_abm_13_2025,inc_abm_13_2035,inc_abm_13_2050)
+
+# add series 14 median income
+
+datasource_id = 17
+
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+
+median_income_cpa_sql = getSQL("../Queries/median_income_cpa_ds_id.sql")
+median_income_cpa_sql <- gsub("ds_id", datasource_id, median_income_cpa_sql)
+mi_cpa<-sqlQuery(channel,median_income_cpa_sql,stringsAsFactors = FALSE)
+# get cpa_id that corresponds to cpa_name
+cpa_id_sql = 'SELECT  distinct(cpa_id),[cpa] FROM [demographic_warehouse].[dim].[mgra_denormalize] WHERE series = 14'
+cpa_id<-sqlQuery(channel,cpa_id_sql,stringsAsFactors = FALSE)
+odbcClose(channel)
+
+mi_cpa$cpa_id<-cpa_id[match(mi_cpa$geozone,cpa_id$cpa),"cpa_id"]
+
+names(mi_cpa)[names(mi_cpa) == 'median_inc'] <- paste('med_inc_ds_id_',datasource_id)
+
+mi_cpa<- subset(mi_cpa, mi_cpa$cpa_id!=0)
+
+mi_cpa = subset(mi_cpa, !(yr_id %in% c(2016,2018,2030,2040,2045)))
+
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+tempdir<-"temp_files\\"
+ifelse(!dir.exists(file.path(maindir,tempdir)), dir.create(file.path(maindir,tempdir), showWarnings = TRUE, recursive=TRUE),0)
+write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",".csv",sep=""))
+write.csv(cum_dist, paste(tempdir,"mi_cpa_abm",".csv",sep=""))
+# write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+
+
+################################################################
+
+#check for negative median income
+#neg<- subset(cum_dist_test2, cum_dist_test2$med_inc<1)
+
+#median income is not available in id=17 for cpa=1401 & 1483 for the 4 ABM years; for 1467 (NCFUA Reserve), mi is only available for 2050; 
+#there is mi in ABM SR 13 for all those years and cpas. 
+
+rm(mi_cpa_13_14)
+
+mi_cpa<- merge(mi_cpa,cum_dist,by.x=c("cpa_id", "yr_id"), by.y=c("cpa_13", "yr"), all=TRUE)
+
+#mi_cpa_13_14<-mi_cpa
+#calculate number and percent changes
+#mi_cpa_13_14 <- mi_cpa[order(mi_cpa_13_14$cpa_id,mi_cpa_13_14$yr_id),]
+#mi_cpa_13_14$mi_numchg13<-ave(mi_cpa_13_14$med_inc.13.2.2, factor(mi_cpa_13_14$cpa_id), FUN=function(x) c(NA,diff(x)))
+#mi_cpa_13_14$mi_pctchg13<- ave(mi_cpa_13_14$med_inc.13.2.2, factor(mi_cpa_13_14$cpa_id), FUN=function(x) c(NA,diff(x)/x*100))
+#mi_cpa_13_14$mi_pctchg13<-round(mi_cpa_13_14$mi_pctchg13,digits=2)
+#mi_cpa_13_14$mi_numchg14<- ave(mi_cpa_13_14$med_inc_ds_id_17, factor(mi_cpa_13_14$cpa_id), FUN=function(x) c(NA,diff(x)))
+#mi_cpa_13_14$mi_pctchg14<- ave(mi_cpa_13_14$med_inc_ds_id_17, factor(mi_cpa_13_14$cpa_id), FUN=function(x) c(NA,diff(x)/x*100))
+#mi_cpa_13_14$mi_pctchg14<-round(mi_cpa_13_14$mi_pctchg14,digits=2)
+
+
+head(mi_cpa_13_14)
+head(cum_dist)
+head(mi_cpa)
+
+
+#######################
+#######################
+
+#cpa plots
+
+cpa_list<-unique(mi_cpa$cpa_id)
+
+results<-"plots\\median_income\\cpa\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+
+for(i in 1:length(cpa_list)){
+  plotdat = subset(mi_cpa, mi_cpa$cpa_id==cpa_list[i])
+  plot<-ggplot(plotdat,aes(x=yr_id, y=med_inc_ds_id_17, colour=geozone)) +
+    geom_line(size=1)+ 
+    geom_line(aes(x=yr_id, y = med_inc.13.2.2)) +
+    scale_y_continuous(label=comma,limits=c(40000,100000))+ 
+    labs(title=paste("Median Income ", cpa_list[i],' SR13 and SR14, 2020-2050',sep=''), 
+         y=" median income", x="Year",
+         caption="Sources: demographic warehouse: dbo.compute_median_income_all_zones 17\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
+    scale_colour_manual(values = c("blue", "red")) +
+    theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    theme(legend.position = "bottom",
+          legend.title=element_blank(),
+          plot.caption = element_text(size = 7))
+  ggsave(plot, file= paste(results, 'median_income', cpa_list[i], '17', ".png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr_id,plotdat$median_inc,plotdat$mi_numchg,plotdat$mi_pctchg,plotdat$reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.median_inc","plotdat.mi_numchg","plotdat.mi_pctchg","plotdat.reg"),new=c("Year","Median Inc","Num Chg","Pct Chg","Region Median Inc"))
+  tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(2,2,2,2,2),
+               c(2,2,2,2,2))
+  output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
+  ggsave(output, file= paste(results, 'median_income', cpa_list[i],'18', ".png", sep=''))#, scale=2)
+}
+
+cpa_high<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc > 100000])
+unique(cpa_high$geozone)
+cpa_subset<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc < 50000]) 
+unique(cpa_subset$geozone)
+
+
+
+
+
+
+
+
+
+
 
 #######################################
 #######################################
@@ -166,70 +296,14 @@ head(cum_dist,15)
 ##########################################
 
 
-##########
-#add formula for median income and exclude records of income groups below the group where the median will be found
-##lower bound per income group- (hh by year and geozone/2-(cum_sum ???-))
-
-cum_dist$med_inc<-cum_dist$lower_bound+((cum_dist$hh_half-(cum_dist$cum_sum-cum_dist$hh))/cum_dist$hh)*cum_dist$interval_width
-
-cum_dist$flag <- NA
-cum_dist$flag <- 0
-cum_dist$flag[cum_dist$cum_sum>cum_dist$hh_half] <- 1
-
-cum_dist<- subset(cum_dist, cum_dist$flag==1)
-
-cum_dist<-cum_dist %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc=first(med_inc))
-
-
-# add series 14 median income
-
-datasource_id = 17
-
-channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-
-median_income_cpa_sql = getSQL("../Queries/median_income_cpa_ds_id.sql")
-median_income_cpa_sql <- gsub("ds_id", datasource_id, median_income_cpa_sql)
-mi_cpa<-sqlQuery(channel,median_income_cpa_sql,stringsAsFactors = FALSE)
-# get cpa_id that corresponds to cpa_name
-cpa_id_sql = 'SELECT  distinct(cpa_id),[cpa] FROM [demographic_warehouse].[dim].[mgra_denormalize] WHERE series = 14'
-cpa_id<-sqlQuery(channel,cpa_id_sql,stringsAsFactors = FALSE)
-odbcClose(channel)
-
-mi_cpa$cpa_id<-cpa_id[match(mi_cpa$geozone,cpa_id$cpa),"cpa_id"]
-
-names(mi_cpa)[names(mi_cpa) == 'median_inc'] <- paste('med_inc_ds_id_',datasource_id)
-
-mi_cpa<- subset(mi_cpa, mi_cpa$cpa_id!=0)
-
-mi_cpa = subset(mi_cpa, !(yr_id %in% c(2016,2018,2030,2040,2045)))
-
-maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-tempdir<-"temp_files\\"
-ifelse(!dir.exists(file.path(maindir,tempdir)), dir.create(file.path(maindir,tempdir), showWarnings = TRUE, recursive=TRUE),0)
-write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",".csv",sep=""))
-write.csv(cum_dist, paste(tempdir,"mi_cpa_abm",".csv",sep=""))
-# write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
-
-
-################################################################
-
-
-median_inc<-aggregate(income_group_id~yr+cpa_13, data = cum_dist, min)
-
-#check for negative median income
-#neg<- subset(cum_dist_test2, cum_dist_test2$med_inc<1)
 
 
 
+####################################
+####################################
+#jur
 
 
-
-head(abm_med_inc$med_inc)
-#HAVING SUM(b.hh) > (num_hh.hh / 2.0);
-
-median_inc<-aggregate(income_group_id~yr+cpa_13, data = cum_dist, min)
-
-head(median_inc,15)
 
 inc13_jur <- aggregate(cbind(cat1, cat2, cat3, cat4, cat5)~jurisdiction_2015+yr, data = inc13geo,sum)
 inc13_jur <- melt(inc13_jur, id.vars=c("jurisdiction_2015", "yr"))
