@@ -1,3 +1,5 @@
+#effective vacancy rate.
+#for effective rate the unoccupiable units are subtracted from the available units.
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -88,12 +90,13 @@ vac_jur$reg<-vac_region[match(vac_jur$yr_id, vac_region$yr_id),9]
 
 for(i in jur_list) { 
 plotdat = subset(vac_jur, vac_jur$jurisdiction_id==jur_list[i])
-plot<- ggplot(plotdat, aes(x=yr_id, y=rate, colour=geozone))+
- geom_line(size=1)+
+plot<- ggplot(plotdat, aes(x=yr_id))+
+  geom_line(aes(y=rate, color="Jur14"))+
+  geom_line(aes(y=reg, color="Reg14")) +
   geom_line(aes(x=yr_id, y=reg, colour="Region")) +
-  scale_y_continuous(labels = comma, limits=c(0,10))+
+  #scale_color_manual("",values =c(Jur14="red", Reg14="blue"))+
+  scale_y_continuous(labels = comma, limits=c(0,12.50))+
   labs(title=paste("Effective Vacancy Rate ", jur_list2[i],'\nand Region, 2016-2050',sep=""),
-       caption="Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 18\nNotes:Unoccupiable units are not included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
        y="Vacancy Rate", 
        x="Year")+
   theme_bw(base_size = 12)+
@@ -113,7 +116,9 @@ lay <- rbind(c(1,1,1,1,1),
              c(1,1,1,1,1),
              c(2,2,2,2,2),
              c(2,2,2,2,2))
-output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
+output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
+                     bottom=textGrob("Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type\nhousehold.datasource_id = 18\nNotes:Unoccupiable units are not included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
+                                    x = .01, y = 0.5, just = "left", gp=gpar(fontsize=6.5)))
 ggsave(output, file= paste(results,'vacancy',jur_list2[i], "18 Effective.png", sep=''))#, scale=2))
 }
 
