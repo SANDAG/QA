@@ -72,6 +72,11 @@ inc_abm_13$cpa_13[is.na(inc_abm_13$cpa_13)]<- 0
 inc_abm_13_cpa<-inc_abm_13
 inc_abm_13_cpa$income_group_id <-as.character(inc_abm_13_cpa$income_group_id)
 
+inc_abm_13_cpa<-aggregate(hh~cpa_13+yr+income_group_id, data = inc_abm_13_cpa, sum)
+
+inc_abm_13_cpa<- inc_abm_13_cpa[order(inc_abm_13_cpa$cpa_13,inc_abm_13_cpa$yr,inc_abm_13_cpa$income_group_id),]
+head(inc_abm_13_cpa,15)
+
 inc_abm_13_cpa$lower_bound[inc_abm_13_cpa$income_group_id=="1"]<- 0
 inc_abm_13_cpa$upper_bound[inc_abm_13_cpa$income_group_id=="1"]<- 29999
 inc_abm_13_cpa$lower_bound[inc_abm_13_cpa$income_group_id=="2"]<- 30000
@@ -87,24 +92,23 @@ inc_abm_13_cpa$upper_bound[inc_abm_13_cpa$income_group_id=="5"]<- 349999
 #I added one to interval calculation because it looks like there is a rounding thing happening in SQL script results - keep or delete?
 inc_abm_13_cpa$interval_width<-inc_abm_13_cpa$upper_bound-inc_abm_13_cpa$lower_bound +1
 
-inc_abm_13_cpa<- inc_abm_13_cpa[order(inc_abm_13_cpa$cpa_13,inc_abm_13_cpa$yr),]
+cpa_1428<-subset(inc_abm_13_cpa, inc_abm_13_cpa$cpa_13==1428)
+head(cpa_1428,12)
 
 inc_abm_13_cpa <- data.table(inc_abm_13_cpa)
 inc_abm_13_cpa[, cum_sum := cumsum(hh), by=list(yr, cpa_13)]
 
-head(inc_abm_13_cpa)
-
 inc_abm_13_cpa<-as.data.frame.matrix(inc_abm_13_cpa) 
-
-
-num_hh_cpa<-aggregate(hh~cpa_13+yr, data = inc_abm_13_cpa, sum)
 
 inc_dist<-inc_abm_13_cpa
 
+#create file with total number of households by year by cpa for median inc calculation
+num_hh_cpa<-aggregate(hh~yr+cpa_13, data = inc_abm_13_cpa, sum)
+
 num_hh_cpa$hh_half<-num_hh_cpa$hh/2.0
+num_hh_cpa$hh_half<-round(num_hh_cpa$hh_half, digits = 0)
 
 head(num_hh_cpa)
-
 
 cum_dist<-inc_dist
 
@@ -113,14 +117,14 @@ cum_dist$hh_full<-num_hh_cpa[match(paste(cum_dist$cpa_13, cum_dist$yr), paste(nu
 cum_dist$hh_half<-num_hh_cpa[match(paste(cum_dist$cpa_13, cum_dist$yr), paste(num_hh_cpa$cpa_13, num_hh_cpa$yr)),"hh_half"]
 
 head(inc_dist)
-head(cum_dist,15)
+head(cum_dist,8)
 
 
 ##########
 #calculate median income
 cum_dist$med_inc<-cum_dist$lower_bound+((cum_dist$hh_half-(cum_dist$cum_sum-cum_dist$hh))/cum_dist$hh)*cum_dist$interval_width
 
-cum_dist_med_inc<-round(cum_dist$med_inc,digits=2)
+cum_dist$med_inc<-round(cum_dist$med_inc,digits=0)
 
 cum_dist$keep <- NA
 cum_dist$keep <- 0
