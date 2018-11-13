@@ -69,7 +69,7 @@ for(i in jur_list) {
         plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year",
-         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=18")
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=19")
     results<-"plots\\hhsize\\jur\\"
     output_table<-plotdat[,c("yr_id","hhp","households","hhs","reg_hhp","reg_hh","reg_hhs")]
     colnames(output_table)[colnames(output_table)=="households"] <- "hh"
@@ -81,7 +81,7 @@ for(i in jur_list) {
                  c(2,2,2,2,2),
                  c(2,2,2,2,2))
     output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-    ggsave(output, file= paste(results, 'hhsize', i, ".png", sep=''),
+    ggsave(output, file= paste(results, 'hhsize', i, "19.png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
@@ -109,7 +109,7 @@ for(i in cpa_list) {
           plot.caption = element_text(size = 7)) +
     labs(title=paste("Household Size\n ", i,' and Region',sep=''), 
          y="Household size", x="Year",
-         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=18") 
+         caption="Sources: demographic_warehouse.fact.population,demographic_warehouse.dim.mgra, housing.datasource_id=19") 
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
   i = gsub("\\:","_",i)
@@ -124,7 +124,7 @@ for(i in cpa_list) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results, 'hhsize', i, ".png", sep=''),
+  ggsave(output, file= paste(results, 'hhsize', i, "19.png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 

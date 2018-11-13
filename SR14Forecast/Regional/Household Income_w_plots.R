@@ -111,7 +111,7 @@ for(i in jur_list) {
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
          y=paste("Percent"), x="",
-         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 18") +
+         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 19") +
     theme(legend.position = "bottom",
         legend.title=element_blank()) +
     scale_colour_manual(values=colours) +
@@ -146,9 +146,9 @@ for(i in jur_list) {
     lay <- rbind(c(1,1,1,1,1),
                  c(2,2,2,2,2))
     output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-    ggsave(tbl, file= paste(results, i,'_table', ".png", sep=''),
+    ggsave(tbl, file= paste(results, i,'_table', "19.png", sep=''),
            width=10, height=6, dpi=100)#, scale=2)
-    ggsave(plot, file= paste(results,i, '_hh_income', ".png", sep=''),
+    ggsave(plot, file= paste(results,i, '_hh_income', "19.png", sep=''),
          width=10, height=6, dpi=100)#, scale=2)
 }
 
@@ -168,7 +168,7 @@ setnames(total_pop_sub, old=c("yr_id",'tot_pop'),new=c("Year",paste("Region","_h
 totals <- merge(total_pop_sub[,c("Year",paste("Region","_hh",sep=''))],hh, by="Year")
 output_table<- merge(totals,percents, by="Year")
 tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-ggsave(tbl, file= paste(results, "ARegion",'_table', ".png", sep=''),
+ggsave(tbl, file= paste(results, "ARegion",'_table', "19.png", sep=''),
        width=10, height=6, dpi=100)#, scale=2)
 
 
@@ -186,7 +186,7 @@ for(i in cpa_list) {
     theme(plot.title = element_text(hjust = 0.5,size=16)) + 
     labs(title=paste("Percent of Total Households by Income Category\n ", i,' and Region',sep=''), 
          y=paste("Percent"), x="",
-         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 18") +
+         caption="Sources: demographic_warehouse: fact.household_income,dim.mgra, dim.income_group\nhousehold_income.datasource_id = 19") +
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
     scale_colour_manual(values=colours) +
@@ -199,7 +199,7 @@ for(i in cpa_list) {
     i = gsub("\\*","",i)
     i = gsub("\\-","_",i)
     i = gsub("\\:","_",i)
-  ggsave(plot, file= paste(results, 'household_income', i, ".png", sep=''),
+  ggsave(plot, file= paste(results, 'household_income', i, "19.png", sep=''),
          width=10, height=6, dpi=100)#, scale=2)
 
 
@@ -227,7 +227,7 @@ tbl <- tableGrob(output_table, rows=NULL, theme=tt)
 lay <- rbind(c(1,1,1,1,1),
              c(2,2,2,2,2))
 output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-ggsave(tbl, file= paste(results, i,'_table', ".png", sep=''),
+ggsave(tbl, file= paste(results, i,'_table', "19.png", sep=''),
        width=10, height=6, dpi=100)#, scale=2)
 ggsave(plot, file= paste(results,i, '_hh_income', ".png", sep=''),
        width=10, height=6, dpi=100)#, scale=2)

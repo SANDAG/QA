@@ -14,7 +14,7 @@ pkgTest(packages)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
-datasource_id = 18
+datasource_id = 19
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
@@ -27,7 +27,7 @@ hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
 hh$N_chg <- ave(hh$hhp, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
 hh$N_pct <- (hh$N_chg / lag(hh$hhp))*100
 hh$N_pct<-sprintf("%.2f",hh$N_pct)
-hh$geozone<-revalue(hh$geozone, c("Los Peñasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
+hh$geozone<-revalue(hh$geozone, c("Los Pe?asquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 
 
 hh$N_chg[hh$yr_id == 2016] <- 0
@@ -77,7 +77,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
     labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=18")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=19")+
     scale_fill_manual(values = c("blue", "red")) +
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
@@ -102,7 +102,7 @@ for(i in jur_list) { #1:length(unique(hh_jur[["cityname"]]))){
     i = gsub("\\*","",i)
     i = gsub("\\-","_",i)
     i = gsub("\\:","_",i)
-  ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''),
+  ggsave(output, file= paste(results, 'total household pop', i, "19.png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
@@ -136,7 +136,7 @@ for(i in cpa_list) { #1:length(unique(hh_jur[["cityname"]]))){
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
     labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=18")+
+         caption="Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=19")+
     scale_fill_manual(values = c("blue", "red")) +
     guides(fill = guide_legend(order = 1))+
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
@@ -161,7 +161,7 @@ for(i in cpa_list) { #1:length(unique(hh_jur[["cityname"]]))){
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
   i = gsub("\\:","_",i)
-  ggsave(output, file= paste(results, 'total household pop', i, ".png", sep=''),
+  ggsave(output, file= paste(results, 'total household pop', i, "19.png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
