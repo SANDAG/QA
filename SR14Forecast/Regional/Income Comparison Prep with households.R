@@ -244,8 +244,9 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 }
     
     
-    
+write.csv(mi_cpa,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\median_income\\mi_cpa_13.2.2.csv")
 
+write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",".csv",sep=""))
 
 
 cpa_high<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc > 100000])
