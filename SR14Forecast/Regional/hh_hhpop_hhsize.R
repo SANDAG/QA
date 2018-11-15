@@ -34,7 +34,7 @@ for(ds_id in datasource_ids) {
 }
 
 
-hh$geozone[hh$geotype =="region"]<- "~Region"
+hh$geozone[hh$geotype =="region"]<- "Region"
 hh$geozone <- gsub("\\*","",hh$geozone)
 hh$geozone <- gsub("\\-","_",hh$geozone)
 hh$geozone <- gsub("\\:","_",hh$geozone)
@@ -42,6 +42,10 @@ hh$geozone <- gsub("\\:","_",hh$geozone)
 colnames(hh)[colnames(hh)=="yr_id"] <- "Year"
 hh$datasource_id = factor( hh$datasource_id) 
 
+# region plots
+hh_region<-subset(hh, geotype=="region")
+
+jur_list = unique(hh_region[["geozone"]])
 
 # jursidiction plots
 
@@ -56,7 +60,7 @@ ifelse(!dir.exists(file.path(maindir,results)),
                   showWarnings = TRUE, recursive=TRUE),0)
 
 for(i in jur_list) {
-  plotdat <- subset(hh,geozone==i & datasource_id %in% c(14,19))
+  plotdat <- subset(hh,geozone==i & datasource_id %in% c(13,19))
   gg <- ggplot(data=plotdat, aes(x=Num_Households, y=Household_Pop)) + 
     geom_point(aes(col=datasource_id,size=Persons_per_Household)) + geom_line(aes(col=datasource_id)) +
     labs(subtitle="Household Population vs Number of Households", 
@@ -89,7 +93,9 @@ for(i in jur_list) {
   h = grid::convertHeight(sum(table$heights), "in", TRUE)
   w = grid::convertWidth(sum(table$widths), "in", TRUE)
   
-  ggplot2::ggsave(file= paste(results, i, 'data', ".png", sep=''), table, width=w, height=h)
+  ggplot2::ggsave(file= paste(results, i, 'data', 
+                              gsub(", ","_",toString(unique(plotdat$datasource_id))),
+                              ".png", sep=''), table, width=w, height=h)
   
 }
   
