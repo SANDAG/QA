@@ -21,49 +21,43 @@ source("../Queries/readSQL.R")
 
 options('scipen'=10)
 
-#files for calculating median income from mgra file
-#inc_abm_13_2020_test<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2020\\mgra13_based_input2020.csv", stringsAsFactors = FALSE)
-#inc_abm_13_2025<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2025\\mgra13_based_input2025.csv", stringsAsFactors = FALSE)
-#inc_abm_13_2035<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2035\\mgra13_based_input2035.csv", stringsAsFactors = FALSE)
-#inc_abm_13_2050<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2050\\mgra13_based_input2050.csv", stringsAsFactors = FALSE)
-
-
+#access file per Wu and Ying
 inc_abm_13_2020<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2020\\households.csv", stringsAsFactors = FALSE)
 inc_abm_13_2025<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2025\\households.csv", stringsAsFactors = FALSE)
 inc_abm_13_2035<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2035\\households.csv", stringsAsFactors = FALSE)
 inc_abm_13_2050<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2050\\households.csv", stringsAsFactors = FALSE)
 
+#add vector to indicate file for bind preparation
 inc_abm_13_2020$yr = 2020
 inc_abm_13_2025$yr = 2025
 inc_abm_13_2035$yr = 2035
 inc_abm_13_2050$yr = 2050
 
+#combine each year file
 inc_abm_13<-rbind(inc_abm_13_2020,inc_abm_13_2025,inc_abm_13_2035,inc_abm_13_2050)
 
+#select columns of interest, rename columns, create a hh variable to allow for counting cases
 inc_abm_13<-select(inc_abm_13, MGRA, HINCCAT1, yr)
 setnames(inc_abm_13, old=c("MGRA","HINCCAT1"), new=c("mgra","income_group_id"))
 inc_abm_13$hh<-1
 head(inc_abm_13)
 
+#count households by income group and geography
 inc_abm_13 <-aggregate(hh~yr + mgra + income_group_id, data= inc_abm_13, sum,na.rm = TRUE)
 tail(inc_abm_13)
 
-#inc_2020<-subset(inc_abm_13_2020, inc_abm_13_2020$BLDGSZ==9)
-#table(inc_2020$HINCCAT1)
-
-
 #SQL query isn't working above so currently accesses file from project folder
 geography <-read.csv("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\median_income\\geography.csv", stringsAsFactors = FALSE)
+#rename column name with strange characters
 colnames(geography)[1]<-"mgra_13"
 
+#combine county and city cpa info into one column
 geography$cocpa_13<-as.numeric(geography$cocpa_13)
 geography$cicpa_13<-as.numeric(geography$cicpa_13)
-
 geography$cpa_13<- ifelse(is.na(geography$cicpa_13) & !is.na(geography$cocpa_13), geography$cocpa_13, geography$cicpa_13)
-
 summary(geography$cpa_13)
 head(geography)
-
+#merge income file with geography file
 inc_abm_13 <- merge(inc_abm_13, geography, by.x="mgra", by.y="mgra_13")
 
 #areas not in a CPA are coded as 0
@@ -71,17 +65,15 @@ inc_abm_13$cpa_13[is.na(inc_abm_13$cpa_13)]<- 0
 
 inc_abm_13$income_group_id <-as.character(inc_abm_13$income_group_id)
 
-
-
-#rm(inc_abm_13_jur,inc_abm_13_cpa,cum_dist_cpa,cum_dist_jur,num_hh_cpa, num_hh_jur)
-
+#create files for cpa and jur
 inc_abm_13_jur<-inc_abm_13
 inc_abm_13_cpa<-inc_abm_13
 
+#aggregate hh count to city or cpa by year and income group 
 inc_abm_13_jur<-aggregate(hh~jurisdiction_2015+yr+income_group_id, data = inc_abm_13_jur, sum)
 inc_abm_13_cpa<-aggregate(hh~cpa_13+yr+income_group_id, data = inc_abm_13_cpa, sum)
 
-
+#add in the lower and upper bound of income groups for median income calculation
 inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="1"]<- 0
 inc_abm_13_jur$upper_bound[inc_abm_13_jur$income_group_id=="1"]<- 29999
 inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="2"]<- 30000
@@ -104,7 +96,8 @@ inc_abm_13_cpa$upper_bound[inc_abm_13_cpa$income_group_id=="4"]<- 149999
 inc_abm_13_cpa$lower_bound[inc_abm_13_cpa$income_group_id=="5"]<- 150000
 inc_abm_13_cpa$upper_bound[inc_abm_13_cpa$income_group_id=="5"]<- 349999
 
-#I added one to interval calculation because it looks like there is a rounding thing happening in SQL script results - keep or delete?
+#calculate the interval with for median income calculation
+#LH added one to interval calculation because it looks like there is a rounding thing happening in SQL script results - keep or delete?
 inc_abm_13_jur$interval_width<-inc_abm_13_jur$upper_bound-inc_abm_13_jur$lower_bound +1
 inc_abm_13_cpa$interval_width<-inc_abm_13_cpa$upper_bound-inc_abm_13_cpa$lower_bound +1
 
@@ -117,6 +110,7 @@ head(inc_abm_13_cpa,15)
 #cpa_1428<-subset(inc_abm_13_cpa, inc_abm_13_cpa$cpa_13==1428)
 #head(cpa_1428,12)
 
+#calculate cumulative sum which requires data.table
 inc_abm_13_jur <- data.table(inc_abm_13_jur)
 inc_abm_13_jur[, cum_sum := cumsum(hh), by=list(yr, jurisdiction_2015)]
 inc_abm_13_jur<-as.data.frame.matrix(inc_abm_13_jur) 
@@ -125,6 +119,7 @@ inc_abm_13_cpa <- data.table(inc_abm_13_cpa)
 inc_abm_13_cpa[, cum_sum := cumsum(hh), by=list(yr, cpa_13)]
 inc_abm_13_cpa<-as.data.frame.matrix(inc_abm_13_cpa) 
 
+#create new file needed for median income calculation
 inc_dist_jur<-inc_abm_13_jur
 inc_dist_cpa<-inc_abm_13_cpa
 
@@ -136,7 +131,6 @@ num_hh_jur<-aggregate(hh~yr+jurisdiction_2015, data = inc_abm_13_jur, sum)
 num_hh_jur$hh_half<-num_hh_jur$hh/2.0
 num_hh_jur$hh_half<-round(num_hh_jur$hh_half, digits = 0)
 head(num_hh_jur)
-
 
 
 num_hh_cpa<-aggregate(hh~yr+cpa_13, data = inc_abm_13_cpa, sum)
@@ -163,15 +157,13 @@ class(cum_dist_cpa)
 
 ##########
 
+
 #calculate median income for jur
 
 cum_dist_jur <- data.table(cum_dist_jur)
 cum_dist_jur$med_inc<-cum_dist_jur$lower_bound+((cum_dist_jur$hh_half-(cum_dist_jur$cum_sum-cum_dist_jur$hh))/cum_dist_jur$hh)*cum_dist_jur$interval_width
 cum_dist_jur <- as.data.frame.matrix(cum_dist_jur)
-
-
 cum_dist_jur$med_inc<-round(cum_dist_jur$med_inc,digits=0)
-
 
 cum_dist_jur$keep <- NA
 cum_dist_jur$keep <- 0
@@ -189,8 +181,8 @@ cum_dist_jur= as.data.frame(cum_dist_jur)
 
 cum_dist_cpa <- data.table(cum_dist_cpa)
 cum_dist_cpa$med_inc<-cum_dist_cpa$lower_bound+((cum_dist_cpa$hh_half-(cum_dist_cpa$cum_sum-cum_dist_cpa$hh))/cum_dist_cpa$hh)*cum_dist_cpa$interval_width
-
 cum_dist_cpa$med_inc<-round(cum_dist_cpa$med_inc,digits=0)
+cum_dist_cpa <- as.data.frame.matrix(cum_dist_cpa)
 
 cum_dist_cpa$keep <- NA
 cum_dist_cpa$keep <- 0
@@ -204,7 +196,7 @@ cum_dist_cpa<-cum_dist_cpa %>% group_by(cpa_13, yr) %>% summarise(count=n(), med
 cum_dist_cpa= as.data.frame(cum_dist_cpa)
 
 #rm(inc_abm_13_2020,inc_abm_13_2025,inc_abm_13_2035,inc_abm_13_2050)
-
+#test case-north park
 #cum_dist_1428<-subset(cum_dist_cpa, cpa_13==1428)
 #head(cum_dist_1428)
 
@@ -215,10 +207,11 @@ datasource_id=17
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
 #region median income for SR14
-median_income_jur_sql = getSQL("../Queries/median_income_jur_ds_id.sql")
-median_income_jur_sql <- gsub("ds_id", datasource_id, median_income_jur_sql)
-mi_jur<-sqlQuery(channel,median_income_jur_sql,stringsAsFactors = FALSE)
-
+median_income_reg_sql = getSQL("../Queries/median_income_region_ds_id.sql")
+median_income_reg_sql <- gsub("ds_id", datasource_id, median_income_reg_sql)
+mi_reg<-sqlQuery(channel,median_income_reg_sql,stringsAsFactors = FALSE)
+setnames(mi_reg, "median_inc", "med_inc_reg")
+head(mi_reg)
 
 #jurisdiction median income for SR14
 median_income_jur_sql = getSQL("../Queries/median_income_jur_ds_id.sql")
@@ -244,6 +237,7 @@ names(mi_cpa)[names(mi_cpa) == 'median_inc'] <- paste('med_inc_ds_id_',datasourc
 
 mi_cpa<- subset(mi_cpa, mi_cpa$cpa_id!=0)
 
+mi_reg = subset(mi_reg, !(yr_id %in% c(2016,2018,2030,2040,2045)))
 mi_jur = subset(mi_jur, !(yr_id %in% c(2016,2018,2030,2040,2045)))
 mi_cpa = subset(mi_cpa, !(yr_id %in% c(2016,2018,2030,2040,2045)))
 
@@ -251,7 +245,7 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 tempdir<-"temp_files\\"
 ifelse(!dir.exists(file.path(maindir,tempdir)), dir.create(file.path(maindir,tempdir), showWarnings = TRUE, recursive=TRUE),0)
 write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",".csv",sep=""))
-write.csv(cum_dist, paste(tempdir,"mi_cpa_abm",".csv",sep=""))
+write.csv(cum_dist_cpa, paste(tempdir,"mi_cpa_abm",".csv",sep=""))
 # write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
 
@@ -259,6 +253,7 @@ write.csv(cum_dist, paste(tempdir,"mi_cpa_abm",".csv",sep=""))
 
 #check for negative median income
 #neg<- subset(cum_dist_test2, cum_dist_test2$med_inc<1)
+
 
 #median income is not available in id=17 for cpa=1401 & 1483 for the 4 ABM years; for 1467 (NCFUA Reserve), mi is only available for 2050; 
 #there is mi in ABM SR 13 for all those years and cpas. 
@@ -280,41 +275,34 @@ head(cum_dist_jur)
 mi_jur<- merge(mi_jur,cum_dist_jur,by.x=c("geozone", "yr_id"), by.y=c("jur_name", "yr"), all=TRUE)
 mi_cpa<- merge(mi_cpa,cum_dist_cpa,by.x=c("cpa_id", "yr_id"), by.y=c("cpa_13", "yr"), all=TRUE)
 
+mi_jur$med_inc_reg<-mi_reg[match(mi_jur$yr_id, mi_reg$yr_id), "med_inc_reg"]
 
-#######################
-#######################
 
-#cpa plots
 
-#sets geozone to cpa_id when geozone is NA
-#mi_cpa$geozone<- ifelse(is.na(mi_cpa$geozone) & !is.na(mi_cpa$cpa_id), mi_cpa$cpa_id, mi_cpa$geozone)
+#Jurisdiction plots
 
-#delete cases with no data for both SR
-mi_cpa<-subset(mi_cpa, !is.na(mi_cpa$geozone))
-mi_cpa$med_inc.13.2.2<-round(mi_cpa$med_inc.13.2.2, digits = 0)
-head(mi_cpa)
 
-cpa_list<-unique(mi_cpa$geozone)
+head(mi_jur)
 
-results<-"plots\\median_income\\cpa\\"
+results<-"plots\\median_income\\jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-
-    for(i in 1:length(cpa_list)) { 
-    plotdat = subset(mi_cpa, mi_cpa$geozone==cpa_list[i])
-    plot<- ggplot(plotdat, aes(x=yr_id, y=med_inc_ds_id_17, colour="SR14"))+
-      geom_line(size=1)+
-      geom_line(aes(x=yr_id, y= med_inc.13.2.2, colour="SR13")) +
-      scale_y_continuous(labels = comma, limits=c(0,200000))+
-      labs(title=paste("Median Income ", cpa_list[i],' SR13 and SR14,\n 2020-2050',sep=""),
+for(i in 1:length(jur_name)) { 
+  plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
+  plot<- ggplot(plotdat, aes(x=yr_id))+
+    geom_line(aes(y=med_inc_ds_id_17, color="SR14"))+
+    geom_line(aes(y= med_inc.13.2.2, color="SR13")) +
+    geom_line(aes(y= med_inc_reg, color="Reg_SR14")) +
+    scale_y_continuous(labels = comma, limits=c(20000,120000))+
+    labs(title=paste("Median Income ", jur_name[i],' SR13 and SR14,\n 2020-2050',sep=""),
            y="Median Income", 
            x="Year")+
       theme_bw(base_size = 12)+
       theme(legend.position = "bottom",
             legend.title=element_blank())
-    ggsave(plot, file= paste(results, 'median income ', cpa_list[i], "13_14.png", sep=''))#, scale=2)
-    output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2)
-    setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id17","plotdat.med_inc.13.2.2"),new=c("Year","SR14 median income","SR13 median income"))
+  ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
     tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
     tbl <- tableGrob(output_table, rows=NULL, theme=tt)
     lay <- rbind(c(1,1,1,1,1),
