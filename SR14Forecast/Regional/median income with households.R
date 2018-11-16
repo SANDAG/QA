@@ -295,64 +295,14 @@ for(i in 1:length(jur_name)) {
     geom_line(aes(y= med_inc_reg, color="Reg_SR14")) +
     scale_y_continuous(labels = comma, limits=c(20000,120000))+
     labs(title=paste("Median Income ", jur_name[i],' SR13 and SR14,\n 2020-2050',sep=""),
-           y="Median Income", 
-           x="Year")+
-      theme_bw(base_size = 12)+
-      theme(legend.position = "bottom",
-            legend.title=element_blank())
-  ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
-    tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
-    tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-    lay <- rbind(c(1,1,1,1,1),
-                 c(1,1,1,1,1),
-                 c(1,1,1,1,1),
-                 c(2,2,2,2,2),
-                 c(2,2,2,2,2))
-    output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
-                         bottom = textGrob("Source: demographic warehouse: dbo.compute_median_income_all_zones 17\nversion.13.2.2 household file\nNotes:Unoccupiable units are included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
-                                           x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
-    ggsave(output, file= paste(results,'median income ',cpa_list[i], "13_14.png", sep=''))#, scale=2))
-}
-    
-    
-write.csv(mi_cpa,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\median_income\\mi_cpa_13.2.2.csv")
-
-write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",".csv",sep=""))
-
-
-cpa_high<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc > 100000])
-unique(cpa_high$geozone)
-cpa_subset<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc < 50000]) 
-unique(cpa_subset$geozone)
-
-
-
-#Jurisdiction plots
-
-
-head(mi_jur)
-
-results<-"plots\\median_income\\jur\\"
-ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
-
-
-for(i in 1:length(jur_name)) { 
-  plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
-  plot<- ggplot(plotdat, aes(x=yr_id, y=med_inc_ds_id_17, colour="SR14"))+
-    geom_line(size=1)+
-    geom_line(aes(x=yr_id, y= med_inc.13.2.2, colour="SR13")) +
-    scale_y_continuous(labels = comma, limits=c(20000,120000))+
-    labs(title=paste("Median Income ", jur_name[i],' SR13 and SR14,\n 2020-2050',sep=""),
          y="Median Income", 
          x="Year")+
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2)
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc.13.2.2"),new=c("Year","SR14 median income","SR13 median income"))
+  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
@@ -369,9 +319,71 @@ for(i in 1:length(jur_name)) {
 
 
 write.csv(mi_jur,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\median_income\\mi_jur_14.csv")
-
 write.csv(cum_dist_jur,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\median_income\\mi_jur_13.2.2.csv")
 
+
+#######################
+#######################
+
+#cpa plots
+
+#sets geozone to cpa_id when geozone is NA
+#mi_cpa$geozone<- ifelse(is.na(mi_cpa$geozone) & !is.na(mi_cpa$cpa_id), mi_cpa$cpa_id, mi_cpa$geozone)
+
+#delete cases with no data for both SR
+mi_cpa<-subset(mi_cpa, !is.na(mi_cpa$geozone))
+mi_cpa$med_inc.13.2.2<-round(mi_cpa$med_inc.13.2.2, digits = 0)
+head(mi_cpa)
+
+mi_cpa$med_inc_reg<-mi_reg[match(mi_cpa$yr_id, mi_reg$yr_id), "med_inc_reg"]
+
+cpa_list<-unique(mi_cpa$geozone)
+
+results<-"plots\\median_income\\cpa\\"
+ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
+
+
+for(i in 1:length(cpa_list)) { 
+  plotdat = subset(mi_cpa, mi_cpa$geozone==cpa_list[i])
+  plot<- ggplot(plotdat, aes(x=yr_id))+
+    geom_line(aes(y=med_inc_ds_id_17, color="SR14"))+
+    geom_line(aes(y= med_inc.13.2.2, color="SR13")) +
+    geom_line(aes(y= med_inc_reg, color="Reg_SR14")) +
+    scale_y_continuous(labels = comma, limits=c(20000,120000))+
+    labs(title=paste("Median Income ", cpa_list[i],' SR13 and SR14,\n 2020-2050',sep=""),
+         y="Median Income", 
+         x="Year")+
+    theme_bw(base_size = 12)+
+    theme(legend.position = "bottom",
+          legend.title=element_blank())
+  ggsave(plot, file= paste(results, 'median income ', cpa_list[i], "13_14.png", sep=''))#, scale=2)
+  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
+  tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(2,2,2,2,2),
+               c(2,2,2,2,2))
+  output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
+                       bottom = textGrob("Source: demographic warehouse: dbo.compute_median_income_all_zones 17\nversion.13.2.2 household file\nNotes:Unoccupiable units are included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
+                                         x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
+  ggsave(output, file= paste(results,'median income ',cpa_list[i], "13_14.png", sep=''))#, scale=2))
+}
+
+
+
+
+write.csv(mi_cpa,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\median_income\\mi_cpa_13.2.2.csv")
+
+write.csv(mi_cpa, paste(tempdir,"mi_cpa_demographic_warehouse",".csv",sep=""))
+
+
+cpa_high<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc > 100000])
+unique(cpa_high$geozone)
+cpa_subset<-lapply(mi_cpa, function(x) x[mi_cpa$median_inc < 50000]) 
+unique(cpa_subset$geozone)
 
 
 
