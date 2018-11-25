@@ -333,7 +333,7 @@ for(i in 1:length(jur_name)) {
                        bottom = textGrob(paste("Sources: SR14: demographic warehouse: dbo.compute_median_income_all_zones ",datasource_id,
                                                " SR13: version.13.2.2 households.csv file"),
                                          x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
-  ggsave(output, file= paste(results,'median income ',jur_name[i], "13_14.png", sep=''))#, scale=2))
+  ggsave(output, width=6, height=8, dpi=100, file= paste(results,'median income ',jur_name[i], "13_14.png", sep=''))#, scale=2))
 }
 
 
