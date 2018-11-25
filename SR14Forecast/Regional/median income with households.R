@@ -142,13 +142,15 @@ head(inc_dist_cpa)
 #create files with total number of households and half households by year by jur and cpa for median inc calculation
 num_hh_jur<-aggregate(hh~yr+jurisdiction_2015, data = inc_abm_13_jur, sum)
 num_hh_jur$hh_half<-num_hh_jur$hh/2.0
-num_hh_jur$hh_half<-round(num_hh_jur$hh_half, digits = 0)
+# to match median from stored procedure, do not round half hh
+# num_hh_jur$hh_half<-round(num_hh_jur$hh_half, digits = 0)
 head(num_hh_jur)
 
 
 num_hh_cpa<-aggregate(hh~yr+cpa_13, data = inc_abm_13_cpa, sum)
 num_hh_cpa$hh_half<-num_hh_cpa$hh/2.0
-num_hh_cpa$hh_half<-round(num_hh_cpa$hh_half, digits = 0)
+# to match median from stored procedure, do not round half hh
+# num_hh_cpa$hh_half<-round(num_hh_cpa$hh_half, digits = 0)
 head(num_hh_cpa)
 
 cum_dist_jur<-inc_dist_jur
