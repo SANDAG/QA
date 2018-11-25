@@ -317,8 +317,8 @@ for(i in 1:length(jur_name)) {
     theme(legend.position = "bottom",
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
+  output_table<-data.frame(plotdat$yr_id,plotdat[[ySR14]],plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat..ySR14..","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
