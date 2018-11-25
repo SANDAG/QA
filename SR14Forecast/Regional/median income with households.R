@@ -36,6 +36,19 @@ inc_abm_13_2050$yr = 2050
 #combine each year file
 inc_abm_13<-rbind(inc_abm_13_2020,inc_abm_13_2025,inc_abm_13_2035,inc_abm_13_2050)
 
+#remove group quarters to compare with demographic warehouse
+#head(inc_abm_13)
+# HHT column - Household/family type:
+# 0.       Not in universe (vacant or GQ)
+# 1.       Family household:married-couple
+# 2.       Family household:male householder,no wife present
+# 3.       Family household:female householder,no husband present
+# 4.       Nonfamily household:male householder, living alone
+# 5.       Nonfamily household:male householder, not living alone
+# 6.       Nonfamily household:female householder, living alone
+# 7.       Nonfamily household:female householder, not living alone
+inc_abm_13 = subset(inc_abm_13,inc_abm_13$HHT!=0)
+
 #select columns of interest, rename columns, create a hh variable to allow for counting cases
 inc_abm_13<-select(inc_abm_13, MGRA, HINCCAT1, yr)
 setnames(inc_abm_13, old=c("MGRA","HINCCAT1"), new=c("mgra","income_group_id"))
