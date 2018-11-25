@@ -327,7 +327,12 @@ for(i in 1:length(jur_name)) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
-                       bottom = textGrob("Source: demographic warehouse: dbo.compute_median_income_all_zones 17\nversion.13.2.2 household file\nNotes:Unoccupiable units are included. Out of range data may not appear on the plot.\nRefer to the table below for those related data results.",
+                       bottom = textGrob(paste("Source: demographic warehouse: 
+                                               dbo.compute_median_income_all_zones ",
+                                               datasource_id,
+                                               "\nversion.13.2.2 household file\nNotes:Unoccupiable units are included. 
+                                               Out of range data may not appear on the plot.\n
+                                               Refer to the table below for those related data results."),
                                          x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
   ggsave(output, file= paste(results,'median income ',jur_name[i], "13_14.png", sep=''))#, scale=2))
 }
