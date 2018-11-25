@@ -254,6 +254,25 @@ cum_dist_cpa= as.data.frame(cum_dist_cpa)
 #cum_dist_1428<-subset(cum_dist_cpa, cpa_13==1428)
 #head(cum_dist_1428)
 
+#calculate median income for region
+
+cum_dist_region <- data.table(cum_dist_region)
+cum_dist_region$med_inc<-cum_dist_region$lower_bound+((cum_dist_region$hh_half-(cum_dist_region$cum_sum-cum_dist_region$hh))/cum_dist_region$hh)*cum_dist_region$interval_width
+cum_dist_region$med_inc<-round(cum_dist_region$med_inc,digits=0)
+cum_dist_region <- as.data.frame.matrix(cum_dist_region)
+
+cum_dist_region$keep <- NA
+cum_dist_region$keep <- 0
+cum_dist_region$keep[cum_dist_region$cum_sum>cum_dist_region$hh_half] <- 1
+
+cum_dist_region<- subset(cum_dist_region, cum_dist_region$keep==1)
+
+cum_dist_region<-cum_dist_region %>% group_by(yr) %>% summarise(count=n(), med_inc.13.2.2=first(med_inc))
+
+#change class to data frame after the group by command
+cum_dist_region= as.data.frame(cum_dist_region)
+cum_dist_region
+
 # add series 14 median income
 
 datasource_id=17
@@ -330,6 +349,7 @@ mi_jur<- merge(mi_jur,cum_dist_jur,by.x=c("geozone", "yr_id"), by.y=c("jur_name"
 mi_cpa<- merge(mi_cpa,cum_dist_cpa,by.x=c("cpa_id", "yr_id"), by.y=c("cpa_13", "yr"), all=TRUE)
 
 mi_jur$med_inc_reg<-mi_reg[match(mi_jur$yr_id, mi_reg$yr_id), "med_inc_reg"]
+mi_jur$med_inc_reg_SR13<-cum_dist_region[match(mi_jur$yr_id, cum_dist_region$yr), "med_inc.13.2.2"]
 
 
 
