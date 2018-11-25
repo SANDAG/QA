@@ -365,13 +365,15 @@ for(i in 1:length(jur_name)) {
   plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
   ySR14= paste('med_inc_ds_id_',datasource_id,sep="")
   plot<- ggplot(plotdat, aes(x=yr_id))+
-    geom_line(aes_string(y=ySR14, color='"SR14"')) +
-    geom_point(aes_string(y=ySR14, color='"SR14"'), size=2, alpha=0.3) +
-    geom_line(aes(y= med_inc.13.2.2, color="SR13")) +
-    geom_point(aes(y= med_inc.13.2.2, color="SR13"), size=2, alpha=0.3) +
-    geom_line(aes(y= med_inc_reg, color="Reg_SR14")) +
-    geom_point(aes(y= med_inc_reg, color="Reg_SR14"), size=2, alpha=0.3) +
-    scale_y_continuous(labels = comma, limits=c(20000,120000))+
+    geom_line(aes_string(y=ySR14, color='"SR14"'),size=1.2) +
+    geom_point(aes_string(y=ySR14, color='"SR14"'), size=3, alpha=0.3) +
+    geom_line(aes(y= med_inc.13.2.2, color="SR13"),size=1.2) +
+    geom_point(aes(y= med_inc.13.2.2, color="SR13"), size=3, alpha=0.3) +
+    geom_line(aes(y= med_inc_reg, color="Reg_SR14"),linetype="dashed",size=1.2) +
+    geom_point(aes(y= med_inc_reg, color="Reg_SR14"), size=3, alpha=0.3) +
+    geom_line(aes(y= med_inc_reg_SR13, color="Reg_SR13"),linetype="dashed",size=1.2) +
+    geom_point(aes(y= med_inc_reg_SR13, color="Reg_SR13"), size=3, alpha=0.3) +
+    scale_y_continuous(labels = comma, limits=c(40000,120000))+
     labs(title=paste("Median Income ", jur_name[i],' SR13 and SR14,\n 2020-2050',sep=""),
          y="Median Income", 
          x="Year")+
