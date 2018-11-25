@@ -149,12 +149,19 @@ inc_abm_13_cpa <- data.table(inc_abm_13_cpa)
 inc_abm_13_cpa[, cum_sum := cumsum(hh), by=list(yr, cpa_13)]
 inc_abm_13_cpa<-as.data.frame.matrix(inc_abm_13_cpa) 
 
+
+inc_abm_13_region <- data.table(inc_abm_13_region)
+inc_abm_13_region[, cum_sum := cumsum(hh), by=list(yr)]
+inc_abm_13_region<-as.data.frame.matrix(inc_abm_13_region) 
+
 #create new file needed for median income calculation
 inc_dist_jur<-inc_abm_13_jur
 inc_dist_cpa<-inc_abm_13_cpa
+inc_dist_region<-inc_abm_13_region
 
 head(inc_dist_jur)
 head(inc_dist_cpa)
+head(inc_dist_region)
 
 #create files with total number of households and half households by year by jur and cpa for median inc calculation
 num_hh_jur<-aggregate(hh~yr+jurisdiction_2015, data = inc_abm_13_jur, sum)
@@ -170,15 +177,27 @@ num_hh_cpa$hh_half<-num_hh_cpa$hh/2.0
 # num_hh_cpa$hh_half<-round(num_hh_cpa$hh_half, digits = 0)
 head(num_hh_cpa)
 
+
+num_hh_region<-aggregate(hh~yr, data = inc_abm_13_region, sum)
+num_hh_region$hh_half<-num_hh_region$hh/2.0
+# to match median from stored procedure, do not round half hh
+# num_hh_cpa$hh_half<-round(num_hh_cpa$hh_half, digits = 0)
+head(num_hh_region)
+
 cum_dist_jur<-inc_dist_jur
 cum_dist_cpa<-inc_dist_cpa
+cum_dist_region<-inc_dist_region
 
 cum_dist_jur$hh_full<-num_hh_jur[match(paste(cum_dist_jur$jurisdiction_2015, cum_dist_jur$yr), paste(num_hh_jur$jurisdiction_2015, num_hh_jur$yr)),"hh"]
 cum_dist_cpa$hh_full<-num_hh_cpa[match(paste(cum_dist_cpa$cpa_13, cum_dist_cpa$yr), paste(num_hh_cpa$cpa_13, num_hh_cpa$yr)),"hh"]
+cum_dist_region$hh_full<-num_hh_region[match(paste(cum_dist_region$yr), paste(num_hh_region$yr)),"hh"]
 
 
 cum_dist_jur$hh_half<-num_hh_jur[match(paste(cum_dist_jur$jurisdiction_2015, cum_dist_jur$yr), paste(num_hh_jur$jurisdiction_2015, num_hh_jur$yr)),"hh_half"]
 cum_dist_cpa$hh_half<-num_hh_cpa[match(paste(cum_dist_cpa$cpa_13, cum_dist_cpa$yr), paste(num_hh_cpa$cpa_13, num_hh_cpa$yr)),"hh_half"]
+cum_dist_region$hh_half<-num_hh_region[match(paste(cum_dist_region$yr), paste(num_hh_region$yr)),"hh_half"]
+
+
 
 head(inc_dist_jur)
 head(cum_dist_jur,8)
@@ -186,6 +205,9 @@ head(cum_dist_jur,8)
 head(inc_dist_cpa)
 head(cum_dist_cpa,8)
 class(cum_dist_cpa)
+
+head(inc_dist_region)
+head(cum_dist_region)
 
 ##########
 
