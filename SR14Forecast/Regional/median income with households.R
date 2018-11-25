@@ -78,13 +78,15 @@ inc_abm_13$cpa_13[is.na(inc_abm_13$cpa_13)]<- 0
 
 inc_abm_13$income_group_id <-as.character(inc_abm_13$income_group_id)
 
-#create files for cpa and jur
+#create files for cpa and jur and region
 inc_abm_13_jur<-inc_abm_13
 inc_abm_13_cpa<-inc_abm_13
+inc_abm_13_region<-inc_abm_13
 
 #aggregate hh count to city or cpa by year and income group 
 inc_abm_13_jur<-aggregate(hh~jurisdiction_2015+yr+income_group_id, data = inc_abm_13_jur, sum)
 inc_abm_13_cpa<-aggregate(hh~cpa_13+yr+income_group_id, data = inc_abm_13_cpa, sum)
+inc_abm_13_region<-aggregate(hh~yr+income_group_id, data = inc_abm_13_region, sum)
 
 #add in the lower and upper bound of income groups for median income calculation
 inc_abm_13_jur$lower_bound[inc_abm_13_jur$income_group_id=="1"]<- 0
