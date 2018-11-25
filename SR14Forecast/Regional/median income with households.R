@@ -304,8 +304,9 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 for(i in 1:length(jur_name)) { 
   plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
+  ySR14= paste('med_inc_ds_id_',datasource_id,sep="")
   plot<- ggplot(plotdat, aes(x=yr_id))+
-    geom_line(aes(y=med_inc_ds_id_17, color="SR14"))+
+    geom_line(aes_string(y=ySR14, color='"SR14"')) +
     geom_line(aes(y= med_inc.13.2.2, color="SR13")) +
     geom_line(aes(y= med_inc_reg, color="Reg_SR14")) +
     scale_y_continuous(labels = comma, limits=c(20000,120000))+
