@@ -362,24 +362,38 @@ head(mi_jur)
 results<-"plots\\median_income\\jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-for(i in 1:length(jur_name)) { 
+# for(i in 1:length(jur_name)) { 
+for(i in 1:2) { 
   plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
   plot<- ggplot(plotdat, aes(x=yr_id))+
     geom_line(aes(y=med_inc_dw, color="SR14"),size=1.2) +
-    geom_point(aes(y=med_inc_dw, color="SR14"), size=3, alpha=0.3) +
+    geom_point(aes(y=med_inc_dw, color="SR14"), size=3, alpha=0.8) +
     geom_line(aes(y= med_inc.13.2.2, color="SR13"),size=1.2) +
-    geom_point(aes(y= med_inc.13.2.2, color="SR13"), size=3, alpha=0.3) +
+    geom_point(aes(y= med_inc.13.2.2, color="SR13"), size=3, alpha=0.8) +
     geom_line(aes(y= med_inc_reg, color="Reg_SR14"),linetype="dashed",size=1.2) +
-    geom_point(aes(y= med_inc_reg, color="Reg_SR14"), size=3, alpha=0.3) +
+    geom_point(aes(y= med_inc_reg, color="Reg_SR14"), size=3, alpha=0.8) +
     geom_line(aes(y= med_inc_reg_SR13, color="Reg_SR13"),linetype="dashed",size=1.2) +
-    geom_point(aes(y= med_inc_reg_SR13, color="Reg_SR13"), size=3, alpha=0.3) +
+    geom_point(aes(y= med_inc_reg_SR13, color="Reg_SR13"), size=3, alpha=0.8) +
     scale_y_continuous(labels = comma, limits=c(40000,120000))+
-    labs(title=paste("Median Income ", jur_name[i],' SR13 and SR14,\n 2020-2050',sep=""),
-         y="Median Income", 
-         x="Year")+
+    #ggtitle(paste(jur_name[i], " Median Income ",sep="")) +
+    labs(title=paste(jur_name[i], " Median Income ",sep=""), 
+         y="Median Income", x="Year",
+         subtitle=paste('SR14:datasource id ',datasource_id,sep='')) +
+    
+    #labs(x="Weather    stations", 
+    #              y="Accumulated Rainfall [mm]",
+    #              title="Rainfall",
+    #              subtitle="Location")
+  
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
-          legend.title=element_blank())
+          legend.title=element_blank()) +
+    theme(axis.text.x=element_text(size=14,angle=0)) +
+    theme(axis.title.x=element_text(size=16,angle=0, hjust=0.5, vjust=1)) +
+    theme(axis.text.y=element_text(size=14,angle=0)) +
+    theme(axis.title.y=element_text(size=16,angle=90)) +
+    theme(plot.title = element_text(hjust = 0.5,size=22,face="bold")) +
+    theme(plot.subtitle=element_text(size=14, hjust=0.5, face="italic", color="black"))
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_dw,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_dw","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
