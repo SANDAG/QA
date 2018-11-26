@@ -406,9 +406,9 @@ for(i in 1:2) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
-                       bottom = textGrob(paste("Sources:\n", 
-"SR14: demographic warehouse: dbo.compute_median_income_all_zones ",datasource_id,
-"\nSR13: version.",abm_version," households.csv file"),
+                       bottom = textGrob(paste("Sources:", 
+"\nSR14: demographic warehouse: dbo.compute_median_income_all_zones ",datasource_id,
+"\nSR13: version.",abm_version," households.csv file",sep=''),
 x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
   ggsave(output, width=6, height=8, dpi=100, file= paste(results,'median income ',jur_name[i], "13_14.png", sep=''))#, scale=2))
 }
