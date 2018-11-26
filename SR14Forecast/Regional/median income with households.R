@@ -305,8 +305,8 @@ odbcClose(channel)
 
 mi_cpa$cpa_id<-cpa_id[match(mi_cpa$geozone,cpa_id$cpa),"cpa_id"]
 
-names(mi_jur)[names(mi_jur) == 'median_inc'] <- paste('med_inc_ds_id_',datasource_id,sep="")
-names(mi_cpa)[names(mi_cpa) == 'median_inc'] <- paste('med_inc_ds_id_',datasource_id,sep="")
+names(mi_jur)[names(mi_jur) == 'median_inc'] <- 'med_inc_dw'
+names(mi_cpa)[names(mi_cpa) == 'median_inc'] <- 'med_inc_dw'
 
 mi_cpa<- subset(mi_cpa, mi_cpa$cpa_id!=0)
 
@@ -364,9 +364,12 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 for(i in 1:length(jur_name)) { 
   plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
   ySR14= paste('med_inc_ds_id_',datasource_id,sep="")
+for(i in 1:length(jur_name)) { 
+  plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
+  # ySR14= paste('med_inc_ds_id_',datasource_id,sep="")
   plot<- ggplot(plotdat, aes(x=yr_id))+
-    geom_line(aes_string(y=ySR14, color='"SR14"'),size=1.2) +
-    geom_point(aes_string(y=ySR14, color='"SR14"'), size=3, alpha=0.3) +
+    geom_line(aes(y=med_inc_dw, color="SR14"),size=1.2) +
+    geom_point(aes(y=med_inc_dw, color="SR14"), size=3, alpha=0.3) +
     geom_line(aes(y= med_inc.13.2.2, color="SR13"),size=1.2) +
     geom_point(aes(y= med_inc.13.2.2, color="SR13"), size=3, alpha=0.3) +
     geom_line(aes(y= med_inc_reg, color="Reg_SR14"),linetype="dashed",size=1.2) +
@@ -381,8 +384,8 @@ for(i in 1:length(jur_name)) {
     theme(legend.position = "bottom",
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat[[ySR14]],plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
-  setnames(output_table, old=c("plotdat.yr_id","plotdat..ySR14..","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
+  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_dw,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_dw","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
