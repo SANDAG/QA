@@ -11,7 +11,7 @@ FROM fact.population
 	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
 		INNER JOIN dim.housing_type
 		ON housing_type.housing_type_id = population.housing_type_id
-WHERE population.datasource_id = 17
+WHERE population.datasource_id = 19
 GROUP BY 
 	population.yr_id
 	,mgra.geotype
