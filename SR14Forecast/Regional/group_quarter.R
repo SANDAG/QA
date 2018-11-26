@@ -60,7 +60,7 @@ jur_list=unique(gq_jur[["geozone"]])
 gq_wide<-data.frame(gq_jur)
 gq_wide$reg<-gq_region[match(paste(gq_jur$yr_id, gq_jur$housing_type_id), paste(gq_region$yr_id, gq_region$housing_type_id)),6]
 
-write.csv(gq_jur, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\GQ\\gq_jur17.csv")
-write.csv(gq_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\GQ\\gq_cpa17.csv")
-write.csv(gq_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 4\\GQ\\gq_region17.csv")
+write.csv(gq_jur, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\GQ\\gq_jur19.csv")
+write.csv(gq_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\GQ\\gq_cpa19.csv")
+write.csv(gq_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\GQ\\gq_region19.csv")
 
