@@ -352,6 +352,7 @@ mi_jur$med_inc_reg<-mi_reg[match(mi_jur$yr_id, mi_reg$yr_id), "med_inc_reg"]
 mi_jur$med_inc_reg_SR13<-cum_dist_region[match(mi_jur$yr_id, cum_dist_region$yr), "med_inc.13.2.2"]
 
 
+summary(mi_jur)
 
 #Jurisdiction plots
 
@@ -363,10 +364,6 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 for(i in 1:length(jur_name)) { 
   plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
-  ySR14= paste('med_inc_ds_id_',datasource_id,sep="")
-for(i in 1:length(jur_name)) { 
-  plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
-  # ySR14= paste('med_inc_ds_id_',datasource_id,sep="")
   plot<- ggplot(plotdat, aes(x=yr_id))+
     geom_line(aes(y=med_inc_dw, color="SR14"),size=1.2) +
     geom_point(aes(y=med_inc_dw, color="SR14"), size=3, alpha=0.3) +
