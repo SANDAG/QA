@@ -21,11 +21,18 @@ source("../Queries/readSQL.R")
 
 options('scipen'=10)
 
+abm_version = '13.2.2'
+abm_version_name = paste('version_',abm_version,sep='')
+
 #access file per Wu and Ying
-inc_abm_13_2020<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2020\\households.csv", stringsAsFactors = FALSE)
-inc_abm_13_2025<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2025\\households.csv", stringsAsFactors = FALSE)
-inc_abm_13_2035<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2035\\households.csv", stringsAsFactors = FALSE)
-inc_abm_13_2050<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2050\\households.csv", stringsAsFactors = FALSE)
+inc_abm_13_2020<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
+                           "\\input\\2020\\households.csv",sep=''), stringsAsFactors = FALSE)
+inc_abm_13_2025<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
+                           "\\input\\2025\\households.csv",sep=''), stringsAsFactors = FALSE)
+inc_abm_13_2035<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
+                           "\\input\\2035\\households.csv",sep=''), stringsAsFactors = FALSE)
+inc_abm_13_2050<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
+                           "\\input\\2050\\households.csv",sep=''), stringsAsFactors = FALSE)
 
 #add vector to indicate file for bind preparation
 inc_abm_13_2020$yr = 2020
