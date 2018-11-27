@@ -366,6 +366,7 @@ mi_jur$med_inc_reg_SR13<-cum_dist_region[match(mi_jur$yr_id, cum_dist_region$yr)
 summary(mi_jur)
 
 #Jurisdiction plots
+write.csv(mi_jur, paste(tempdir,"mi_jur",".csv",sep=""))
 
 
 head(mi_jur)
@@ -400,9 +401,16 @@ for(i in 1:2) {
     theme(plot.title = element_text(hjust = 0.5,size=22,face="bold")) +
     theme(plot.subtitle=element_text(size=14, hjust=0.5, face="italic", color="black"))
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_dw,plotdat$med_inc_abm,plotdat$med_inc_reg)
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_dw","plotdat.med_inc_abm","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
-  tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
+  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_reg_SR13,plotdat$med_inc_reg,
+                           plotdat$med_inc_abm,plotdat$med_inc_dw)
+  sr14_colname = paste('\"',"SR14 ",jur_name[i],'\"',sep=" ")
+  sr13_colname = paste('\"',"SR13 ",jur_name[i],'\"',sep=" ")
+  sr14_colname_region = paste('\"',"SR14 ","Region",'\"',sep=" ")
+  sr13_colname_region = paste('\"',"SR13 ","Region",'\"',sep=" ")
+  setnames(output_table, 
+           old=c("plotdat.yr_id","plotdat.med_inc_reg_SR13","plotdat.med_inc_reg","plotdat.med_inc_abm","plotdat.med_inc_dw"),
+           new=c("Year",sr13_colname_region,sr14_colname_region,sr13_colname,sr14_colname))
+  tt <- ttheme_default(base_size=11,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
                c(1,1,1,1,1),
