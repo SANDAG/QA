@@ -19,7 +19,7 @@ options('scipen'=10)
 
 # set abm_version for plots
 
-abm_version == '13.2.2' # original
+abm_version = '13.2.2' # original
 
 # abm_version = '13_3_2' # revised
 
@@ -387,7 +387,7 @@ for(i in 1:length(jur_name)) {
     geom_line(aes(y= med_inc_reg_SR13, color="Reg_SR13"),linetype="dashed",size=1.2) +
     geom_point(aes(y= med_inc_reg_SR13, color="Reg_SR13"), size=3, alpha=0.8) +
     scale_y_continuous(labels = comma, limits=c(40000,120000))+
-    labs(title=paste(jur_name[i], " Median Income ",sep=""), 
+    labs(title=paste(jur_name[i], " Household Median Income ",sep=""), 
          y="Median Income", x="Year",
          subtitle=paste('SR14 datasource id ',datasource_id,
                         ' and SR13 version ',abm_version,sep='')) +
@@ -398,7 +398,7 @@ for(i in 1:length(jur_name)) {
     theme(axis.title.x=element_text(size=16,angle=0, hjust=0.5, vjust=1)) +
     theme(axis.text.y=element_text(size=14,angle=0)) +
     theme(axis.title.y=element_text(size=16,angle=90)) +
-    theme(plot.title = element_text(hjust = 0.5,size=22,face="bold")) +
+    theme(plot.title = element_text(hjust = 0.5,size=18,face="bold")) +
     theme(plot.subtitle=element_text(size=14, hjust=0.5, face="italic", color="black"))
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_reg_SR13,plotdat$med_inc_reg,
@@ -468,7 +468,7 @@ for(i in 1:length(cpa_list)) {
     geom_line(aes(y= med_inc_reg_SR13, color="Reg_SR13"),linetype="dashed",size=1.2) +
     geom_point(aes(y= med_inc_reg_SR13, color="Reg_SR13"), size=3, alpha=0.8) +
     scale_y_continuous(labels = comma, limits=c(20000,120000))+ # limits=c(20000,120000)
-    labs(title=paste(cpa_list[i], " Median Income ",sep=""), 
+    labs(title=paste(cpa_list[i], " Household Median Income ",sep=""), 
          y="Median Income", x="Year",
          subtitle=paste('SR14 datasource id ',datasource_id,
                         ' and SR13 version ',abm_version,sep='')) +
@@ -479,7 +479,7 @@ for(i in 1:length(cpa_list)) {
     theme(axis.title.x=element_text(size=16,angle=0, hjust=0.5, vjust=1)) +
     theme(axis.text.y=element_text(size=14,angle=0)) +
     theme(axis.title.y=element_text(size=16,angle=90)) +
-    theme(plot.title = element_text(hjust = 0.5,size=22,face="bold")) +
+    theme(plot.title = element_text(hjust = 0.5,size=18,face="bold")) +
     theme(plot.subtitle=element_text(size=14, hjust=0.5, face="italic", color="black"))
   ggsave(plot, file= paste(results, 'median income ', cpa_list[i], "13_14.png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_reg_SR13,plotdat$med_inc_reg,
