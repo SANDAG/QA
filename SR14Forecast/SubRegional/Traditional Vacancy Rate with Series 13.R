@@ -132,7 +132,7 @@ cpa_list = unique(vacancy_cpa[["geozone"]])
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
-results<-"plots\\Vacancy\\Jur_SERIES 13 vs 14 (18)\\"
+results<-"plots\\Vacancy\\Jur_SERIES 13 vs 14 (19)\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 tail(vacancy_jur)
@@ -173,7 +173,7 @@ for(i in jur_list[]) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
-                       bottom = textGrob("Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type \nhousehold.datasource_id = 18 & 13\nNote: Unoccupiable units are included. Out of range data may not appear on the\nplot. Refer to the table for out of range results.",
+                       bottom = textGrob("Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type \nhousehold.datasource_id = 19 & 13\nNote: Unoccupiable units are included. Out of range data may not appear on the\nplot. Refer to the table for out of range results.",
                                          x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))#Katie: smaller font & multiple line caption 
   ggsave(output, file= paste(results,'vacancy ',jur_list2[i], " 13 to 14.png", sep=''))#, scale=2))
 }
@@ -230,7 +230,7 @@ for(i in 1:length(cpa_list)) {
     theme(legend.position = "bottom",
           legend.title=element_blank(),
           plot.title = element_text(hjust = 0.5, size = 9))#Katie: title font size and alignment
-  ggsave(plot, file= paste(results, 'vacancy', cpa_list[i], "18.png", sep=''))#, scale=2)
+  ggsave(plot, file= paste(results, 'vacancy', cpa_list[i], "19.png", sep=''))#, scale=2)
   #sortdat <- plotdat[order(plotdat$geozone,plotdat$yr_id),]
   output_table<-data.frame(plotdat$yr_id,plotdat$rate14,plotdat$rate13,plotdat$reg14,plotdat$reg13)
   setnames(output_table, old=c("plotdat.yr_id", "plotdat.rate14","plotdat.rate13","plotdat.reg14","plotdat.reg13"),new=c("Year","CPA Vac 14","CPA Vac 13","Reg Vac 14", "Reg Vac 13"))
@@ -246,9 +246,9 @@ for(i in 1:length(cpa_list)) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
-              bottom = textGrob("Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type \nhousehold.datasource_id = 18 & 13\nNote: Unoccupiable units are included. Out of range data may not appear on\nthe plot. Refer to the table for out of range results.",
+              bottom = textGrob("Source: demographic_warehouse: fact.housing,dim.mgra, dim.structure_type \nhousehold.datasource_id = 19 & 13\nNote: Unoccupiable units are included. Out of range data may not appear on\nthe plot. Refer to the table for out of range results.",
                                          x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 7)))
-  ggsave(output, file= paste(results,'vacancy',cpa_list[i], "18.png", sep=''))#, scale=2))
+  ggsave(output, file= paste(results,'vacancy',cpa_list[i], "19.png", sep=''))#, scale=2))
 }
 
 
