@@ -232,7 +232,7 @@ cum_dist_jur$keep[cum_dist_jur$cum_sum>cum_dist_jur$hh_half] <- 1
 
 cum_dist_jur<- subset(cum_dist_jur, cum_dist_jur$keep==1)
 
-cum_dist_jur<-cum_dist_jur %>% group_by(jurisdiction_2015, yr) %>% summarise(count=n(), med_inc.13.2.2=first(med_inc))
+cum_dist_jur<-cum_dist_jur %>% group_by(jurisdiction_2015, yr) %>% summarise(count=n(), med_inc_abm=first(med_inc))
 
 head(cum_dist_jur)
 #change class to data frame after the group by command
@@ -251,7 +251,7 @@ cum_dist_cpa$keep[cum_dist_cpa$cum_sum>cum_dist_cpa$hh_half] <- 1
 
 cum_dist_cpa<- subset(cum_dist_cpa, cum_dist_cpa$keep==1)
 
-cum_dist_cpa<-cum_dist_cpa %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc.13.2.2=first(med_inc))
+cum_dist_cpa<-cum_dist_cpa %>% group_by(cpa_13, yr) %>% summarise(count=n(), med_inc_abm=first(med_inc))
 
 #change class to data frame after the group by command
 cum_dist_cpa= as.data.frame(cum_dist_cpa)
@@ -274,7 +274,7 @@ cum_dist_region$keep[cum_dist_region$cum_sum>cum_dist_region$hh_half] <- 1
 
 cum_dist_region<- subset(cum_dist_region, cum_dist_region$keep==1)
 
-cum_dist_region<-cum_dist_region %>% group_by(yr) %>% summarise(count=n(), med_inc.13.2.2=first(med_inc))
+cum_dist_region<-cum_dist_region %>% group_by(yr) %>% summarise(count=n(), med_inc_abm=first(med_inc))
 
 #change class to data frame after the group by command
 cum_dist_region= as.data.frame(cum_dist_region)
@@ -356,7 +356,7 @@ mi_jur<- merge(mi_jur,cum_dist_jur,by.x=c("geozone", "yr_id"), by.y=c("jur_name"
 mi_cpa<- merge(mi_cpa,cum_dist_cpa,by.x=c("cpa_id", "yr_id"), by.y=c("cpa_13", "yr"), all=TRUE)
 
 mi_jur$med_inc_reg<-mi_reg[match(mi_jur$yr_id, mi_reg$yr_id), "med_inc_reg"]
-mi_jur$med_inc_reg_SR13<-cum_dist_region[match(mi_jur$yr_id, cum_dist_region$yr), "med_inc.13.2.2"]
+mi_jur$med_inc_reg_SR13<-cum_dist_region[match(mi_jur$yr_id, cum_dist_region$yr), "med_inc_abm"]
 
 
 summary(mi_jur)
@@ -375,23 +375,17 @@ for(i in 1:2) {
   plot<- ggplot(plotdat, aes(x=yr_id))+
     geom_line(aes(y=med_inc_dw, color="SR14"),size=1.2) +
     geom_point(aes(y=med_inc_dw, color="SR14"), size=3, alpha=0.8) +
-    geom_line(aes(y= med_inc.13.2.2, color="SR13"),size=1.2) +
-    geom_point(aes(y= med_inc.13.2.2, color="SR13"), size=3, alpha=0.8) +
+    geom_line(aes(y= med_inc_abm, color="SR13"),size=1.2) +
+    geom_point(aes(y= med_inc_abm, color="SR13"), size=3, alpha=0.8) +
     geom_line(aes(y= med_inc_reg, color="Reg_SR14"),linetype="dashed",size=1.2) +
     geom_point(aes(y= med_inc_reg, color="Reg_SR14"), size=3, alpha=0.8) +
     geom_line(aes(y= med_inc_reg_SR13, color="Reg_SR13"),linetype="dashed",size=1.2) +
     geom_point(aes(y= med_inc_reg_SR13, color="Reg_SR13"), size=3, alpha=0.8) +
     scale_y_continuous(labels = comma, limits=c(40000,120000))+
-    #ggtitle(paste(jur_name[i], " Median Income ",sep="")) +
     labs(title=paste(jur_name[i], " Median Income ",sep=""), 
          y="Median Income", x="Year",
-         subtitle=paste('SR14:datasource id ',datasource_id,sep='')) +
-    
-    #labs(x="Weather    stations", 
-    #              y="Accumulated Rainfall [mm]",
-    #              title="Rainfall",
-    #              subtitle="Location")
-  
+         subtitle=paste('SR14 datasource id ',datasource_id,
+                        ' and SR13 version ',abm_version,sep='')) +
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
@@ -402,8 +396,8 @@ for(i in 1:2) {
     theme(plot.title = element_text(hjust = 0.5,size=22,face="bold")) +
     theme(plot.subtitle=element_text(size=14, hjust=0.5, face="italic", color="black"))
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_dw,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_dw","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
+  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_dw,plotdat$med_inc_abm,plotdat$med_inc_reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_dw","plotdat.med_inc_abm","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
@@ -412,9 +406,10 @@ for(i in 1:2) {
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
-                       bottom = textGrob(paste("Sources: SR14: demographic warehouse: dbo.compute_median_income_all_zones ",datasource_id,
-                                               " SR13: version.13.2.2 households.csv file"),
-                                         x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
+                       bottom = textGrob(paste("Sources:", 
+"\nSR14: demographic warehouse: dbo.compute_median_income_all_zones ",datasource_id,
+"\nSR13: version.",abm_version," households.csv file",sep=''),
+x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
   ggsave(output, width=6, height=8, dpi=100, file= paste(results,'median income ',jur_name[i], "13_14.png", sep=''))#, scale=2))
 }
 
@@ -434,7 +429,7 @@ write.csv(cum_dist_jur,"M:\\Technical Services\\QA Documents\\Projects\\Sub Regi
 
 #delete cases with no data for both SR
 mi_cpa<-subset(mi_cpa, !is.na(mi_cpa$geozone))
-mi_cpa$med_inc.13.2.2<-round(mi_cpa$med_inc.13.2.2, digits = 0)
+mi_cpa$med_inc_abm<-round(mi_cpa$med_inc_abm, digits = 0)
 head(mi_cpa)
 
 mi_cpa$med_inc_reg<-mi_reg[match(mi_cpa$yr_id, mi_reg$yr_id), "med_inc_reg"]
@@ -449,7 +444,7 @@ for(i in 1:length(cpa_list)) {
   plotdat = subset(mi_cpa, mi_cpa$geozone==cpa_list[i])
   plot<- ggplot(plotdat, aes(x=yr_id))+
     geom_line(aes(y=med_inc_ds_id_17, color="SR14"))+
-    geom_line(aes(y= med_inc.13.2.2, color="SR13")) +
+    geom_line(aes(y= med_inc_abm, color="SR13")) +
     geom_line(aes(y= med_inc_reg, color="Reg_SR14")) +
     scale_y_continuous(labels = comma, limits=c(20000,120000))+
     labs(title=paste("Median Income ", cpa_list[i],' SR13 and SR14,\n 2020-2050',sep=""),
@@ -459,8 +454,8 @@ for(i in 1:length(cpa_list)) {
     theme(legend.position = "bottom",
           legend.title=element_blank())
   ggsave(plot, file= paste(results, 'median income ', cpa_list[i], "13_14.png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc.13.2.2,plotdat$med_inc_reg)
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc.13.2.2","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
+  output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_ds_id_17,plotdat$med_inc_abm,plotdat$med_inc_reg)
+  setnames(output_table, old=c("plotdat.yr_id","plotdat.med_inc_ds_id_17","plotdat.med_inc_abm","plotdat.med_inc_reg"),new=c("Year","SR14 median income","SR13 median income","SR14 region med inc"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),

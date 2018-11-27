@@ -137,6 +137,7 @@ dem_ethn$N_chg[dem_ethn$Year == "2016"] <- 0
 dem_ethn$N_pct[dem_ethn$yr_id == "2016"] <- 0
 dem_ethn$N_pct[dem_ethn$N_chg == "NA"] <- 0
 dem_ethn$N_pct[dem_ethn$N_pct == "NA"] <- 0
+dem_ethn$N_pct[dem_ethn$N_pct == "Inf"] <- 0
 dem_ethn$pct_of_total[dem_ethn$pct_of_total == "NaN"] <- 0
 
 
