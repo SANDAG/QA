@@ -16,9 +16,9 @@ pkgTest(packages)
 #set o= other comparison datasource_id 
 #set p= most current phase number
 #set op= other comparison phase number
-v="18"
+v="19"
 o="17"
-p="5"
+p="6"
 op="4"
 
 gq_cpav<-read.csv(paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase ",p,"\\GQ\\gq_cpa",v,".csv",sep=""))
