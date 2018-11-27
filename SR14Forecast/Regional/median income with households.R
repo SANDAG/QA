@@ -13,26 +13,38 @@ pkgTest(packages)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
-#bring data in from SQL
-#channel <- odbcDriverConnect('driver={SQL Server};server=sql2014a8; database=data_cafe; trusted_connection=true')
-#geo_sql = getSQL("../Queries/geography.sql")
-#geography<-sqlQuery(channel,geo_sql)
-#odbcClose(channel)
-
 options('scipen'=10)
 
-abm_version = '13.2.2'
-abm_version_name = paste('version_',abm_version,sep='')
+## ABM versions  ##################################
+
+# set abm_version for plots
+
+abm_version == '13.2.2' # original
+
+# abm_version = '13_3_2' # revised
+
+if(abm_version == '13.2.2') {
+  abm_version_path = paste('archive\\version_',abm_version,sep='')
+}
+
+if(abm_version == '13_3_2') {
+  abm_version_path = paste('version_',abm_version,sep='')
+}
+  
+##################################################
+
 
 #access file per Wu and Ying
-inc_abm_13_2020<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
-                           "\\input\\2020\\households.csv",sep=''), stringsAsFactors = FALSE)
-inc_abm_13_2025<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
-                           "\\input\\2025\\households.csv",sep=''), stringsAsFactors = FALSE)
-inc_abm_13_2035<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
-                           "\\input\\2035\\households.csv",sep=''), stringsAsFactors = FALSE)
-inc_abm_13_2050<- read.csv(paste("T:\\ABM\\release\\ABM\\archive\\",abm_version_name,
-                           "\\input\\2050\\households.csv",sep=''), stringsAsFactors = FALSE)
+inc_abm_13_2020<- read.csv(paste("T:\\ABM\\release\\ABM\\",abm_version_path,
+                          "\\input\\2020\\households.csv",sep=''), stringsAsFactors = FALSE)
+inc_abm_13_2025<- read.csv(paste("T:\\ABM\\release\\ABM\\",abm_version_path,
+                          "\\input\\2025\\households.csv",sep=''), stringsAsFactors = FALSE)
+inc_abm_13_2035<- read.csv(paste("T:\\ABM\\release\\ABM\\",abm_version_path,
+                          "\\input\\2035\\households.csv",sep=''), stringsAsFactors = FALSE)
+inc_abm_13_2050<- read.csv(paste("T:\\ABM\\release\\ABM\\",abm_version_path,
+                          "\\input\\2050\\households.csv",sep=''), stringsAsFactors = FALSE)
+
+
 
 #add vector to indicate file for bind preparation
 inc_abm_13_2020$yr = 2020
@@ -44,7 +56,7 @@ inc_abm_13_2050$yr = 2050
 inc_abm_13<-rbind(inc_abm_13_2020,inc_abm_13_2025,inc_abm_13_2035,inc_abm_13_2050)
 
 #remove group quarters to compare with demographic warehouse
-#head(inc_abm_13)
+# head(inc_abm_13)
 # HHT column - Household/family type:
 # 0.       Not in universe (vacant or GQ)
 # 1.       Family household:married-couple
@@ -54,11 +66,22 @@ inc_abm_13<-rbind(inc_abm_13_2020,inc_abm_13_2025,inc_abm_13_2035,inc_abm_13_205
 # 5.       Nonfamily household:male householder, not living alone
 # 6.       Nonfamily household:female householder, living alone
 # 7.       Nonfamily household:female householder, not living alone
-inc_abm_13 = subset(inc_abm_13,inc_abm_13$HHT!=0)
+
+# note columns are capitalized depending on ABM release
+
+if(abm_version == '13.2.2'){
+  inc_abm_13 = subset(inc_abm_13,inc_abm_13$HHT!=0)
+  inc_abm_13<-select(inc_abm_13, MGRA, HINCCAT1, yr)
+  setnames(inc_abm_13, old=c("MGRA","HINCCAT1"), new=c("mgra","income_group_id"))}
+
+if(abm_version == '13_3_2'){
+  inc_abm_13 = subset(inc_abm_13,inc_abm_13$hht!=0)
+  inc_abm_13<-select(inc_abm_13, mgra, hinccat1, yr)
+  setnames(inc_abm_13, old=c("hinccat1"), new=c("income_group_id"))}
+
 
 #select columns of interest, rename columns, create a hh variable to allow for counting cases
-inc_abm_13<-select(inc_abm_13, MGRA, HINCCAT1, yr)
-setnames(inc_abm_13, old=c("MGRA","HINCCAT1"), new=c("mgra","income_group_id"))
+
 inc_abm_13$hh<-1
 head(inc_abm_13)
 
