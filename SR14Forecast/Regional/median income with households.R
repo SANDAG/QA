@@ -6,8 +6,9 @@ pkgTest <- function(pkg){
   
   
 }
+
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice")
+              "stringr","gridExtra","grid","lattice","gtable")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -374,18 +375,19 @@ head(mi_jur)
 results<-"plots\\median_income\\jur\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
+
 for(i in 1:length(jur_name)) { 
 # for(i in 1:2) { 
   plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
   plot<- ggplot(plotdat, aes(x=yr_id))+
-    geom_line(aes(y=med_inc_dw, color="SR14"),size=1.2) +
-    geom_point(aes(y=med_inc_dw, color="SR14"), size=3, alpha=0.8) +
-    geom_line(aes(y= med_inc_abm, color="SR13"),size=1.2) +
-    geom_point(aes(y= med_inc_abm, color="SR13"), size=3, alpha=0.8) +
-    geom_line(aes(y= med_inc_reg, color="Reg_SR14"),linetype="dashed",size=1.2) +
-    geom_point(aes(y= med_inc_reg, color="Reg_SR14"), size=3, alpha=0.8) +
-    geom_line(aes(y= med_inc_reg_SR13, color="Reg_SR13"),linetype="dashed",size=1.2) +
-    geom_point(aes(y= med_inc_reg_SR13, color="Reg_SR13"), size=3, alpha=0.8) +
+    geom_line(aes(y=med_inc_dw,  color=paste("SR14 ",jur_name[i],sep='')),size=1.2) +
+    geom_point(aes(y=med_inc_dw, color=paste("SR14 ",jur_name[i],sep='')), size=3, alpha=0.8) +
+    geom_line(aes(y= med_inc_abm, color=paste("SR13 ",jur_name[i],sep='')),size=1.2) +
+    geom_point(aes(y= med_inc_abm,color=paste("SR13 ",jur_name[i],sep='')), size=3, alpha=0.8) +
+    geom_line(aes(y= med_inc_reg, color="Region SR14"),linetype="dashed",size=1.2) +
+    geom_point(aes(y= med_inc_reg, color="Region SR14"), size=3, alpha=0.8) +
+    geom_line(aes(y= med_inc_reg_SR13, color="Region SR13"),linetype="dashed",size=1.2) +
+    geom_point(aes(y= med_inc_reg_SR13, color="Region SR13"), size=3, alpha=0.8) +
     scale_y_continuous(labels = comma, limits=c(40000,120000))+
     labs(title=paste(jur_name[i], " Household Median Income ",sep=""), 
          y="Median Income", x="Year",
@@ -403,21 +405,30 @@ for(i in 1:length(jur_name)) {
   ggsave(plot, file= paste(results, 'median income ', jur_name[i], "13_14.png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$med_inc_reg_SR13,plotdat$med_inc_reg,
                            plotdat$med_inc_abm,plotdat$med_inc_dw)
-  sr14_colname = paste('\"',"SR14 ",jur_name[i],'\"',sep=" ")
-  sr13_colname = paste('\"',"SR13 ",jur_name[i],'\"',sep=" ")
-  sr14_colname_region = paste('\"',"SR14 ","Region",'\"',sep=" ")
-  sr13_colname_region = paste('\"',"SR13 ","Region",'\"',sep=" ")
+  sr14_colname = paste("SR14\n",jur_name[i],sep=" ")
+  sr13_colname = paste("SR13\n",jur_name[i],sep=" ")
+  sr14_colname_region = paste("Region\n", "SR14",sep=" ")
+  sr13_colname_region = paste("Region\n", "SR13",sep=" ")
+  
   setnames(output_table, 
            old=c("plotdat.yr_id","plotdat.med_inc_reg_SR13","plotdat.med_inc_reg","plotdat.med_inc_abm","plotdat.med_inc_dw"),
            new=c("Year",sr13_colname_region,sr14_colname_region,sr13_colname,sr14_colname))
-  tt <- ttheme_default(base_size=11,colhead=list(fg_params = list(parse=TRUE)))
+  tt <- ttheme_default(colhead = 
+                          # first unit is the wdith, and second the height
+                          list(padding=unit.c(unit(4, "mm"), unit(10, "mm"))))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-  lay <- rbind(c(1,1,1,1,1),
-               c(1,1,1,1,1),
-               c(1,1,1,1,1),
-               c(2,2,2,2,2),
-               c(2,2,2,2,2))
-  output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay,
+  title <- textGrob(paste(jur_name[i], " Household Median Income ",sep=""),
+                    gp=gpar(fontsize=16))
+  padding <- unit(5,"mm")
+  table <- gtable_add_rows(
+    tbl, 
+    heights = grobHeight(title) + padding,
+    pos = 0)
+  table <- gtable_add_grob(
+    table, 
+    title, 
+    1, 1, 1, ncol(table))
+  output<-grid.arrange(plot,table,as.table=TRUE,nrow = 2,#layout_matrix=lay,
                        bottom = textGrob(paste("Sources:", 
 "\nSR14: demographic warehouse: dbo.compute_median_income_all_zones ",datasource_id,
 "\nSR13: version.",abm_version," households.csv file",sep=''),
