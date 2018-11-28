@@ -378,7 +378,22 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 for(i in 1:length(jur_name)) { 
 # for(i in 1:2) { 
+  lowerlimit = 40000
+  upperlimit = 106000
   plotdat = subset(mi_jur, mi_jur$geozone==jur_name[i])
+  plotdat$count <-NULL
+  scale_change=''
+  data_long <- melt(plotdat,id.vars=c("yr_id","geozone","jurisdiction_2015"),
+                    measure.vars=c("med_inc_dw","med_inc_abm","med_inc_reg","med_inc_reg_SR13"),
+                    variable.name="source",value.name="median_income")
+  if (NROW(na.omit(data_long[(data_long[,'median_income']<lowerlimit),]))) {
+    lowerlimit = min(data_long$median_income)
+    scale_change='\nNote: scale change'
+  }
+  if (NROW(na.omit(data_long[(data_long[,'median_income']>upperlimit),]))) {
+    upperlimit = max(data_long$median_income)
+    scale_change='\nNote: scale change'
+  }
   plot<- ggplot(plotdat, aes(x=yr_id))+
     geom_line(aes(y=med_inc_dw,  color=paste("SR14 ",jur_name[i],sep='')),size=1.2) +
     geom_point(aes(y=med_inc_dw, color=paste("SR14 ",jur_name[i],sep='')), size=3, alpha=0.8) +
@@ -388,11 +403,11 @@ for(i in 1:length(jur_name)) {
     geom_point(aes(y= med_inc_reg, color="Region SR14"), size=3, alpha=0.8) +
     geom_line(aes(y= med_inc_reg_SR13, color="Region SR13"),linetype="dashed",size=1.2) +
     geom_point(aes(y= med_inc_reg_SR13, color="Region SR13"), size=3, alpha=0.8) +
-    scale_y_continuous(labels = comma, limits=c(40000,120000))+
+    scale_y_continuous(labels = comma, limits=c(lowerlimit,upperlimit)) +
     labs(title=paste(jur_name[i], " Household Median Income ",sep=""), 
          y="Median Income", x="Year",
          subtitle=paste('SR14 datasource id ',datasource_id,
-                        ' and SR13 version ',abm_version,sep='')) +
+                        ' and SR13 version ',abm_version,scale_change,sep='')) +
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
@@ -468,7 +483,23 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 for(i in 1:length(cpa_list)) {  
 #for(i in 1:2) { 
+  lowerlimit = 40000
+  upperlimit = 106000
   plotdat = subset(mi_cpa, mi_cpa$geozone==cpa_list[i])
+  plotdat$count <-NULL
+  scale_change=''
+  data_long <- melt(plotdat,id.vars=c("cpa_id", "yr_id","geozone"),
+                    measure.vars=c("med_inc_dw","med_inc_abm","med_inc_reg","med_inc_reg_SR13"),
+                    variable.name="source",value.name="median_income")
+  if (NROW(na.omit(data_long[(data_long[,'median_income']<lowerlimit),]))) {
+    lowerlimit = min(data_long$median_income)
+    scale_change='\nNote: scale change'
+  }
+  if (NROW(na.omit(data_long[(data_long[,'median_income']>upperlimit),]))) {
+    upperlimit = max(data_long$median_income)
+    scale_change='\nNote: scale change'
+  }
+  
   plot<- ggplot(plotdat, aes(x=yr_id))+
     geom_line(aes(y=med_inc_dw,  color=paste("SR14 ",cpa_list[i],sep='')),size=1.2) +
     geom_point(aes(y=med_inc_dw, color=paste("SR14 ",cpa_list[i],sep='')), size=3, alpha=0.8) +
@@ -478,11 +509,11 @@ for(i in 1:length(cpa_list)) {
     geom_point(aes(y= med_inc_reg, color="Region SR14"), size=3, alpha=0.8) +
     geom_line(aes(y= med_inc_reg_SR13, color="Region SR13"),linetype="dashed",size=1.2) +
     geom_point(aes(y= med_inc_reg_SR13, color="Region SR13"), size=3, alpha=0.8) +
-    scale_y_continuous(labels = comma, limits=c(28000,120000))+
+    scale_y_continuous(labels = comma, limits=c(lowerlimit,upperlimit))+
     labs(title=paste(cpa_list[i], " Household Median Income ",sep=""), 
          y="Median Income", x="Year",
          subtitle=paste('SR14 datasource id ',datasource_id,
-                        ' and SR13 version ',abm_version,sep='')) +
+                        ' and SR13 version ',abm_version,scale_change,sep='')) +
     theme_bw(base_size = 12)+
     theme(legend.position = "bottom",
           legend.title=element_blank()) +
