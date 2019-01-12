@@ -4,8 +4,8 @@
 
 ##########################
 #LH to fix
-#region isn't matched on type
-#there isn't a line plotted for each type of structure
+
+#need to fix the table for the graph to show by structure type
 ##########################
 
 
@@ -72,7 +72,9 @@ citynames <- data.frame(jur_list, jur_list2)
 vacancy_jur$jurisdiction_id<-citynames[match(vacancy_jur$geozone, citynames$jur_list2),1]
 
 #match region rate into jur data
-vacancy_jur$reg14<-vacancy_region[match(vacancy_jur$yr_id, vacancy_region$yr_id),"rate"]
+vacancy_jur$reg14<-vacancy_region[match(paste(vacancy_jur$yr_id,vacancy_jur$structure_type_id),
+                                        paste(vacancy_region$yr_id,vacancy_region$structure_type_id)),"rate"]
+
 
 #rename jur rate to include year
 setnames(vacancy_jur, old=c("rate"), new=c("rate14"))
@@ -82,7 +84,9 @@ setnames(vacancy_jur, old=c("rate"), new=c("rate14"))
 
 
 #match region rate into cpa 14 data
-vacancy_cpa$reg14<-vacancy_region[match(vacancy_cpa$yr_id, vacancy_region$yr_id),"rate"]
+vacancy_cpa$reg14<-vacancy_region[match(paste(vacancy_cpa$yr_id,vacancy_cpa$structure_type_id),
+                                        paste(vacancy_region$yr_id,vacancy_region$structure_type_id)),"rate"]
+
 
 #rename cpa rate to include year
 setnames(vacancy_cpa, old=c("rate"), new=c("rate14"))
@@ -102,18 +106,14 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\Vacancy\\Jur by type (19)\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
-tail(vacancy_jur)
-
-
+head(vacancy_jur)
+colours = c(#E69F00", "#56B4E9", "#009E73","#CC79A7")
 
 
 for(i in jur_list[]) { 
   plotdat = subset(vacancy_jur, vacancy_jur$jurisdiction_id==jur_list[i])
-  plot<- ggplot(plotdat, aes(x=yr_id))+
-    geom_line(aes(y=rate14, color="Jur14", linetype="Jur14"))+
-    geom_line(aes(y=reg14, color="Reg14", linetype="Reg14")) +
-    scale_color_manual("",values =c(Jur14="red", Reg14="blue"))+
-    scale_linetype_manual("",values=c(Jur14="solid",Reg14="solid"))+
+  plot<- ggplot(plotdat, aes(x=yr_id, y=rate14, group=short_name, color=short_name))+
+    scale_color_manual(values =colour)+
     scale_y_continuous(labels = comma, limits=c(0,10))+
     labs(title=paste(jur_list2[i],' SR14 Vacancy by Type\nand Region, 2016-2050',sep=""),
          y="Vacancy Rate", 
