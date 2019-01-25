@@ -50,6 +50,7 @@ vacancy <- data.frame()
 for(ds_id in datasource_ids) {
   channel <- odbcDriverConnect('driver={SQL Server};server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
   Vacancy_sql = getSQL("../Queries/HU_densification/Vacancy_ds_id.sql")
+  Vacancy_sql <- gsub("ds_id", ds_id,Vacancy_sql)
   vac_query<-sqlQuery(channel,Vacancy_sql)
   vac_query$datasource_id = ds_id
   vacancy <- rbind(vacancy,vac_query)
