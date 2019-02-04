@@ -1,0 +1,3 @@
+SELECT *
+FROM [SPACECORE].[gis].[SCHOOL]
+  
