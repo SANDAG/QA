@@ -45,11 +45,16 @@ hh_sql <- gsub("ds_id", datasource_id,hh_sql)
 hh<-sqlQuery(channel,hh_sql,stringsAsFactors = FALSE)
 hh$datasource_id = datasource_id
 
+#cpa ids
+cpa_sql = getSQL("../Queries/cpa_id_lookup.sql")
+cpa_id<-sqlQuery(channel,cpa_sql,stringsAsFactors = FALSE)
+
 odbcClose(channel)
 
 # get region data
 mi_jur$med_inc_reg1<-mi_reg[match(mi_jur$yr_id, mi_reg$yr_id), "med_inc_reg"]
 mi_cpa$med_inc_reg1<-mi_reg[match(mi_cpa$yr_id, mi_reg$yr_id), "med_inc_reg"]
+mi_cpa<- merge(mi_cpa,cpa_id,by.x=c("geozone"), by.y=c("geozone"), all.x=TRUE)
 
 # get household data
 mi_jur_hh<- merge(mi_jur,hh,by.x=c("geozone", "yr_id"), by.y=c("geozone", "yr_id"), all.x=TRUE)
