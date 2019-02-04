@@ -25,7 +25,7 @@ odbcClose(channel)
 write.csv(hh, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\hh_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
 
 #rename region value for match
-hh$geozone[hh$geotype =="region"]<- "Region"
+hh$geozone[hh$geotype =="region"]<- "~Region"
 hh$geozone <- gsub("\\*","",hh$geozone)
 hh$geozone <- gsub("\\-","_",hh$geozone)
 hh$geozone <- gsub("\\:","_",hh$geozone)
