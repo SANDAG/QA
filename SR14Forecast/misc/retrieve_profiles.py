@@ -78,7 +78,9 @@ if not (os.access(output_path, os.F_OK)):
     os.makedirs(os.getcwd() + '/' + output_path)
 
 for geo in geo_df['name'].tolist():
-    url = 'http://sql2014a8/ReportServer/Pages/ReportViewer.aspx?%2fsocioec%2fsr14%2fsinglezone&datasource_id={0}&geotype={1}&geozone={2}&rs:Format=PDF'.\
+    #url = 'http://sql2014a8/ReportServer/Pages/ReportViewer.aspx?%2fsocioec%2fsr14%2fsinglezone&datasource_id={0}&geotype={1}&geozone={2}&rs:Format=PDF'.\
+    #    format(datasource_id,geotype,urllib.parse.quote(geo))
+    url = 'http://sql2014a8/ReportServer/Pages/ReportViewer.aspx?%2fsocioec%2fsr14%2fsinglezone_classic_vac&datasource_id={0}&geotype={1}&geozone={2}&rs:Format=PDF'.\
         format(datasource_id,geotype,urllib.parse.quote(geo))
     print(url)
     r = requests.get(url, auth=HttpNtlmAuth(username, password))
