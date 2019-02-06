@@ -66,6 +66,9 @@ write.csv(grades_pub,"M:\\Technical Services\\QA Documents\\Projects\\School Spa
 write.csv(grades_schoolpt,"M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\schoolpt_grades.csv")
 write.csv(grades_pub_served,"M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\public_grades_served.csv")
 
+############################
+############################
+
 addmargins(xtabs( ~ public.StatusType + public.ClosedDate, data=closed_s))
 
 
