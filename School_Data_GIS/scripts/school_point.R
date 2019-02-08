@@ -9,7 +9,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2","lubridate", 
-              "stringr","gridExtra","grid","lattice", "gtable")
+              "stringr","gridExtra","grid","lattice", "gtable", "janitor")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -23,6 +23,44 @@ odbcClose(channel)
 private<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\CA Dept of Ed data\\privateschools1617.csv")
 public<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\CA Dept of Ed data\\pubschls.csv")
 
+options(stringsAsFactors=FALSE)
+
+
+names(public)<-tolower(names(public))
+names(private)<-tolower(names(private))
+names(schoolpt)<-tolower(names(schoolpt))
+
+#format dates
+public$OpenDate<-as.Date((public$OpenDate), format='%m/%d/%Y')
+public$ClosedDate<-as.Date((public$ClosedDate), format='%m/%d/%Y')
+
+#format dates for pt
+#############
+
+#calc gsoffered for private
+private$gsoffered<-as.character(paste(private$low.grade, private$high.grade, sep="-"))
+
+
+#change private names for rbind
+names(private) <- gsub(".", "", names(private), fixed = TRUE)
+setnames (private, old='publicdistrict', new='soctype')
+
+#select columns of interest
+public<-select(public,street,cdscode,charter,city,closeddate,district,doctype,gsoffered,
+                  gsserved,school,opendate,county,soctype,zip)
+private<-select(private,street,cdscode,city,gsoffered,school,county,soctype,zip)
+
+colnames(public)
+colnames(private)
+
+doe<-rbind(public, private)
+
+#select by county=san diego
+#merge with pt file
+
+#merge pt with poly
+
+
 head(private)
 priv_test<-subset(schoolpt, socType=='Private')
 head(priv_test)
@@ -30,8 +68,12 @@ head(priv_test)
 head(schoolpt)
 
 head(private)
-
+public_sd<-subset(public, County=='San Diego')
+unique(public_sd$County)
+unique(public_sd$GSoffered)
 unique(schoolpt$gsOffered)
+unique(private_sd$GSoffered)
+colnames(private_sd)
 
 #save out for coding public school grades offered to categories in school point data
 grades_pub<-data.frame(table(public$GSoffered))
@@ -68,19 +110,19 @@ write.csv(grades_pub_served,"M:\\Technical Services\\QA Documents\\Projects\\Sch
 
 ############################
 ############################
-
-addmargins(xtabs( ~ public.StatusType + public.ClosedDate, data=closed_s))
-
-
-table(closed_s$public.StatusType)
-sch_merge<-subset(closed_s, public.StatusType=='Merged')
-
-public$OpenDate<-as.Date((public$OpenDate), format='%m/%d/%Y')
-public$ClosedDate<-as.Date((public$ClosedDate), format='%m/%d/%Y')
+#crosstab
+#addmargins(xtabs( ~ public.StatusType + public.ClosedDate, data=closed_s))
 
 
-######this is wrong
+
+
+colnames(public)
+
+
+######this pulls out NAs
 openEQclose<-public[public$OpenDate==public$ClosedDate,]
 ###################
+
+
 
 
