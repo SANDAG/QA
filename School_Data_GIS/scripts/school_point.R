@@ -20,45 +20,141 @@ schoolpt_sql = getSQL("../queries/school_point.sql")
 schoolpt<-sqlQuery(channel,schoolpt_sql)
 odbcClose(channel)
 
-private<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\CA Dept of Ed data\\privateschools1617.csv")
-public<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\CA Dept of Ed data\\pubschls.csv")
+private<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\CA Dept of Ed data\\privateschools1617.csv", stringsAsFactors = FALSE)
+public<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\CA Dept of Ed data\\pubschls.csv", stringsAsFactors = FALSE)
 
 options(stringsAsFactors=FALSE)
-
 
 names(public)<-tolower(names(public))
 names(private)<-tolower(names(private))
 names(schoolpt)<-tolower(names(schoolpt))
 
-#format dates
-public$OpenDate<-as.Date((public$OpenDate), format='%m/%d/%Y')
-public$ClosedDate<-as.Date((public$ClosedDate), format='%m/%d/%Y')
-
-#format dates for pt
-#############
-
-#calc gsoffered for private
-private$gsoffered<-as.character(paste(private$low.grade, private$high.grade, sep="-"))
 
 
-#change private names for rbind
+#change private names to match public
 names(private) <- gsub(".", "", names(private), fixed = TRUE)
-setnames (private, old='publicdistrict', new='soctype')
+setnames (private, old='publicdistrict', new='district')
+#calc gsoffered for private
+private$gsoffered<-as.character(paste(private$lowgrade, private$highgrade, sep="-"))
+
+public$cdscode<-format(public$cdscode, scientific = FALSE)
+private$cdscode<-format(private$cdscode, scientific = FALSE)
+schoolpt$cdscode<-format(schoolpt$cdscode, scientific = FALSE)
+
+#format dates
+private$opendate<-ymd_hms(private$opendate)
+private$opendate<-date(private$opendate)
+publict$opendate<-ymd_hms(public$opendate)
+public$opendate<-date(public$opendate)
+publict$closedate<-ymd_hms(public$closedate)
+public$closedate<-date(public$closedate)
+schoolpt$opendate<-ymd_hms(schoolpt$opendate)
+schoolpt$opendate<-date(schoolpt$opendate)
+schoolpt$closeddate<-ymd_hms(schoolpt$closeddate)
+schoolpt$closeddate<-date(schoolpt$closeddate)
+
+
+
+
 
 #select columns of interest
 public<-select(public,street,cdscode,charter,city,closeddate,district,doctype,gsoffered,
                   gsserved,school,opendate,county,soctype,zip)
-private<-select(private,street,cdscode,city,gsoffered,school,county,soctype,zip)
+private<-select(private,street,cdscode,city,gsoffered,school,county,district,zip)
 
-colnames(public)
-colnames(private)
+#create columns needed before merge
+private$priv<-"Y"
+private$charter<-"N"
+private$soctype<-"Private"
+public$priv<-"N"
 
-doe<-rbind(public, private)
+public<-subset(public, county=='San Diego')
+private<-subset(private, county=='San Diego')
 
-#select by county=san diego
+
+#check that all public schools with gsoffered value of no data do not have data for gsserved
+#if there were data in gsserved it should override the no data value in gsoffered
+public_nogs<-subset(public, public$gsoffered=='No Data' & public$county=='San Diego')
+public_nogs<-if(all(public_nogs$gsoffered==public_nogs$gsserved)) print('match') else print ('no match') 
+
+#check for duplicates by cdscode in each source file 
+dups_private <-private[duplicated(private$cdscode)|duplicated(private$cdscode, fromLast=TRUE),]
+dups_private
+dups_public <-public[duplicated(public$cdscode)|duplicated(public$cdscode, fromLast=TRUE),]
+dups_public
+dups_schoolpt <-schoolpt[duplicated(schoolpt$cdscode)|duplicated(schoolpt$cdscode, fromLast=TRUE),]
+dups_schoolpt <-dups_schoolpt[order(dups_schoolpt),]
+write.csv(dups_schoolpt, "M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\Result data files\\dups_by_cds_schoolpt.csv")
+table(dups_schoolpt$cdscode) 
+
+#check for duplicates by schoolid
+dups_schoolpt_id <-schoolpt[duplicated(schoolpt$schoolid)|duplicated(schoolpt$schoolid, fromLast=TRUE),]
+dups_schoolpt_id
+
+#check that closed schools have a closed date
+close_info<-ifelse(schoolpt$closeddate)
+
+schoolpt[is.na(schoolpt$opendate), "schoolid"]
+
+doe<-rbind.fill(public, private)
+
+doe$in_doe<-1
+schoolpt$in_pt<-1
+
+doe2schpt<-merge(doe, schoolpt, by.x = 'cdscode', by.y = 'cdscode', all = TRUE)
+doe2schpt$in_doe[is.na(doe2schpt$in_doe)]<-9
+doe2schpt$in_pt[is.na(doe2schpt$in_pt)]<-9
+
+doe2schpt$matched<-ifelse(doe2schpt$in_doe==doe2schpt$in_pt,'1',
+                            ifelse(doe2schpt$in_doe!=doe2schpt$in_pt,'0', '9'))
+                          
+table(doe2schpt$matched)
+
+unmatched<-subset(doe2schpt, matched==0)
+write.csv(dups_schoolpt, "M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\Result data files\\doe2pt_unmatched_schools.csv")
+
+
+
+doe2schpt$unmatched_2<-ifelse(doe2schpt$in_doe==doe2schpt$in_pt,'0',
+                            ifelse(is.na(doe2schpt$in_doe)|
+                                   is.na(doe2schpt$in_pt),'1', '9'))
+
+
+GROUP_COMPAS$cbt_high <- ifelse(GROUP_COMPAS$CognitiveBehavior=='H'|
+                                  GROUP_COMPAS$CriminalOpportunity=='H'|
+                                  GROUP_COMPAS$CriminalAssociatesPeers=='H'|
+                                  GROUP_COMPAS$CriminalPersonality=='H'|
+                                  GROUP_COMPAS$FamilyCriminality=='H'|
+                                  GROUP_COMPAS$SocialAdjustment=='H','H',
+                                ifelse(is.na(GROUP_COMPAS$AssessmentDate), NA, 'L'))
+
+
+
+head(doe)
+head(schoolpt)
+class(public$cdscode)
+
 #merge with pt file
 
 #merge pt with poly
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####################
+
+
+
 
 
 head(private)
