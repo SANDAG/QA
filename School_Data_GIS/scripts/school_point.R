@@ -9,7 +9,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2","lubridate", 
-              "stringr","gridExtra","grid","lattice", "gtable", "janitor")
+              "stringr","gridExtra","grid","lattice", "gtable")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -18,6 +18,8 @@ source("../queries/readSQL.R")
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8;trusted_connection=true')
 schoolpt_sql = getSQL("../queries/school_point.sql")
 schoolpt<-sqlQuery(channel,schoolpt_sql)
+schoolpoly_sql = getSQL("../queries/school_poly.sql")
+schoolpoly<-sqlQuery(channel,schoolpoly_sql)
 odbcClose(channel)
 
 private<-read.csv("M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\CA Dept of Ed data\\privateschools1617.csv", stringsAsFactors = FALSE)
@@ -28,8 +30,7 @@ options(stringsAsFactors=FALSE)
 names(public)<-tolower(names(public))
 names(private)<-tolower(names(private))
 names(schoolpt)<-tolower(names(schoolpt))
-
-
+names(schoolpoly)<-tolower(names(schoolpoly))
 
 #change private names to match public
 names(private) <- gsub(".", "", names(private), fixed = TRUE)
@@ -42,23 +43,14 @@ private$cdscode<-format(private$cdscode, scientific = FALSE)
 schoolpt$cdscode<-format(schoolpt$cdscode, scientific = FALSE)
 
 #format dates
-private$opendate<-ymd_hms(private$opendate)
-private$opendate<-date(private$opendate)
-publict$opendate<-ymd_hms(public$opendate)
-public$opendate<-date(public$opendate)
-publict$closedate<-ymd_hms(public$closedate)
-public$closedate<-date(public$closedate)
-schoolpt$opendate<-ymd_hms(schoolpt$opendate)
-schoolpt$opendate<-date(schoolpt$opendate)
-schoolpt$closeddate<-ymd_hms(schoolpt$closeddate)
-schoolpt$closeddate<-date(schoolpt$closeddate)
-
-
-
+public$opendate<-as.Date(public$opendate, "%m/%d/%Y")
+public$closedate<-as.Date(public$closeddate, "%m/%d/%Y")
+schoolpt$opendate<-as.Date(schoolpt$opendate, "%m/%d/%Y")
+schoolpt$closeddate<-as.Date(schoolpt$closeddate, "%m/%d/%Y")
 
 
 #select columns of interest
-public<-select(public,street,cdscode,charter,city,closeddate,district,doctype,gsoffered,
+public<-select(public,statustype, street,cdscode,charter,city,closeddate,district,doctype,gsoffered,
                   gsserved,school,opendate,county,soctype,zip)
 private<-select(private,street,cdscode,city,gsoffered,school,county,district,zip)
 
@@ -90,10 +82,27 @@ table(dups_schoolpt$cdscode)
 #check for duplicates by schoolid
 dups_schoolpt_id <-schoolpt[duplicated(schoolpt$schoolid)|duplicated(schoolpt$schoolid, fromLast=TRUE),]
 dups_schoolpt_id
+dups_schoolpoly_id <-schoolpoly[duplicated(schoolpoly$schoolid)|duplicated(schoolpoly$schoolid, fromLast=TRUE),]
+dups_schoolpt_id
 
 #check that closed schools have a closed date
-close_info<-ifelse(schoolpt$closeddate)
+public_1<-subset(public_1, County=='San Diego')
+public_1$close_flag[((is.na(public_1$ClosedDate)) & (public_1$StatusType='Closed'))|((!is.na(public_1$ClosedDate)) & (public_1$StatusType!='Closed'))]<-1
+public_1$close_flag[(public_1$ClosedDate=='No Data') & (public_1$StatusType=='Closed')]<-1
+public_1$close_flag2[(public_1$ClosedDate!='No Data') & (public_1$StatusType!='Closed')]<-1
+public_1$close_flag
+public_1$close_flag2
 
+table(public_1$close_flag)
+table(public_1$close_flag2)
+table(public_1$StatusType)
+
+
+table(public_1$ClosedDate)
+
+
+head(public_1$StatusType)
+#list schools with missing schoolid
 schoolpt[is.na(schoolpt$opendate), "schoolid"]
 
 doe<-rbind.fill(public, private)
@@ -211,7 +220,6 @@ write.csv(grades_pub_served,"M:\\Technical Services\\QA Documents\\Projects\\Sch
 
 
 
-
 colnames(public)
 
 
@@ -219,6 +227,11 @@ colnames(public)
 openEQclose<-public[public$OpenDate==public$ClosedDate,]
 ###################
 
+diegovalley<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\DS cleaning files\\DiegoValleyCharterSchools.csv')
 
+diegovalley<-read.delim2("K:\\box1\\gis\\Schools\\Schools2018\\DiegoValleyCharterSchools.csv.txt")
 
+file.exists('M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\DS cleaning files\\DiegoValleyCharterSchools.txt')
 
+file.exists("K:\\box1\\gis\\Schools\\Schools2018\\DiegoValleyCharterSchools.csv")
+getwd()

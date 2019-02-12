@@ -1,0 +1,5 @@
+SELECT [schoolID]
+      ,[regionID]
+      ,[Check_]
+      ,[Phantom]
+  FROM [SPACECORE].[gis].[SCHOOLPOLY]
