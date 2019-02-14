@@ -27,6 +27,7 @@ datasource_id=25
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
+hh_sql <- gsub("ds_id", ds_id,hh_sql)
 hh<-sqlQuery(channel,hh_sql)
 odbcClose(channel)
 
