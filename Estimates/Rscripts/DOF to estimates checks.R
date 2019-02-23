@@ -1,7 +1,7 @@
 #HH estimate script
 #started 2/12/2019
 #DOF doesn't report number of households
-
+#fix SQL code to bring in  est for id26 - what I have isn't working 
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -22,7 +22,7 @@ source("../Queries/readSQL.R")
 getwd()
 options(stringsAsFactors=FALSE)
 
-ds_id=24
+ds_id=26
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
@@ -37,13 +37,33 @@ totpop<-sqlQuery(channel,totpop_sql)
 vac_sql = getSQL("../Queries/vacancy.sql")
 vac_sql <- gsub("ds_id", ds_id,vac_sql)
 vac<-sqlQuery(channel,vac_sql)
+hhinc_sql = getSQL("../Queries/hhinc.sql")
+hhinc_sql <- gsub("ds_id", ds_id,hhinc_sql)
+hhinc<-sqlQuery(channel,hhinc_sql)
+demo_sql = getSQL("../Queries/age_ethn_gender.sql")
+demo_sql <- gsub("ds_id", ds_id,demo_sql)
+demo<-sqlQuery(channel,demo_sql)
+ma_jur_sql = getSQL("../Queries/median_age_jur.sql")
+ma_jur<-sqlQuery(channel,ma_jur_sql)
+ma_reg_sql = getSQL("../Queries/median_age_reg.sql")
+ma_reg<-sqlQuery(channel,ma_reg_sql)
+ma_f_jur_sql = getSQL("../Queries/median_age_female_jur.sql")
+ma_f_jur<-sqlQuery(channel,ma_f_jur_sql)
+ma_m_jur_sql = getSQL("../Queries/median_age_male_jur.sql")
+ma_m_jur<-sqlQuery(channel,ma_m_jur_sql)
+ma_f_reg_sql = getSQL("../Queries/median_age_female_reg.sql")
+ma_f_reg<-sqlQuery(channel,ma_f_reg_sql)
+ma_m_reg_sql = getSQL("../Queries/median_age_male_reg.sql")
+ma_m_reg<-sqlQuery(channel,ma_m_reg_sql)
 odbcClose(channel)
+
 
 #aggregate gq pop only - exclude hh pop
 gq <-aggregate(pop~yr_id + geozone + geotype, subset(gq, housing_type_id!=1), sum,na.rm = TRUE)
 setnames(gq, old="pop", new="gqpop")
 
 hu <- dcast(vac, yr_id + geotype + geozone ~ short_name, value.var="units")
+hutot <- aggregate(units~yr_id + geotype + geozone, data=vac, sum)
 
 #merge sandag data and calculate the vacancy rate
 #I think I can remove vac file since I have hu and hh
@@ -60,19 +80,37 @@ gq$geozone <- gsub("\\:","_",gq$geozone)
 hh$geozone <- gsub("\\*","",hh$geozone)
 hh$geozone <- gsub("\\-","_",hh$geozone)
 hh$geozone <- gsub("\\:","_",hh$geozone)
+hutot$geozone <- gsub("\\*","",hutot$geozone)
+hutot$geozone <- gsub("\\-","_",hutot$geozone)
+hutot$geozone <- gsub("\\:","_",hutot$geozone)
 hu$geozone <- gsub("\\*","",hu$geozone)
 hu$geozone <- gsub("\\-","_",hu$geozone)
 hu$geozone <- gsub("\\:","_",hu$geozone)
 
 est <- merge(totpop, gq, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 est <- merge(est, hh, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
+est <- merge(est, hutot, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 est <- merge(est, hu, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 
 est <- subset(est, geotype!="cpa")
 
+#change integer to numeric type
+est$pop <- as.numeric(est$pop)
+est$gqpop <- as.numeric(est$gqpop)
+est$households <- as.numeric(est$households)
+est$hhp <- as.numeric(est$hhp)
+est$units <- as.numeric(est$units)
+est$mf <- as.numeric(est$mf)
+est$mh <- as.numeric(est$mh)
+est$sfa <- as.numeric(est$sfa)
+est$sfd <- as.numeric(est$sfd)
+
 #levels(est$geozone) <- c(levels(est$geozone), "San Diego Region")
 est$geozone[est$geotype=='region'] <- 'San Diego Region'
 
+#################
+#dof to estimate checkS
+#################
 
 dof<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DOF\\E-5_DOF_formatted.csv')
 
@@ -81,10 +119,8 @@ setnames(dof, 1, "Geography")
 
 dof$Geography <- gsub("\\:","_",dof$Geography)
 
-#change column type from character to numeric
-type2num <-c("Total","Household","Group.Quarters","Housing.units","Single.Detached","Single.Attached","Two.to.Four","Five.Plus","Mobile.Homes","Occupied","Vacancy.Rate")
-
-#loop doesn't work
+#change column type from character to numeric - loop doesn't work
+#type2num <-c("Total","Household","Group.Quarters","Housing.units","Single.Detached","Single.Attached","Two.to.Four","Five.Plus","Mobile.Homes","Occupied","Vacancy.Rate")
 #for(i in type2num) { 
 #dof$type2num[i] <- as.numeric(gsub(",", "", dof$type2num[i]))
 #}
@@ -113,18 +149,13 @@ dof$hu_diff_rc
 dof$mf_dof <- dof$Two.to.Four+dof$Five.Plus
 head(dof)
 
-colnames(dof)
 #rename dof columns before merge
 setnames(dof, old=c("Total","Household","Group.Quarters","Total.1","Single.Detached","Single.Attached","Mobile.Homes","Occupied","Vacancy.Rate",
                     "Persons.per.Household", "year"), new=c("pop_dof","hhp_dof","gqpop_dof","hu_dof","sfd_dof","sfa_dof","mh_dof","occupied_dof",
                     "vac_dof","hhs_dof","yr_id"))
          
-#add housing units here         
-##setnames(est, old=c("pop","gqpop","households","hhp","hhs","mf","mh","sfa","sfd"), new=c("pop_est","gqpop_est","households_est",
-                    "hhp_est","hhs_est","mf_est","mh_est","sfa_est","sfd_est"))
-##use for datasourceid=24
-setnames(est, old=c("pop","gqpop","households","hhp","hhs","mf","mh","sfmu","sf"), new=c("pop_est","gqpop_est","households_est",
-                                                                                         "hhp_est","hhs_est","mf_est","mh_est","sfa_est","sfd_est"))
+setnames(est, old=c("pop","gqpop","households","hhp","hhs","mf","mh","sfa","sfd","units"), new=c("pop_est","gqpop_est","households_est",
+                                                                                         "hhp_est","hhs_est","mf_est","mh_est","sfa_est","sfd_est","hu_est"))
 
 
 est$geozone <- gsub("^\\s+|\\s+$", "", est$geozone)
@@ -139,29 +170,44 @@ dof<-dof[!dof$Geography=="Incorporated",]
 #merge dof and estimates for comparison
 dof2est <- merge(dof,est, by.x = c("yr_id","Geography"), by.y = c("yr_id", "geozone"), all=TRUE)
 
-#clean up for sample file and save for Darlanne
-DMfile <- dof2est[dof2est$yr_id=="2010" | dof2est$yr_id=="2017" | dof2est$yr_id=="2018", ]
-DMfile_1<-select(DMfile, yr_id, Geography, pop_dof,hhp_dof, gqpop_dof, hu_dof, mh_dof, vac_dof, hhs_dof, 
-                 pop_est,hhp_est, gqpop_est, mh_est, hhs_est)
-write.csv(DMfile_1, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DMfile.csv")
-
-
-colnames(DMfile)
-
-
-table(dof$hu_dof)
-table(est$hu_est)
-
-sapply(dof2est, class)
-
+#get file for DM training
+#change id to 24 and est$sfa to est$sfmu and est$sfd to est$sf 
+#dmfile <- dof2est[dof2est$yr_id=="2010" | dof2est$yr_id=="2015" | dof2est$yr_id=="2016",]
+#dmfile <- select(dmfile,yr_id,Geography,pop_dof,hhp_dof,gqpop_dof,hu_dof,mh_dof,occupied_dof,hhs_dof,
+#                  pop_est,hhp_est,gqpop_est,mh_est,hhs_est)
+#setnames(dmfile, old = c("pop_dof","hhp_dof","gqpop_dof","hu_dof","mh_dof","occupied_dof","hhs_dof",
+#                        "pop_est","hhp_est","gqpop_est","mh_est","hhs_est"), new = c("pop_1","hhp_1","gqpop_1","hu_1",
+#                        "mh_1","occupied_1","hhs_1","pop_2","hhp_2","gqpop_2","mh_2","hhs_2"))
+#write.csv(dmfile, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\dmfile.csv")
 
 
 dof2est$tot_pop_diff <- dof2est$pop_dof-dof2est$pop_est
 dof2est$hhp_diff <- dof2est$hhp_dof-dof2est$hhp_est
 dof2est$gqpop_diff <- dof2est$gqpop_dof-dof2est$gqpop_est
-#dof2est$hu_diff <- dof2est$hu_dof-dof2est$hu_est
+dof2est$hu_diff <- dof2est$hu_dof-dof2est$hu_est
 dof2est$sfa_diff <- dof2est$sfa_dof-dof2est$sfa_est
 dof2est$sfd_diff <- dof2est$sfd_dof-dof2est$sfd_est
 dof2est$mf_diff <- dof2est$mf_dof-dof2est$mf_est
 dof2est$mh_diff <- dof2est$mh_dof-dof2est$mh_est
 dof2est$hhs_diff <- dof2est$hhs_dof-dof2est$hhs_est
+
+head(dof2est,8)
+dof2est_2018 <- dof2est[dof2est$yr_id==2018,]
+head(dof2est_2018,8)
+
+#calculate standard deviation - is this useful?
+by(dof2est$pop_dof,dof$Geography, sd )
+
+
+by(dof2est_2018$pop_dof,dof2est_2018$Geography, sum)
+
+by(dof2est_2018$pop_est,dof2est_2018$Geography, sum)
+
+
+
+hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
+hh$N_chg <- ave(hh$hhp, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
+hh$N_pct <- (hh$N_chg / lag(hh$hhp))*100
+hh$N_pct<-sprintf("%.2f",hh$N_pct)
+
+head(est,10)
