@@ -1,0 +1,1 @@
+EXECUTE dbo.compute_median_age_female 25, 'region'
