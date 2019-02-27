@@ -22,8 +22,42 @@ source("../Queries/readSQL.R")
 getwd()
 options(stringsAsFactors=FALSE)
 
-ds_id=26
+ds_id=24
 
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
+hh_sql <- gsub("ds_id", ds_id,hh_sql)
+hh_24<-sqlQuery(channel,hh_sql)
+gq_sql = getSQL("../Queries/group_quarter.sql")
+gq_sql <- gsub("ds_id", ds_id,gq_sql)
+gq_24<-sqlQuery(channel,gq_sql)
+totpop_sql = getSQL("../Queries/total_population.sql")
+totpop_sql <- gsub("ds_id", ds_id,totpop_sql)
+totpop_24<-sqlQuery(channel,totpop_sql)
+vac_sql = getSQL("../Queries/vacancy.sql")
+vac_sql <- gsub("ds_id", ds_id,vac_sql)
+vac_24<-sqlQuery(channel,vac_sql)
+hhinc_sql = getSQL("../Queries/hhinc.sql")
+hhinc_sql <- gsub("ds_id", ds_id,hhinc_sql)
+hhinc_24<-sqlQuery(channel,hhinc_sql)
+demo_sql = getSQL("../Queries/age_ethn_gender.sql")
+demo_sql <- gsub("ds_id", ds_id,demo_sql)
+demo_24<-sqlQuery(channel,demo_sql)
+ma_jur_sql = getSQL("../Queries/median_age_jur.sql")
+ma_jur_24<-sqlQuery(channel,ma_jur_sql)
+ma_reg_sql = getSQL("../Queries/median_age_reg.sql")
+ma_reg_24<-sqlQuery(channel,ma_reg_sql)
+ma_f_jur_sql = getSQL("../Queries/median_age_female_jur.sql")
+ma_f_jur_24<-sqlQuery(channel,ma_f_jur_sql)
+ma_m_jur_sql = getSQL("../Queries/median_age_male_jur.sql")
+ma_m_jur_24<-sqlQuery(channel,ma_m_jur_sql)
+ma_f_reg_sql = getSQL("../Queries/median_age_female_reg.sql")
+ma_f_reg_24<-sqlQuery(channel,ma_f_reg_sql)
+ma_m_reg_sql = getSQL("../Queries/median_age_male_reg.sql")
+ma_m_reg_24<-sqlQuery(channel,ma_m_reg_sql)
+odbcClose(channel)
+
+ds_id=26
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
 hh_sql <- gsub("ds_id", ds_id,hh_sql)
@@ -62,8 +96,14 @@ odbcClose(channel)
 gq <-aggregate(pop~yr_id + geozone + geotype, subset(gq, housing_type_id!=1), sum,na.rm = TRUE)
 setnames(gq, old="pop", new="gqpop")
 
+gq_24 <-aggregate(pop~yr_id + geozone + geotype, subset(gq_24, housing_type_id!=1), sum,na.rm = TRUE)
+setnames(gq, old="pop", new="gqpop_24")
+
 hu <- dcast(vac, yr_id + geotype + geozone ~ short_name, value.var="units")
 hutot <- aggregate(units~yr_id + geotype + geozone, data=vac, sum)
+
+hu_24 <- dcast(vac_24, yr_id + geotype + geozone ~ short_name, value.var="units")
+hutot_24 <- aggregate(units~yr_id + geotype + geozone, data=vac_24, sum)
 
 #merge sandag data and calculate the vacancy rate
 #I think I can remove vac file since I have hu and hh
@@ -86,6 +126,30 @@ hutot$geozone <- gsub("\\:","_",hutot$geozone)
 hu$geozone <- gsub("\\*","",hu$geozone)
 hu$geozone <- gsub("\\-","_",hu$geozone)
 hu$geozone <- gsub("\\:","_",hu$geozone)
+
+vac_24$geozone <- gsub("\\*","",vac_24$geozone)
+vac_24$geozone <- gsub("\\-","_",vac_24$geozone)
+vac_24$geozone <- gsub("\\:","_",vac_24$geozone)
+totpop_24$geozone <- gsub("\\*","",totpop_24$geozone)
+totpop_24$geozone <- gsub("\\-","_",totpop_24$geozone)
+totpop_24$geozone <- gsub("\\:","_",totpop_24$geozone)
+gq_24$geozone <- gsub("\\*","",gq_24$geozone)
+gq_24$geozone <- gsub("\\-","_",gq_24$geozone)
+gq_24$geozone <- gsub("\\:","_",gq_24$geozone)
+hh_24$geozone <- gsub("\\*","",hh_24$geozone)
+hh_24$geozone <- gsub("\\-","_",hh_24$geozone)
+hh_24$geozone <- gsub("\\:","_",hh_24$geozone)
+hutot_24$geozone <- gsub("\\*","",hutot_24$geozone)
+hutot_24$geozone <- gsub("\\-","_",hutot_24$geozone)
+hutot_24$geozone <- gsub("\\:","_",hutot_24$geozone)
+hu_24$geozone <- gsub("\\*","",hu_24$geozone)
+hu_24$geozone <- gsub("\\-","_",hu_24$geozone)
+hu_24$geozone <- gsub("\\:","_",hu_24$geozone)
+
+
+
+table(vac$yr_id)
+#fix ma_jur ma_reg - no data for 2017 or 2018
 
 est <- merge(totpop, gq, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 est <- merge(est, hh, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
@@ -180,7 +244,7 @@ dof2est <- merge(dof,est, by.x = c("yr_id","Geography"), by.y = c("yr_id", "geoz
 #                        "mh_1","occupied_1","hhs_1","pop_2","hhp_2","gqpop_2","mh_2","hhs_2"))
 #write.csv(dmfile, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\dmfile.csv")
 
-
+table(dof2est$yr_id)
 dof2est$tot_pop_diff <- dof2est$pop_dof-dof2est$pop_est
 dof2est$hhp_diff <- dof2est$hhp_dof-dof2est$hhp_est
 dof2est$gqpop_diff <- dof2est$gqpop_dof-dof2est$gqpop_est
@@ -192,8 +256,12 @@ dof2est$mh_diff <- dof2est$mh_dof-dof2est$mh_est
 dof2est$hhs_diff <- dof2est$hhs_dof-dof2est$hhs_est
 
 head(dof2est,8)
-dof2est_2018 <- dof2est[dof2est$yr_id==2018,]
-head(dof2est_2018,8)
+#dof2est_2018 <- dof2est[dof2est$yr_id==2018,]
+#head(dof2est_2018,8)
+
+dof2est <- dof2est[order(dof2est$Geography, dof2est$yr_id),]
+
+write.csv(dof2est,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DOF differences.csv" )
 
 #calculate standard deviation - is this useful?
 by(dof2est$pop_dof,dof$Geography, sd )
@@ -205,9 +273,5 @@ by(dof2est_2018$pop_est,dof2est_2018$Geography, sum)
 
 
 
-hh<- hh[order(hh$geotype,hh$geozone,hh$yr_id),]
-hh$N_chg <- ave(hh$hhp, factor(hh$geozone), FUN=function(x) c(NA,diff(x)))
-hh$N_pct <- (hh$N_chg / lag(hh$hhp))*100
-hh$N_pct<-sprintf("%.2f",hh$N_pct)
 
 head(est,10)
