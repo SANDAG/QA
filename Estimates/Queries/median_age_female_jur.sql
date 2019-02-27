@@ -1,1 +1,1 @@
-EXECUTE dbo.compute_median_age_female 25, 'jurisdiction'
+EXECUTE dbo.compute_median_age_female 24, 'jurisdiction'

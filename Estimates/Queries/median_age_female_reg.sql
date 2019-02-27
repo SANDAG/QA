@@ -1,1 +1,1 @@
-EXECUTE dbo.compute_median_age_female 25, 'region'
+EXECUTE dbo.compute_median_age_male 26, 'region', 'San Diego'
