@@ -1,30 +1,114 @@
 --HH, HHP, HHS
 
-SELECT
+(SELECT
 	population.yr_id
-	,mgra.geotype
-	,mgra.geozone
+	,'jurisdiction' as geotype
+	,mgra_denormalize.jurisdiction as geozone
 	,hh.hh AS households
 	,SUM(population) as hhp
 	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
 FROM fact.population
 	INNER JOIN dim.mgra
 	ON mgra.mgra_id = population.mgra_id
-	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
+		 INNER JOIN dim.mgra_denormalize
+         ON mgra_denormalize.mgra_id = population.mgra_id	
 		INNER JOIN
 		(
-			SELECT yr_id, mgra.geotype, mgra.geozone, SUM(occupied) as hh
+			SELECT yr_id, 'jurisdiction' as geotype,mgra_denormalize.jurisdiction as geozone, SUM(occupied) as hh
 			FROM fact.housing
-				INNER JOIN dim.mgra
-				ON mgra.mgra_id = housing.mgra_id
-				AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
-			WHERe housing.datasource_id = ds_id
-			GROUP BY yr_id, mgra.geotype, mgra.geozone
+					 INNER JOIN dim.mgra_denormalize
+					ON mgra_denormalize.mgra_id = housing.mgra_id
+			WHERE housing.datasource_id = 26
+			GROUP BY yr_id, mgra_denormalize.jurisdiction
+		) hh
+		ON hh.yr_id = population.yr_id
+		AND hh.geozone = mgra.geozone
+		AND hh.geotype = mgra.geotype
+WHERE datasource_id = 26
+AND population.housing_type_id = 1
+GROUP BY population.yr_id, mgra_denormalize.jurisdiction, hh.hh)
+UNION
+(SELECT
+	population.yr_id
+	,'cpa' as geotype
+	,mgra_denormalize.cpa as geozone
+	,hh.hh AS households
+	,SUM(population) as hhp
+	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
+FROM fact.population
+	INNER JOIN dim.mgra
+	ON mgra.mgra_id = population.mgra_id
+		 INNER JOIN dim.mgra_denormalize
+         ON mgra_denormalize.mgra_id = population.mgra_id	
+		INNER JOIN
+		(
+			SELECT yr_id, 'cpa' as geotype,mgra_denormalize.cpa as geozone, SUM(occupied) as hh
+			FROM fact.housing
+					 INNER JOIN dim.mgra_denormalize
+					ON mgra_denormalize.mgra_id = housing.mgra_id
+			WHERE housing.datasource_id = 26
+			GROUP BY yr_id, mgra_denormalize.cpa
+		) hh
+		ON hh.yr_id = population.yr_id
+		AND hh.geozone = mgra.geozone
+		AND hh.geotype = mgra.geotype
+WHERE datasource_id = 26
+AND population.housing_type_id = 1
+GROUP BY population.yr_id, mgra_denormalize.cpa, hh.hh)
+UNION
+(SELECT
+	population.yr_id
+	,'region' as geotype
+	,mgra_denormalize.region as geozone
+	,hh.hh AS households
+	,SUM(population) as hhp
+	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
+FROM fact.population
+	INNER JOIN dim.mgra
+	ON mgra.mgra_id = population.mgra_id
+		 INNER JOIN dim.mgra_denormalize
+         ON mgra_denormalize.mgra_id = population.mgra_id	
+		INNER JOIN
+		(
+			SELECT yr_id, 'region' as geotype,mgra_denormalize.region as geozone, SUM(occupied) as hh
+			FROM fact.housing
+					 INNER JOIN dim.mgra_denormalize
+					ON mgra_denormalize.mgra_id = housing.mgra_id
+			WHERE housing.datasource_id = 26
+			GROUP BY yr_id, mgra_denormalize.region
 		) hh
 		ON hh.yr_id = population.yr_id
 		AND hh.geozone = mgra.geozone
 		AND hh.geotype = mgra.geotype
 WHERE datasource_id = ds_id
 AND population.housing_type_id = 1
-GROUP BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh
-ORDER BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh
+GROUP BY population.yr_id, mgra_denormalize.region, hh.hh)
+UNION
+(SELECT
+	population.yr_id
+	,'tract' as geotype
+	,mgra_denormalize.tract as geozone
+	,hh.hh AS households
+	,SUM(population) as hhp
+	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
+FROM fact.population
+	INNER JOIN dim.mgra
+	ON mgra.mgra_id = population.mgra_id
+		 INNER JOIN dim.mgra_denormalize
+         ON mgra_denormalize.mgra_id = population.mgra_id	
+		INNER JOIN
+		(
+			SELECT yr_id, 'tract' as geotype,mgra_denormalize.tract as geozone, SUM(occupied) as hh
+			FROM fact.housing
+					 INNER JOIN dim.mgra_denormalize
+					ON mgra_denormalize.mgra_id = housing.mgra_id
+			WHERE housing.datasource_id = 26
+			GROUP BY yr_id, mgra_denormalize.tract
+		) hh
+		ON hh.yr_id = population.yr_id
+		AND hh.geozone = mgra.geozone
+		AND hh.geotype = mgra.geotype
+WHERE datasource_id = ds_id
+AND population.housing_type_id = 1
+GROUP BY population.yr_id, mgra_denormalize.tract, hh.hh)
+ORDER BY population.yr_id, geotype, geozone, hh.hh
