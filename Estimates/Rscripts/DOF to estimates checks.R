@@ -261,17 +261,13 @@ head(dof2est,8)
 
 dof2est <- dof2est[order(dof2est$Geography, dof2est$yr_id),]
 
-write.csv(dof2est,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DOF differences.csv" )
+write.csv(dof2est,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DOF differences all geographies.csv")
 
-#calculate standard deviation - is this useful?
-by(dof2est$pop_dof,dof$Geography, sd )
+reg_jur_pop <- subset(dof2est, dof2est$geotype=='region'|dof2est$geotype=='jurisdiction')
+by(reg_jur_pop$tot_pop_diff,reg_jur_pop$Geography, sum )
 
+write.csv(merge_geo_mgra[,c("mgra","variable", "value", "value_old", "diff", "cpa.1", "jurisdiction.1")], "M:\\Technical Services\\QA Documents\\Projects\\Synthetic Population\\Data Files\\MGRA_2016_diff.csv" )
 
-by(dof2est_2018$pop_dof,dof2est_2018$Geography, sum)
+colnames(reg_jur_pop)
 
-by(dof2est_2018$pop_est,dof2est_2018$Geography, sum)
-
-
-
-
-head(est,10)
+write.csv(reg_jur_pop[,c("yr_id","Geography","pop_dof","pop_est","tot_pop_diff")],"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DOF differences jur & reg.csv")
