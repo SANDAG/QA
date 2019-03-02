@@ -4,6 +4,8 @@
 #fix ma by gender not working sql query -stored procedure requires geozone not just geotype- do we want to have someone create a script?
 #why is there a column sfmu in est id 26 file?
 #there is an issue with ma by tract - table doesn't have geotyp so it needs to be added - tracts with no pop aren't listed-are excluded
+# why do I have two gqpop variables in the id 24 file
+
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -64,6 +66,7 @@ ma_tract_24<-sqlQuery(channel,ma_tract_sql)
 odbcClose(channel)
 
 ds_id=26
+
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
 hh_sql <- gsub("ds_id", ds_id,hh_sql)
@@ -118,6 +121,7 @@ vac <- vac [!(vac$structure_type_id==5 | vac$structure_type_id==6),]
 
 hu <- dcast(vac, yr_id + geotype + geozone ~ short_name, value.var="units")
 hutot <- aggregate(units~yr_id + geotype + geozone, data=vac, sum)
+setnames(hutot, old = "units", new = "hu")
 
 hu_24 <- dcast(vac_24, yr_id + geotype + geozone ~ short_name, value.var="units")
 hutot_24 <- aggregate(units~yr_id + geotype + geozone, data=vac_24, sum)
@@ -186,7 +190,7 @@ est$pop <- as.numeric(est$pop)
 est$gqpop <- as.numeric(est$gqpop)
 est$households <- as.numeric(est$households)
 est$hhp <- as.numeric(est$hhp)
-est$units <- as.numeric(est$units)
+est$hu <- as.numeric(est$hu)
 est$mf <- as.numeric(est$mf)
 est$mh <- as.numeric(est$mh)
 est$sfmu <- as.numeric(est$sf)
@@ -227,56 +231,49 @@ table(est_24_26$geotype.y)
 ##est_24_26$tot_pop_diff <- rowSums(est_24_26 [,c(est_24_26$pop_est, est_24_26$pop_est_24)], na.rm=TRUE)
 ##est_24_26$tot_pop_diff <- rowSums(est_24_26[,c(pop_est, pop_est_24)], na.rm=TRUE)
 
-head(est_24_26)
-est_24_26$tot_pop_numchg <- est_24_26$pop_est-est_24_26$pop_est_24
-est_24_26$hhp_numchg <- est_24_26$hhp_est-est_24_26$hhp_est_24
-est_24_26$gqpop_numchg <- est_24_26$gqpop_est-est_24_26$gqpop_est_24
-est_24_26$hh_numchg <- est_24_26$housholds_est-est_24_26$households_est_24
-est_24_26$hu_numchg <- est_24_26$hu_est-est_24_26$hu_est_24
-est_24_26$sfa_numchg <- est_24_26$sfa_est-est_24_26$sfa_est_24
-est_24_26$sfd_numchg <- est_24_26$sfd_est-est_24_26$sfd_est_24
-est_24_26$mf_numchg <- est_24_26$mf_est-est_24_26$mf_est_24
-est_24_26$mh_numchg <- est_24_26$mh_est-est_24_26$mh_est_24
-est_24_26$hhs_numchg <- est_24_26$hhs_est-est_24_26$hhs_est_24
+colnames(est_24_26)
 
-head(est_24_26, 8)
+#calculate number change
+est_24_26$tot_pop_numchg <- est_24_26$pop-est_24_26$pop_24
+est_24_26$hhp_numchg <- est_24_26$hhp-est_24_26$hhp_24
+est_24_26$gqpop_numchg <- est_24_26$gqpop.y-est_24_26$gqpop_24
+est_24_26$hh_numchg <- est_24_26$households-est_24_26$households_24
+est_24_26$hu_numchg <- est_24_26$hu-est_24_26$hu_24
+est_24_26$sfa_numchg <- est_24_26$sfa-est_24_26$sfa_24
+est_24_26$sfd_numchg <- est_24_26$sfd-est_24_26$sfd_24
+est_24_26$mf_numchg <- est_24_26$mf-est_24_26$mf_24
+est_24_26$mh_numchg <- est_24_26$mh-est_24_26$mh_24
+est_24_26$hhs_numchg <- est_24_26$hhs-est_24_26$hhs_24
 
-est_24_26$tot_pop_pctchg <- (est_24_26$tot_pop_numchg/est_24_26$pop_est_24)*100
+head(subset(est_24_26, est_24_26$geotype.x=="jurisdiction"), 8)
+
+#calculate percent change
+est_24_26$tot_pop_pctchg <- (est_24_26$tot_pop_numchg/est_24_26$pop_24)*100
 est_24_26$tot_pop_pctchg <- round(est_24_26$tot_pop_pctchg,digits=2)
-
 est_24_26$hhp_pctchg <- (est_24_26$hhp_numchg/est_24_26$hhp_24)*100
 est_24_26$hhp_pctchg <- round(est_24_26$hhp_pctchg,digits=2)
-
 est_24_26$gqpop_pctchg <- (est_24_26$gqpop_numchg/est_24_26$gqpop_24)*100
 est_24_26$gqpop_pctchg <- round(est_24_26$gqpop_pctchg,digits=2)
-
-est_24_26$hh_pctchg <- (est_24_26$hh_numchg/est_24_26$households_est_24)*100
+est_24_26$hh_pctchg <- (est_24_26$hh_numchg/est_24_26$households_24)*100
 est_24_26$hh_pctchg <- round(est_24_26$hh_pctchg,digits=2)
-
-est_24_26$hu_pctchg <- (est_24_26$hu_numchg/est_24_26$hu_est_24)*100
+est_24_26$hu_pctchg <- (est_24_26$hu_numchg/est_24_26$hu_24)*100
 est_24_26$hu_pctchg <- round(est_24_26$hu_pctchg,digits=2)
 
 #wait until EDAM fixes the units by type names
-est_24_26$hu_pctchg <- (est_24_26$hu_numchg/est_24_26$hu_est_24)*100
-est_24_26$hu_pctchg <- round(est_24_26$hu_pctchg,digits=2)
+#add sfd and sfa
 
-est_24_26$hu_pctchg <- (est_24_26$hu_numchg/est_24_26$hu_est_24)*100
-est_24_26$hu_pctchg <- round(est_24_26$hu_pctchg,digits=2)
-
-est_24_26$hu_pctchg <- (est_24_26$hu_numchg/est_24_26$hu_est_24)*100
-est_24_26$hu_pctchg <- round(est_24_26$hu_pctchg,digits=2)
-
-est_24_26$hu_pctchg <- (est_24_26$hu_numchg/est_24_26$hu_est_24)*100
-est_24_26$hu_pctchg <- round(est_24_26$hu_pctchg,digits=2)
 ##############
 ###############
-
-est_24_26$hhs_pctchg <- (est_24_26$hhs_numchg/est_24_26$hhs_est_24)*100
+est_24_26$mf_pctchg <- (est_24_26$mf_numchg/est_24_26$mf_24)*100
+est_24_26$mf_pctchg <- round(est_24_26$mf_pctchg,digits=2)
+est_24_26$mh_pctchg <- (est_24_26$mh_numchg/est_24_26$mh_24)*100
+est_24_26$mh_pctchg <- round(est_24_26$mh_pctchg,digits=2)
+est_24_26$hhs_pctchg <- (est_24_26$hhs_numchg/est_24_26$hhs_24)*100
 est_24_26$hhs_pctchg <- round(est_24_26$hhs_pctchg,digits=2)
 
-table(est_test$tot_pop_pctchg)
-table(est_test$tot_pop_pctchg)
 
+table(est_test$tot_pop_pctchg)
+table(est_test$tot_pop_pctchg)
 
 plot(est_test$yr_id, est_test$gqpop_numchg, "p" )
 
@@ -286,8 +283,28 @@ est_24_26 <- est_24_26[order(est_24_26$geozone, est_24_26$yr_id),]
 write.csv(est_24_26,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\Est 2016 to 2018 differences.csv" )
 
 #calculate standard deviation - is this useful?
-by(est_24_26$pop_est,est_24_26$yr_id, sd, na.rm=TRUE)
-by(est_24_26$pop_est_24,est_24_26$yr_id, sd, na.rm=TRUE)
+by(est_24_26$pop,est_24_26$yr_id, sd, na.rm=TRUE)
+by(est_24_26$pop_24,est_24_26$yr_id, sd, na.rm=TRUE)
+
+
+rm(list = ls()[!ls() %in% c("demo_24", "demo", "hhinc_24", "hhinc")])
+
+#merge demo
+
+demo <- subset(demo, demo$geotype!="tract")
+demo_24 <- subset(demo_24, demo_24$geotype!="tract")
+demo_24_26 <- merge(demo_24,demo, by.x = c("yr_id","geozone"), by.y = c("yr_id", "geozone"), all=TRUE)
+
+head(demo_24_26)
+
+table(demo$geotype)
+
+
+
+
+
+
+
 
 
 
