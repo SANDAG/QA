@@ -270,4 +270,4 @@ write.csv(merge_geo_mgra[,c("mgra","variable", "value", "value_old", "diff", "cp
 
 colnames(reg_jur_pop)
 
-write.csv(reg_jur_pop[,c("yr_id","Geography","pop_dof","pop_est","tot_pop_diff")],"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DOF differences jur & reg.csv")
+write.csv(reg_jur_pop[,c("yr_id","Geography","pop_dof","pop_est","tot_pop_diff")],"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\DOF differences jur & reg.csv", row.names=TRUE)
