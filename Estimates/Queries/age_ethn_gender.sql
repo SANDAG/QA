@@ -121,7 +121,7 @@ GROUP BY age_sex_ethnicity.yr_id
 ORDER BY age_sex_ethnicity.yr_id
 	,geotype
 	,geozone
-	--,mgra_denormalize.cpa
+	--,mgra_denormalize.tract
 	,age_sex_ethnicity.age_group_id
 	,age_sex_ethnicity.sex_id
 	,age_sex_ethnicity.ethnicity_id
