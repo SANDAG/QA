@@ -235,6 +235,23 @@ for(yr in years) {
 }
 
 
+outliers_single_yr <- data.frame()
+
+# note: keep year 2010 - will include all 627 census tracts for reference
+# i.e. all will be in outliers dataframe
+
+for(yr in years) {
+  
+  # for each year get the tracts that are +/- 3 standard deviations from the mean
+  outliers_in_1yr = unique(subset(tract4, (pctchg.hhpop >= sdplus3 | pctchg.hhpop <= sdminus3) & year == yr))
+  
+  outliers_in_1yr['outlier_yr'] = yr
+  
+  # add outliers for each year to dataframe
+  outliers_single_yr  <- rbind(outliers_single_yr ,outliers_in_1yr)
+}
+
+
 count_outliers <-
   outliers %>%                    
   group_by(outlier_yr) %>%          
@@ -246,5 +263,8 @@ count_outliers['Total_Census_Tracts'] = subset(count_outliers,outlier_yr==2010)$
 count_outliers['Percent_Outliers'] = count_outliers$outliers/count_outliers['Total_Census_Tracts']
 
 outliers <- merge(x = outliers, y = count_outliers, by = "outlier_yr", all.x = TRUE)
+outliers_single_yr <- merge(x = outliers_single_yr, y = count_outliers, by = "outlier_yr", all.x = TRUE)
+outliers_single_yr<-outliers_single_yr[!(outliers_single_yr$year==2010),]
 
 write.csv(outliers, "..\\Data\\hhpop\\outliers.csv",row.names=FALSE)
+write.csv(outliers_single_yr, "..\\Data\\hhpop\\outliers_single_yr.csv",row.names=FALSE)
