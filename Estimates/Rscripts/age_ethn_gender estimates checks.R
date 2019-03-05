@@ -1,5 +1,6 @@
 #estimates
 #file sizes are large so id26 data is transformed first and then id 24 data
+#add variable with datasource ID
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -34,7 +35,6 @@ options(stringsAsFactors=FALSE)
 
 demo_26<- demo_26[order(demo_26$geotype,demo_26$geozone,demo_26$yr_id),]
 
-#demo_26$geozone<-revalue(demo_26$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
 demo_26$geozone[demo_26$geotype =="region"]<- "Region"
 demo_26$geozone <- gsub("\\*","",demo_26$geozone)
 demo_26$geozone <- gsub("\\-","_",demo_26$geozone)
@@ -69,24 +69,137 @@ demo_26$age_group_name_rc<- ifelse(demo_26$age_group_rc==1,"<18",
                                       ifelse(demo_26$age_group_rc==3,"45-64",
                                              ifelse(demo_26$age_group_rc==4,"65+",NA))))
 
-head(demo_26)
+
+
+table(demo_26_ethn$short_name)
 
 #aggregate total counts by year for age, gender and ethnicity
 demo_26_age<-aggregate(pop~age_group_name_rc+geotype+geozone+yr_id, data=demo_26, sum)
 demo_26_gender<-aggregate(pop~sex+geotype+geozone+yr_id, data=demo_26, sum)
 demo_26_ethn<-aggregate(pop~short_name+geotype+geozone+yr_id, data=demo_26, sum)
 
+head(demo_26_ethn)
+
+
+#recode ethn into 3 categories per EDAM - White, Hispanic, Other
+#copy ethnicity column for reference
+demo_26_ethn$short_name_orig=demo_26_ethn$short_name
+#collapse ethnic categories
+demo_26_ethn$short_name_rc <- 3
+demo_26_ethn$short_name_rc[demo_26_ethn$short_name=="Hispanic"] <- 1
+demo_26_ethn$short_name_rc[demo_26_ethn$short_name=="White"] <- 2
+
+#name recoded ethnic categories
+demo_26_ethn$short_name<- ifelse(demo_26_ethn$short_name_rc==1,"Hispanic",
+                                   ifelse(demo_26_ethn$short_name_rc==2,"White",
+                                          ifelse(demo_26_ethn$short_name_rc==3,"Other",NA)))
+                                                 
+table(demo_26_ethn$short_name_rc)
+
 setnames(demo_26_age, old = "pop", new = "pop_age_26")
 setnames(demo_26_ethn, old = "pop", new = "pop_ethn_26")
 setnames(demo_26_gender, old = "pop", new = "pop_gender_26")
 
-
+#############################################
+############################################
+table(demo_26_age$pop_age_26[demo_26_age$geotype=="region"])
 table(demo_26_age$geotype)
+
 
 #creates file with pop totals by geozone and year
 geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=demo_26, sum)
 
 tail(geozone_pop)
+
+
+#calculate year to year changes within ID26.
+demo_26_gender <- demo_26_gender[order(demo_26_gender$sex,demo_26_gender$geotype,demo_26_gender$geozone,demo_26_gender$yr_id),]
+demo_26_gender$N_chg <- demo_26_gender$pop_gender_26 - lag(demo_26_gender$pop_gender_26)
+demo_26_gender$N_pct <- (demo_26_gender$N_chg / lag(demo_26_gender$pop_gender_26))
+demo_26_gender$N_pct<-round(demo_26_gender$N_pct,digits=5)
+demo_26_gender$geozone_pop<-geozone_pop[match(paste(demo_26_gender$yr_id, demo_26_gender$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
+demo_26_gender$pct_of_total<-(demo_26_gender$pop_gender_26 / demo_26_gender$geozone_pop)
+demo_26_gender$pct_of_total<-round(demo_26_gender$pct_of_total,digits=5)
+#setnames(demo_26_gender, old=c("sex", "yr_id", "pop_gender_26"),new=c("Gender", "Year", "Pop_ID26"))
+#demo_26_gender$Gender[demo_26_gender$Gender=="F"]<- "Female"
+#demo_26_gender$Gender[demo_26_gender$Gender=="M"]<- "Male"
+
+demo_26_ethn <- demo_26_ethn[order(demo_26_ethn$short_name,demo_26_ethn$geotype,demo_26_ethn$geozone,demo_26_ethn$yr_id),]
+demo_26_ethn$N_chg <- demo_26_ethn$pop_ethn_26 - lag(demo_26_ethn$pop_ethn_26)
+demo_26_ethn$N_pct <- (demo_26_ethn$N_chg / lag(demo_26_ethn$pop_ethn_26))
+demo_26_ethn$N_pct<-round(demo_26_ethn$N_pct,digits=5)
+demo_26_ethn$geozone_pop<-geozone_pop[match(paste(demo_26_ethn$yr_id, demo_26_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
+demo_26_ethn$pct_of_total<-(demo_26_ethn$pop_ethn_26 / demo_26_ethn$geozone_pop)
+demo_26_ethn$pct_of_total<-round(demo_26_ethn$pct_of_total,digits=5)
+#setnames(demo_26_ethn, old=c("short_name", "yr_id", "pop_ethn_26"),new=c("Ethnicity", "Year", "Pop_ID26"))
+
+demo_26_age <- demo_26_age[order(demo_26_age$age_group_name_rc,demo_26_age$geotype,demo_26_age$geozone,demo_26_age$yr_id),]
+demo_26_age$N_chg <- demo_26_age$pop_age_26 - lag(demo_26_age$pop_age_26)
+demo_26_age$N_pct <- (demo_26_age$N_chg / lag(demo_26_age$pop_age_26))
+demo_26_age$N_pct<-round(demo_26_age$N_pct,digits=5)
+demo_26_age$geozone_pop<-geozone_pop[match(paste(demo_26_age$yr_id, demo_26_age$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
+demo_26_age$pct_of_total<-(demo_26_age$pop_age_26 / demo_26_age$geozone_pop)
+demo_26_age$pct_of_total<-round(demo_26_age$pct_of_total,digits=5)
+
+head(demo_26_ethn)
+class(demo_26_ethn$pct_of_total)
+
+#setnames(demo_26_age, old=c("age_group_name_rc", "yr_id", "pop_age_26"),new=c("Age_Group", "Year", "Pop_ID26"))
+
+demo_26_age$N_chg[demo_26_age$yr_id=="2010"] <- NA 
+demo_26_age$N_pct[demo_26_age$yr_id=="2010"] <- NA
+demo_26_gender$N_chg[demo_26_gender$yr_id=="2010"] <- NA 
+demo_26_gender$N_pct[demo_26_gender$yr_id=="2010"] <- NA
+demo_26_ethn$N_chg[demo_26_ethn$yr_id=="2010"] <- NA 
+demo_26_ethn$N_pct[demo_26_ethn$yr_id=="2010"] <- NA
+
+head(subset(demo_26_gender, demo_26_gender$geotype=="jurisdiction"), 8)
+head(subset(demo_26_ethn, demo_26_ethn$geotype=="jurisdiction"), 8)
+head(subset(demo_26_age, demo_26_age$geotype=="jurisdiction"), 8)
+
+#demo_26_age <- demo_26_age[order(demo_26_age$age_group_name_rc,demo_26_age$geotype,demo_26_age$geozone,demo_26_age$yr_id),]
+demo_26_age$prop_change <- demo_26_age$pct_of_total - lag(demo_26_age$pct_of_total)
+demo_26_gender$prop_change <- demo_26_gender$pct_of_total - lag(demo_26_gender$pct_of_total)
+demo_26_ethn$prop_change <- demo_26_ethn$pct_of_total - lag(demo_26_ethn$pct_of_total)
+
+demo_26_age$prop_change[demo_26_age$yr_id=="2010"] <- 0
+demo_26_gender$prop_change[demo_26_gender$yr_id=="2010"] <- 0
+demo_26_ethn$prop_change[demo_26_ethn$yr_id=="2010"] <- 0
+
+#####################################
+######################################
+
+#calculate sd and iqr
+
+demo_26_age$N_pct_sd <- sapply(demo_26_age$N_pct, sd)
+
+head(demo_26_age$N_pct_sd)
+
+######################################
+#######################################
+age_outliers <- subset(demo_26_age, demo_26_age$prop_change>=3)
+summary(age_outliers$prop_change)
+unique((age_outliers$geozone))
+gender_outliers <- subset(demo_26_gender, demo_26_gender$prop_change>=2)
+summary(gender_outliers$prop_change)
+unique((gender_outliers$geozone))
+ethn_outliers <- subset(demo_26_ethn, demo_26_ethn$prop_change>=3)
+summary(ethn_outliers$prop_change)
+unique((ethn_outliers$geozone))
+
+#save out files for PowerBI
+write.csv(demo_26_age, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\dem_age.csv" )
+write.csv(demo_26_gender, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\dem_gender.csv" )
+write.csv(demo_26_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\dem_ethn.csv" )
+write.csv(age_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\age_outliers.csv" )
+write.csv(gender_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\gender_outliers.csv" )
+write.csv(ethn_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\ethn_outliers.csv" )
+
+################################################
+###################################################
+
+
+
 
 rm(demo_26)
 
@@ -201,82 +314,10 @@ table(age_24_26$pct20up)
 age_test <- subset(age_24_26, age_24_26$pct20up=="1" & age_24_26=="2016" & age_24_26$pop_age_24>100 & age_24_26$pop_age_26>100)
 unique(age_test$geozone)
 
-#calculate year to year changes within ID26.
-gender_24_26 <- gender_24_26[order(gender_24_26$sex,gender_24_26$geotype,gender_24_26$geozone,gender_24_26$yr_id),]
-gender_24_26$N_chg <- gender_24_26$pop_gender_26 - lag(gender_24_26$pop_gender_26)
-gender_24_26$N_pct <- (gender_24_26$N_chg / lag(gender_24_26$pop_gender_26))*100
-gender_24_26$N_pct<-round(gender_24_26$N_pct,digits=2)
-gender_24_26$geozone_pop<-geozone_pop[match(paste(gender_24_26$yr_id, gender_24_26$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
-gender_24_26$pct_of_total<-(gender_24_26$pop_gender_26 / gender_24_26$geozone_pop)*100
-gender_24_26$pct_of_total<-round(gender_24_26$pct_of_total,digits=2)
-#setnames(gender_24_26, old=c("sex", "yr_id", "pop_gender_26"),new=c("Gender", "Year", "Pop_ID26"))
-#gender_24_26$Gender[gender_24_26$Gender=="F"]<- "Female"
-#gender_24_26$Gender[gender_24_26$Gender=="M"]<- "Male"
 
-ethn_24_26 <- ethn_24_26[order(ethn_24_26$short_name,ethn_24_26$geotype,ethn_24_26$geozone,ethn_24_26$yr_id),]
-ethn_24_26$N_chg <- ethn_24_26$pop_ethn_26 - lag(ethn_24_26$pop_ethn_26)
-ethn_24_26$N_pct <- (ethn_24_26$N_chg / lag(ethn_24_26$pop_ethn_26))*100
-ethn_24_26$N_pct<-round(ethn_24_26$N_pct,digits=2)
-ethn_24_26$geozone_pop<-geozone_pop[match(paste(ethn_24_26$yr_id, ethn_24_26$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
-ethn_24_26$pct_of_total<-(ethn_24_26$pop_ethn_26 / ethn_24_26$geozone_pop)*100
-ethn_24_26$pct_of_total<-round(ethn_24_26$pct_of_total,digits=2)
-#setnames(ethn_24_26, old=c("short_name", "yr_id", "pop_ethn_26"),new=c("Ethnicity", "Year", "Pop_ID26"))
-
-head(ethn_24_26)
-class(ethn_24_26$pct_of_total)
-
-age_24_26 <- age_24_26[order(age_24_26$age_group_name_rc,age_24_26$geotype,age_24_26$geozone,age_24_26$yr_id),]
-age_24_26$N_chg <- age_24_26$pop_age_26 - lag(age_24_26$pop_age_26)
-age_24_26$N_pct <- (age_24_26$N_chg / lag(age_24_26$pop_age_26))*100
-age_24_26$N_pct<-round(age_24_26$N_pct,digits=2)
-age_24_26$geozone_pop<-geozone_pop[match(paste(age_24_26$yr_id, age_24_26$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
-age_24_26$pct_of_total<-(age_24_26$pop_age_26 / age_24_26$geozone_pop)*100
-age_24_26$pct_of_total<-round(age_24_26$pct_of_total,digits=2)
-age_24_26$geozone_pop_24<-geozone_pop_24[match(paste(age_24_26$yr_id, age_24_26$geozone), paste(geozone_pop_24$yr_id, geozone_pop_24$geozone)), 4]
-age_24_26$pct_of_total_24<-(age_24_26$pop_age_24 / age_24_26$geozone_pop_24)*100
-age_24_26$pct_of_total_24<-round(age_24_26$pct_of_total_24,digits=2)
-
-#setnames(age_24_26, old=c("age_group_name_rc", "yr_id", "pop_age_26"),new=c("Age_Group", "Year", "Pop_ID26"))
-
-age_24_26$N_chg[age_24_26$yr_id=="2010"] <- NA 
-age_24_26$N_pct[age_24_26$yr_id=="2010"] <- NA
-gender_24_26$N_chg[gender_24_26$yr_id=="2010"] <- NA 
-gender_24_26$N_pct[gender_24_26$yr_id=="2010"] <- NA
-ethn_24_26$N_chg[ethn_24_26$yr_id=="2010"] <- NA 
-ethn_24_26$N_pct[ethn_24_26$yr_id=="2010"] <- NA
-
-head(subset(gender_24_26, gender_24_26$geotype=="jurisdiction"), 8)
-head(subset(ethn_24_26, ethn_24_26$geotype=="jurisdiction"), 8)
-head(subset(age_24_26, age_24_26$geotype=="jurisdiction"), 8)
-
-#age_24_26 <- age_24_26[order(age_24_26$age_group_name_rc,age_24_26$geotype,age_24_26$geozone,age_24_26$yr_id),]
-age_24_26$prop_change <- age_24_26$pct_of_total - lag(age_24_26$pct_of_total)
-gender_24_26$prop_change <- gender_24_26$pct_of_total - lag(gender_24_26$pct_of_total)
-ethn_24_26$prop_change <- ethn_24_26$pct_of_total - lag(ethn_24_26$pct_of_total)
-
-age_24_26$prop_change[age_24_26$yr_id=="2010"] <- 0
-gender_24_26$prop_change[gender_24_26$yr_id=="2010"] <- 0
-ethn_24_26$prop_change[ethn_24_26$yr_id=="2010"] <- 0
-
-
-age_outliers <- subset(age_24_26, age_24_26$prop_change>=3)
-summary(age_outliers$prop_change)
-unique((age_outliers$geozone))
-gender_outliers <- subset(gender_24_26, gender_24_26$prop_change>=2)
-summary(gender_outliers$prop_change)
-unique((gender_outliers$geozone))
-ethn_outliers <- subset(ethn_24_26, ethn_24_26$prop_change>=3)
-summary(ethn_outliers$prop_change)
-unique((ethn_outliers$geozone))
-
-#save out files for PowerBI
-write.csv(age_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\dem_age.csv" )
-write.csv(gender_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\dem_gender.csv" )
-write.csv(ethn_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\dem_ethn.csv" )
-write.csv(age_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\age_outliers.csv" )
-write.csv(gender_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\gender_outliers.csv" )
-write.csv(ethn_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\ethn_outliers.csv" )
-
+demo_26_age$geozone_pop_24<-geozone_pop_24[match(paste(demo_26_age$yr_id, demo_26_age$geozone), paste(geozone_pop_24$yr_id, geozone_pop_24$geozone)), 4]
+demo_26_age$pct_of_total_24<-(demo_26_age$pop_age_24 / demo_26_age$geozone_pop_24)
+demo_26_age$pct_of_total_24<-round(demo_26_age$pct_of_total_24,digits=5)
 
 
 
