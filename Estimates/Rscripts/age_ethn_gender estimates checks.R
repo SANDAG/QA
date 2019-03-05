@@ -201,7 +201,6 @@ table(age_24_26$pct20up)
 age_test <- subset(age_24_26, age_24_26$pct20up=="1" & age_24_26=="2016" & age_24_26$pop_age_24>100 & age_24_26$pop_age_26>100)
 unique(age_test$geozone)
 
-
 #calculate year to year changes within ID26.
 gender_24_26 <- gender_24_26[order(gender_24_26$sex,gender_24_26$geotype,gender_24_26$geozone,gender_24_26$yr_id),]
 gender_24_26$N_chg <- gender_24_26$pop_gender_26 - lag(gender_24_26$pop_gender_26)
@@ -233,6 +232,10 @@ age_24_26$N_pct<-round(age_24_26$N_pct,digits=2)
 age_24_26$geozone_pop<-geozone_pop[match(paste(age_24_26$yr_id, age_24_26$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 age_24_26$pct_of_total<-(age_24_26$pop_age_26 / age_24_26$geozone_pop)*100
 age_24_26$pct_of_total<-round(age_24_26$pct_of_total,digits=2)
+age_24_26$geozone_pop_24<-geozone_pop_24[match(paste(age_24_26$yr_id, age_24_26$geozone), paste(geozone_pop_24$yr_id, geozone_pop_24$geozone)), 4]
+age_24_26$pct_of_total_24<-(age_24_26$pop_age_24 / age_24_26$geozone_pop_24)*100
+age_24_26$pct_of_total_24<-round(age_24_26$pct_of_total_24,digits=2)
+
 #setnames(age_24_26, old=c("age_group_name_rc", "yr_id", "pop_age_26"),new=c("Age_Group", "Year", "Pop_ID26"))
 
 age_24_26$N_chg[age_24_26$yr_id=="2010"] <- NA 
