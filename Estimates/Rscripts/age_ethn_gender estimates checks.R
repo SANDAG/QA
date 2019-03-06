@@ -1,6 +1,7 @@
 #estimates
 #file sizes are large so id26 data is transformed first and then id 24 data
-#add variable with datasource ID
+#add variable with datasource ID - merge it in
+#exclusion/recode of N_pct from inf to 0 loses info about most remarkably the Marine Corps Recruit Depot - need to fix or note
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -25,6 +26,12 @@ getwd()
 ds_id=26
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+
+# datasource name
+ds_sql = getSQL("../Queries/datasource_name.sql")
+ds_sql <- gsub("ds_id", ds_id,ds_sql)
+datasource_name<-sqlQuery(channel,ds_sql,stringsAsFactors = FALSE)
+
 demo_sql = getSQL("../Queries/age_ethn_gender.sql")
 demo_sql <- gsub("ds_id", ds_id,demo_sql)
 demo_26<-sqlQuery(channel,demo_sql)
@@ -70,15 +77,10 @@ demo_26$age_group_name_rc<- ifelse(demo_26$age_group_rc==1,"<18",
                                              ifelse(demo_26$age_group_rc==4,"65+",NA))))
 
 
-
-table(demo_26_ethn$short_name)
-
 #aggregate total counts by year for age, gender and ethnicity
 demo_26_age<-aggregate(pop~age_group_name_rc+geotype+geozone+yr_id, data=demo_26, sum)
 demo_26_gender<-aggregate(pop~sex+geotype+geozone+yr_id, data=demo_26, sum)
 demo_26_ethn<-aggregate(pop~short_name+geotype+geozone+yr_id, data=demo_26, sum)
-
-head(demo_26_ethn)
 
 
 #recode ethn into 3 categories per EDAM - White, Hispanic, Other
@@ -94,15 +96,11 @@ demo_26_ethn$short_name<- ifelse(demo_26_ethn$short_name_rc==1,"Hispanic",
                                    ifelse(demo_26_ethn$short_name_rc==2,"White",
                                           ifelse(demo_26_ethn$short_name_rc==3,"Other",NA)))
                                                  
-table(demo_26_ethn$short_name_rc)
-
 setnames(demo_26_age, old = "pop", new = "pop_age_26")
 setnames(demo_26_ethn, old = "pop", new = "pop_ethn_26")
 setnames(demo_26_gender, old = "pop", new = "pop_gender_26")
 
-#############################################
-############################################
-table(demo_26_age$pop_age_26[demo_26_age$geotype=="region"])
+
 table(demo_26_age$geotype)
 
 
@@ -150,42 +148,118 @@ demo_26_age$N_chg[demo_26_age$yr_id=="2010"] <- NA
 demo_26_age$N_pct[demo_26_age$yr_id=="2010"] <- NA
 demo_26_gender$N_chg[demo_26_gender$yr_id=="2010"] <- NA 
 demo_26_gender$N_pct[demo_26_gender$yr_id=="2010"] <- NA
-demo_26_ethn$N_chg[demo_26_ethn$yr_id=="2010"] <- NA 
+demo_26_ethn$N_chg[demo_26_ethn$yr_id=="2010"] <- NA
 demo_26_ethn$N_pct[demo_26_ethn$yr_id=="2010"] <- NA
 
-head(subset(demo_26_gender, demo_26_gender$geotype=="jurisdiction"), 8)
-head(subset(demo_26_ethn, demo_26_ethn$geotype=="jurisdiction"), 8)
-head(subset(demo_26_age, demo_26_age$geotype=="jurisdiction"), 8)
+#review data with following commands
+#head(subset(demo_26_gender, demo_26_gender$geotype=="jurisdiction"), 8)
+#head(subset(demo_26_ethn, demo_26_ethn$geotype=="jurisdiction"), 8)
+#head(subset(demo_26_age, demo_26_age$geotype=="jurisdiction"), 8)
 
 #demo_26_age <- demo_26_age[order(demo_26_age$age_group_name_rc,demo_26_age$geotype,demo_26_age$geozone,demo_26_age$yr_id),]
 demo_26_age$prop_change <- demo_26_age$pct_of_total - lag(demo_26_age$pct_of_total)
 demo_26_gender$prop_change <- demo_26_gender$pct_of_total - lag(demo_26_gender$pct_of_total)
 demo_26_ethn$prop_change <- demo_26_ethn$pct_of_total - lag(demo_26_ethn$pct_of_total)
 
-demo_26_age$prop_change[demo_26_age$yr_id=="2010"] <- 0
-demo_26_gender$prop_change[demo_26_gender$yr_id=="2010"] <- 0
-demo_26_ethn$prop_change[demo_26_ethn$yr_id=="2010"] <- 0
+demo_26_age$prop_change[demo_26_age$yr_id=="2010"] <- NA
+demo_26_gender$prop_change[demo_26_gender$yr_id=="2010"] <- NA
+demo_26_ethn$prop_change[demo_26_ethn$yr_id=="2010"] <- NA
+
+
 
 #####################################
 ######################################
 
 #calculate sd and iqr
 
-demo_26_age$N_pct_sd <- sapply(demo_26_age$N_pct, sd)
 
-head(demo_26_age$N_pct_sd)
+
+head(demo_26_age)
+########## summary w mean and standard dev of pct change of census tracts
+
+# to be used for filtering data by tract for +/- 3 standard deviations
+
+##############
+##############
+#data review for calculating sd and IQR
+test <- subset(demo_26_age,(is.na(demo_26_age$N_pct)))
+
+test2 <- subset(demo_26_age,(is.na(demo_26_age$N_chg)))
+
+test3 <- subset(demo_26_age,(is.nan(demo_26_age$pct_of_total)))
+
+test4 <- subset(demo_26_age,(is.infinite(demo_26_age$N_pct)))
+
+test5 <- subset(demo_26_age,(is.na(demo_26_age$pct_of_total)))
+
+test6 <- subset(demo_26_age,(is.infinite(demo_26_age$pct_of_total)))
+
+test7 <- subset(demo_26_age,(is.nan(demo_26_age$N_pct)))
+
+table(test$N_pct)
+count(is.nan(test$N_pct))
+count(is.na(test$N_pct))
+
+test8 <- count(test3$geozone[test3$geotype=="cpa"])
+head(test8)
+
+fivenum(demo_26_age$N_pct)
+
+summary(demo_26_age$pct_of_total)
+
+################################
+################################
+
+
+###############
+#should I have recoded to 0 where yr_id~=2010 and value is NA unless there is no population instead of zero because that changes the denominator - what about inf?
+###############
+
+summary(demo_26_age$N_pct[!is.nan(demo_26_age$N_pct) & !is.infinite(demo_26_age$N_pct) & !is.na(demo_26_age$N_pct)])
+sd(demo_26_age$N_pct[!is.nan(demo_26_age$N_pct) & !is.infinite(demo_26_age$N_pct) & !is.na(demo_26_age$N_pct)])
+IQR(demo_26_age$N_pct[!is.nan(demo_26_age$N_pct) & !is.infinite(demo_26_age$N_pct) & !is.na(demo_26_age$N_pct)])
+
+
+summarydf <- demo_26_age %>%
+  select(pop_age_26, N_pct, yr_id) %>%
+  group_by(yr_id) %>%
+  summarise(mean.pctchg.age = mean(N_pct,na.rm=TRUE), 
+            stdev.pctchg.age = sd(N_pct,na.rm=TRUE))
+
+
+summarydf <- tract3 %>%
+  select(hhpop, pctchg.hhpop,year) %>%
+  group_by(year) %>%
+  summarise(mean.pctchg.hhpop = mean(pctchg.hhpop,na.rm=TRUE), 
+            stdev.pctchg.hhpop = sd(pctchg.hhpop,na.rm=TRUE))
+
+
+summarydf$mean.pctchg.hhpop[summarydf$year == 2010] <- 0 
+summarydf$stdev.pctchg.hhpop[summarydf$year == 2010] <- 0
+
+
+
+summarydf['sdplus3'] = summarydf['mean.pctchg.hhpop'] + (3*summarydf['stdev.pctchg.hhpop'])
+summarydf['sdminus3'] = summarydf['mean.pctchg.hhpop'] - (3*summarydf['stdev.pctchg.hhpop'])
+
+write.csv(summarydf, "..\\Data\\hhpop\\summary.csv",row.names=FALSE)
+
+#### end summary w mean and standard dev
+
 
 ######################################
 #######################################
-age_outliers <- subset(demo_26_age, demo_26_age$prop_change>=3)
-summary(age_outliers$prop_change)
-unique((age_outliers$geozone))
-gender_outliers <- subset(demo_26_gender, demo_26_gender$prop_change>=2)
-summary(gender_outliers$prop_change)
-unique((gender_outliers$geozone))
-ethn_outliers <- subset(demo_26_ethn, demo_26_ethn$prop_change>=3)
-summary(ethn_outliers$prop_change)
-unique((ethn_outliers$geozone))
+
+#rework
+# age_outliers <- subset(demo_26_age, demo_26_age$prop_change>=3)
+# summary(age_outliers$prop_change)
+# unique((age_outliers$geozone))
+# gender_outliers <- subset(demo_26_gender, demo_26_gender$prop_change>=2)
+# summary(gender_outliers$prop_change)
+# unique((gender_outliers$geozone))
+# ethn_outliers <- subset(demo_26_ethn, demo_26_ethn$prop_change>=3)
+# summary(ethn_outliers$prop_change)
+# unique((ethn_outliers$geozone))
 
 #save out files for PowerBI
 write.csv(demo_26_age, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Phase 6\\dem_age.csv" )
@@ -199,9 +273,9 @@ write.csv(ethn_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estima
 ###################################################
 
 
-
-
 rm(demo_26)
+
+#add datasource name from AK
 
 ds_id=24
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
