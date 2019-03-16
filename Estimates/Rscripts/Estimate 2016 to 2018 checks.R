@@ -5,6 +5,7 @@
 #why is there a column sfmu in est id 26 file?
 #there is an issue with ma by tract - table doesn't have geotyp so it needs to be added - tracts with no pop aren't listed-are excluded
 # why do I have two gqpop variables in the id 24 file
+#ADD up each column by tract and see if totals match region
 
 
 pkgTest <- function(pkg){
@@ -117,11 +118,11 @@ gq_24 <-aggregate(pop~yr_id + geozone + geotype, subset(gq_24, housing_type_id!=
 setnames(gq_24, old="pop", new="gqpop_24")
 
 #Delete rows with old structure type id - all unit numbers are zero because of a recode by EDAM
-vac <- vac [!(vac$structure_type_id==5 | vac$structure_type_id==6),]
+#vac <- vac [!(vac$structure_type_id==5 | vac$structure_type_id==6),]
 
-hu <- dcast(vac, yr_id + geotype + geozone ~ short_name, value.var="units")
-hutot <- aggregate(units~yr_id + geotype + geozone, data=vac, sum)
-setnames(hutot, old = "units", new = "hu")
+#hu <- dcast(vac, yr_id + geotype + geozone ~ short_name, value.var="units")
+#hutot <- aggregate(units~yr_id + geotype + geozone, data=vac, sum)
+#setnames(hutot, old = "units", new = "hu")
 
 hu_24 <- dcast(vac_24, yr_id + geotype + geozone ~ short_name, value.var="units")
 hutot_24 <- aggregate(units~yr_id + geotype + geozone, data=vac_24, sum)
@@ -141,12 +142,12 @@ gq$geozone <- gsub("\\:","_",gq$geozone)
 hh$geozone <- gsub("\\*","",hh$geozone)
 hh$geozone <- gsub("\\-","_",hh$geozone)
 hh$geozone <- gsub("\\:","_",hh$geozone)
-hutot$geozone <- gsub("\\*","",hutot$geozone)
-hutot$geozone <- gsub("\\-","_",hutot$geozone)
-hutot$geozone <- gsub("\\:","_",hutot$geozone)
-hu$geozone <- gsub("\\*","",hu$geozone)
-hu$geozone <- gsub("\\-","_",hu$geozone)
-hu$geozone <- gsub("\\:","_",hu$geozone)
+#hutot$geozone <- gsub("\\*","",hutot$geozone)
+#hutot$geozone <- gsub("\\-","_",hutot$geozone)
+#hutot$geozone <- gsub("\\:","_",hutot$geozone)
+#hu$geozone <- gsub("\\*","",hu$geozone)
+#hu$geozone <- gsub("\\-","_",hu$geozone)
+#hu$geozone <- gsub("\\:","_",hu$geozone)
 
 vac_24$geozone <- gsub("\\*","",vac_24$geozone)
 vac_24$geozone <- gsub("\\-","_",vac_24$geozone)
@@ -173,9 +174,10 @@ head(totpop)
 
 est <- merge(totpop, gq, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 est <- merge(est, hh, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
-est <- merge(est, hutot, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
-est <- merge(est, hu, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
+#est <- merge(est, hutot, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
+#est <- merge(est, hu, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 
+setnames(est, old="units",new="hu")
 head(est)
 
 est_24 <- merge(totpop_24, gq_24, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
@@ -191,16 +193,16 @@ est$gqpop <- as.numeric(est$gqpop)
 est$households <- as.numeric(est$households)
 est$hhp <- as.numeric(est$hhp)
 est$hu <- as.numeric(est$hu)
-est$mf <- as.numeric(est$mf)
-est$mh <- as.numeric(est$mh)
-est$sfmu <- as.numeric(est$sf)
-est$sf <- as.numeric(est$sf)
+#est$mf <- as.numeric(est$mf)
+#est$mh <- as.numeric(est$mh)
+#est$sfmu <- as.numeric(est$sf)
+#est$sf <- as.numeric(est$sf)
 
 est_24$pop <- as.numeric(est_24$pop)
 est_24$gqpop <- as.numeric(est_24$gqpop)
 est_24$households <- as.numeric(est_24$households)
 est_24$hhp <- as.numeric(est_24$hhp)
-est_24$units <- as.numeric(est_24$units)
+est_24$units <- as.numeric(est_24$units.y)
 est_24$mf <- as.numeric(est_24$mf)
 est_24$mh <- as.numeric(est_24$mh)
 est_24$sfmu <- as.numeric(est_24$sfmu)
@@ -272,67 +274,135 @@ est_24_26$hhs_pctchg <- (est_24_26$hhs_numchg/est_24_26$hhs_24)*100
 est_24_26$hhs_pctchg <- round(est_24_26$hhs_pctchg,digits=2)
 
 
-table(est_test$tot_pop_pctchg)
-table(est_test$tot_pop_pctchg)
-
-plot(est_test$yr_id, est_test$gqpop_numchg, "p" )
-
-
 est_24_26 <- est_24_26[order(est_24_26$geozone, est_24_26$yr_id),]
 
-write.csv(est_24_26,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\Data Files\\Est 2016 to 2018 differences.csv" )
-
-#calculate standard deviation - is this useful?
-by(est_24_26$pop,est_24_26$yr_id, sd, na.rm=TRUE)
-by(est_24_26$pop_24,est_24_26$yr_id, sd, na.rm=TRUE)
+write.csv(est_24_26,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Est 2016 to 2018 differences.csv" )
 
 
-rm(list = ls()[!ls() %in% c("demo_24", "demo", "hhinc_24", "hhinc")])
+head(est)
+#two units variables so delete one
+#est$units <- NULL
 
-#merge demo
-
-demo <- subset(demo, demo$geotype!="tract")
-demo_24 <- subset(demo_24, demo_24$geotype!="tract")
-demo_24_26 <- merge(demo_24,demo, by.x = c("yr_id","geozone"), by.y = c("yr_id", "geozone"), all=TRUE)
-
-head(demo_24_26)
-
-table(demo$geotype)
-
-
-
-
-
-
-
-
-
+#calculate change in ID 26 data
+est <- est[order(est$geotype,est$geozone,est$yr_id),]
+est$hhpN_chg <- est$hhp - lag(est$hhp)
+est$hhpN_pct <- (est$hhpN_chg / lag(est$hhp))*100
+est$hhpN_pct<-round(est$hhpN_pct,digits=2)
+est$hhsN_chg <- est$hhs - lag(est$hhs)
+est$hhsN_pct <- (est$hhsN_chg / lag(est$hhs))*100
+est$hhsN_pct<-round(est$hhsN_pct,digits=2)
+est$hhN_chg <- est$households - lag(est$households)
+est$hhN_pct <- est$hhN_chg / lag(est$households)*100
+est$hhN_pct<-round(est$hhN_pct,digits=2)
+est$huN_chg <- est$hu - lag(est$hu)
+est$huN_pct <- (est$huN_chg / lag(est$hu))*100
+est$huN_pct<-round(est$huN_pct,digits=2)
 
 
+head(est[est$geotype=="jurisdiction",],10)
 
-#######temporary
-est_test <- est_24_26 [!(est_24_26$yr_id=='2018' | est_24_26$yr_id=='2017'),]
+#set 2010 number and pct change to NA - there is no previous year to calculate change
+est$hhpN_pct[est$yr_id==2010] <- NA
+est$hhpN_chg[est$yr_id==2010] <- NA
+est$hhsN_pct[est$yr_id==2010] <- NA
+est$hhsN_chg[est$yr_id==2010] <- NA
+est$hhN_pct[est$yr_id==2010] <- NA
+est$hhN_chg[est$yr_id==2010] <- NA 
+est$huN_pct[est$yr_id==2010] <- NA
+est$huN_chg[est$yr_id==2010] <- NA 
+#set Inf values to NA for later calculations
+est$hhpN_pct[is.infinite(est$hhpN_pct)] <-NA 
+est$hhsN_pct[is.infinite(est$hhsN_pct)] <-NA 
+est$hhN_pct[is.infinite(est$hhN_pct)] <-NA 
+est$huN_pct[is.infinite(est$huN_pct)] <-NA 
 
-look_na <- (subset(est_test, (is.na(est_test$pop_est_24 | est_test$pop_est))))
-unique(look_na$geozone)
-unique(look_na$geotype.y)
+#subset est file for jurisdiction and region
+est_jur <- subset(est, est$geotype=="jurisdiction")
+est_reg <- subset(est, est$geotype=="region")
 
-est_test <- subset (est_test, (!is.na(est_test$pop_est)))
-est_test <- subset (est_test, (!is.na(est_test$pop_est_24)))
 
-est_test$tot_pop_diff <- est_test$pop_est-est_test$pop_est_24
-est_test$hhp_diff <- est_test$hhp_est-est_test$hhp_est_24
-est_test$gqpop_diff <- est_test$gqpop_est-est_test$gqpop_est_24
-est_test$hu_diff <- est_test$hu_est-est_test$hu_est_24
-est_test$sfa_diff <- est_test$sfa_est-est_test$sfa_est_24
-est_test$sfd_diff <- est_test$sfd_est-est_test$sfd_est_24
-est_test$mf_diff <- est_test$mf_est-est_test$mf_est_24
-est_test$mh_diff <- est_test$mh_est-est_test$mh_est_24
-est_test$hhs_diff <- est_test$hhs_est-est_test$hhs_est_24
+#############################
+#############################
+#keep only tract geographies
+#############################
+#############################
 
-est_test$tot_pop_pctchg <- (est_test$tot_pop_diff/est_test$pop_est_24)*100
-est_test$tot_pop_pctchg <- round(est_test$tot_pop_pctchg,digits=2)
-table(est_test$tot_pop_pctchg)
+est <- subset(est, est$geotype=="tract")
+table(est$geotype)
 
-#############
+#calculate the mean and sd for hh variables
+est_means <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct)~yr_id,data=est,mean,na.rm=TRUE)
+est_sd <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct)~yr_id,data=est,sd,na.rm=TRUE)
 
+head(est_means$hhpN_pct,9)
+head(est_sd$hhpN_pct,9)
+
+
+#match in stats to est file
+est$hhp_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 2]
+est$hhs_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 3]
+est$hu_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 4]
+est$hh_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 5]
+
+est$hhp_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 2]
+est$hhs_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 3]
+est$hu_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 4]
+est$hh_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 5]
+
+est_3sd <- merge(est_means, est_sd, by.x = "yr_id", by.y = "yr_id",all = TRUE)
+est_3sd$hhp_3sd <- est_3sd$hhpN_pct.x+(3*est_3sd$hhpN_pct.y)
+est_3sd$hhs_3sd <- est_3sd$hhsN_pct.x+(3*est_3sd$hhsN_pct.y)
+est_3sd$hu_3sd <- est_3sd$huN_pct.x+(3*est_3sd$huN_pct.y)
+est_3sd$hh_3sd <- est_3sd$hhN_pct.x+(3*est_3sd$hhN_pct.y)
+
+est_3sd$hhp_3sd_minus <- est_3sd$hhpN_pct.x-(3*est_3sd$hhpN_pct.y)
+est_3sd$hhs_3sd_minus <- est_3sd$hhsN_pct.x-(3*est_3sd$hhsN_pct.y)
+est_3sd$hu_3sd_minus <- est_3sd$huN_pct.x-(3*est_3sd$huN_pct.y)
+est_3sd$hh_3sd_minus <- est_3sd$hhN_pct.x-(3*est_3sd$hhN_pct.y)
+
+est$hhp_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 10]
+est$hhs_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 11]
+est$hu_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 12]
+est$hh_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 13]
+
+est$hhp_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 14]
+est$hhs_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 15]
+est$hu_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 16]
+est$hh_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 17]
+
+head(est,12)
+colnames(est_3sd)
+
+est$hhp_flag<-NULL 
+est$hhs_flag<-NULL
+est$hu_flag <-NULL
+est$hh_flag <-NULL
+
+class(est$hh_flag)
+
+est$hhp_flag[est$hhpN_pct>=est$hhp_3sd | est$hhpN_pct<=est$hhp_3sd_minus] <-1 
+est$hhs_flag[est$hhsN_pct>=est$hhs_3sd | est$hhsN_pct<=est$hhs_3sd_minus] <-1 
+est$hu_flag[est$huN_pct>=est$hu_3sd | est$huN_pct<=est$hu_3sd_minus] <-1 
+est$hh_flag[est$hhN_pct>=est$hh_3sd | est$hhN_pct<=est$hh_3sd_minus] <-1 
+table(est$hhp_flag)
+table(est$hhs_fl)
+table(est$hu_flag)
+table(est$hh_flag)
+
+
+
+head(est_3sd,9)
+vacancy_cpa<- merge(select(vacancy_cpa, yr_id, year, geotype, geozone, rate14, reg14), (select (vacancy13_cpa, yr_id, year, geotype, geozone, rate13, reg13)), by.a=c("yr_id","geotype", "geozone"), by.b=c("yr_id","geotype","geozone"),all = TRUE)
+
+
+head(est)
+
+est_outliers <- subset(est, est$hhp_flag==1 | est$hhs_flag==1 | est$hu_flag==1 | est$hh_flag==1)
+
+unique(est_outliers$geozone)
+
+
+write.csv(est_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_jur_ID26.csv",row.names = FALSE )
+write.csv(est_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_reg_ID26.csv",row.names = FALSE )
+write.csv(est_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26.csv",row.names = FALSE )
+write.csv(est, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID26.csv",row.names = FALSE )
