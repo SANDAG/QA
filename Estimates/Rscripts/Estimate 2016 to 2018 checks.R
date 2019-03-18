@@ -330,79 +330,97 @@ est_reg <- subset(est, est$geotype=="region")
 est <- subset(est, est$geotype=="tract")
 table(est$geotype)
 
+est_2017 <- subset(est, est$yr_id<=2017)
+table(est_2017$yr_id)
+
 #calculate the mean and sd for hh variables
-est_means <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct)~yr_id,data=est,mean,na.rm=TRUE)
-est_sd <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct)~yr_id,data=est,sd,na.rm=TRUE)
+est_means <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct,vacN_pct)~yr_id,data=est,mean,na.rm=TRUE)
+est_sd <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct,vacN_pct)~yr_id,data=est,sd,na.rm=TRUE)
+est_min <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct,vacN_pct)~geozone,data=est_2017,min,na.rm=TRUE)
+est_max <- aggregate(cbind(hhpN_pct,hhsN_pct,huN_pct,hhN_pct,vacN_pct)~geozone,data=est_2017,max,na.rm=TRUE)
+
 
 head(est_means$hhpN_pct,9)
 head(est_sd$hhpN_pct,9)
+head(est_sd)
+head(est_min,10)
 
 
-#match in stats to est file
+#match in means to est file
 est$hhp_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 2]
-est$hhs_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 3]
-est$hu_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 4]
-est$hh_means<-est_means[match(paste(est$yr_id), paste(est_means$yr_id)), 5]
 
+#match in sd to est file
 est$hhp_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 2]
-est$hhs_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 3]
-est$hu_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 4]
-est$hh_sd<-est_sd[match(paste(est$yr_id), paste(est_sd$yr_id)), 5]
+#match in min to est file
+est$hhp_min<-est_min[match(paste(est$geozone), paste(est_min$geozone)), 2]
+#match in max to est file
+est$hhp_max<-est_max[match(paste(est$geozone), paste(est_max$geozone)), 2]
+#concatenate min and max into one vector
+est$hhp_range<-paste("(",est$hhp_min,"-",est$hhp_max,")")
 
+
+head(hhinc_min)
+head(hhinc_max)
+
+#####
+#####
+head(hhinc)
+
+#merge means and sd to calculate 3 standard deviations from mean
 est_3sd <- merge(est_means, est_sd, by.x = "yr_id", by.y = "yr_id",all = TRUE)
+#calculate 3 standard deviations above the mean
 est_3sd$hhp_3sd <- est_3sd$hhpN_pct.x+(3*est_3sd$hhpN_pct.y)
-est_3sd$hhs_3sd <- est_3sd$hhsN_pct.x+(3*est_3sd$hhsN_pct.y)
-est_3sd$hu_3sd <- est_3sd$huN_pct.x+(3*est_3sd$huN_pct.y)
-est_3sd$hh_3sd <- est_3sd$hhN_pct.x+(3*est_3sd$hhN_pct.y)
-
+#calculate 3 standard deviations below the mean
 est_3sd$hhp_3sd_minus <- est_3sd$hhpN_pct.x-(3*est_3sd$hhpN_pct.y)
-est_3sd$hhs_3sd_minus <- est_3sd$hhsN_pct.x-(3*est_3sd$hhsN_pct.y)
-est_3sd$hu_3sd_minus <- est_3sd$huN_pct.x-(3*est_3sd$huN_pct.y)
-est_3sd$hh_3sd_minus <- est_3sd$hhN_pct.x-(3*est_3sd$hhN_pct.y)
 
-est$hhp_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 10]
-est$hhs_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 11]
-est$hu_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 12]
-est$hh_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 13]
+#match 3 standard deviations above the mean into est
+est$hhp_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), "hhp_3sd"]
 
-est$hhp_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 14]
-est$hhs_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 15]
-est$hu_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 16]
-est$hh_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), 17]
+#match 3 standard deviations  below the mean into est
+est$hhp_3sd_minus<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), "hhp_3sd_minus"]
 
-head(est,12)
-colnames(est_3sd)
 
-est$hhp_flag<-NULL 
-est$hhs_flag<-NULL
-est$hu_flag <-NULL
-est$hh_flag <-NULL
-
-class(est$hh_flag)
-
+#create flag variables to identify outliers
 est$hhp_flag[est$hhpN_pct>=est$hhp_3sd | est$hhpN_pct<=est$hhp_3sd_minus] <-1 
-est$hhs_flag[est$hhsN_pct>=est$hhs_3sd | est$hhsN_pct<=est$hhs_3sd_minus] <-1 
-est$hu_flag[est$huN_pct>=est$hu_3sd | est$huN_pct<=est$hu_3sd_minus] <-1 
-est$hh_flag[est$hhN_pct>=est$hh_3sd | est$hhN_pct<=est$hh_3sd_minus] <-1 
 table(est$hhp_flag)
-table(est$hhs_fl)
-table(est$hu_flag)
-table(est$hh_flag)
+
+hhinc_outliers <- subset(hhinc, hhinc$hhinc_flag==1)
+
+unique(hhinc_outliers$geozone)
+hhinc_out <- subset(hhinc, hhinc$hhinc_flag==1)
+
+hhinc$hhinc_maxflag[hhinc$geozone %in% hhinc_out$geozone] <- 1
+
+hhinc_outliers <- subset(hhinc_outliers, hhinc_outliers$yr_id==2018)
+
+#create a variable to indicate all years for tracts with outliers  
+
+est_outlier_all_years <- subset(est, (est$geozone %in% est_outliers$geozone & est$outlier==1))
+
+table(est_outliers$geozone)
+row_number(est_outliers$geozone)
+unique(est_outlier_all_years$geozone)
+
+sum(est$gqpop, na.rm = TRUE)
 
 
 
-head(est_3sd,9)
-vacancy_cpa<- merge(select(vacancy_cpa, yr_id, year, geotype, geozone, rate14, reg14), (select (vacancy13_cpa, yr_id, year, geotype, geozone, rate13, reg13)), by.a=c("yr_id","geotype", "geozone"), by.b=c("yr_id","geotype","geozone"),all = TRUE)
+#add script to delete unoccupiable, available, means, 3sd, min max
+#rename flags specific record has issue, geozone has issue  
 
-
-head(est)
-
-est_outliers <- subset(est, est$hhp_flag==1 | est$hhs_flag==1 | est$hu_flag==1 | est$hh_flag==1)
-
-unique(est_outliers$geozone)
-
+head(est,15)
 
 write.csv(est_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_jur_ID26.csv",row.names = FALSE )
 write.csv(est_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_reg_ID26.csv",row.names = FALSE )
-write.csv(est_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26.csv",row.names = FALSE )
-write.csv(est, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID26.csv",row.names = FALSE )
+write.csv(est_outliers[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hh_sd","hu","huN_chg","huN_pct","hu_range","hu_sd",
+                          "hhp","hhpN_chg","hhpN_pct","hhp_range","hhp_sd","hhs","hhsN_chg","hhsN_pct","hhs_range","hhs_sd","vac_rate","vacN_chg","vacN_pct",
+                          "vac_range","vac_sd","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26_sd.csv",row.names = FALSE )
+write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
+                 "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg","vacN_pct",
+                 "vac_range","hh_flag","hh_flag_max","hu_flag","hu_flag_max","hhp_flag","hhp_flag_max","hhs_flag","hhs_flag_max","vac_flag","vac_flag_max")],
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID26.csv",row.names = FALSE )
+write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
+                          "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg","vacN_pct",
+                          "vac_range","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26.csv",row.names = FALSE )
