@@ -136,13 +136,9 @@ table(hhinc_24_26$geotype)
 
 #calculate number change
 hhinc_24_26$hhinc_diff <- hhinc_24_26$hhinc_prop-hhinc_24_26$hhinc_prop_24
+hhinc_24_26$hhinc_diff[hhinc_24_26$yr_id==2010] <- NA
 
-#calculate percent diff
-hhinc_24_26$hhinc_pctdiff <- (hhinc_24_26$hhinc_diff/hhinc_24_26$hhinc_prop_24)*100
-hhinc_24_26$hhinc_pctdiff <- round(hhinc_24_26$hhinc_pctdiff,digits=2)
-hhinc_24_26$hhinc_pctdiff[is.infinite(hhinc_24_26$hhinc_pctdiff)] <-NA 
-
-hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$yr_id<=2016)
+#hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$yr_id<=2016)
 
 head(subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction"),15)
 
@@ -168,8 +164,6 @@ head(hhinc,12)
 #calculate year over year change
 hhinc <- hhinc[order(hhinc$geozone, hhinc$income_id2 ,hhinc$yr_id),]
 hhinc$hhinc_nchg <- hhinc$hhinc_prop - lag(hhinc$hhinc_prop)
-#hhinc$hhinc_npct <- hhinc$hhinc_nchg/lag(hhinc$hhinc_prop)*100 
-#hhinc$hhinc_npct <- round(hhinc$hhinc_npct, digits = 2)
 
 #set 2010 number and pct change to NA - there is no previous year to calculate change
 hhinc$hhinc_nchg[hhinc$yr_id==2010] <- NA
@@ -206,23 +200,21 @@ hhinc_sd$hhinc_nchg <- round(hhinc_sd$hhinc_nchg,digits = 2)
 
 hhinc_min <- aggregate(hhinc_nchg~income_id2+geozone,data=hhinc_2017,min,na.rm=TRUE)
 hhinc_max <- aggregate(hhinc_nchg~income_id2+geozone,data=hhinc_2017,max,na.rm=TRUE)
-hhinc_min <- round(hhinc_min$hhinc_nchg, digits = 2)
-hhinc_max <- round(hhinc_min$hhinc_nchg, digits = 2)
+hhinc_min$hhinc_nchg <- round(hhinc_min$hhinc_nchg, digits = 2)
+hhinc_max$hhinc_nchg <- round(hhinc_max$hhinc_nchg, digits = 2)
 
 
 head(hhinc_means,20)
 head(hhinc_sd,10)
 
-hhinc_test <- subset(hhinc,hhinc$geozone==1)
-head(hhinc_test,10)
 #match in means to hhinc file
-hhinc$hhinc_means<-hhinc_means[match(paste(hhinc$yr_id), paste(hhinc_means$yr_id)), 2]
+hhinc$hhinc_means<-hhinc_means[match(paste(hhinc$yr_id), paste(hhinc_means$yr_id)), "hhinc_nchg"]
 #match in sd to hhinc file
-hhinc$hhinc_sd<-hhinc_sd[match(paste(hhinc$yr_id), paste(hhinc_sd$yr_id)), 2]
+hhinc$hhinc_sd<-hhinc_sd[match(paste(hhinc$yr_id), paste(hhinc_sd$yr_id)), "hhinc_nchg"]
 #match in min to hhinc file
-hhinc$hhinc_min<-hhinc_min[match(paste(hhinc$geozone,hhinc$income_id2), paste(hhinc_min$geozone,hhinc$income_id2)), 3]
+hhinc$hhinc_min<-hhinc_min[match(paste(hhinc$geozone,hhinc$income_id2), paste(hhinc_min$geozone,hhinc_min$income_id2)), "hhinc_nchg"]
 #match in max to hhinc file
-hhinc$hhinc_max<-hhinc_max[match(paste(hhinc$geozone), paste(hhinc_max$geozone)), 3]
+hhinc$hhinc_max<-hhinc_max[match(paste(hhinc$geozone,hhinc$income_id2), paste(hhinc_max$geozone,hhinc_max$income_id2)), "hhinc_nchg"]
 #concatenate min and max into one vector
 hhinc$hhinc_range<-paste("(",hhinc$hhinc_min,"-",hhinc$hhinc_max,")")
 
@@ -233,14 +225,14 @@ head(hhinc_max)
 #####
 head(hhinc)
 
-head(hhinc_3sd)
-
 #merge means and sd to calculate 3 standard deviations from mean
 hhinc_3sd <- merge(hhinc_means, hhinc_sd, by.x = c("yr_id","income_id2"), by.y = c("yr_id","income_id2"), all = TRUE)
 #calculate 3 standard deviations above the mean
-hhinc_3sd$hhinc_3sd <- hhinc_3sd$hhinc_npct.x+(3*hhinc_3sd$hhinc_npct.y)
+hhinc_3sd$hhinc_3sd <- hhinc_3sd$hhinc_nchg.x+(3*hhinc_3sd$hhinc_nchg.y)
 #calculate 3 standard deviations below the mean
-hhinc_3sd$hhinc_3sd_minus <- hhinc_3sd$hhinc_npct.x-(3*hhinc_3sd$hhinc_npct.y)
+hhinc_3sd$hhinc_3sd_minus <- hhinc_3sd$hhinc_nchg.x-(3*hhinc_3sd$hhinc_nchg.y)
+
+head(hhinc_3sd)
 
 #match 3 standard deviations above the mean into hhinc
 hhinc$hhinc_3sd<-hhinc_3sd[match(paste(hhinc$yr_id), paste(hhinc_3sd$yr_id)), "hhinc_3sd"]
@@ -250,7 +242,7 @@ hhinc$hhinc_3sd_minus<-hhinc_3sd[match(paste(hhinc$yr_id), paste(hhinc_3sd$yr_id
 
 
 #create flag variables to identify outliers
-hhinc$hhinc_flag[hhinc$hhinc_npct>=hhinc$hhinc_3sd | hhinc$hhinc_npct<=hhinc$hhinc_3sd_minus] <-1 
+hhinc$hhinc_flag[hhinc$hhinc_nchg>=hhinc$hhinc_3sd | hhinc$hhinc_nchg<=hhinc$hhinc_3sd_minus] <-1 
 table(hhinc$hhinc_flag)
 
 hhinc_outliers <- subset(hhinc, hhinc$hhinc_flag==1)
@@ -262,6 +254,9 @@ table(hhinc_outliers$yr_id)
 hhinc_out <- subset(hhinc, hhinc$hhinc_flag==1)
 hhinc$hhinc_maxflag[hhinc$geozone %in% hhinc_out$geozone] <- 1
 #end test
+
+head(hhinc)
+
 hhinc_outliers <- subset(hhinc_outliers, hhinc_outliers$yr_id==2018)
 
 #create a variable to indicate all years for tracts with outliers  
