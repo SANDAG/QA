@@ -11,8 +11,6 @@ USE demographic_warehouse;
 	,SUM(population) as hhp
 	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
 FROM fact.population
-	INNER JOIN dim.mgra
-	ON mgra.mgra_id = population.mgra_id
 		 INNER JOIN dim.mgra_denormalize
          ON mgra_denormalize.mgra_id = population.mgra_id	
 		INNER JOIN
@@ -25,9 +23,7 @@ FROM fact.population
 			WHERE housing.datasource_id = ds_id
 			GROUP BY yr_id, mgra_denormalize.jurisdiction
 		) hh
-		ON hh.yr_id = population.yr_id
-		AND hh.geozone = mgra.geozone
-		AND hh.geotype = mgra.geotype
+		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.jurisdiction
 WHERE datasource_id = ds_id
 AND population.housing_type_id = 1
 GROUP BY population.yr_id, mgra_denormalize.jurisdiction, hh.hh, hh.unoccupied, hh.du)
@@ -42,8 +38,6 @@ UNION
 	,SUM(population) as hhp
 	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
 FROM fact.population
-	INNER JOIN dim.mgra
-	ON mgra.mgra_id = population.mgra_id
 		 INNER JOIN dim.mgra_denormalize
          ON mgra_denormalize.mgra_id = population.mgra_id	
 		INNER JOIN
@@ -56,9 +50,7 @@ FROM fact.population
 			WHERE housing.datasource_id = ds_id
 			GROUP BY yr_id, mgra_denormalize.cpa
 		) hh
-		ON hh.yr_id = population.yr_id
-		AND hh.geozone = mgra.geozone
-		AND hh.geotype = mgra.geotype
+		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.cpa
 WHERE datasource_id = ds_id
 AND population.housing_type_id = 1
 GROUP BY population.yr_id, mgra_denormalize.cpa, hh.hh, hh.unoccupied, hh.du)
@@ -73,8 +65,6 @@ UNION
 	,SUM(population) as hhp
 	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
 FROM fact.population
-	INNER JOIN dim.mgra
-	ON mgra.mgra_id = population.mgra_id
 		 INNER JOIN dim.mgra_denormalize
          ON mgra_denormalize.mgra_id = population.mgra_id	
 		INNER JOIN
@@ -87,9 +77,7 @@ FROM fact.population
 			WHERE housing.datasource_id = ds_id
 			GROUP BY yr_id, mgra_denormalize.region
 		) hh
-		ON hh.yr_id = population.yr_id
-		AND hh.geozone = mgra.geozone
-		AND hh.geotype = mgra.geotype
+		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.region
 WHERE datasource_id = ds_id
 AND population.housing_type_id = 1
 GROUP BY population.yr_id, mgra_denormalize.region, hh.hh, hh.unoccupied, hh.du)
@@ -104,8 +92,6 @@ UNION
 	,SUM(population) as hhp
 	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
 FROM fact.population
-	INNER JOIN dim.mgra
-	ON mgra.mgra_id = population.mgra_id
 		 INNER JOIN dim.mgra_denormalize
          ON mgra_denormalize.mgra_id = population.mgra_id	
 		INNER JOIN
@@ -118,9 +104,7 @@ FROM fact.population
 			WHERE housing.datasource_id = ds_id
 			GROUP BY yr_id, mgra_denormalize.tract
 		) hh
-		ON hh.yr_id = population.yr_id
-		AND hh.geozone = mgra.geozone
-		AND hh.geotype = mgra.geotype
+		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.tract
 WHERE datasource_id = ds_id
 AND population.housing_type_id = 1
 GROUP BY population.yr_id, mgra_denormalize.tract, hh.hh, hh.unoccupied, hh.du)
