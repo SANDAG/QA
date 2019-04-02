@@ -1,5 +1,5 @@
 
-
+#load packages
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -12,10 +12,12 @@ packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC",
               "stringr","gridExtra","grid","lattice","gtable")
 pkgTest(packages)
 
-
+#set working directory to access files and save to
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+#necessary code for running SQL scripts in R
 source("../Queries/readSQL.R")
 
+#channel set to SQL database access the query and pull the specific data
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 dem_sql = getSQL("../Queries/age_ethn_gender.sql")
 dem<-sqlQuery(channel,dem_sql)
@@ -28,10 +30,10 @@ write.csv(dem, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Region
 #change all factors to character for ease of coding
 options(stringsAsFactors=FALSE)
 
+#order the data in the file
 dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
 
-#dem$geozone<-revalue(dem$geozone, c("Los Penasquitos Canyon Preserve" = "Los Penas. Can. Pres."))
-dem$geozone[dem$geotype =="region"]<- "Region"
+#deletes extra characters in geozone for matching later
 dem$geozone <- gsub("\\*","",dem$geozone)
 dem$geozone <- gsub("\\-","_",dem$geozone)
 dem$geozone <- gsub("\\:","_",dem$geozone)
@@ -59,13 +61,16 @@ dem$age_group_rc <- ifelse(dem$age_group_id==1|
                                                   dem$age_group_id==19|
                                                   dem$age_group_id==20,4,NA))))
                                                   
-                                        
+#create variable of labels for new age categories
 dem$age_group_name_rc<- ifelse(dem$age_group_rc==1,"<18",
                                ifelse(dem$age_group_rc==2,"18-44",
                                       ifelse(dem$age_group_rc==3,"45-64",
                                              ifelse(dem$age_group_rc==4,"65+",NA))))
 
 head(dem)
+
+#RO - add script to find under 18 and over 65 by gender
+
 
 #aggregate total counts by year for age, gender and ethnicity
 dem_age<-aggregate(pop~age_group_name_rc+geotype+geozone+yr_id, data=dem, sum)
@@ -77,16 +82,19 @@ geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem, sum)
 
 tail(geozone_pop)
 
-#calculate percent of the total population, total change, percent change by year for age, gender and ethnicity
-
-head(dem_age)
+#calculate percent of the total population, total change, percent change by year for age, gender and ethnicity using a lag
+head(dem_age,10)
 dem_age <- dem_age[order(dem_age$age_group_name_rc,dem_age$geotype,dem_age$geozone,dem_age$yr_id),]
 dem_age$N_chg <- dem_age$pop - lag(dem_age$pop)
 dem_age$N_pct <- (dem_age$N_chg / lag(dem_age$pop))*100
+#rounds percent
 dem_age$N_pct<-round(dem_age$N_pct,digits=2)
+#match in population for each geozone
 dem_age$geozone_pop<-geozone_pop[match(paste(dem_age$yr_id, dem_age$geozone),paste(geozone_pop$yr_id, geozone_pop$geozone)),4]
+#calculate the proportion of pop in each age group and round
 dem_age$pct_of_total<-(dem_age$pop / dem_age$geozone_pop)*100
 dem_age$pct_of_total<-round(dem_age$pct_of_total,digits=2)
+#rename variables
 setnames(dem_age, old=c("age_group_name_rc", "yr_id", "pop"),new=c("Age_Group", "Year", "Population"))
 
 
