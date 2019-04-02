@@ -1,7 +1,7 @@
 #HH estimate script
-#started 2/12/2019
-#DOF doesn't report number of households
-#fix SQL code to bring in  est for id26 - what I have isn't working 
+#DOF number of households is "occupied"
+#Check 2011-2018 estimates to DOF - delete 2010 data out of those checks
+#add checks for 2010 estimates to Decennial Census data
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -52,6 +52,7 @@ hh$geozone <- gsub("\\-","_",hh$geozone)
 hh$geozone <- gsub("\\:","_",hh$geozone)
 
 
+
 est <- merge(totpop, gq, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 est <- merge(est, hh, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
 
@@ -83,6 +84,7 @@ dof$Geography <- gsub("\\:","_",dof$Geography)
 #dof$type2num[i] <- as.numeric(gsub(",", "", dof$type2num[i]))
 #}
 
+
 #strip commas and change type to numeric
 dof$Total <- as.numeric(gsub(",", "", dof$Total))
 dof$Household<-as.numeric(gsub(",", "", dof$Household))
@@ -100,7 +102,7 @@ any(is.na(dof$Total))
 
 #rename dof columns before merge
 setnames(dof, old=c("Total","Household","Group.Quarters","Total.1","Single.Detached","Single.Attached","Mobile.Homes","Occupied","Vacancy.Rate",
-                    "Persons.per.Household", "year"), new=c("pop_dof","hhp_dof","gqpop_dof","hu_dof","sfd_dof","sfa_dof","mh_dof","occupied_dof",
+                    "Persons.per.Household","year"), new=c("pop_dof","hhp_dof","gqpop_dof","hu_dof","sfd_dof","sfa_dof","mh_dof","households_dof",
                     "vac_dof","hhs_dof","yr_id"))
          
 setnames(est, old=c("pop","gqpop","households","hhp","hhs"), new=c("pop_est","gqpop_est","households_est",
@@ -123,6 +125,7 @@ dof2est$tot_pop_diff <- dof2est$pop_dof-dof2est$pop_est
 dof2est$hhp_diff <- dof2est$hhp_dof-dof2est$hhp_est
 dof2est$gqpop_diff <- dof2est$gqpop_dof-dof2est$gqpop_est
 dof2est$hhs_diff <- dof2est$hhs_dof-dof2est$hhs_est
+dof2est$households_diff <- dof2est$households_dof-dof2est$households_est
 
 head(dof2est,8)
 #dof2est_2018 <- dof2est[dof2est$yr_id==2018,]
