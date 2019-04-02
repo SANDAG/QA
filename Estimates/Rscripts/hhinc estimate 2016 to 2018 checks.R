@@ -136,22 +136,29 @@ table(hhinc_24_26$geotype)
 
 #calculate number change
 hhinc_24_26$hhinc_diff <- hhinc_24_26$hhinc_prop-hhinc_24_26$hhinc_prop_24
-hhinc_24_26$hhinc_diff[hhinc_24_26$yr_id==2010] <- NA
+#hhinc_24_26$hhinc_diff[hhinc_24_26$yr_id==2010] <- NA
 
-#hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$yr_id<=2016)
+hhinc_24_26 <- hhinc_24_26[order(hhinc_24_26$geozone,hhinc_24_26$yr_id, hhinc_24_26$income_id2),]
+setnames(hhinc_24_26, old=c("name2","hh","hhtot","hhinc_prop"), new=c("income_cat","hh_26","hhtot_26","hhinc_prop_26"))
 
+
+hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$yr_id<=2016)
 head(subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction"),15)
+
+hhinc_24_26$flag_5pct[hhinc_24_26$hhinc_diff>=5.00 | hhinc_24_26$hhinc_diff<=-5.00] <- 1
+hhinc_24_26$flag_3pct[hhinc_24_26$hhinc_diff>=3.00 | hhinc_24_26$hhinc_diff<=-3.00] <- 1
 
 hhinc_24_26_jur <- subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction")
 hhinc_24_26_reg <- subset(hhinc_24_26, hhinc_24_26$geotype=="region")
 hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$geotype=="tract")
 
+table(hhinc_24_26_jur$flag_3pct)
+
 head(hhinc_24_26_jur,20)
 
-write.csv(hhinc_24_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc_24_26_jur.csv",row.names = FALSE )
-write.csv(hhinc_24_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc_24_26_reg.csv",row.names = FALSE )
-write.csv(hhinc_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc_24_26_tract.csv",row.names = FALSE )
-
+write.csv(hhinc_24_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_jur.csv",row.names = FALSE )
+write.csv(hhinc_24_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_reg.csv",row.names = FALSE )
+write.csv(hhinc_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_tract.csv",row.names = FALSE )
 
 ##################
 ##################
@@ -169,13 +176,14 @@ hhinc$hhinc_nchg <- hhinc$hhinc_prop - lag(hhinc$hhinc_prop)
 hhinc$hhinc_nchg[hhinc$yr_id==2010] <- NA
 #hhinc$hhinc_npct[hhinc$yr_id==2010] <- NA 
 
-#set Inf values to NA for later calculations
-#hhinc$hhinc_npct[is.infinite(hhinc$hhinc_npct)] <-NA 
+hhinc <- hhinc[order(hhinc$geozone,hhinc$yr_id, hhinc$income_id2),]
+setnames(hhinc, old="name2", new="income_cat")
 
 #subset hhinc file for jurisdiction and region
 hhinc_jur <- subset(hhinc, hhinc$geotype=="jurisdiction")
 hhinc_reg <- subset(hhinc, hhinc$geotype=="region")
 tail(hhinc[hhinc$geotype=="jurisdiction",],10)
+
 
 rm(hhinc_24_26, hhinc_24_26_jur,hhinc_24_26_reg,hhinc_sql,hhtot,hhtot_24)
 
@@ -193,8 +201,8 @@ hhinc_2017 <- subset(hhinc, hhinc$yr_id<=2017)
 table(hhinc_2017$yr_id)
 
 #calculate the mean and sd for hhinc
-hhinc_means <- aggregate(hhinc_nchg~income_id2+yr_id,data=hhinc,mean,na.rm=TRUE)
-hhinc_sd <- aggregate(hhinc_nchg~income_id2+yr_id,data=hhinc,sd,na.rm=TRUE)
+hhinc_means <- aggregate(hhinc_nchg~income_id2,data=hhinc,mean,na.rm=TRUE)
+hhinc_sd <- aggregate(hhinc_nchg~income_id2,data=hhinc,sd,na.rm=TRUE)
 hhinc_means$hhinc_nchg <- round(hhinc_means$hhinc_nchg,digits = 2)
 hhinc_sd$hhinc_nchg <- round(hhinc_sd$hhinc_nchg,digits = 2)
 
@@ -208,25 +216,25 @@ head(hhinc_means,20)
 head(hhinc_sd,10)
 
 #match in means to hhinc file
-hhinc$hhinc_means<-hhinc_means[match(paste(hhinc$yr_id), paste(hhinc_means$yr_id)), "hhinc_nchg"]
+hhinc$hhinc_means<-hhinc_means[match(paste(hhinc$income_id2), paste(hhinc_means$income_id2)), "hhinc_nchg"]
 #match in sd to hhinc file
-hhinc$hhinc_sd<-hhinc_sd[match(paste(hhinc$yr_id), paste(hhinc_sd$yr_id)), "hhinc_nchg"]
+hhinc$hhinc_sd<-hhinc_sd[match(paste(hhinc$income_id2), paste(hhinc_sd$income_id2)), "hhinc_nchg"]
 #match in min to hhinc file
 hhinc$hhinc_min<-hhinc_min[match(paste(hhinc$geozone,hhinc$income_id2), paste(hhinc_min$geozone,hhinc_min$income_id2)), "hhinc_nchg"]
 #match in max to hhinc file
 hhinc$hhinc_max<-hhinc_max[match(paste(hhinc$geozone,hhinc$income_id2), paste(hhinc_max$geozone,hhinc_max$income_id2)), "hhinc_nchg"]
 #concatenate min and max into one vector
-hhinc$hhinc_range<-paste("(",hhinc$hhinc_min,"-",hhinc$hhinc_max,")")
+hhinc$range_nchg_2010_2017<-paste("(",hhinc$hhinc_min,"-",hhinc$hhinc_max,")")
 
 head(hhinc_min)
 head(hhinc_max)
 
 #####
 #####
-head(hhinc)
+head(hhinc,12)
 
 #merge means and sd to calculate 3 standard deviations from mean
-hhinc_3sd <- merge(hhinc_means, hhinc_sd, by.x = c("yr_id","income_id2"), by.y = c("yr_id","income_id2"), all = TRUE)
+hhinc_3sd <- merge(hhinc_means, hhinc_sd, by.x = "income_id2", by.y = "income_id2", all = TRUE)
 #calculate 3 standard deviations above the mean
 hhinc_3sd$hhinc_3sd <- hhinc_3sd$hhinc_nchg.x+(3*hhinc_3sd$hhinc_nchg.y)
 #calculate 3 standard deviations below the mean
@@ -235,25 +243,25 @@ hhinc_3sd$hhinc_3sd_minus <- hhinc_3sd$hhinc_nchg.x-(3*hhinc_3sd$hhinc_nchg.y)
 head(hhinc_3sd)
 
 #match 3 standard deviations above the mean into hhinc
-hhinc$hhinc_3sd<-hhinc_3sd[match(paste(hhinc$yr_id), paste(hhinc_3sd$yr_id)), "hhinc_3sd"]
+hhinc$hhinc_3sd<-hhinc_3sd[match(paste(hhinc$income_id2), paste(hhinc_3sd$income_id2)), "hhinc_3sd"]
 
 #match 3 standard deviations  below the mean into hhinc
-hhinc$hhinc_3sd_minus<-hhinc_3sd[match(paste(hhinc$yr_id), paste(hhinc_3sd$yr_id)), "hhinc_3sd_minus"]
+hhinc$hhinc_3sd_minus<-hhinc_3sd[match(paste(hhinc$income_id2), paste(hhinc_3sd$income_id2)), "hhinc_3sd_minus"]
 
 
 #create flag variables to identify outliers
 hhinc$hhinc_flag[hhinc$hhinc_nchg>=hhinc$hhinc_3sd | hhinc$hhinc_nchg<=hhinc$hhinc_3sd_minus] <-1 
 table(hhinc$hhinc_flag)
+head(hhinc$hhinc_flag)
+
+
 
 hhinc_outliers <- subset(hhinc, hhinc$hhinc_flag==1)
 
+summary(hhinc$hhinc_nchg)
+
 unique(hhinc_outliers$geozone)
 table(hhinc_outliers$yr_id)
-
-#test
-hhinc_out <- subset(hhinc, hhinc$hhinc_flag==1)
-hhinc$hhinc_maxflag[hhinc$geozone %in% hhinc_out$geozone] <- 1
-#end test
 
 head(hhinc)
 
@@ -261,32 +269,24 @@ hhinc_outliers <- subset(hhinc_outliers, hhinc_outliers$yr_id==2018)
 
 #create a variable to indicate all years for tracts with outliers  
 
-hhinc_outlier_all_years <- subset(hhinc, (hhinc$geozone %in% hhinc_outliers$geozone & hhinc$outlier==1))
-
-table(hhinc_outliers$geozone)
-row_number(hhinc_outliers$geozone)
-unique(hhinc_outlier_all_years$geozone)
-
 sum(hhinc$gqpop, na.rm = TRUE)
-
-
 
 #add script to delete unoccupiable, available, means, 3sd, min max
 #rename flags specific record has issue, geozone has issue  
 
-head(hhinc,15)
+head(hhinc_outliers)
 
-write.csv(est_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_jur_ID26.csv",row.names = FALSE )
-write.csv(est_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_reg_ID26.csv",row.names = FALSE )
-write.csv(est_outliers[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hh_sd","hu","huN_chg","huN_pct","hu_range","hu_sd",
-                          "hhp","hhpN_chg","hhpN_pct","hhp_range","hhp_sd","hhs","hhsN_chg","hhsN_pct","hhs_range","hhs_sd","vac_rate","vacN_chg","vacN_pct",
-                          "vac_range","vac_sd","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26_sd.csv",row.names = FALSE )
-write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
-                 "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg","vacN_pct",
-                 "vac_range","hh_flag","hh_flag_max","hu_flag","hu_flag_max","hhp_flag","hhp_flag_max","hhs_flag","hhs_flag_max","vac_flag","vac_flag_max")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID26.csv",row.names = FALSE )
-write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
-                          "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg","vacN_pct",
-                          "vac_range","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26.csv",row.names = FALSE )
+hhinc_wide_reg <- dcast(hhinc_reg, income_cat+income_id2+geozone~yr_id,value.var="hhinc_prop")
+
+hhinc_wide_jur <- dcast(hhinc_jur, income_cat+income_id2+geozone~yr_id,value.var="hhinc_prop")
+hhinc_wide_jur <- hhinc_wide_jur[order(hhinc_wide_jur$geozone, hhinc_wide_jur$income_id2),]
+
+
+head(hhinc_wide_jur,10)
+
+write.csv(hhinc_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26.csv",row.names = FALSE )
+write.csv(hhinc_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26.csv",row.names = FALSE )
+write.csv(hhinc_outliers[,c("yr_id","geozone","income_cat","hh","hhtot","hhinc_prop","hhinc_nchg","hhinc_sd","range_nchg_2010_2017","hhinc_flag")],
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_outliers_tract_ID26.csv",row.names = FALSE )
+write.csv(hhinc_wide_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26_wide.csv",row.names = FALSE )
+write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide.csv",row.names = FALSE )
