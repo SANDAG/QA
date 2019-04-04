@@ -21,7 +21,7 @@ options(stringsAsFactors=FALSE)
 
 # getwd()
 
-datasource_ids = c(24,26)
+datasource_ids = c(24,27)
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
 race_ethnicity <- data.frame()
@@ -201,7 +201,10 @@ tractswide <- merge(x = tract2016est2016, y =tract2016est2018,by = c("yr_id","tr
 
 
 tractswide$pct_of_total_chg <- tractswide$pct_of_total.2018est - tractswide$pct_of_total.2016est
+tractswide$abs_pct_of_total_chg <- abs(tractswide$pct_of_total.2018est - tractswide$pct_of_total.2016est)
+
 tractswide$pop_chg <- tractswide$pop.2018est - tractswide$pop.2016est
+tractswide$abs_pop_chg <- abs(tractswide$pop.2018est - tractswide$pop.2016est)
 
 rm(tract2016est2016)
 rm(tract2016est2018)
@@ -268,16 +271,16 @@ df <-
   mutate(max.totalpop = max(abs(totalpop.2018est),na.rm=TRUE))
 
 # flag census tract with pop less than 1000
-df <- add_column(df,pop.LT.1000 = 0)
-df$pop.LT.1000[df$max.totalpop < 1000] <- 1
+# df <- add_column(df,pop.LT.1000 = 0)
+# df$pop.LT.1000[df$max.totalpop < 1000] <- 1
 
 # flag census tract with pop less than 1000
-df <- add_column(df,pop.GRE.1000 = 0)
-df$pop.GRE.1000[df$max.totalpop >= 1000] <- 1
+# df <- add_column(df,pop.GRE.1000 = 0)
+# df$pop.GRE.1000[df$max.totalpop >= 1000] <- 1
 
 # flag census tract with pop less than 1000
-df <- add_column(df,pop.lessthan.1000 = 'no')
-df$pop.lessthan.1000[df$max.totalpop < 1000] <- 'yes'
+# df <- add_column(df,pop.lessthan.1000 = 'no')
+# df$pop.lessthan.1000[df$max.totalpop < 1000] <- 'yes'
 
 # remove column after filtering
 df$max.totalpop <- NULL
@@ -323,6 +326,14 @@ setwd(file.path(outfolder))
 
 df$race_tract = paste(df$short_name,df$tracts,sep='_')
 tractswide$race_tract = paste(tractswide$short_name,tractswide$tracts,sep='_')
+
+
+df$mean.yearly.chg <- NULL
+df$stdev.chg <- NULL
+df$mean.plus.3stdev <- NULL
+df$mean.minus.3stdev <- NULL
+df$short_name_geozone <- NULL
+df$short_name_geozone_yr <-NULL
 
 
 write.csv(region, "region_across_vintage_long.csv",row.names=FALSE)
