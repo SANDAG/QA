@@ -140,25 +140,27 @@ by(reg_jur_pop$tot_pop_diff,reg_jur_pop$Geography, sum )
 
 colnames(reg_jur_pop)
 
-reg_jur_pop$DOF2estflag[reg_jur_pop$tot_pop_diff!=0 | reg_jur_pop$hhp_diff!=0 | reg_jur_pop$gqpop_diff!=0 | reg_jur_pop$hhs_diff!=0] <-1 
+reg_jur_pop$DOF2estflag[reg_jur_pop$tot_pop_diff!=0 | reg_jur_pop$hhp_diff!=0 | reg_jur_pop$gqpop_diff!=0 | reg_jur_pop$hhs_diff!=0 | reg_jur_pop$households_diff!=0] <-1 
 reg_jur_pop$popflag[reg_jur_pop$tot_pop_diff!=0 ] <-1 
 reg_jur_pop$hhpflag[reg_jur_pop$hhp_diff!=0] <-1 
 reg_jur_pop$gqpopflag[reg_jur_pop$gqpop_diff!=0 ] <-1 
-reg_jur_pop$hhsflag[reg_jur_pop$hhs_diff!=0] <-1 
+reg_jur_pop$hhsflag[reg_jur_pop$hhs_diff!=0] <-1
+reg_jur_pop$hhflag[reg_jur_pop$households_diff!=0] <-1
 table(reg_jur_pop$DOF2estflag)
 table(reg_jur_pop$popflag)
 table(reg_jur_pop$hhpflag)
 table(reg_jur_pop$gqpopflag)
 table(reg_jur_pop$hhsflag)
+table(reg_jur_pop$hhflag)
 
 reg_jur_pop_diff <-subset(reg_jur_pop, reg_jur_pop$DOF2estflag==1) 
 
 write.csv(reg_jur_pop[,c("yr_id","Geography","pop_dof","pop_est","tot_pop_diff","gqpop_dof","gqpop_est","gqpop_diff","hhp_dof","hhp_est","hhp_diff","hhs_dof",
-                         "hhs_est","hhs_diff")],"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\DOF differences jur & reg.csv", row.names=TRUE)
+                         "hhs_est","hhs_diff","households_dof","households_est","households_diff")],
+                          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\DOF differences jur & reg.csv", row.names=FALSE)
 
-write.csv(reg_jur_pop_diff[,c("yr_id","Geography","popflag","hhpflag","gqpopflag","hhsflag","pop_dof","pop_est","tot_pop_diff","gqpop_dof","gqpop_est","gqpop_diff",
-                              "hhp_dof","hhp_est","hhp_diff","hhs_dof","hhs_est","hhs_diff")],
-                            "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\DOF differences jur & reg_differences.csv", row.names=TRUE)
-
+write.csv(reg_jur_pop_diff[,c("yr_id","Geography","popflag","hhpflag","gqpopflag","hhsflag","hhflag","pop_dof","pop_est","tot_pop_diff","gqpop_dof","gqpop_est","gqpop_diff",
+                              "hhp_dof","hhp_est","hhp_diff","hhs_dof","hhs_est","hhs_diff","households_dof","households_est","households_diff")],
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\DOF differences jur & reg_differences.csv", row.names=FALSE)
 
 
