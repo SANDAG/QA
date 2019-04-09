@@ -1,12 +1,13 @@
 #HH estimate script
 #started 2/12/2019
-#DOF doesn't report number of households
 #fix ma by gender not working sql query -stored procedure requires geozone not just geotype- do we want to have someone create a script?
-#why is there a column sfmu in est id 26 file?
 #there is an issue with ma by tract - table doesn't have geotyp so it needs to be added - tracts with no pop aren't listed-are excluded
 # why do I have two gqpop variables in the id 24 file
 #ADD up each column by tract and see if totals match region
 
+#############
+#############
+#updated to datasource_id 27 on 4/8/19
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -66,7 +67,7 @@ ma_tract_24<-sqlQuery(channel,ma_tract_sql)
 #ma_m_reg_24<-sqlQuery(channel,ma_m_reg_sql)
 odbcClose(channel)
 
-ds_id=26
+ds_id=27
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
@@ -222,68 +223,68 @@ setnames(est_24, old=c("pop","gqpop_24","households","hhp","hhs","mf","mh","sfmu
 est$geozone <- gsub("^\\s+|\\s+$", "", est$geozone)
 est_24$geozone <- gsub("^\\s+|\\s+$", "", est_24$geozone)
 
-est_24_26 <- merge(est_24,est, by.x = c("yr_id","geozone"), by.y = c("yr_id", "geozone"), all=TRUE)
+est_24_27 <- merge(est_24,est, by.x = c("yr_id","geozone"), by.y = c("yr_id", "geozone"), all=TRUE)
 
 #confirm expected records are in dataframe
-table(est_24_26$yr_id)
-table(est_24_26$geozone)
-table(est_24_26$geotype.x)
-table(est_24_26$geotype.y)
+table(est_24_27$yr_id)
+table(est_24_27$geozone)
+table(est_24_27$geotype.x)
+table(est_24_27$geotype.y)
 
-##est_24_26$tot_pop_diff <- rowSums(est_24_26 [,c(est_24_26$pop_est, est_24_26$pop_est_24)], na.rm=TRUE)
-##est_24_26$tot_pop_diff <- rowSums(est_24_26[,c(pop_est, pop_est_24)], na.rm=TRUE)
+##est_24_27$tot_pop_diff <- rowSums(est_24_27 [,c(est_24_27$pop_est, est_24_27$pop_est_24)], na.rm=TRUE)
+##est_24_27$tot_pop_diff <- rowSums(est_24_27[,c(pop_est, pop_est_24)], na.rm=TRUE)
 
-colnames(est_24_26)
+colnames(est_24_27)
 
 #calculate number change
-est_24_26$tot_pop_numchg <- est_24_26$pop-est_24_26$pop_24
-est_24_26$hhp_numchg <- est_24_26$hhp-est_24_26$hhp_24
-est_24_26$gqpop_numchg <- est_24_26$gqpop.y-est_24_26$gqpop_24
-est_24_26$hh_numchg <- est_24_26$households-est_24_26$households_24
-est_24_26$hu_numchg <- est_24_26$hu-est_24_26$hu_24
-est_24_26$sfa_numchg <- est_24_26$sfa-est_24_26$sfa_24
-est_24_26$sfd_numchg <- est_24_26$sfd-est_24_26$sfd_24
-est_24_26$mf_numchg <- est_24_26$mf-est_24_26$mf_24
-est_24_26$mh_numchg <- est_24_26$mh-est_24_26$mh_24
-est_24_26$hhs_numchg <- est_24_26$hhs-est_24_26$hhs_24
+est_24_27$tot_pop_numchg <- est_24_27$pop-est_24_27$pop_24
+est_24_27$hhp_numchg <- est_24_27$hhp-est_24_27$hhp_24
+est_24_27$gqpop_numchg <- est_24_27$gqpop.y-est_24_27$gqpop_24
+est_24_27$hh_numchg <- est_24_27$households-est_24_27$households_24
+est_24_27$hu_numchg <- est_24_27$hu-est_24_27$hu_24
+est_24_27$sfa_numchg <- est_24_27$sfa-est_24_27$sfa_24
+est_24_27$sfd_numchg <- est_24_27$sfd-est_24_27$sfd_24
+est_24_27$mf_numchg <- est_24_27$mf-est_24_27$mf_24
+est_24_27$mh_numchg <- est_24_27$mh-est_24_27$mh_24
+est_24_27$hhs_numchg <- est_24_27$hhs-est_24_27$hhs_24
 
-head(subset(est_24_26, est_24_26$geotype.x=="jurisdiction"), 8)
+head(subset(est_24_27, est_24_27$geotype.x=="jurisdiction"), 8)
 
 #calculate percent change
-est_24_26$tot_pop_pctchg <- (est_24_26$tot_pop_numchg/est_24_26$pop_24)*100
-est_24_26$tot_pop_pctchg <- round(est_24_26$tot_pop_pctchg,digits=2)
-est_24_26$hhp_pctchg <- (est_24_26$hhp_numchg/est_24_26$hhp_24)*100
-est_24_26$hhp_pctchg <- round(est_24_26$hhp_pctchg,digits=2)
-est_24_26$gqpop_pctchg <- (est_24_26$gqpop_numchg/est_24_26$gqpop_24)*100
-est_24_26$gqpop_pctchg <- round(est_24_26$gqpop_pctchg,digits=2)
-est_24_26$hh_pctchg <- (est_24_26$hh_numchg/est_24_26$households_24)*100
-est_24_26$hh_pctchg <- round(est_24_26$hh_pctchg,digits=2)
-est_24_26$hu_pctchg <- (est_24_26$hu_numchg/est_24_26$hu_24)*100
-est_24_26$hu_pctchg <- round(est_24_26$hu_pctchg,digits=2)
+est_24_27$tot_pop_pctchg <- (est_24_27$tot_pop_numchg/est_24_27$pop_24)*100
+est_24_27$tot_pop_pctchg <- round(est_24_27$tot_pop_pctchg,digits=2)
+est_24_27$hhp_pctchg <- (est_24_27$hhp_numchg/est_24_27$hhp_24)*100
+est_24_27$hhp_pctchg <- round(est_24_27$hhp_pctchg,digits=2)
+est_24_27$gqpop_pctchg <- (est_24_27$gqpop_numchg/est_24_27$gqpop_24)*100
+est_24_27$gqpop_pctchg <- round(est_24_27$gqpop_pctchg,digits=2)
+est_24_27$hh_pctchg <- (est_24_27$hh_numchg/est_24_27$households_24)*100
+est_24_27$hh_pctchg <- round(est_24_27$hh_pctchg,digits=2)
+est_24_27$hu_pctchg <- (est_24_27$hu_numchg/est_24_27$hu_24)*100
+est_24_27$hu_pctchg <- round(est_24_27$hu_pctchg,digits=2)
 
 #wait until EDAM fixes the units by type names
 #add sfd and sfa
 
 ##############
 ###############
-est_24_26$mf_pctchg <- (est_24_26$mf_numchg/est_24_26$mf_24)*100
-est_24_26$mf_pctchg <- round(est_24_26$mf_pctchg,digits=2)
-est_24_26$mh_pctchg <- (est_24_26$mh_numchg/est_24_26$mh_24)*100
-est_24_26$mh_pctchg <- round(est_24_26$mh_pctchg,digits=2)
-est_24_26$hhs_pctchg <- (est_24_26$hhs_numchg/est_24_26$hhs_24)*100
-est_24_26$hhs_pctchg <- round(est_24_26$hhs_pctchg,digits=2)
+est_24_27$mf_pctchg <- (est_24_27$mf_numchg/est_24_27$mf_24)*100
+est_24_27$mf_pctchg <- round(est_24_27$mf_pctchg,digits=2)
+est_24_27$mh_pctchg <- (est_24_27$mh_numchg/est_24_27$mh_24)*100
+est_24_27$mh_pctchg <- round(est_24_27$mh_pctchg,digits=2)
+est_24_27$hhs_pctchg <- (est_24_27$hhs_numchg/est_24_27$hhs_24)*100
+est_24_27$hhs_pctchg <- round(est_24_27$hhs_pctchg,digits=2)
 
 
-est_24_26 <- est_24_26[order(est_24_26$geozone, est_24_26$yr_id),]
+est_24_27 <- est_24_27[order(est_24_27$geozone, est_24_27$yr_id),]
 
-write.csv(est_24_26,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Est 2016 to 2018 differences.csv" )
+#saved from datasource_id 26
+#write.csv(est_24_26,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Est 2016 to 2018 differences.csv" )
 
+write.csv(est_24_27,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\Est 2016 to 2018 differences2.csv" )
 
 head(est)
-#two units variables so delete one
-#est$units <- NULL
 
-#calculate change in ID 26 data
+#calculate change in ID 27 data
 est <- est[order(est$geotype,est$geozone,est$yr_id),]
 est$hhpN_chg <- est$hhp - lag(est$hhp)
 est$hhpN_pct <- (est$hhpN_chg / lag(est$hhp))*100
@@ -297,7 +298,9 @@ est$hhN_pct<-round(est$hhN_pct,digits=2)
 est$huN_chg <- est$hu - lag(est$hu)
 est$huN_pct <- (est$huN_chg / lag(est$hu))*100
 est$huN_pct<-round(est$huN_pct,digits=2)
-
+est$vacN_chg <- est$vac - lag(est$vac)
+est$vacN_pct <- (est$vacN_chg / lag(est$vac))*100
+est$vacN_pct<-round(est$vacN_pct,digits=2)
 
 head(est[est$geotype=="jurisdiction",],10)
 
@@ -310,12 +313,14 @@ est$hhN_pct[est$yr_id==2010] <- NA
 est$hhN_chg[est$yr_id==2010] <- NA 
 est$huN_pct[est$yr_id==2010] <- NA
 est$huN_chg[est$yr_id==2010] <- NA 
+est$vacN_pct[est$yr_id==2010] <- NA
+est$vacN_chg[est$yr_id==2010] <- NA 
 #set Inf values to NA for later calculations
 est$hhpN_pct[is.infinite(est$hhpN_pct)] <-NA 
 est$hhsN_pct[is.infinite(est$hhsN_pct)] <-NA 
 est$hhN_pct[is.infinite(est$hhN_pct)] <-NA 
 est$huN_pct[is.infinite(est$huN_pct)] <-NA 
-
+est$vacN_pct[is.infinite(est$vacN_pct)] <-NA 
 #subset est file for jurisdiction and region
 est_jur <- subset(est, est$geotype=="jurisdiction")
 est_reg <- subset(est, est$geotype=="region")
@@ -326,6 +331,9 @@ est_reg <- subset(est, est$geotype=="region")
 #keep only tract geographies
 #############################
 #############################
+
+rm(hh_24,gq_24,hhinc_24,hu_24,hutot_24,demo_24,ma_tract_24,ma_cpa_24,ma_jur_24,ma_reg_24,totpop_24,vac_24)
+
 
 est <- subset(est, est$geotype=="tract")
 table(est$geotype)
@@ -403,6 +411,32 @@ unique(est_outlier_all_years$geozone)
 
 sum(est$gqpop, na.rm = TRUE)
 
+#outliers from first round of QA - 100.15
+# 101.03
+# 126
+# 134.12
+# 148.04
+# 166.12
+# 166.15
+# 170.09
+# 185.15
+# 189.04
+# 198.05
+# 200.18
+# 200.23
+# 200.29
+# 202.11
+# 205
+# 213.02
+# 215
+# 219
+# 220
+# 51
+# 52
+# 53
+# 58
+# 60
+# 99.01
 
 
 #add script to delete unoccupiable, available, means, 3sd, min max
@@ -410,17 +444,17 @@ sum(est$gqpop, na.rm = TRUE)
 
 head(est,15)
 
-write.csv(est_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_jur_ID26.csv",row.names = FALSE )
-write.csv(est_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_reg_ID26.csv",row.names = FALSE )
+write.csv(est_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_jur_ID27.csv",row.names = FALSE )
+write.csv(est_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_reg_ID27.csv",row.names = FALSE )
 write.csv(est_outliers[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hh_sd","hu","huN_chg","huN_pct","hu_range","hu_sd",
                           "hhp","hhpN_chg","hhpN_pct","hhp_range","hhp_sd","hhs","hhsN_chg","hhsN_pct","hhs_range","hhs_sd","vac_rate","vacN_chg","vacN_pct",
                           "vac_range","vac_sd","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26_sd.csv",row.names = FALSE )
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID27_sd.csv",row.names = FALSE )
 write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
                  "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg","vacN_pct",
                  "vac_range","hh_flag","hh_flag_max","hu_flag","hu_flag_max","hhp_flag","hhp_flag_max","hhs_flag","hhs_flag_max","vac_flag","vac_flag_max")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID26.csv",row.names = FALSE )
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID27.csv",row.names = FALSE )
 write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
                           "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg","vacN_pct",
                           "vac_range","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID26.csv",row.names = FALSE )
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID27.csv",row.names = FALSE )
