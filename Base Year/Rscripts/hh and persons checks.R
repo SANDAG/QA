@@ -31,6 +31,8 @@ persons<- read.csv("T:\\socioec\\Current_Projects\\XPEF10\\abm_csv\\persons_2016
 
 median(persons$age)
 
+table(persons$sex)
+
 
 #EXECUTE dbo.compute_median_income_all_zones 27, 'region'
 
