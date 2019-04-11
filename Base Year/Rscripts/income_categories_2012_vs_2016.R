@@ -100,7 +100,8 @@ inc2012_by_jur_and_cpa <-
 inc2012_by_jur_and_cpa <- rename(inc2012_by_jur_and_cpa, count_households_2012 = n)
 hhinc_cpa <- merge(x = inc2012_by_jur_and_cpa, y =inc2016_by_jur_and_cpa,
                                     by = c("hinccat1","jurisdiction_and_cpa","income_range",
-                                           "constant_dollars_year","jurisdiction_and_cpa_name"))
+                                           "constant_dollars_year","jurisdiction_and_cpa_name"),
+                   all=TRUE)
 hhinc_cpa <- subset(hhinc_cpa,jurisdiction_and_cpa>19)
 hhinc_cpa <- rename(hhinc_cpa, geography_name = jurisdiction_and_cpa_name)
 hhinc_cpa <- rename(hhinc_cpa, geography_id = jurisdiction_and_cpa)
