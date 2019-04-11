@@ -19,22 +19,11 @@ options(stringsAsFactors=FALSE)
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
-
-income_sql <- '
-      SELECT [income_group] as hinccat1
-      ,[name]
-,[constant_dollars_year]
-,[lower_bound]
-,[upper_bound]
-,[categorization]
-FROM [demographic_warehouse].[dim].[income_group]
-where categorization = 5 and constant_dollars_year = 2010'
-
 mgra_to_jur_sql = getSQL("../Queries/geography.sql")
 mgra_to_jur<-sqlQuery(channel,mgra_to_jur_sql)
 
+income_sql = getSQL("../Queries/income_categories.sql")
 income_cat<-sqlQuery(channel,income_sql)
-
 
 odbcClose(channel)
 
