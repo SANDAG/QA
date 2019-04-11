@@ -1,7 +1,7 @@
 USE demographic_warehouse
 
 SELECT [income_group] as hinccat1
-      ,[name]
+      ,[name] as income_range
 ,[constant_dollars_year]
 ,[lower_bound]
 ,[upper_bound]

@@ -45,19 +45,19 @@ hh_no_gq2016 = subset(hhinc2016,hht!=0)
 
 nrow(hh_no_gq2016)
 
-inc2016_by_region <- hh_no_gq2016 %>% group_by(hinccat1,name,constant_dollars_year) %>% tally()
+inc2016_by_region <- hh_no_gq2016 %>% group_by(hinccat1,income_range,constant_dollars_year) %>% tally()
 inc2016_by_region <- rename(inc2016_by_region, count_households_2016 = n)
 
 inc2016_by_jur <-
   hh_no_gq2016 %>%
-  count(jurisdiction,jurisdiction_name,hinccat1,name,constant_dollars_year, sort = FALSE)
+  count(jurisdiction,jurisdiction_name,hinccat1,income_range,constant_dollars_year, sort = FALSE)
 
 inc2016_by_jur <- rename(inc2016_by_jur, count_households_2016 = n)
 
 
 inc2016_by_jur_and_cpa <-
   hh_no_gq2016 %>%
-  count(jurisdiction_and_cpa,jurisdiction_and_cpa_name,hinccat1,name,constant_dollars_year, sort = FALSE)
+  count(jurisdiction_and_cpa,jurisdiction_and_cpa_name,hinccat1,income_range,constant_dollars_year, sort = FALSE)
 
 inc2016_by_jur_and_cpa <- rename(inc2016_by_jur_and_cpa, count_households_2016 = n)
 
@@ -81,48 +81,35 @@ hh_no_gq2012 = subset(hhinc2012,hht!=0)
 nrow(hh_no_gq2012)
 
 
-inc2012_by_region <- hh_no_gq2012 %>% group_by(hinccat1,name,constant_dollars_year) %>% tally()
+inc2012_by_region <- hh_no_gq2012 %>% group_by(hinccat1,income_range,constant_dollars_year) %>% tally()
 inc2012_by_region <- rename(inc2012_by_region, count_households_2012 = n)
 
 inc2012_by_jur <-
   hh_no_gq2012 %>%
-  count(jurisdiction,jurisdiction_name,hinccat1,name,constant_dollars_year, sort = FALSE)
+  count(jurisdiction,jurisdiction_name,hinccat1,income_range,constant_dollars_year, sort = FALSE)
 
 inc2012_by_jur <- rename(inc2012_by_jur, count_households_2012 = n)
 
 
 inc2012_by_jur_and_cpa <-
   hh_no_gq2012 %>%
-  count(jurisdiction_and_cpa,jurisdiction_and_cpa_name,hinccat1,name,constant_dollars_year, sort = FALSE)
+  count(jurisdiction_and_cpa,jurisdiction_and_cpa_name,hinccat1,income_range,constant_dollars_year, sort = FALSE)
 
 inc2012_by_jur_and_cpa <- rename(inc2012_by_jur_and_cpa, count_households_2012 = n)
-
-
-
-#count2012inc <- hh_no_gq2012 %>% group_by(hinccat1) %>% tally()
-#count2012inc <- rename(count2012inc, count_households_2012 = n)
-#count2012inc <- rename(count2012inc, hinccat1 = HINCCAT1)
-
-
 
 
 #######################################
 
 hhinc_region <- merge(x = inc2012_by_region, y =inc2016_by_region ,
-                      by = c("hinccat1","name","constant_dollars_year"))
-
+                      by = c("hinccat1","income_range","constant_dollars_year"))
 
 hhinc_jurisdiction <- merge(x = inc2012_by_jur , y =inc2016_by_jur,
-                            by = c("hinccat1","jurisdiction","name",
+                            by = c("hinccat1","jurisdiction","income_range",
                                    "constant_dollars_year","jurisdiction_name"))
 hhinc_jurisdiction_and_cpa <- merge(x = inc2012_by_jur_and_cpa, y =inc2016_by_jur_and_cpa,
-                                    by = c("hinccat1","jurisdiction_and_cpa","name",
+                                    by = c("hinccat1","jurisdiction_and_cpa","income_range",
                                            "constant_dollars_year","jurisdiction_and_cpa_name"))
 
-
-hhinc_region <- rename(hhinc_region, income_range = name)
-hhinc_jurisdiction <- rename(hhinc_jurisdiction, income_range = name)
-hhinc_jurisdiction_and_cpa <- rename(hhinc_jurisdiction_and_cpa, income_range = name)
 
 
 outfolder = "..\\output"
