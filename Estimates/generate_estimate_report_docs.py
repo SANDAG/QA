@@ -142,7 +142,7 @@ geotypes_df = pd.read_sql(geotypes_sql, mssql_engine)
 start_time = time.monotonic()
 
 for yr_id in est_years_list:
-    print('Now in estimates year {}'.format(yr_id))
+    print('\n\nNow in estimates year {}'.format(yr_id))
     for a, b in geotypes_df.iterrows():
         geotype_start = time.monotonic()
         geotype = b['geotype']
@@ -165,8 +165,15 @@ for yr_id in est_years_list:
 
         for c, d in geozone_df.iterrows():
             geozone = str(d['geozone'])
+
+            if geozone == 'None':
+                print('Field contained a NULL value. Skipping this iteration.')
+                continue
+
             geozone_url = geozone.replace(' ', '%20')
-            geozone_url = geozone_url.replace('ñ', '%F1')
+            # geozone_url = geozone_url.replace('ñ', 'n')
+            # geozone_url = geozone_url.replace('ñ', '%F1')
+            # Correction: No special characters should be needed.
             # This should be the only special character that needs encoding.
             # See https://www.w3schools.com/tags/ref_urlencode.asp for more.
             url = 'http://sql2014a8/ReportServer/Pages/ReportViewer.aspx?' \
@@ -200,14 +207,18 @@ for yr_id in est_years_list:
                 print(err)
                 if err.response.status_code == 401:
                     print(' You have provided an invalid username / password combination.\n The reports will not load.')
+                elif err.response.status_code == 500:
+                    print(' There is an unknown error. Skipping this iteration.')
+                    continue
                 else:
                     print(' The request has failed. Use the error code above to determine possible causes.')
-                while True:
-                    err_continue = input('\nWould you like to continue? ([y]/n)\n')
-                    if err_continue == 'y':
-                        break
-                    else:
-                        exit()
+                    continue
+                # while True:
+                #     err_continue = input('\nWould you like to continue? ([y]/n)\n')
+                #     if err_continue == 'y':
+                #         break
+                #     else:
+                #         exit()
 
         geotype_end = time.monotonic()
         print('{0} geotype reports completed in {1}'.format(geotype,
