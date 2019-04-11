@@ -117,7 +117,7 @@ setwd(file.path(outfolder))
 
 hhinc <- rbind(hhinc_region, hhinc_jurisdiction, hhinc_cpa)
 
+hhinc <- rename(hhinc, income_categories = hinccat1)
 
 write.csv(hhinc,"hhinc.csv",row.names=FALSE)
-
 
