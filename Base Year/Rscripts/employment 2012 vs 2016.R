@@ -26,9 +26,10 @@ odbcClose(channel)
 
 #create a variable to indicate mgra in a cpa
 geo$cpa <- ifelse((geo$jurisdiction==14 | geo$jurisdiction==19),'cpa','not_cpa')
-
+#confirm results of new variable
 table(geo$cpa,geo$jurisdiction)
 
+#read in mgra files for 2016 and 2012
 mgra<-read.csv('T:\\socioec\\Current_Projects\\XPEF10\\abm_csv\\mgra13_based_input2016_01.csv',stringsAsFactors = FALSE ,fileEncoding="UTF-8-BOM")
 
 mgra_2012<-read.csv('T:\\ABM\\release\\ABM\\version_13_3_2\\input\\2012\\mgra13_based_input2012.csv',stringsAsFactors = FALSE ,fileEncoding="UTF-8-BOM")
@@ -39,7 +40,7 @@ mgra$civ_emp_tot<-mgra$emp_total-mgra$emp_fed_mil
 mgra_2012$civ_emp_tot<-mgra_2012$emp_total-mgra_2012$emp_fed_mil
 
 
-#keep only columns of interest
+#keep only columns of interest in mgra files
 mgra <- select(mgra,mgra,pop,hhp,hh,gq_civ,gq_mil,emp_ag,emp_const_non_bldg_prod,emp_const_non_bldg_office,emp_utilities_prod,emp_utilities_office,
                emp_const_bldg_prod,emp_const_bldg_office,emp_mfg_prod,emp_mfg_office,emp_whsle_whs,
                emp_trans,emp_retail,emp_prof_bus_svcs,emp_prof_bus_svcs_bldg_maint,emp_pvt_ed_k12,
@@ -75,8 +76,8 @@ mgra_16_12$diff<-mgra_16_12$value_2016-mgra_16_12$value_2012
 #merge in geography files
 mgra_16_12<-merge(mgra_16_12, geo, by="mgra")
 
-head(mgra_16_12[mgra_16_12$jurisdiction==14,],15)
-
+#check results of merge
+head(mgra_16_12[mgra_16_12$jurisdiction==1,],15)
 
 #aggregate totals to jurisdiction
 emp_jur_16_12<-aggregate(cbind(value_2016,value_2012,diff)~variable+jurisdiction_name, data=mgra_16_12, sum)
@@ -84,42 +85,15 @@ emp_jur_16_12<-aggregate(cbind(value_2016,value_2012,diff)~variable+jurisdiction
 head(emp_jur_16_12)
 
 #aggregate the totals by cpa
-emp_cpa_16_12<-aggregate(cbind(value_2016,value_2012,diff)~variable+jurisdiction_and_cpa_name, data=mgra_16_12, sum)
+emp_cpa_16_12 <- subset(mgra_16_12,mgra_16_12$cpa!="not_cpa")
+emp_cpa_16_12<-aggregate(cbind(value_2016,value_2012,diff)~variable+jurisdiction_and_cpa_name, data=emp_cpa_16_12, sum)
 
-table(geo$jurisdiction_and_cpa_name)
+#aggregate for region totals
+emp_reg_16_12<-aggregate(cbind(value_2016,value_2012,diff)~variable, data=mgra_16_12, sum)
 
+write.csv(emp_reg_16_12, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\emp_reg_16_12.csv" )
 
-#merge cpa totals into 2012 to 2016 comparison file.
-merge_geo_mgra<-merge(merge_geo_mgra, cpa_tot_2016, by.x=c("cpa.1", "variable"), by.y = c("cpa.1", "variable"), all=TRUE)
+write.csv(emp_jur_16_12, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\emp_jur_16_12.csv" )
 
-merge_geo_mgra_16_12<-merge(merge_geo_mgra_16_12, cpa_tot_2016_new, by.x=c("cpa.1", "variable"), by.y = c("cpa.1", "variable"), all=TRUE)
-
-merge_geo_mgra_16_12<-merge(merge_geo_mgra_16_12, cpa_tot_2012, by.x=c("cpa.1", "variable"), by.y = c("cpa.1", "variable"), all=TRUE)
-
-
-#delete rows with no difference from one file to another
-merge_mgra_diff_16_12<-subset(merge_geo_mgra_16_12, diff!=0)
-
-
-write.csv(merge_mgra_diff_16_12[,c("mgra","variable", "value_new", "value_2012", "cpa_tot_new", "cpa_tot_2012", "diff", "cpa.1", "jurisdiction.1")], "M:\\Technical Services\\QA Documents\\Projects\\Synthetic Population\\Phase II\\Scripts\\output\\MGRA_2016_2012_diff.csv" )
-
-
-
-value_2016<-aggregate(value_new~variable+cpa.1, data=merge_mgra_diff, sum)
-old_value_2016<-aggregate(value_old~variable+cpa.1, data=merge_mgra_diff, sum)
-value_2012<-aggregate(value_2012~variable+cpa.1, data=merge_mgra_diff_16_12, sum)
-value_2016_12<-aggregate(value_new~variable+cpa.1, data=merge_mgra_diff_16_12, sum)
-
-merge_cpa<-merge(value_2016, old_value_2016, by.x=c("cpa.1", "variable"), by.y=c("cpa.1", "variable"))
-merge_cpa<-merge(merge_cpa, by.x=c("cpa.1", "variable"), by.y=c("cpa.1", "variable"))
-
-merge_cpa_16_12<-merge(value_2016_12, value_2012, by.x=c("cpa.1", "variable"), by.y=c("cpa.1", "variable"))
-merge_cpa<-merge(value_2016, old_value_2016, by.x=c("cpa.1", "variable"), by.y=c("cpa.1", "variable"))
-
-
-write.csv(merge_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Synthetic Population\\Phase II\\Scripts\\output\\cpa_2016_diff.csv" )
-
-write.csv(cpa_16_12, "M:\\Technical Services\\QA Documents\\Projects\\Synthetic Population\\Phase II\\Scripts\\output\\cpa_2016_12_diff.csv" )
-
-
+write.csv(emp_cpa_16_12, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\emp_cpa_16_12.csv" )
 
