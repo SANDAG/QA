@@ -155,7 +155,8 @@ hhinc <- hhinc %>%
   mutate_all(~replace(.,is.na(.)|is.infinite(.),'null'))
 
 
-hhinc <- hhinc[,c(3,9,1,2,4,5,6,7,8,9,11,10,12,13,14,15,16,17)]
+hhinc <- hhinc[,c(3,9,1,2,4,5,6,7,8,11,12,13,14,15,16,10,17)]
+hhinc <- hhinc[,c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,10,15,17)]
 write.csv(hhinc,"hhinc.csv",row.names=FALSE)
 
 data_long <- gather(hhinc, base_year, households,count_households_2012,count_households_2016 , factor_key=TRUE)
