@@ -1,3 +1,5 @@
+USE data_cafe;
+
 WITH jur_names as (SELECT zone,name as jur_name FROM [data_cafe].[ref].[geography_zone] 
 where geography_type_id = 150),
 city_cpa_names as (SELECT zone,name as city_cpa_name FROM [data_cafe].[ref].[geography_zone] 
