@@ -32,7 +32,15 @@ table(geo$cpa,geo$jurisdiction)
 #read in mgra files for 2016 and 2012
 mgra<-read.csv('T:\\socioec\\Current_Projects\\XPEF10\\abm_csv\\mgra13_based_input2016_01.csv',stringsAsFactors = FALSE ,fileEncoding="UTF-8-BOM")
 
+testtaz <- unique(mgra$taz[mgra$hhp>0])
+
+testmgra <- unique(mgra$mgra[mgra$hhp>0])
+mgra_employ <- sum(mgra$emp_total)
+
+
+#Series 13 ABM version of 2012
 mgra_2012<-read.csv('T:\\ABM\\release\\ABM\\version_13_3_2\\input\\2012\\mgra13_based_input2012.csv',stringsAsFactors = FALSE ,fileEncoding="UTF-8-BOM")
+
 
 
 #create civilian employment total for each file
