@@ -57,9 +57,9 @@ mgra_17_27<-aggregate(cbind(value_id27,value_id17,diff)~variable, data=mgra_16s,
 #subset a file
 mgra_17_27_diff <- subset(mgra_17_27, mgra_17_27$diff!=0)
 
-write.csv(mgra_17_27, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\mgra id27 to id17.csv" )
+write.csv(mgra_17_27, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\mgra id27 to id17.csv",row.names = FALSE )
 
-write.csv(mgra_17_27_diff, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\mgra id27 to id17 difference.csv" )
+write.csv(mgra_17_27_diff, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\mgra id27 to id17 difference.csv",row.names = FALSE )
 
 
 
