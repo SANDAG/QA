@@ -53,6 +53,8 @@ totpop_sql <- gsub("ds_id", ds_id,totpop_sql)
 totpop <-sqlQuery(channel,totpop_sql)
 odbcClose(channel)
 
+head(gq_24)
+
 
 #aggregate gq pop only - exclude hh pop
 gq <-aggregate(pop~yr_id + geozone + geotype, subset(gq, housing_type_id!=1), sum,na.rm = TRUE)
@@ -140,7 +142,7 @@ est_24_27 <- merge(est_24,est, by.x = c("yr_id","geozone","geotype"), by.y = c("
 
 #confirm expected records are in dataframe
 table(est_24_27$yr_id)
-table(est_24_27$geozone)
+#table(est_24_27$geozone)
 table(est_24_27$geotype)
 
 #calculate number change
@@ -239,7 +241,7 @@ head(est)
 #############################
 
 #remove unneeded objects
-rm(hh_24,gq_24,hu_24,hutot_24,totpop_24)
+rm(hh_24,gq_24,totpop_24)
 
 #make copy of est in case need to rerun after this point
 est_backup <- data.frame(est) 
@@ -285,11 +287,11 @@ est$hu_min<-est_min[match(paste(est$geozone), paste(est_min$geozone)), "huN_pct"
 est$vac_min<-est_min[match(paste(est$geozone), paste(est_min$geozone)), "vacN_chg"]
 
 #match in max to est file
-est$hhp_max<-est_max[match(paste(est$geozone), paste(est_max$geozone)), 2]
-est$hhs_min<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "hhsN_pct"]
-est$hh_min<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "hhN_pct"]
-est$hu_min<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "huN_pct"]
-est$vac_min<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "vacN_chg"]
+est$hhp_max<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "hhpN_pct"]
+est$hhs_max<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "hhsN_pct"]
+est$hh_max<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "hhN_pct"]
+est$hu_max<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "huN_pct"]
+est$vac_max<-est_max[match(paste(est$geozone), paste(est_max$geozone)), "vacN_chg"]
 
 #concatenate min and max into one vector
 est$hhp_range<-paste("(",est$hhp_min,"-",est$hhp_max,")")
@@ -308,7 +310,7 @@ est_3sd$hhp_3sd <- est_3sd$hhpN_pct.x+(3*est_3sd$hhpN_pct.y)
 est_3sd$hhs_3sd <- est_3sd$hhsN_pct.x+(3*est_3sd$hhsN_pct.y)
 est_3sd$hh_3sd <- est_3sd$hhN_pct.x+(3*est_3sd$hhN_pct.y)
 est_3sd$hu_3sd <- est_3sd$huN_pct.x+(3*est_3sd$huN_pct.y)
-est_3sd$vac_3sd <- est_3sd$vacN_pct.x+(3*est_3sd$vacN_pct.y)
+est_3sd$vac_3sd <- est_3sd$vacN_chg.x+(3*est_3sd$vacN_chg.y)
 
 
 #calculate 3 standard deviations below the mean
@@ -316,7 +318,7 @@ est_3sd$hhp_3sd_minus <- est_3sd$hhpN_pct.x-(3*est_3sd$hhpN_pct.y)
 est_3sd$hhs_3sd_minus <- est_3sd$hhsN_pct.x-(3*est_3sd$hhsN_pct.y)
 est_3sd$hh_3sd_minus <- est_3sd$hhN_pct.x-(3*est_3sd$hhN_pct.y)
 est_3sd$hu_3sd_minus <- est_3sd$huN_pct.x-(3*est_3sd$huN_pct.y)
-est_3sd$vac_3sd_minus <- est_3sd$vacN_pct.x-(3*est_3sd$vacN_pct.y)
+est_3sd$vac_3sd_minus <- est_3sd$vacN_chg.x-(3*est_3sd$vacN_chg.y)
 
 #match 3 standard deviations above the mean into est
 est$hhp_3sd<-est_3sd[match(paste(est$yr_id), paste(est_3sd$yr_id)), "hhp_3sd"]
@@ -341,18 +343,30 @@ est$vac_flag[est$vacN_chg>=est$vac_3sd | est$vacN_chg<=est$vac_3sd_minus] <-1
 
 #check flag results
 table(est$hhp_flag)
+table(est$hhs_flag)
+table(est$hh_flag)
+table(est$hu_flag)
+table(est$vac_flag)
 
-#save object with flag = 1
+
+#create generic outlier to indicate any type of outlier
+est$outlier[est$hhp_flag==1 | est$hhs_flag==1 | est$hh_flag==1 | est$hu_flag==1 | est$vac_flag==1] <- 1
+
+table(est$outlier)
+
+#create a outlier list of census tract numbers with one or more outliers
+outlier_max <- aggregate(outlier~geozone,data=est,max,na.rm=TRUE)
+
+#match outlier to estimate file to identify records for every year of census tracts whether there is an outlier or not
+est$any_outlier<-outlier_max[match(paste(est$geozone), paste(outlier_max$geozone)), "outlier"]
+
+#save object with outliers cases
 hh_outliers <- subset(est, est$hhp_flag==1 | est$hhs_flag==1 | est$hh_flag==1 | est$hu_flag==1 | est$vac_flag==1)
 
-#create a variable to indicate all years for tracts with outliers  
-hh_outlier_all_years <- subset(est, (est$geozone %in% hh_outliers$geozone & hh$outlier==1))
-##hh_outlier_all_years <- subset(est, (est$geozone %in% hh_outliers$geozone ##& hh$outlier==1))
-                                     
+outliers_2018 <-subset(est, est$outlier==1 & est$yr_id==2018) 
                                      
 table(hh_outliers$geozone)
 row_number(hh_outliers$geozone)
-unique(hh_outlier_all_years$geozone)
 
 sum(est$gqpop, na.rm = TRUE)
 
@@ -383,25 +397,40 @@ sum(est$gqpop, na.rm = TRUE)
 # 60
 # 99.01
 
+
 outlier_list <- c(100.15, 101.03, 126, 134.12, 148.04, 166.12, 166.15, 170.09, 185.15, 189.04, 198.05, 200.18, 200.23, 200.29, 202.11,
                   205, 213.02, 215, 219, 220, 51, 52, 53, 58, 60, 99.01)
 
+outlier_df <- as.data.frame(outlier_list) 
+outlier_df$old_outlier <- 1
+outliers_2018$old_outlier <- outlier_df[match(paste(outliers_2018$geozone),paste(outlier_df$outlier_list)), "old_outlier"]
+
+
+head(outliers_2018$geozone[outliers_2018$old_outlier==1],19)
 
 #add script to delete unoccupiable, available, means, 3sd, min max
 #rename flags specific record has issue, geozone has issue  
 
-head(est,15)
+
+colnames(outliers_2018)
 
 write.csv(est_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_jur_ID27 2.csv",row.names = FALSE )
 write.csv(est_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variables_reg_ID27 2.csv",row.names = FALSE )
-write.csv(est_outliers[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hh_sd","hu","huN_chg","huN_pct","hu_range","hu_sd",
-                          "hhp","hhpN_chg","hhpN_pct","hhp_range","hhp_sd","hhs","hhsN_chg","hhsN_pct","hhs_range","hhs_sd","vac_rate","vacN_chg",
-                          "vac_range","vac_sd","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID27_sd 2.csv",row.names = FALSE )
-write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
-                 "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg",
-                 "vac_range","hh_flag","hh_flag_max","hu_flag","hu_flag_max","hhp_flag","hhp_flag_max","hhs_flag","hhs_flag_max","vac_flag","vac_flag_max")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID27 2.csv",row.names = FALSE )
+
+
+write.csv(outliers_2018[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hh_sd","hu","huN_chg","huN_pct","hu_range","hu_sd",
+                          "hhp","hhpN_chg","hhpN_pct","hhp_range","hhp_sd","hhs","hhsN_chg","hhsN_pct","hhs_range","hhs_sd","vac","vacN_chg",
+                          "vac_range","vac_sd","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag","old_outlier")],
+          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_outliers_tract_ID27_sd_2018_outliers.csv",row.names = FALSE )
+
+
+#write.csv(outliers_2018[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
+                # "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac","vacN_chg",
+                 #"vac_range","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag","old_outlier")],
+          #"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hh_variable_tract_ID27_2018_outliers.csv",row.names = FALSE )
+
+
+
 write.csv(est[,c("yr_id","geozone","pop","gqpop","households","hhN_chg","hhN_pct","hh_range","hu","huN_chg","huN_pct","hu_range",
                           "hhp","hhpN_chg","hhpN_pct","hhp_range","hhs","hhsN_chg","hhsN_pct","hhs_range","vac_rate","vacN_chg",
                           "vac_range","hh_flag","hu_flag","hhp_flag","hhs_flag","vac_flag")],
