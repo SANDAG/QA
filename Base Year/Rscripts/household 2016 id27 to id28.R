@@ -59,6 +59,6 @@ hh_summary <- hh_merge %>%
   summarise(sum_id28 = sum(sum_id28,na.rm=TRUE),sum_id27 = sum(sum_id27,na.rm=TRUE),diff = sum(diff,na.rm=TRUE))
 
 
-write.csv(hh_merge, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\hh id28 to id27.csv",row.names = FALSE )
-write.csv(hh_summary, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\hh id28 to id27 summary.csv",row.names = FALSE )
+write.csv(hh_merge, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\hh id28 to id27 v2.csv",row.names = FALSE )
+write.csv(hh_summary, "M:\\Technical Services\\QA Documents\\Projects\\Base Year_Popsyn\\4_Data Files\\ouput files\\hh id28 to id27 summary v2.csv",row.names = FALSE )
 
