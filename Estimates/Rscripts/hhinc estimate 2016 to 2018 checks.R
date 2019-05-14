@@ -290,3 +290,4 @@ write.csv(hhinc_outliers[,c("yr_id","geozone","income_cat","hh","hhtot","hhinc_p
           "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_outliers_tract_ID26.csv",row.names = FALSE )
 write.csv(hhinc_wide_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26_wide.csv",row.names = FALSE )
 write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide.csv",row.names = FALSE )
+# write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide v2.csv",row.names = FALSE )
