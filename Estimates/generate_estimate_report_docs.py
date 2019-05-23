@@ -182,9 +182,11 @@ for yr_id in est_years_list:
                 .format(datasource_id, geotype, geozone_url, yr_id)
 
             geozone_file = geozone.replace(':', '_')
-            geozone_file = geozone_file.replace('.', '_')
+            # geozone_file = geozone_file.replace('.', '_')
             geozone_file = geozone_file.replace('*', '')
-            file_name = '{0} {1}.pdf'.format(geozone_file, strftime('%Y_%m_%d'))
+            geozone_file = geozone_file.replace('ñ', 'n')
+            # file_name = '{0} {1}.pdf'.format(geozone_file, strftime('%Y_%m_%d'))
+            file_name = 'sandag_estimate_{0}_{1}_{2}.pdf'.format(yr_id, geotype, geozone_file.lower())
             file_path = os.path.join(main_path, file_name)
 
             try:

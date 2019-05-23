@@ -15,7 +15,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice")
+              "stringr")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
