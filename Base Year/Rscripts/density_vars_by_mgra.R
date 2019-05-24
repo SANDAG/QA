@@ -251,6 +251,13 @@ percent_diffs[,(dim(percent_diffs)[2]+ 1):(dim(percent_diffs)[2] + 5)] <-
 
 head(percent_diffs)
 
+
+
+# replace all NA and Inf with "null" otherwise get an error in PowerBI
+percent_diffs <- percent_diffs %>% 
+  mutate_all(~replace(.,is.na(.)|is.infinite(.),'null'))
+
+
 write.csv(percent_diffs, file = "density_variables_series13_series14.csv",row.names = F)
 
 rm(percent_diffs)
@@ -331,7 +338,7 @@ plot_for_loop <- function(df,count13,count14,xlabel1,xlabel2,title,plotname,num1
           axis.text.y  = element_text(vjust=0.5, size=8)) +
     theme(strip.text.x = element_text(size=8)) +
     labs(caption = plotcaption) +
-    theme(plot.caption = element_text(size=6))
+    theme(plot.caption = element_text(size=8)) #+ ylim(0,ylimit)# + xlim(0,xlimit)
   
   # overlay plots series 13 and 14
   p2 <- ggplot(histdata_for_plots,aes(value,fill=source)) + 
@@ -347,7 +354,7 @@ plot_for_loop <- function(df,count13,count14,xlabel1,xlabel2,title,plotname,num1
           axis.text.y  = element_text(vjust=0.5, size=8)) +
     theme(strip.text.x = element_text(size=8)) +
     labs(caption = paste("# excluded: ",num13x,' sr13 & ',num14x,' sr14',sep='')) +
-    theme(plot.caption = element_text(size=6))
+    theme(plot.caption = element_text(size=8)) # + ylim(0,ylimit)# +  xlim(0,xlimit)
   
   g <- grid.arrange(p1, p2,widths = c(2,1), nrow = 1, 
                     top = textGrob(paste(title,
@@ -355,7 +362,7 @@ plot_for_loop <- function(df,count13,count14,xlabel1,xlabel2,title,plotname,num1
                                    gp=gpar(fontsize=12,font=3)))
   
   ggsave(file=plotname, g,width = 6, 
-         height = 4, dpi = 1000, units = "in", device='png') #saves g
+         height = 4, dpi = 100, units = "in", device='png') #saves g
   
   
 }
