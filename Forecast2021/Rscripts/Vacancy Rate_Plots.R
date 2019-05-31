@@ -54,9 +54,7 @@ vacancy <- merge(x = vacancy, y =sourcename[ , c("name","datasource_id")],by = "
 # cleanup
 rm(vac,datasource_name,sourcename)
 
-
-#save a time stamped verion of the raw file from SQL
-# write.csv(vacancy, paste("M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\time stamp files\\vacancy_sql",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+# write output of vacancy query 
 
 
 # note city of san diego and san diego region are both named san diego
@@ -89,6 +87,8 @@ vacancy$id[vacancy$geozone=="~San Diego Region"] <- 9999
 # subset(t,n>8)
 # subset(vacancy,geozone=='Via De La Valle')
 
+
+
 #check mid city name gets fixed
 vacancy$geozone[vacancy$id==1459]
 
@@ -108,7 +108,19 @@ vacancy$vacancy_rate_effective <-round(vacancy$vacancy_rate_effective,digits=4)
 vacancy$available <- NULL
 vacancy$occupiable_unit <- NULL 
 
+
+vacancy$pc_vacancy_rate_wo_unoccupiable <- vacancy$vacancy_rate_effective * 100
 vacancy$pc_vacancy_rate <- vacancy$vacancy_rate * 100
+
+
+#save a time stamped verion of the raw file from SQL
+# write.csv(vacancy, paste("M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\vacancy",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+# vacancy_outfile = vacancy[ , c("datasource_id","name","geotype","id","geozone","yr_id","units","unoccupiable",
+#                          "hh","pc_vacancy_rate_wo_unoccupiable","pc_vacancy_rate")]
+# write.csv(vacancy_outfile, "M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\vacancy.csv",row.names=FALSE)
+
+
+
 
 # region_vacancy
 region_vacancy <- subset(vacancy,geozone=='~San Diego Region')
