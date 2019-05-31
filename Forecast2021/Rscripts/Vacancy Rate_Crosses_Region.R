@@ -158,3 +158,9 @@ names(qc_fail_geos) <- c('vacany_rate_crosses_region','geotype')
 write.csv(qc_fail_geos,"M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\list_of_geographies_where_vacancy_crosses_region.csv",row.names = FALSE)
 
 
+qc_fail_geos <- subset(crosses_region,yr_id==2018)[,c('geozone')]
+
+# names(qc_fail_geos) <- c('vacany_rate_crosses_region','geotype')
+write.csv(qc_fail_geos,"M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\list_of_geographies_where_vacancy_crosses_region2.csv",row.names = FALSE)
+
+
