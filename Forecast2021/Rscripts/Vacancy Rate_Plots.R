@@ -89,11 +89,16 @@ vacancy$id[vacancy$geozone=="~San Diego Region"] <- 9999
 # subset(t,n>8)
 # subset(vacancy,geozone=='Via De La Valle')
 
+#check mid city name gets fixed
+vacancy$geozone[vacancy$id==1459]
+
 # clean up names
 vacancy$geozone <- gsub("\\*","",vacancy$geozone)
 vacancy$geozone <- gsub("\\-","_",vacancy$geozone)
 vacancy$geozone <- gsub("\\:","_",vacancy$geozone)
 
+#check mid city name is fixed
+vacancy$geozone[vacancy$id==1459]
 
 #calculate the effective vacancy rate subtracting out unoccupiable units
 vacancy$occupiable_unit<-vacancy$units-vacancy$unoccupiable
@@ -110,8 +115,10 @@ region_vacancy <- subset(vacancy,geozone=='~San Diego Region')
 reg <- region_vacancy[,c('yr_id','pc_vacancy_rate','geozone','id')]
 
 
+
 # function to determine outliers by IQR
-outliers_by_IQR <- function(df,geography) {
+outliers_by_IQR <- function(df,geography,outlierdf) {
+  outlierdf <- data.frame()
   geo_list = unique(subset(df, geotype==geography)[["geozone"]])
   geo_vac <- subset(vacancy, geotype==geography)
   lowerq = quantile(geo_vac$pc_vacancy_rate)[2]
@@ -121,10 +128,16 @@ outliers_by_IQR <- function(df,geography) {
   mild.threshold.lower = lowerq - (iqr * 1.5)
   # outliers have a vacancy rate outside  
   # of IQR * 1.5 for any year (of all jurisdictions or CPAs)
-  outside_limits <- unique(subset(geo_vac,
-                                  (pc_vacancy_rate>mild.threshold.upper | 
-                                     pc_vacancy_rate<mild.threshold.lower))[["geozone"]])
-  return(outside_limits)
+  #outside_limits <- unique(subset(geo_vac,
+  #                                (pc_vacancy_rate>mild.threshold.upper | 
+  #                                   pc_vacancy_rate<mild.threshold.lower))[["geozone"]])
+  # outside_limits <- unique(outlierdf)[["geozone"]]
+  outliersonly <- subset(geo_vac,(pc_vacancy_rate>mild.threshold.upper | 
+                                   pc_vacancy_rate<mild.threshold.lower))
+  outliersonly$threshold.lower <- mild.threshold.lower
+  outliersonly$threshold.upper <- mild.threshold.upper
+  outlierdf <- rbind(outlierdf,outliersonly)
+  return(outlierdf)
 }
 
 # function to determine plot limits
@@ -196,8 +209,13 @@ outfolder<-"..\\output\\vacancy\\CPAplots\\"
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-outliers <- outliers_by_IQR(vacancy,"cpa")
+
+dfoutliersCPA <- outliers_by_IQR(vacancy,"cpa")
+outliers <- unique(dfoutliersCPA$geozone)
 not_outliers <- geo_list[!geo_list %in% outliers]
+
+outlier_CPA <- subset(vacancy,geozone %in% outliers)
+
 
 # subset vacany dataframe to just the geographies that don't have outliers
 # to get max and min to use for all plots without outliers
@@ -249,7 +267,8 @@ outfolder<-"..\\output\\vacancy\\JURplots\\"
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-outliers <- outliers_by_IQR(vacancy,"jurisdiction")
+dfoutliersJUR <- outliers_by_IQR(vacancy,"jurisdiction")
+outliers <- unique(dfoutliersJUR$geozone)
 not_outliers <- geo_list[!geo_list %in% outliers]
 
 # subset vacany dataframe to just the geographies that don't have outliers
@@ -276,3 +295,9 @@ for(i in 1:length(outliers)){
   plotsubtitle <- "Jurisdiction and Region at Forecast Increments: Outlier as defined by 1.5 * IQR\nnote: scale change"
   vacancy_plot(plotdat,reg,plotsubtitle,ymin,ymax,"Outlier",outliers[i])
 }
+
+alloutliers <- rbind(dfoutliersJUR,dfoutliersCPA)
+outfile =alloutliers[ , c("datasource_id","name","geotype","id","geozone","yr_id","units","unoccupiable",
+                          "hh","pc_vacancy_rate","threshold.lower","threshold.upper")]
+setwd(file.path(maindir,"..\\output\\vacancy\\"))
+write.csv(outfile,'outliersby1.5IQR.csv',row.names = FALSE)
