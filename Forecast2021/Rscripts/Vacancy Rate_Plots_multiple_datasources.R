@@ -183,10 +183,10 @@ vacancy_plot <- function(geo,reg,subtitle,ylim_min,ylim_max,status,geo_name,dsid
                           nrow=2,
                           as.table=TRUE,
                           heights=c(1,1)) 
-  #ggsave(plotout, file= paste(geo_name,"_ds",dsid,"vacancy_",status, ".png", sep=''),
-  #       width=8, height=8, dpi=100)
-  ggsave(plotout, file= paste(geo_name,"_ds",dsid,"vacancy_",status, ".pdf", sep=''),
+  ggsave(plotout, file= paste(geo_name,"_ds",dsid,"vacancy_",status, ".png", sep=''),
          width=8, height=8, dpi=100)
+  #ggsave(plotout, file= paste(geo_name,"_ds",dsid,"vacancy_",status, ".pdf", sep=''),
+  #       width=8, height=8, dpi=100)
   
 }
 
@@ -200,7 +200,7 @@ for(i in 1:length(not_outliers)) {
       next
     }
     
-    if (plotdat$id[1] < 19 & plotdat$id[1] > 0) {
+    if (plotdat$id[1] < 20 & plotdat$id[1] > 0) {
       fldr <- 'JUR'
       } else if (plotdat$id[1] > 19 & plotdat$id[1] < 1500) {
         fldr <- 'CityCPA'
@@ -228,7 +228,7 @@ for(i in 1:length(outliers)) {
     if (nrow(plotdat)==0) {
       next
     }
-    if (plotdat$id[1] < 19 & plotdat$id[1] > 0) {
+    if (plotdat$id[1] < 20 & plotdat$id[1] > 0) {
       fldr <- 'JUR'
     } else if (plotdat$id[1] > 19 & plotdat$id[1] < 1500) {
       fldr <- 'CityCPA'
