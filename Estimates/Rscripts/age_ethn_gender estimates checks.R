@@ -167,10 +167,13 @@ gender_26_jur <- subset(demo_26_gender, demo_26_gender$geotype=="jurisdiction")
 gender_26_cpa <- subset(demo_26_gender, demo_26_gender$geotype=="cpa")
 gender_26_tract <- subset(demo_26_gender, demo_26_gender$geotype=="tract")
 
-#identify age outliers by tract
+#confirm subsetting worked by tract
 table(age_26_tract$geotype)
-
+table(gender_26_tract)
 #create subset without 2018 to determine min and max of proportion change (difference)
+age_26_tract_2017 <- subset(age_26_tract, age_26_tract$yr_id<=2017)
+table(age_26_tract_2017$yr_id)
+
 age_26_tract_2017 <- subset(age_26_tract, age_26_tract$yr_id<=2017)
 table(age_26_tract_2017$yr_id)
 
@@ -178,8 +181,8 @@ table(age_26_tract_2017$yr_id)
 #calculate the mean and sd for age
 age_means <- aggregate(prop_change~age_group_name_rc,data=age_26_tract,mean,na.rm=TRUE)
 age_sd <- aggregate(prop_change~age_group_name_rc,data=age_26_tract,sd,na.rm=TRUE)
-age_means$prop_change <- round(age_means$prop_change,digits = 3)
-age_sd$prop_change <- round(age_sd$prop_change,digits = 3)
+#age_means$prop_change <- round(age_means$prop_change,digits = 3)
+#age_sd$prop_change <- round(age_sd$prop_change,digits = 3)
 
 age_min <- aggregate(prop_change~age_group_name_rc+geozone,data=age_26_tract_2017,min,na.rm=TRUE)
 age_max <- aggregate(prop_change~age_group_name_rc+geozone,data=age_26_tract_2017,max,na.rm=TRUE)
@@ -195,33 +198,37 @@ age_26_tract$age_min<-age_min[match(paste(age_26_tract$geozone,age_26_tract$age_
 #match in max to hhinc file
 age_26_tract$age_max<-age_max[match(paste(age_26_tract$geozone,age_26_tract$age_group_name_rc), paste(age_max$geozone,age_max$age_group_name_rc)), "prop_change"]
 #concatenate min and max into one vector
-age_26_tract$range_nchg_2010_2017<-paste("(",age_26_tract$age_min,"-",age_26_tract$age_max,")")
+age_26_tract$prop_chg_2010_17_by_tract<-paste("(",age_26_tract$age_min,"-",age_26_tract$age_max,")")
 head(age_26_tract)
 
 #calculate 3 standard deviations above the mean
-age_26_tract$age_3sd <- 3*age_26_tract$age_means
+age_26_tract$age_3sd <- 3*age_26_tract$age_sd
 #calculate 3 standard deviations below the mean
-age_26_tract$age_3sd_minus <- -(3*age_26_tract$age_means)
+age_26_tract$age_3sd_minus <- -(3*age_26_tract$age_sd)
 
 #create flag variables to identify outliers
 age_26_tract$age_flag[age_26_tract$prop_change>=age_26_tract$age_3sd | age_26_tract$prop_change<=age_26_tract$age_3sd_minus] <-1 
 table(age_26_tract$age_flag)
 head(age_26_tract$age_flag)
 summary(age_26_tract$prop_change)
+summary(age_26_tract$prop_change[age_26_tract$age_flag==1 & age_26_tract$prop_change<=0 & age_26_tract$age_group_name_rc=="65+"])
 
-plot(age_26_tract$N_chg)
-age_outliers <- subset(age_26_tract, age_26_tract$age_flag==1 & age_26_tract$pop_age_26>=100)
+table(age_26_tract$age_group_name_rc,age_26_tract$age_3sd)
 
-summary(age_26_tract$N_chg)
+age_outliers_all_yrs <- subset(age_26_tract, age_26_tract$age_flag==1 & age_26_tract$pop_age_26>=100 & age_26_tract$N_chg>=50)
 
-unique(age_outliers$geozone)
-table(age_outliers$yr_id)
+age_outliers_2018 <- subset(age_26_tract, age_26_tract$age_flag==1 & age_26_tract$yr_id==2018)
+
+age_top_20_outliers <- age_outliers %>%
+  arrange(desc(abs(prop_change))) %>%
+  slice(1:20) 
+
 
 #save out files
 
 write.csv(age_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\age_reg_26.csv")
 write.csv(age_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\age_jur_26.csv")
-write.csv(age_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\age_outliers_2018_26.csv")
+write.csv(age_outliers_2018, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\age_outliers_2018_26.csv")
 
 write.csv(gender_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\gender_reg_26.csv")
 write.csv(gender_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\gender_jur_26.csv")
