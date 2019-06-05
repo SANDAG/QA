@@ -1,7 +1,6 @@
 import os
 from sqlalchemy import create_engine
 import time
-from time import strftime
 from datetime import timedelta
 import pandas as pd
 import requests
@@ -157,7 +156,7 @@ for yr_id in est_years_list:
         SELECT geozone
         FROM demographic_warehouse.dim.datasource ds
         INNER JOIN demographic_warehouse.dim.mgra m ON ds.series = m.series
-        WHERE datasource_id = {0} AND geotype = '{1}'
+        WHERE datasource_id = {0} AND geotype = '{1}' AND geozone IS NOT NULL
         GROUP BY geozone
         ORDER BY geozone
         '''.format(datasource_id, geotype)
@@ -185,6 +184,9 @@ for yr_id in est_years_list:
             # geozone_file = geozone_file.replace('.', '_')
             geozone_file = geozone_file.replace('*', '')
             geozone_file = geozone_file.replace('ñ', 'n')
+            geozone_file = geozone_file.replace(' Community College', '')
+            geozone_file = geozone_file.rstrip(' ')
+            geozone_file = geozone_file.lstrip(' ')
             # file_name = '{0} {1}.pdf'.format(geozone_file, strftime('%Y_%m_%d'))
             file_name = 'sandag_estimate_{0}_{1}_{2}.pdf'.format(yr_id, geotype, geozone_file.lower())
             file_path = os.path.join(main_path, file_name)
