@@ -1,6 +1,5 @@
 #estimates
 #file sizes are large so id26 data is transformed first and then id 24 data
-#add variable with datasource ID - merge it in
 #exclusion/recode of N_pct from inf to 0 loses info about most remarkably the Marine Corps Recruit Depot - need to fix or note
 #ID24 pops by geozone merge in incorrectly
 
@@ -13,8 +12,8 @@ pkgTest <- function(pkg){
   
   
 }
-packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice","gtable")
+packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "reshape2", 
+              "stringr","tidyverse")
 pkgTest(packages)
 
 
@@ -22,8 +21,6 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 getwd()
-
-#rm(demo_26)
 
 ds_id=26
 
@@ -42,12 +39,15 @@ odbcClose(channel)
 #change all factors to character for ease of coding
 options(stringsAsFactors=FALSE)
 
+#order file for merge
 demo_26<- demo_26[order(demo_26$geotype,demo_26$geozone,demo_26$yr_id),]
 
-demo_26$geozone[demo_26$geotype =="region"]<- "Region"
+#clean up geozone for merge
+demo_26$geozone[demo_26$geotype=="region"] <- "San Diego Region"
 demo_26$geozone <- gsub("\\*","",demo_26$geozone)
 demo_26$geozone <- gsub("\\-","_",demo_26$geozone)
 demo_26$geozone <- gsub("\\:","_",demo_26$geozone)
+demo_26$geozone <- gsub("^\\s+|\\s+$", "", demo_26$geozone)
 
 
 #recode age groups
@@ -112,31 +112,21 @@ geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=demo_26, sum)
 tail(geozone_pop)
 
 
-#calculate year to year changes within ID26.
+#calculate year to year changes and proportion of total pop by group per year within ID26.
 demo_26_gender <- demo_26_gender[order(demo_26_gender$sex,demo_26_gender$geotype,demo_26_gender$geozone,demo_26_gender$yr_id),]
 demo_26_gender$N_chg <- demo_26_gender$pop_gender_26 - lag(demo_26_gender$pop_gender_26)
-demo_26_gender$N_pct <- (demo_26_gender$N_chg / lag(demo_26_gender$pop_gender_26))
-demo_26_gender$N_pct<-round(demo_26_gender$N_pct,digits=5)
 demo_26_gender$geozone_pop<-geozone_pop[match(paste(demo_26_gender$yr_id, demo_26_gender$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 demo_26_gender$pct_of_total<-(demo_26_gender$pop_gender_26 / demo_26_gender$geozone_pop)
 demo_26_gender$pct_of_total<-round(demo_26_gender$pct_of_total,digits=5)
-#setnames(demo_26_gender, old=c("sex", "yr_id", "pop_gender_26"),new=c("Gender", "Year", "Pop_ID26"))
-#demo_26_gender$Gender[demo_26_gender$Gender=="F"]<- "Female"
-#demo_26_gender$Gender[demo_26_gender$Gender=="M"]<- "Male"
 
 demo_26_ethn <- demo_26_ethn[order(demo_26_ethn$short_name,demo_26_ethn$geotype,demo_26_ethn$geozone,demo_26_ethn$yr_id),]
 demo_26_ethn$N_chg <- demo_26_ethn$pop_ethn_26 - lag(demo_26_ethn$pop_ethn_26)
-demo_26_ethn$N_pct <- (demo_26_ethn$N_chg / lag(demo_26_ethn$pop_ethn_26))
-demo_26_ethn$N_pct<-round(demo_26_ethn$N_pct,digits=5)
 demo_26_ethn$geozone_pop<-geozone_pop[match(paste(demo_26_ethn$yr_id, demo_26_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 demo_26_ethn$pct_of_total<-(demo_26_ethn$pop_ethn_26 / demo_26_ethn$geozone_pop)
 demo_26_ethn$pct_of_total<-round(demo_26_ethn$pct_of_total,digits=5)
-#setnames(demo_26_ethn, old=c("short_name", "yr_id", "pop_ethn_26"),new=c("Ethnicity", "Year", "Pop_ID26"))
 
 demo_26_age <- demo_26_age[order(demo_26_age$age_group_name_rc,demo_26_age$geotype,demo_26_age$geozone,demo_26_age$yr_id),]
 demo_26_age$N_chg <- demo_26_age$pop_age_26 - lag(demo_26_age$pop_age_26)
-demo_26_age$N_pct <- (demo_26_age$N_chg / lag(demo_26_age$pop_age_26))
-demo_26_age$N_pct<-round(demo_26_age$N_pct,digits=5)
 demo_26_age$geozone_pop<-geozone_pop[match(paste(demo_26_age$yr_id, demo_26_age$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 demo_26_age$pct_of_total<-(demo_26_age$pop_age_26 / demo_26_age$geozone_pop)
 demo_26_age$pct_of_total<-round(demo_26_age$pct_of_total,digits=5)
@@ -144,21 +134,10 @@ demo_26_age$pct_of_total<-round(demo_26_age$pct_of_total,digits=5)
 head(demo_26_ethn)
 class(demo_26_ethn$pct_of_total)
 
-#setnames(demo_26_age, old=c("age_group_name_rc", "yr_id", "pop_age_26"),new=c("Age_Group", "Year", "Pop_ID26"))
-
 demo_26_age$N_chg[demo_26_age$yr_id=="2010"] <- NA 
-demo_26_age$N_pct[demo_26_age$yr_id=="2010"] <- NA
 demo_26_gender$N_chg[demo_26_gender$yr_id=="2010"] <- NA 
-demo_26_gender$N_pct[demo_26_gender$yr_id=="2010"] <- NA
 demo_26_ethn$N_chg[demo_26_ethn$yr_id=="2010"] <- NA
-demo_26_ethn$N_pct[demo_26_ethn$yr_id=="2010"] <- NA
 
-#review data with following commands
-#head(subset(demo_26_gender, demo_26_gender$geotype=="jurisdiction"), 8)
-#head(subset(demo_26_ethn, demo_26_ethn$geotype=="jurisdiction"), 8)
-#head(subset(demo_26_age, demo_26_age$geotype=="jurisdiction"), 8)
-
-#demo_26_age <- demo_26_age[order(demo_26_age$age_group_name_rc,demo_26_age$geotype,demo_26_age$geozone,demo_26_age$yr_id),]
 demo_26_age$prop_change <- demo_26_age$pct_of_total - lag(demo_26_age$pct_of_total)
 demo_26_gender$prop_change <- demo_26_gender$pct_of_total - lag(demo_26_gender$pct_of_total)
 demo_26_ethn$prop_change <- demo_26_ethn$pct_of_total - lag(demo_26_ethn$pct_of_total)
@@ -167,23 +146,106 @@ demo_26_age$prop_change[demo_26_age$yr_id=="2010"] <- NA
 demo_26_gender$prop_change[demo_26_gender$yr_id=="2010"] <- NA
 demo_26_ethn$prop_change[demo_26_ethn$yr_id=="2010"] <- NA
 
-
-
+#review data with following commands
+head(subset(demo_26_gender, demo_26_gender$geotype=="jurisdiction"), 8)
+head(subset(demo_26_ethn, demo_26_ethn$geozone=="Carlsbad" & (demo_26_ethn$short_name=="White" | demo_26_ethn$short_name=="Hispanic")), 15)
+head(subset(demo_26_ethn, demo_26_ethn$geozone=="Carlsbad" & (demo_26_ethn$yr_id>=2017)), 16)
+head(subset(demo_26_age, demo_26_age$geozone=="San Diego" & (demo_26_ethn$yr_id>=2016)), 9)
+head(subset(demo_26_age, demo_26_age$geotype=="jurisdiction"), 8)
 #####################################
 ######################################
 
-#calculate sd and iqr
+
+#subset files by geotype
+age_26_reg <- subset(demo_26_age, demo_26_age$geotype=="region")
+age_26_jur <- subset(demo_26_age, demo_26_age$geotype=="jurisdiction")
+age_26_cpa <- subset(demo_26_age, demo_26_age$geotype=="cpa")
+age_26_tract <- subset(demo_26_age, demo_26_age$geotype=="tract")
+
+gender_26_reg <- subset(demo_26_gender, demo_26_gender$geotype=="region")
+gender_26_jur <- subset(demo_26_gender, demo_26_gender$geotype=="jurisdiction")
+gender_26_cpa <- subset(demo_26_gender, demo_26_gender$geotype=="cpa")
+gender_26_tract <- subset(demo_26_gender, demo_26_gender$geotype=="tract")
+
+#confirm subsetting worked by tract
+table(age_26_tract$geotype)
+table(gender_26_tract)
+#create subset without 2018 to determine min and max of proportion change (difference)
+age_26_tract_2017 <- subset(age_26_tract, age_26_tract$yr_id<=2017)
+table(age_26_tract_2017$yr_id)
+
+age_26_tract_2017 <- subset(age_26_tract, age_26_tract$yr_id<=2017)
+table(age_26_tract_2017$yr_id)
+
+#calculate SD and identify outlier cases 3 SD from mean
+#calculate the mean and sd for age
+age_means <- aggregate(prop_change~age_group_name_rc,data=age_26_tract,mean,na.rm=TRUE)
+age_sd <- aggregate(prop_change~age_group_name_rc,data=age_26_tract,sd,na.rm=TRUE)
+#age_means$prop_change <- round(age_means$prop_change,digits = 3)
+#age_sd$prop_change <- round(age_sd$prop_change,digits = 3)
+
+age_min <- aggregate(prop_change~age_group_name_rc+geozone,data=age_26_tract_2017,min,na.rm=TRUE)
+age_max <- aggregate(prop_change~age_group_name_rc+geozone,data=age_26_tract_2017,max,na.rm=TRUE)
+age_min$prop_change <- round(age_min$prop_change, digits = 3)
+age_max$prop_change <- round(age_max$prop_change, digits = 3)
+
+#match in means to age file
+age_26_tract$age_means<-age_means[match(paste(age_26_tract$age_group_name_rc), paste(age_means$age_group_name_rc)), "prop_change"]
+#match in sd value to age file and round sd
+age_26_tract$age_sd<- age_sd[match(paste(age_26_tract$age_group_name_rc), paste(age_means$age_group_name_rc)), "prop_change"]
+#match in min to hhinc file
+age_26_tract$age_min<-age_min[match(paste(age_26_tract$geozone,age_26_tract$age_group_name_rc), paste(age_min$geozone,age_min$age_group_name_rc)), "prop_change"]
+#match in max to hhinc file
+age_26_tract$age_max<-age_max[match(paste(age_26_tract$geozone,age_26_tract$age_group_name_rc), paste(age_max$geozone,age_max$age_group_name_rc)), "prop_change"]
+#concatenate min and max into one vector
+age_26_tract$prop_chg_2010_17_by_tract<-paste("(",age_26_tract$age_min,"-",age_26_tract$age_max,")")
+head(age_26_tract)
+
+#calculate 3 standard deviations above the mean
+age_26_tract$age_3sd <- 3*age_26_tract$age_sd
+#calculate 3 standard deviations below the mean
+age_26_tract$age_3sd_minus <- -(3*age_26_tract$age_sd)
+
+#create flag variables to identify outliers
+age_26_tract$age_flag[age_26_tract$prop_change>=age_26_tract$age_3sd | age_26_tract$prop_change<=age_26_tract$age_3sd_minus] <-1 
+table(age_26_tract$age_flag)
+head(age_26_tract$age_flag)
+summary(age_26_tract$prop_change)
+summary(age_26_tract$prop_change[age_26_tract$age_flag==1 & age_26_tract$prop_change<=0 & age_26_tract$age_group_name_rc=="65+"])
+
+table(age_26_tract$age_group_name_rc,age_26_tract$age_3sd)
+
+age_outliers_all_yrs <- subset(age_26_tract, age_26_tract$age_flag==1 & age_26_tract$pop_age_26>=100 & age_26_tract$N_chg>=50)
+
+age_outliers_2018 <- subset(age_26_tract, age_26_tract$age_flag==1 & age_26_tract$yr_id==2018)
+
+age_top_20_outliers <- age_outliers %>%
+  arrange(desc(abs(prop_change))) %>%
+  slice(1:20) 
+
+
+#save out files
+
+write.csv(age_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\age_reg_26.csv")
+write.csv(age_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\age_jur_26.csv")
+write.csv(age_outliers_2018, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\age_outliers_2018_26.csv")
+
+write.csv(gender_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\gender_reg_26.csv")
+write.csv(gender_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\gender_jur_26.csv")
+write.csv(gender_outliers, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\gender_outliers_2018_26.csv")
 
 
 
-head(demo_26_age)
+write.csv(demo_26_gender, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\gender26.csv" )
+write.csv(demo_26_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\ethn26.csv" )
+
 ########## summary w mean and standard dev of pct change of census tracts
 
 # to be used for filtering data by tract for +/- 3 standard deviations
 
 ##############
 ##############
-#data review for calculating sd and IQR
+#data review for calculating sd
 test <- subset(demo_26_age,(is.na(demo_26_age$N_pct)))
 
 test2 <- subset(demo_26_age,(is.na(demo_26_age$N_chg)))
@@ -211,56 +273,6 @@ head(test8)
 fivenum(demo_26_age$N_pct)
 
 summary(demo_26_age$pct_of_total)
-
-################################
-################################
-
-
-###############
-#should I have recoded to 0 where yr_id~=2010 and value is NA unless there is no population instead of zero because that changes the denominator - what about inf?
-###############
-
-
-# summary(demo_26_age$N_pct[!is.nan(demo_26_age$N_pct) & !is.infinite(demo_26_age$N_pct) & !is.na(demo_26_age$N_pct)])
-# sd(demo_26_age$N_pct[!is.nan(demo_26_age$N_pct) & !is.infinite(demo_26_age$N_pct) & !is.na(demo_26_age$N_pct)])
-# IQR(demo_26_age$N_pct[!is.nan(demo_26_age$N_pct) & !is.infinite(demo_26_age$N_pct) & !is.na(demo_26_age$N_pct)])
-# 
-# summarydf <- demo_26_age %>%
-#   select(pop_age_26, N_pct, yr_id) %>%
-#   group_by(yr_id) %>%
-#   summarise(mean.pctchg.age = mean(N_pct,na.rm=TRUE), 
-#             stdev.pctchg.age = sd(N_pct,na.rm=TRUE))
-# 
-# 
-# age_stats <- df 
-# age_stats <- mean(demo_26_age$pct_of_total[!is.nan(demo_26_age$pct_of_total) & !is.infinite(demo_26_age$pct_of_total) & !is.na(demo_26_age$pct_of_total)])
-# sd(demo_26_age$pct_of_total[!is.nan(demo_26_age$pct_of_total) & !is.infinite(demo_26_age$pct_of_total) & !is.na(demo_26_age$pct_of_total)])
-# IQR(demo_26_age$pct_of_total[!is.nan(demo_26_age$pct_of_total) & !is.infinite(demo_26_age$pct_of_total) & !is.na(demo_26_age$pct_of_total)])
-# 
-# summarydf <- demo_26_age %>%
-#   select(pop_age_26, pct_of_total, yr_id) %>%
-#   group_by(yr_id) %>%
-#   summarise(mean.propchg.age = mean(pct_of_total,na.rm=TRUE), 
-#             stdev.propchg.age = sd(pct_of_total,na.rm=TRUE))
-# 
-# plot(demo_26_age$yr_id, demo_26_age$pct_of_total,)
-# head(summarydf)
-# 
-# ##############
-# #update AK script
-#   
-# summarydf$mean.pctchg.hhpop[summarydf$year == 2010] <- 0 
-# summarydf$stdev.pctchg.hhpop[summarydf$year == 2010] <- 0
-# 
-# summarydf['sdplus3'] = summarydf['mean.pctchg.hhpop'] + (3*summarydf['stdev.pctchg.hhpop'])
-# summarydf['sdminus3'] = summarydf['mean.pctchg.hhpop'] - (3*summarydf['stdev.pctchg.hhpop'])
-# 
-# write.csv(summarydf, "..\\Data\\hhpop\\summary.csv",row.names=FALSE)
-
-#############################
-##############################
-
-#### end summary w mean and standard dev
 
 
 ######################################

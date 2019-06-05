@@ -146,19 +146,31 @@ hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$yr_id<=2016)
 head(subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction"),15)
 
 hhinc_24_26$flag_5pct[hhinc_24_26$hhinc_diff>=5.00 | hhinc_24_26$hhinc_diff<=-5.00] <- 1
-hhinc_24_26$flag_3pct[hhinc_24_26$hhinc_diff>=3.00 | hhinc_24_26$hhinc_diff<=-3.00] <- 1
+#hhinc_24_26$flag_3pct[hhinc_24_26$hhinc_diff>=3.00 | hhinc_24_26$hhinc_diff<=-3.00] <- 1
+hhinc_24_26$flag_10pct[hhinc_24_26$hhinc_diff>=10.00 | hhinc_24_26$hhinc_diff<=-10.00] <- 1
+hhinc_24_26$flag_20pct[hhinc_24_26$hhinc_diff>=20.00 | hhinc_24_26$hhinc_diff<=-20.00] <- 1
+
+
+hhinc_24_26 = hhinc_24_26 %>% select(yr_id,geotype,geozone,income_id2,income_cat,hh_24,hh_26,hhinc_prop_24,hhinc_prop_26,hhinc_diff,flag_5pct,flag_10pct,flag_20pct)
+
+head(hhinc_24_26)
 
 hhinc_24_26_jur <- subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction")
 hhinc_24_26_reg <- subset(hhinc_24_26, hhinc_24_26$geotype=="region")
 hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$geotype=="tract")
+hhinc_24_26_2016 <- subset(hhinc_24_26, hhinc_24_26$geotype=="tract" & hhinc_24_26$yr_id=="2016")
 
-table(hhinc_24_26_jur$flag_3pct)
+table(hhinc_24_26$flag_5pct)
+table(hhinc_24_26$flag_10pct)
+table(hhinc_24_26$flag_20pct)
 
 head(hhinc_24_26_jur,20)
 
-write.csv(hhinc_24_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_jur.csv",row.names = FALSE )
-write.csv(hhinc_24_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_reg.csv",row.names = FALSE )
-write.csv(hhinc_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_tract.csv",row.names = FALSE )
+
+#write.csv(hhinc_24_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_jur v3.csv",row.names = FALSE )
+#write.csv(hhinc_24_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_reg v3.csv",row.names = FALSE )
+#write.csv(hhinc_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_tract v3.csv",row.names = FALSE )
+#write.csv(hhinc_24_26_2016, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_tract_2016 v3.csv",row.names = FALSE )
 
 ##################
 ##################
@@ -290,3 +302,4 @@ write.csv(hhinc_outliers[,c("yr_id","geozone","income_cat","hh","hhtot","hhinc_p
           "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_outliers_tract_ID26.csv",row.names = FALSE )
 write.csv(hhinc_wide_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26_wide.csv",row.names = FALSE )
 write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide.csv",row.names = FALSE )
+# write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide v2.csv",row.names = FALSE )
