@@ -214,7 +214,7 @@ head(dof_race[dof_race$year==2018 | dof_race$year==2050,],20)
 head(dw_age[dw_age$yr_id==2018 | dw_age$yr_id==2050,],20)
 head(dof_age_sum[dof_age_sum$year==2018 | dof_age_sum$year==2050,],20)
 
-#merge DOF and SANDAG demographic warehouse totals by age and calculate differences
+#merge DOF and SANDAG demographic warehouse totals and calculate differences
 dof2dw_totpop <- merge(dof_sums,dw_pop, by.x = "year",by.y = "yr_id", all = TRUE)
 dof2dw_totpop$diff <- dof2dw_totpop$dof_pop_tot-dof2dw_totpop$dw_pop
 dof2dw_totpop$diff_pct <- (dof2dw_totpop$diff/dof2dw_totpop$dw_pop)*100
@@ -226,13 +226,16 @@ dof2dw_age <- merge(dof_age_sum,dw_age, by.x = c("year","agerc_qa"),by.y = c("yr
 dof2dw_age$diff <- dof2dw_age$dof_age_pop-dof2dw_age$dw_age_pop
 dof2dw_age$diff_pct <- (dof2dw_age$diff/dof2dw_age$dw_age_pop)*100
 dof2dw_age$diff_pct <- round(dof2dw_age$diff_pct, digits = 2)
+dof2dw_age <- select(dof2dw_age, year, age_group_name_rc,dof_age_pop,dw_age_pop,diff,diff_pct)
 head(dof2dw_age)
 
 #merge DOF and SANDAG demographic warehouse totals by gender and calculate differences
+setnames(dw_gender, old="sex", new = "sex_name")
 dof2dw_gender <- merge(dof_gender,dw_gender, by.x = c("year","sex"),by.y = c("yr_id","sex_id"), all = TRUE)
 dof2dw_gender$diff <- dof2dw_gender$gender_pop-dof2dw_gender$dw_gender_pop
 dof2dw_gender$diff_pct <- (dof2dw_gender$diff/dof2dw_gender$dw_gender_pop)*100
 dof2dw_gender$diff_pct <- round(dof2dw_gender$diff_pct, digits = 2)
+dof2dw_gender <- select(dof2dw_gender, year, sex, sex_name, dof_gender_pop, dw_gender_pop, diff, diff_pct)
 head(dof2dw_gender)
 
 #merge DOF and SANDAG demographic warehouse totals by ethnicity and calculate differences
