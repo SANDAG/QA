@@ -188,8 +188,9 @@ age_by_gender_cpa = subset(age_by_gender,geotype=='cpa')
 #check results
 head(age_by_gender[age_by_gender$geozone=="Carlsbad",],20)
 head(dem_ethn[dem_ethn$geozone=="Carlsbad",],20)
+head(age_by_gender[age_by_gender$geozone=="San Diego Region",],20)
+head(dem_ethn[dem_ethn$geozone=="San Diego Region",],20)
 
-write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\age_ethn_gender\\dem_age.csv")
 
 write.csv(dem_age, paste("M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\age_ethn_gender\\dem_age",ds_id,".csv",sep=''))
 write.csv(dem_gender, paste("M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\age_ethn_gender\\dem_gender_",ds_id,".csv",sep=''))
@@ -213,30 +214,7 @@ write.csv(age_by_gender, paste("M:\\Technical Services\\QA Documents\\Projects\\
 
 #################################################
 #################################################
-#internal integrity checks#
-# write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_age19.csv" )
-# write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_gender19.csv" )
-# write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_ethn19.csv" )
-# 
-# write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_age_region19.csv" )
-# write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_gender_region19.csv" )
-# write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_ethn_region19.csv" )
-# 
-# write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_age_jurisdiction19.csv" )
-# write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_gender_jurisdiction19.csv" )
-# write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_ethn_jurisdiction19.csv" )
-# 
-# write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_age_cpa19.csv" )
-# write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_gender_cpa19.csv" )
-# write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\Phase 6\\Dem\\dem_ethn_cpa19.csv" )
-# 
-# 
-
-
-
-
-
-#Internal Integrity Checks
+#Internal Integrity Checks - These checks really confirm the script above and not internal integrity
 
 
 ic_1<-summary(dem)
@@ -329,11 +307,6 @@ dem_tot_ic_wide$Gender2Region<-dem_tot_ic_wide$Gender-dem_tot_ic_wide$Region_SQL
 # write.csv(dem_tot_ic_wide, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 6\\Internal Integrity\\Dem_region_total_ic.csv" )
 
 
-#require(openxlsx)
-#list_of_datasets <- list("AgeTotal" = age_ic_wide,  "GenderTotal" = gender_ic_wide, "EthnicityTotal" = ethn_ic_wide)
-#write.xlsx(list_of_datasets, file = "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Results\\Phase 2\\internal integrity\\internal integrity results.xlsx")
-
- 
 #the save to the sourcetree location needs to be fixed
 #results<-"data\\demographics\\"
 #ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
