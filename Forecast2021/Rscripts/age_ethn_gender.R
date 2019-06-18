@@ -28,6 +28,8 @@ dem_sql <- gsub("ds_id", ds_id,dem_sql)
 dem<-sqlQuery(channel,dem_sql,stringsAsFactors = FALSE)
 odbcClose(channel)
 
+dem <- subset(dem, dem$geotype!="tract")
+
 #order the data in the file
 dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
 
@@ -36,6 +38,8 @@ dem$geozone <- gsub("\\*","",dem$geozone)
 dem$geozone <- gsub("\\-","_",dem$geozone)
 dem$geozone <- gsub("\\:","_",dem$geozone)
 
+#rename geozone value for region to differentiate from SD city
+dem$geozone[dem$geotype=="region"] <- "San Diego Region"
 
 #recode age groups
 dem$age_group_rc <- ifelse(dem$age_group_id==1|
