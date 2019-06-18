@@ -26,6 +26,7 @@ sourcename <- data.frame()
 ############################################################
 datasource_ids = c(13,28)
 datasource_names = c("Series 13 (ds 13)","Series 14 (ds 28)")
+datasource_name_short = c("Series 13","Series 14")
 datasource_outfolder = "ds13ds28"
 ############################################################
 # **********************************************************
@@ -108,6 +109,9 @@ vacancy$vacancy_rate_effective <-round(vacancy$vacancy_rate_effective,digits=4)
 vacancy$available <- NULL
 vacancy$occupiable_unit <- NULL 
 
+
+vacancy$unoccupiable[vacancy$series == datasource_names[1]] <- NA
+
 # convert vacancy rate to percentage
 vacancy$pc_vacancy_rate_wo_unoccupiable <- vacancy$vacancy_rate_effective * 100
 vacancy$pc_vacancy_rate <- vacancy$vacancy_rate * 100
@@ -123,10 +127,10 @@ region_vacancy <- subset(vacancy,geozone=='~San Diego Region')
 ##################################################################
 
 
-# function to determine outliers by IQR
+# function to determine outliers by IQR at every increment for Series 14
 outliers_by_IQR <- function(df) {
   # outliers determined by IQR * 1.5 (exclude very small CPAs less than 500 units) 
-  geo_vac <- subset(df,units >= 500 & series=="Series 14 (ds 28)")
+  geo_vac <- subset(df,units >= 500 & series==datasource_names[2])
   
   alloutliers <- data.frame()
   increments <- unique(geo_vac$yr_id)
@@ -145,14 +149,15 @@ outliers_by_IQR <- function(df) {
     alloutliers <- rbind(alloutliers,outliersonly)
     
   }
+  # list all geographies that had outliers at any increment
   all_outlier_list <- unique(alloutliers$geozone)
   return(all_outlier_list)
 }
 
 
-# function to determine plot limits
+# get quantiles as dataframe
 def_quantile <- function(df) {
-  geo_vac <- subset(df,units >= 500 & series=="Series 14 (ds 28)")
+  geo_vac <- subset(df,units >= 500 & series==datasource_names[2])
   q <- as.data.frame(quantile(geo_vac$pc_vacancy_rate))
   quantiles <- cbind(row.names(q),q)
   rownames(quantiles) <- NULL
@@ -164,6 +169,7 @@ def_quantile <- function(df) {
 
 theme_set(theme_bw())
 
+# vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
 vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
   
   # for watermark: "SCALE CHANGE"
@@ -188,6 +194,7 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
     unitsplot <-  ggplot(long, aes(x=yr_id, y=value, fill=variable)) + geom_area() +
           facet_wrap( ~ series) + scale_y_continuous(labels=scales::comma) + 
           labs(title=paste(df$geozone[1],": Units", sep=' '), 
+          caption=paste("vacant units includes unoccupiable units (un_occup)", sep=''),
              y="Number of Units", x="Increment",color=NULL) +
           theme(axis.title.y = element_text(size = 14)) +
           theme(axis.title.x = element_blank()) +
@@ -219,23 +226,26 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
                color=colortouse, angle=0, fontface='bold', size=7, alpha=0.5) 
       
     # table of data
-    outt <- df %>% select("series","geozone","yr_id","units","hh","vacant_units","pc_vacancy_rate")
+    outt <- df %>% select("series","geozone","yr_id","units","hh","unoccupiable","vacant_units","pc_vacancy_rate")
     # rename variables
-    outt <- outt %>% rename(increment = yr_id, occupied = hh,vacant=vacant_units,vacancy = pc_vacancy_rate,name=geozone )
+    outt <- outt %>% rename(increment = yr_id,occupied = hh,un_occup=unoccupiable,
+                            vacant=vacant_units,vacancy = pc_vacancy_rate,name=geozone)
     # series 13
-    out13 <- subset(outt,series=="Series 13 (ds 13)")
+    out13 <- subset(outt,series==datasource_names[1])
     out13$series <- NULL
     out13$name <- NULL
     # series 14
-    out14 <- subset(outt,series== "Series 14 (ds 28)")
+    out14 <- subset(outt,series== datasource_names[2])
     out14$series <- NULL
     out14$name <- NULL
 
+    # ugly code to make nice tables!
     # set years 2012 to NA for series 14 and year 2018 to NA for series 13
-    d2012 <- data.frame("2012",NA,NA,NA,NA)
-    names(d2012) <- c("increment","units","occupied","vacant","vacancy")
-    d2018 <- data.frame("2018",NA,NA,NA,NA)
-    names(d2018) <- c("increment","units","occupied","vacant","vacancy")
+    d2012 <- data.frame("2012",NA,NA,NA,NA,NA)
+    names(d2012) <- c("increment","units","occupied","un_occup","vacant","vacancy")
+    d2018 <- data.frame("2018",NA,NA,NA,NA,NA)
+    names(d2018) <- c("increment","units","occupied","un_occup","vacant","vacancy")
+    
     out132020 <- rbind(out13, d2018)
     out142020 <- rbind(out14, d2012)
     
@@ -244,8 +254,12 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
     out142020 <- out142020[order(out142020$increment),]
     
     # rename increment to series for table output
-    out132020 <- out132020 %>% rename('Series 13' = increment )
-    out142020 <- out142020 %>% rename('Series 14' = increment )
+    #out132020 <- out132020 %>% rename("Series 13" = increment ) #datasource_name_short[1]
+    
+    names(out132020)[names(out132020)=="increment"] <- datasource_name_short[1]
+    names(out142020)[names(out142020)=="increment"] <- datasource_name_short[2]
+    
+
 
   
     tt <- ttheme_default(base_size = 7,colhead=list(fg_params = list(parse=TRUE)))
@@ -294,13 +308,16 @@ outfolder<-paste("..\\output\\vacancy\\",datasource_outfolder,"\\plots\\",sep=''
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-for(i in 1:length(geo_list)) {  
+for(i in 1:length(geo_list)) {
+# for(i in 1:5) { # test plots with short loop
   
     plotdat = subset(vacancy, vacancy$geozone==geo_list[i])
     
     if (geo_list[i]  %in% plot_outliers_list) {
       s = 'outlier'
-      ymax <- max(plotdat$pc_vacancy_rate)
+      if (max(plotdat$pc_vacancy_rate) <= 42) {
+        ymax <- 42
+      } else {ymax <- max(plotdat$pc_vacancy_rate)}
     } else {
       s = 'not_outlier'
       ymax <- mild.threshold.upper
@@ -398,7 +415,7 @@ for(i in 1:length(outliers)) {
 }
 
 
-source = "Series 14 (ds 28)"
+source = datasource_names[2]
 boxplot_df <- subset(vacancy,units >= 500 & series==source)
 vacbox <- ggplot(boxplot_df, aes(x=as.factor(yr_id),y=pc_vacancy_rate)) + 
   geom_boxplot() + 
