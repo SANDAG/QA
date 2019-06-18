@@ -16,6 +16,7 @@ pkgTest(packages)
 source("../Queries/readSQL.R")
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
+
 # initialize dataframes
 vacancy <- data.frame()
 sourcename <- data.frame()
@@ -27,7 +28,7 @@ sourcename <- data.frame()
 datasource_ids = c(13,28)
 datasource_names = c("Series 13 (ds 13)","Series 14 (ds 28)")
 datasource_name_short = c("Series 13","Series 14")
-datasource_outfolder = "ds13ds28"
+datasource_outfolder = "vacancyds28"
 ############################################################
 # **********************************************************
 
@@ -126,6 +127,11 @@ vacancy$pc_vacancy_rate <- vacancy$vacancy_rate * 100
 region_vacancy <- subset(vacancy,geozone=='~San Diego Region')
 ##################################################################
 
+# out folder for plots
+outfolder<-paste("..\\output\\",datasource_outfolder,"\\plots\\",sep='')
+ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
+setwd(file.path(maindir,outfolder))
+
 
 # function to determine outliers by IQR at every increment for Series 14
 outliers_by_IQR <- function(df) {
@@ -133,6 +139,7 @@ outliers_by_IQR <- function(df) {
   geo_vac <- subset(df,units >= 500 & series==datasource_names[2])
   
   alloutliers <- data.frame()
+  allranges <- data.frame()
   increments <- unique(geo_vac$yr_id)
   # get outliers at any increment
   for(i in 1:length(increments)) {
@@ -142,6 +149,9 @@ outliers_by_IQR <- function(df) {
     iqr = upperq - lowerq #Or use IQR(data)
     mild.threshold.upper = (iqr * 1.5) + upperq
     mild.threshold.lower = lowerq - (iqr * 1.5)
+    thresholds <- data.frame(increments[i],round(mild.threshold.lower[[1]],1),round(mild.threshold.upper[[1]],1))
+    names(thresholds)<-c("increment","threshold.lower","threshold.upper")
+    allranges <- rbind(allranges,thresholds)
     outliersonly <- subset(geo_increment,(pc_vacancy_rate>mild.threshold.upper | 
                                  pc_vacancy_rate<mild.threshold.lower))
     outliersonly$threshold.lower <- mild.threshold.lower
@@ -151,6 +161,9 @@ outliers_by_IQR <- function(df) {
   }
   # list all geographies that had outliers at any increment
   all_outlier_list <- unique(alloutliers$geozone)
+  allranges <- allranges[order(allranges$increment),]
+  allranges$threshold.lower[allranges$threshold.lower<0] <- 0
+  write.csv(allranges,"IQR.csv",row.names=FALSE)
   return(all_outlier_list)
 }
 
@@ -170,7 +183,7 @@ def_quantile <- function(df) {
 theme_set(theme_bw())
 
 # vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
-vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
+vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,suf) {
   
   # for watermark: "SCALE CHANGE"
   if (status =='outlier') {colortouse = 'grey'} else {colortouse='white'}
@@ -178,12 +191,26 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
   df <- geo
   df$series <- as.factor(df$series)
   df$vacant_units <- df$units - df$hh
+  df$pc_vacancy_rate_wo_unoccupiable[df$series == datasource_names[1]] <- NA
+  df$geozone[df$geozone == "~San Diego Region"] <- "San Diego Region"
+  
+  
+  
+  
   
   hh_and_vacant_units <- df %>% select("series", "geozone","yr_id","geotype","name","hh","vacant_units")
-  vacancy_rate <- df %>% select("series", "geozone","yr_id","geotype","name","pc_vacancy_rate")
+  vacancy_rate <- df %>% select("series", "geozone","yr_id","geotype","name","pc_vacancy_rate","pc_vacancy_rate_wo_unoccupiable")
+  
+  
   
   long <- reshape2::melt(hh_and_vacant_units, id.vars = c("series", "geozone","yr_id","geotype","name"))
   long2 <- reshape2::melt(vacancy_rate, id.vars = c("series", "geozone","yr_id","geotype","name"))
+  
+  levels(long2$variable) <- c(levels(long2$variable), "vacancy_classic","vacancy_eff")
+  
+  long2$variable[long2$variable == 'pc_vacancy_rate'] <- "vacancy_classic"
+  long2$variable[long2$variable == 'pc_vacancy_rate_wo_unoccupiable'] <- "vacancy_eff"
+  long2<-long2[!(long2$variable=="vacancy_eff" & long2$series == datasource_names[1]),]
   
   long$variable = factor(long$variable, levels=c("hh","vacant_units"))
   levels(long$variable) <- c("Occupied Units","Vacant Units")
@@ -203,33 +230,37 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
           theme(strip.text = element_text(size=14)) +
           theme(plot.title = element_text(size=18)) +
           theme(legend.title = element_blank())  +
-          theme(legend.text=element_text(size=14)) + 
+          theme(legend.text=element_text(size=10)) + 
           scale_fill_manual(values = c("#014d64","#7ad2f6")) 
       
     # line plot of vacancy rate    
     vacancyplot <-  ggplot(long2, aes(x=yr_id,y=value,label=value)) + 
-        geom_line(aes(y=value, col=series),size=1.5) + 
-        geom_point(aes(y=value),size=2) + facet_wrap( ~ series) +
+        # geom_line(aes(y=value, col=series,linetype=variable),size=1.5) + 
+        geom_line(aes(y=value,linetype=variable),size=1) + 
+        geom_point(aes(y=value),size=1.5) + facet_wrap( ~ series) +
         theme(strip.text = element_text(size=14)) +
         labs(title=paste(df$geozone[1],": Vacancy Rate", sep=' '), 
            caption=paste("Source: Demographic Warehouse",sep=''),
            y="% Vacancy", x="Increment",color=NULL) 
     vacancyplot <- vacancyplot + ylim(ylim_min,ylim_max) +
         scale_color_manual(values = c("#00887d", "#C10534")) +
+        scale_linetype_manual(values=c("solid", "dotted")) +
         theme(axis.title.y = element_text(size = 14)) +
         theme(axis.title.x = element_text(size = 12)) +
         theme(axis.text.y = element_text(vjust=0.5, size = 12)) +
         theme(axis.text.x = element_text(vjust=0.5, size = 12)) + 
         theme(plot.title = element_text(size=18)) +
-        theme(legend.text=element_text(size=14)) +
+        theme(legend.title = element_blank())  +
+        theme(legend.text=element_text(size=10)) +
         annotate(geom="text", x=2030, y=10, label='SCALE CHANGE', 
                color=colortouse, angle=0, fontface='bold', size=7, alpha=0.5) 
       
     # table of data
-    outt <- df %>% select("series","geozone","yr_id","units","hh","unoccupiable","vacant_units","pc_vacancy_rate")
+    outt <- df %>% select("series","geozone","yr_id","units","hh","unoccupiable","vacant_units",
+                          "pc_vacancy_rate","pc_vacancy_rate_wo_unoccupiable")
     # rename variables
     outt <- outt %>% rename(increment = yr_id,occupied = hh,un_occup=unoccupiable,
-                            vacant=vacant_units,vacancy = pc_vacancy_rate,name=geozone)
+                            vacant=vacant_units,vacancy=pc_vacancy_rate,vac_eff=pc_vacancy_rate_wo_unoccupiable,name=geozone)
     # series 13
     out13 <- subset(outt,series==datasource_names[1])
     out13$series <- NULL
@@ -241,10 +272,10 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
 
     # ugly code to make nice tables!
     # set years 2012 to NA for series 14 and year 2018 to NA for series 13
-    d2012 <- data.frame("2012",NA,NA,NA,NA,NA)
-    names(d2012) <- c("increment","units","occupied","un_occup","vacant","vacancy")
-    d2018 <- data.frame("2018",NA,NA,NA,NA,NA)
-    names(d2018) <- c("increment","units","occupied","un_occup","vacant","vacancy")
+    d2012 <- data.frame("2012",NA,NA,NA,NA,NA,NA)
+    names(d2012) <- c("increment","units","occupied","un_occup","vacant","vac_eff","vacancy")
+    d2018 <- data.frame("2018",NA,NA,NA,NA,NA,NA)
+    names(d2018) <- c("increment","units","occupied","un_occup","vacant","vac_eff","vacancy")
     
     out132020 <- rbind(out13, d2018)
     out142020 <- rbind(out14, d2012)
@@ -276,7 +307,7 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre) {
     
     #ggsave(plotout, file= paste(df$geozone[1],"_units_and_vacancy", ".png", sep=''),
     #      width=8, height=8, dpi=100)
-    ggsave(plotout, file= paste(pre,df$geozone[1],"_units_and_vacancy", ".pdf", sep=''),
+    ggsave(plotout, file= paste(pre,df$geozone[1],"_units_and_vacancy",suf,".pdf", sep=''),
            width=8, height=8, dpi=100)
     
   }
@@ -304,12 +335,9 @@ plot_outliers <- subset(vacancy, pc_vacancy_rate > mild.threshold.upper)
 plot_outliers_list <- unique(plot_outliers$geozone)
 
 
-outfolder<-paste("..\\output\\vacancy\\",datasource_outfolder,"\\plots\\",sep='')
-ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
-setwd(file.path(maindir,outfolder))
 
 for(i in 1:length(geo_list)) {
-# for(i in 1:5) { # test plots with short loop
+# for(i in 1:2) { # test plots with short loop
   
     plotdat = subset(vacancy, vacancy$geozone==geo_list[i])
     
@@ -322,7 +350,12 @@ for(i in 1:length(geo_list)) {
       s = 'not_outlier'
       ymax <- mild.threshold.upper
     }
-
+    
+    if (geo_list[i]  %in% outliers) {
+      plotsuffix <- 'outlier'} 
+    else {
+      plotsuffix <- ''  
+      }
     
     if (nrow(plotdat)==0) {
       next
@@ -342,7 +375,7 @@ for(i in 1:length(geo_list)) {
           prefix <-'4'
     }
     
-    vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
+    vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix,plotsuffix)
 
   }
 
@@ -362,7 +395,7 @@ lab = textGrob("\n\n\n Vacancy Rate for City CPAs\n\n
 ggsave(lab, file= paste("2AACityCPA", ".pdf", sep=''),
        width=10, height=6, dpi=100)
 
-lab = textGrob("\n\n\n Vacancy Rate for Unincorporated CPAs\n\n
+lab = textGrob("\n\n\n Vacancy Rate for County CPAs\n\n
                (vacancy plots on the same scale unless indicated otherwise)",
                x = unit(.1, "npc"), just = c("left"), 
                gp = gpar(fontsize = 12))
@@ -376,47 +409,11 @@ ggsave(lab, file= paste("4AARegion", ".pdf", sep=''),
        width=10, height=6, dpi=100)
 
 
-#  outliers where units greater than 500
-outfolder<-paste("..\\output\\vacancy\\",datasource_outfolder,"\\","outliers_gr_500units\\",sep='')
-ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
-setwd(file.path(maindir,outfolder))
-
-
-outliersdf <- subset(vacancy,geozone %in% outliers)
-ymax <- max(outliersdf$pc_vacancy_rate)
-
-for(i in 1:length(outliers)) {  
-  
-  plotdat = subset(vacancy, geozone==outliers[i])
-  
-  s = '' # do not add water mark to plot
-  
-  if (nrow(plotdat)==0) {
-    next
-  }
-  
-  if (plotdat$id[1] < 20 & plotdat$id[1] > 0) {
-    fldr <- 'JUR'
-    prefix <- '1'
-  } else if (plotdat$id[1] > 19 & plotdat$id[1] < 1500) {
-    fldr <- 'CityCPA'
-    prefix <- '2'
-  } else if (plotdat$id[1] > 1500 & plotdat$id[1] < 2000) {
-    fldr <- 'CountyCPA'
-    prefix <- '3'
-  } else {
-    fldr <- ''
-    prefix <-'4'
-  }
-  
-  
-  vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
-  
-}
 
 
 source = datasource_names[2]
 boxplot_df <- subset(vacancy,units >= 500 & series==source)
+IQR_df <- read.csv(file="IQR.csv", header=TRUE, sep=",")
 vacbox <- ggplot(boxplot_df, aes(x=as.factor(yr_id),y=pc_vacancy_rate)) + 
   geom_boxplot() + 
   labs(title="Vacancy at Forecast Increments (all jurisdictions and CPAs with units > 500)", 
@@ -425,13 +422,15 @@ vacbox <- ggplot(boxplot_df, aes(x=as.factor(yr_id),y=pc_vacancy_rate)) +
        y="Vacancy %", x="Increment",
        color=NULL)  # title and caption
 tt <- ttheme_default(base_size = 10,colhead=list(fg_params = list(parse=TRUE)))
-quant <- tableGrob(quantiles_df, rows=NULL, theme=tt)
-lab = textGrob(paste("note: vacancy calculation includes all units\n\nOutliers shown as points on plot are defined as:\n", "1.5 * IQR at any increment\n",
-                      "e.g. for all increments combined:","\n    ",
-                     "= 1.5 * (",quantiles_df$percent_vacancy[4],"- ",quantiles_df$percent_vacancy[2],
-                      ") + ",quantiles_df$percent_vacancy[4]," = ",mild.threshold.upper,
-                      "\nupper vacancy threshold = ",mild.threshold.upper,"%\n\n",
-                      "Number of unique outliers =",length(outliers), "\n\n Plots for each unique outlier on following pages",
+# quant <- tableGrob(quantiles_df, rows=NULL, theme=tt)
+quant <- tableGrob(IQR_df, rows=NULL, theme=tt)
+lab = textGrob(paste("Number of unique outliers =",length(outliers), "\n\n Plots for each unique outlier on previous pages.\n\n",
+                     "note: vacancy calculation includes \"unoccupiable\" units\n",
+                     #"Outliers shown as points on plot are defined as:\n", "1.5 * IQR at any increment\n",
+                      #"e.g. for all increments combined:","\n    ",
+                     #"= 1.5 * (",quantiles_df$percent_vacancy[4],"- ",quantiles_df$percent_vacancy[2],
+                    #  ") + ",quantiles_df$percent_vacancy[4]," = ",mild.threshold.upper,
+                     # "\nupper vacancy threshold = ",mild.threshold.upper,"%\n\n",
                   sep = " "),
                x = unit(.1, "npc"), just = c("left"), 
                gp = gpar(fontsize = 10))
@@ -441,50 +440,48 @@ plotout <- grid.arrange(
   layout_matrix = rbind(c(1,1,NA),
                         c(2,3,NA)))
 
-#ggsave(plotout, file= paste("vacancy_boxplot_500", ".png", sep=''),
-#       width=10, height=6, dpi=100)
 
-ggsave(plotout, file= paste("0vacancy_boxplot_units_grth_500", ".pdf", sep=''),
+ggsave(plotout, file= paste("6vacancy_boxplot_units_grth_500", "outlier.pdf", sep=''),
        width=10, height=6, dpi=100)
 
 
-
-
-# include all geographies including CPAs with less than 500 units
-plot_outliers_sm <- subset(vacancy, pc_vacancy_rate > mild.threshold.upper & units < 500 &
-                             series==source)
-plot_outliers_list_sm <- unique(plot_outliers_sm$geozone)
-
-for(i in 1:length(plot_outliers_list_sm)) {  
-  
-  plotdat = subset(vacancy, geozone==plot_outliers_list_sm[i])
-  
-  if (max(plotdat$pc_vacancy_rate) > max(outliersdf$pc_vacancy_rate)) {
-      s = 'outlier'
-      ymax <- max(plotdat$pc_vacancy_rate)
-  }
-  else {
-    ymax <- max(outliersdf$pc_vacancy_rate)
-    s = ''
-  }
-  
-  if (nrow(plotdat)==0) {
-    next
-  }
-  
-  prefix <- 6
-  
-  vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
-  
-}
-
-lab = textGrob("\n\n\n Outliers where units < 500\n\n",
-               x = unit(.1, "npc"), just = c("left"), 
-               gp = gpar(fontsize = 12))
-
-ggsave(lab, file= paste("5TitlePage", ".pdf", sep=''),
-       width=10, height=6, dpi=100)
-
+# 
+# 
+# # include all geographies including CPAs with less than 500 units
+# plot_outliers_sm <- subset(vacancy, pc_vacancy_rate > mild.threshold.upper & units < 500 &
+#                              series==source)
+# plot_outliers_list_sm <- unique(plot_outliers_sm$geozone)
+# 
+# for(i in 1:length(plot_outliers_list_sm)) {  
+#   
+#   plotdat = subset(vacancy, geozone==plot_outliers_list_sm[i])
+#   
+#   if (max(plotdat$pc_vacancy_rate) > max(outliersdf$pc_vacancy_rate)) {
+#       s = 'outlier'
+#       ymax <- max(plotdat$pc_vacancy_rate)
+#   }
+#   else {
+#     ymax <- max(outliersdf$pc_vacancy_rate)
+#     s = ''
+#   }
+#   
+#   if (nrow(plotdat)==0) {
+#     next
+#   }
+#   
+#   prefix <- 6
+#   
+#   vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
+#   
+# }
+# 
+# lab = textGrob("\n\n\n Outliers where units < 500\n\n",
+#                x = unit(.1, "npc"), just = c("left"), 
+#                gp = gpar(fontsize = 12))
+# 
+# ggsave(lab, file= paste("5TitlePage", ".pdf", sep=''),
+#        width=10, height=6, dpi=100)
+# 
 
 # write.csv(vacancy,"vacancy.csv")
 
