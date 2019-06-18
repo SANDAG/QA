@@ -44,6 +44,31 @@ head(hhinc_24)
 
 table(hhinc$income_group_id)
 
+#sum households across income categories to check that tot hh equals tot at region level.
+hhinc_sums= hhinc
+hhinc_sums$geotype_num[hhinc_sums$geotype=="region"] <- 1
+hhinc_sums$geotype_num[hhinc_sums$geotype=="tract"] <- 2
+hhinc_sums <- subset(hhinc_sums,(!is.na(hhinc_sums$geotype_num)))
+
+tract_sum_hh <- hhinc_sums %>%
+  select(yr_id,geotype_num,hh) %>%
+  group_by(yr_id,geotype_num) %>%
+  summarise(hhsum = sum(hh,na.rm=TRUE))  
+
+hhinc_wide_sums <- dcast(tract_sum_hh, yr_id~geotype_num,value.var="hhsum")
+
+setnames(hhinc_wide_sums, old=c("1","2"), new=c("reg_hh_tot","tract_hh_tot"))
+
+hhinc_wide_sums$hh_diff <- hhinc_wide_sums$reg_hh_tot-hhinc_wide_sums$tract_hh_tot
+
+write.csv(hhinc_wide_sums,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\sums_check_hhinc_id26.csv",row.names = FALSE)
+
+#################
+#################
+
+hhinc_24$geozone[hhinc_24$geotype=="region"] <- "San Diego Region"
+hhinc$geozone[hhinc$geotype=="region"] <- "San Diego Region"
+
 #hhinc recode to fewer categories
 #hhinc ID24 data
 hhinc_24$income_id2 <-ifelse(hhinc_24$income_group_id>=11 & hhinc_24$income_group_id<=12, '1',
@@ -119,9 +144,6 @@ hhinc_24$hhtot_24 <- as.numeric(hhinc_24$hhtot_24)
 hhinc$hh <- as.numeric(hhinc$hh)
 hhinc$hhtot <- as.numeric(hhinc$hhtot)
 
-#rename region for clarity in output
-hhinc$geozone[hhinc$geotype=='region'] <- 'San Diego Region'
-hhinc_24$geozone[hhinc_24$geotype=='region'] <- 'San Diego Region'
 
 hhinc_24_26 <- merge(hhinc_24, hhinc, by.x = c("yr_id","geotype","geozone","income_id2","name2"), by.y = c("yr_id","geotype","geozone","income_id2","name2"), all=TRUE)
 
@@ -208,7 +230,7 @@ rm(hhinc_24_26, hhinc_24_26_jur,hhinc_24_26_reg,hhinc_sql,hhtot,hhtot_24)
 hhinc <- subset(hhinc, hhinc$geotype=="tract")
 table(hhinc$geotype)
 
-#create subset without 2018 to determine min and max of percent change
+#create subset without 2018 to determine min and max of proportion change (difference)
 hhinc_2017 <- subset(hhinc, hhinc$yr_id<=2017)
 table(hhinc_2017$yr_id)
 
@@ -216,7 +238,6 @@ table(hhinc_2017$yr_id)
 hhinc_means <- aggregate(hhinc_nchg~income_id2,data=hhinc,mean,na.rm=TRUE)
 hhinc_sd <- aggregate(hhinc_nchg~income_id2,data=hhinc,sd,na.rm=TRUE)
 hhinc_means$hhinc_nchg <- round(hhinc_means$hhinc_nchg,digits = 2)
-hhinc_sd$hhinc_nchg <- round(hhinc_sd$hhinc_nchg,digits = 2)
 
 hhinc_min <- aggregate(hhinc_nchg~income_id2+geozone,data=hhinc_2017,min,na.rm=TRUE)
 hhinc_max <- aggregate(hhinc_nchg~income_id2+geozone,data=hhinc_2017,max,na.rm=TRUE)
@@ -224,13 +245,11 @@ hhinc_min$hhinc_nchg <- round(hhinc_min$hhinc_nchg, digits = 2)
 hhinc_max$hhinc_nchg <- round(hhinc_max$hhinc_nchg, digits = 2)
 
 
-head(hhinc_means,20)
-head(hhinc_sd,10)
-
 #match in means to hhinc file
 hhinc$hhinc_means<-hhinc_means[match(paste(hhinc$income_id2), paste(hhinc_means$income_id2)), "hhinc_nchg"]
-#match in sd to hhinc file
-hhinc$hhinc_sd<-hhinc_sd[match(paste(hhinc$income_id2), paste(hhinc_sd$income_id2)), "hhinc_nchg"]
+#match in sd value to hhinc file and round sd
+hhinc$hhinc_sd<- hhinc_sd[match(paste(hhinc$income_id2), paste(hhinc_means$income_id2)), "hhinc_nchg"]
+hhinc$hhinc_sd <- round(hhinc$hhinc_sd, digits = 2)
 #match in min to hhinc file
 hhinc$hhinc_min<-hhinc_min[match(paste(hhinc$geozone,hhinc$income_id2), paste(hhinc_min$geozone,hhinc_min$income_id2)), "hhinc_nchg"]
 #match in max to hhinc file
@@ -245,27 +264,15 @@ head(hhinc_max)
 #####
 head(hhinc,12)
 
-#merge means and sd to calculate 3 standard deviations from mean
-hhinc_3sd <- merge(hhinc_means, hhinc_sd, by.x = "income_id2", by.y = "income_id2", all = TRUE)
 #calculate 3 standard deviations above the mean
-hhinc_3sd$hhinc_3sd <- hhinc_3sd$hhinc_nchg.x+(3*hhinc_3sd$hhinc_nchg.y)
+hhinc$hhinc_3sd <- 3*hhinc$hhinc_nchg
 #calculate 3 standard deviations below the mean
-hhinc_3sd$hhinc_3sd_minus <- hhinc_3sd$hhinc_nchg.x-(3*hhinc_3sd$hhinc_nchg.y)
-
-head(hhinc_3sd)
-
-#match 3 standard deviations above the mean into hhinc
-hhinc$hhinc_3sd<-hhinc_3sd[match(paste(hhinc$income_id2), paste(hhinc_3sd$income_id2)), "hhinc_3sd"]
-
-#match 3 standard deviations  below the mean into hhinc
-hhinc$hhinc_3sd_minus<-hhinc_3sd[match(paste(hhinc$income_id2), paste(hhinc_3sd$income_id2)), "hhinc_3sd_minus"]
-
+hhinc$hhinc_3sd_minus <- -(3*hhinc$hhinc_nchg)
 
 #create flag variables to identify outliers
 hhinc$hhinc_flag[hhinc$hhinc_nchg>=hhinc$hhinc_3sd | hhinc$hhinc_nchg<=hhinc$hhinc_3sd_minus] <-1 
 table(hhinc$hhinc_flag)
 head(hhinc$hhinc_flag)
-
 
 
 hhinc_outliers <- subset(hhinc, hhinc$hhinc_flag==1)
@@ -294,12 +301,11 @@ hhinc_wide_jur <- dcast(hhinc_jur, income_cat+income_id2+geozone~yr_id,value.var
 hhinc_wide_jur <- hhinc_wide_jur[order(hhinc_wide_jur$geozone, hhinc_wide_jur$income_id2),]
 
 
-head(hhinc_wide_jur,10)
+head(hhinc_wide_reg,10)
 
-write.csv(hhinc_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26.csv",row.names = FALSE )
-write.csv(hhinc_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26.csv",row.names = FALSE )
-write.csv(hhinc_outliers[,c("yr_id","geozone","income_cat","hh","hhtot","hhinc_prop","hhinc_nchg","hhinc_sd","range_nchg_2010_2017","hhinc_flag")],
-          "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_outliers_tract_ID26.csv",row.names = FALSE )
-write.csv(hhinc_wide_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26_wide.csv",row.names = FALSE )
-write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide.csv",row.names = FALSE )
+# write.csv(hhinc_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26 v2.csv",row.names = FALSE )
+# write.csv(hhinc_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26 v2.csv",row.names = FALSE )
+# write.csv(hhinc_outliers[,c("yr_id","geozone","income_cat","hh","hhtot","hhinc_prop","hhinc_nchg","hhinc_sd","range_nchg_2010_2017","hhinc_flag")],
+#           "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_outliers_tract_ID26 v2.csv",row.names = FALSE )
+# write.csv(hhinc_wide_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26_wide v2.csv",row.names = FALSE )
 # write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide v2.csv",row.names = FALSE )
