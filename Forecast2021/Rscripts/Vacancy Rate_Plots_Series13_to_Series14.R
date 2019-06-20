@@ -220,8 +220,8 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
   
   if (s  == 'outlier') {
     if (max(long2$value,na.rm=TRUE) <= 42) {
-      ymax <- 42
-    } else {ymax <- max(long2$value,na.rm=TRUE)}
+      ylim_max <- 42
+    } else {ylim_max <- max(long2$value,na.rm=TRUE)}
   } 
   
   
