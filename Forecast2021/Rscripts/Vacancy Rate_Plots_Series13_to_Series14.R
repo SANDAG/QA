@@ -182,13 +182,16 @@ def_quantile <- function(df) {
 
 theme_set(theme_bw())
 
-# vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
+
+# vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix,plotsuffix)
 vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,suf) {
   
   # for watermark: "SCALE CHANGE"
   if (status =='outlier') {colortouse = 'grey'} else {colortouse='white'}
   
   df <- geo
+  df$vacancy_rate_effective[is.nan(df$vacancy_rate_effective)] <- NA
+  df$pc_vacancy_rate_wo_unoccupiable[is.nan(df$pc_vacancy_rate_wo_unoccupiable)] <- NA
   df$series <- as.factor(df$series)
   df$vacant_units <- df$units - df$hh
   df$pc_vacancy_rate_wo_unoccupiable[df$series == datasource_names[1]] <- NA
@@ -215,6 +218,14 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
   long$variable = factor(long$variable, levels=c("hh","vacant_units"))
   levels(long$variable) <- c("Occupied Units","Vacant Units")
   
+  if (s  == 'outlier') {
+    if (max(long2$value,na.rm=TRUE) <= 42) {
+      ymax <- 42
+    } else {ymax <- max(long2$value,na.rm=TRUE)}
+  } 
+  
+  
+  
   if (sum(long$value) != 0) { # plot only if there is data
     
     # area plot of occupied and vacant units
@@ -234,7 +245,8 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
           scale_fill_manual(values = c("#014d64","#7ad2f6")) 
       
     # line plot of vacancy rate    
-    vacancyplot <-  ggplot(long2, aes(x=yr_id,y=value,label=value)) + 
+    vacancyplot <-  ggplot(data=subset(long2, !is.na(value)),
+                           aes(x=yr_id,y=value,label=value)) + 
         # geom_line(aes(y=value, col=series,linetype=variable),size=1.5) + 
         geom_line(aes(y=value,linetype=variable),size=1) + 
         geom_point(aes(y=value),size=1.5) + facet_wrap( ~ series) +
@@ -336,19 +348,17 @@ plot_outliers_list <- unique(plot_outliers$geozone)
 
 
 
-for(i in 1:length(geo_list)) {
-# for(i in 1:2) { # test plots with short loop
+#for(i in 1:length(geo_list)) {
+for(i in 24:24) { # test plots with short loop note: error in first 25
   
     plotdat = subset(vacancy, vacancy$geozone==geo_list[i])
     
+    ymax <- mild.threshold.upper
+    
     if (geo_list[i]  %in% plot_outliers_list) {
       s = 'outlier'
-      if (max(plotdat$pc_vacancy_rate) <= 42) {
-        ymax <- 42
-      } else {ymax <- max(plotdat$pc_vacancy_rate)}
     } else {
       s = 'not_outlier'
-      ymax <- mild.threshold.upper
     }
     
     if (geo_list[i]  %in% outliers) {
@@ -372,9 +382,9 @@ for(i in 1:length(geo_list)) {
           prefix <- '3'
     } else {
           fldr <- ''
-          prefix <-'4'
+          prefix <-'0'
     }
-    
+    print(geo_list[i])
     vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix,plotsuffix)
 
   }
@@ -483,5 +493,5 @@ ggsave(plotout, file= paste("6vacancy_boxplot_units_grth_500", "outlier.pdf", se
 #        width=10, height=6, dpi=100)
 # 
 
-# write.csv(vacancy,"vacancy.csv")
+write.csv(vacancy,"vacancy.csv")
 
