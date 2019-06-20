@@ -348,8 +348,8 @@ plot_outliers_list <- unique(plot_outliers$geozone)
 
 
 
-#for(i in 1:length(geo_list)) {
-for(i in 24:24) { # test plots with short loop note: error in first 25
+for(i in 1:length(geo_list)) {
+#for(i in 24:24) { # test plot loop for CPA outlier
   
     plotdat = subset(vacancy, vacancy$geozone==geo_list[i])
     
