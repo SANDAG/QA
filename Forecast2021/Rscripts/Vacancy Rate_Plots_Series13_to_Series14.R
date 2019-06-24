@@ -380,6 +380,9 @@ for(i in 1:length(geo_list)) {
       } else if (plotdat$id[1] > 1500 & plotdat$id[1] < 2000) {
           fldr <- 'CountyCPA'
           prefix <- '3'
+      } else if (geo_list[i] == 'Not in a CPA') {
+        fldr <- ''
+        prefix <- '4'
     } else {
           fldr <- ''
           prefix <-'0'
@@ -389,8 +392,32 @@ for(i in 1:length(geo_list)) {
 
   }
 
+njur <- length(unique(subset(vacancy,geotype=='jurisdiction')$geozone))
+ncpa <- length(unique(subset(vacancy,geotype=='cpa' & geozone != 'Not in a CPA')$geozone))
+totalgeo <- length(unique(vacancy$geozone))
+geo0 <- subset(vacancy,units==0)
+geonot0 <- subset(vacancy,units!=0)
+n0 <- length(unique(subset(geo0,!(geozone %in% unique(geonot0$geozone)))$geozone))
+nplots <- totalgeo - n0
+#"\ntotal geographies = ",totalgeo,
+#"\ncities (including unincorporated) =",njur,"\ncpas=",ncpa,"\n+ 1 region + 1 Not in a CPA\n",
+
 
 # create divider pdf pages
+lab = textGrob(paste("\n\nVacancy Rate Plots for Region, Jurisdictions and CPAs: ",
+                     "\n\n\nTotal geographies = ",totalgeo,
+                     "\n\nTotal plots=",nplots,
+                     
+                     "\n\n\n\n      total cities (including unincorporated) = ",njur,
+                    "\n      total cpas = ",ncpa,
+                    "\n      region = 1",
+                    "\n      \'Not in a CPA\' = 1",
+                    "\n      excluded geographies with no residential units = ",n0,
+                     sep=''),
+               x = unit(.1, "npc"), just = c("left"), 
+               gp = gpar(fontsize = 12))
+ggsave(lab, file= paste("0AACoverPage", ".pdf", sep=''),
+       width=10, height=6, dpi=100)
 
 lab = textGrob("\n\n\n Vacancy Rate for Jurisdictions\n\n
                (vacancy plots on the same scale unless indicated otherwise)",
@@ -411,11 +438,12 @@ lab = textGrob("\n\n\n Vacancy Rate for County CPAs\n\n
                gp = gpar(fontsize = 12))
 ggsave(lab, file= paste("3AACountyCPAs", ".pdf", sep=''),
        width=10, height=6, dpi=100)
-lab = textGrob("\n\n\n Vacancy Rate for Region and *NOT IN A CPA*\n\n
+
+lab = textGrob("\n\n\n Vacancy Rate for \'NOT IN A CPA\' and boxplot\n\n
                (vacancy plots on the same scale unless indicated otherwise)",
                x = unit(.1, "npc"), just = c("left"), 
                gp = gpar(fontsize = 12))
-ggsave(lab, file= paste("4AARegion", ".pdf", sep=''),
+ggsave(lab, file= paste("4AANotinCPA", ".pdf", sep=''),
        width=10, height=6, dpi=100)
 
 
@@ -423,10 +451,16 @@ ggsave(lab, file= paste("4AARegion", ".pdf", sep=''),
 
 source = datasource_names[2]
 boxplot_df <- subset(vacancy,units >= 500 & series==source)
+
+n <- length(unique(boxplot_df$geozone))
+
+#small_geo <- subset(vacancy,!(geozone %in% unique(boxplot_df$geozone)))
+#length(unique(small_geo$geozone))
+
 IQR_df <- read.csv(file="IQR.csv", header=TRUE, sep=",")
 vacbox <- ggplot(boxplot_df, aes(x=as.factor(yr_id),y=pc_vacancy_rate)) + 
   geom_boxplot() + 
-  labs(title="Vacancy at Forecast Increments (all jurisdictions and CPAs with units > 500)", 
+  labs(title=paste("Vacancy at Forecast Increments (n=",n,", jurisdictions & CPAs w units > 500)",sep=''), 
        subtitle="Outliers are defined as 1.5 times IQR (shown as points on plot)",
        caption=paste("Source: Demographic Warehouse: ",source, sep=''),
        y="Vacancy %", x="Increment",
