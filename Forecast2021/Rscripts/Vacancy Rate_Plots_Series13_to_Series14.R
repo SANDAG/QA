@@ -9,7 +9,7 @@ pkgTest <- function(pkg){
   if (length(new.pkg))
     install.packages(new.pkg, dep = TRUE)
   sapply(pkg, require, character.only = TRUE)}
-packages <- c("RODBC","tidyverse","gridExtra","grid") #"ggsci"
+packages <- c("RODBC","tidyverse","gridExtra","grid","gtable") #"ggsci"
 pkgTest(packages)
 
 # get data from database
@@ -22,7 +22,7 @@ vacancy <- data.frame()
 sourcename <- data.frame()
 
 
-# change these 3 lines depending on datasource ids
+# change these 4 lines depending on datasource ids
 # **********************************************************
 ############################################################
 datasource_ids = c(13,28)
@@ -112,6 +112,8 @@ vacancy$occupiable_unit <- NULL
 
 
 vacancy$unoccupiable[vacancy$series == datasource_names[1]] <- NA
+vacancy$vacant_units <- vacancy$units - vacancy$hh
+
 
 # convert vacancy rate to percentage
 vacancy$pc_vacancy_rate_wo_unoccupiable <- vacancy$vacancy_rate_effective * 100
@@ -197,14 +199,8 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
   df$pc_vacancy_rate_wo_unoccupiable[df$series == datasource_names[1]] <- NA
   df$geozone[df$geozone == "~San Diego Region"] <- "San Diego Region"
   
-  
-  
-  
-  
   hh_and_vacant_units <- df %>% select("series", "geozone","yr_id","geotype","name","hh","vacant_units")
   vacancy_rate <- df %>% select("series", "geozone","yr_id","geotype","name","pc_vacancy_rate","pc_vacancy_rate_wo_unoccupiable")
-  
-  
   
   long <- reshape2::melt(hh_and_vacant_units, id.vars = c("series", "geozone","yr_id","geotype","name"))
   long2 <- reshape2::melt(vacancy_rate, id.vars = c("series", "geozone","yr_id","geotype","name"))
@@ -223,7 +219,6 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
       ylim_max <- 42
     } else {ylim_max <- max(long2$value,na.rm=TRUE)}
   } 
-  
   
   
   if (sum(long$value) != 0) { # plot only if there is data
@@ -339,7 +334,8 @@ quantiles_df <- def_quantile(vacancy)
 iqr = quantiles_df$percent_vacancy[4] - quantiles_df$percent_vacancy[2]
 mild.threshold.upper = round(((iqr * 1.5) + quantiles_df$percent_vacancy[4]),1)
 mild.threshold.upper
-
+mild.threshold.lower = round((quantiles_df$percent_vacancy[2] - (iqr * 1.5)),1)
+mild.threshold.lower
 ymin <- 0
 
 # include all geographies including CPAs with less than 500 units
@@ -349,7 +345,7 @@ plot_outliers_list <- unique(plot_outliers$geozone)
 
 
 for(i in 1:length(geo_list)) {
-#for(i in 24:24) { # test plot loop for CPA outlier
+# for(i in 1:12) { # test plot loop for CPA outlier
   
     plotdat = subset(vacancy, vacancy$geozone==geo_list[i])
     
@@ -358,7 +354,7 @@ for(i in 1:length(geo_list)) {
     if (geo_list[i]  %in% plot_outliers_list) {
       s = 'outlier'
     } else {
-      s = 'not_outlier'
+      s = ''
     }
     
     if (geo_list[i]  %in% outliers) {
@@ -373,159 +369,168 @@ for(i in 1:length(geo_list)) {
     
     if (plotdat$id[1] < 20 & plotdat$id[1] > 0) {
       fldr <- 'JUR'
-      prefix <- '1'
+      prefix <- '2'
       } else if (plotdat$id[1] > 19 & plotdat$id[1] < 1500) {
         fldr <- 'CityCPA'
-        prefix <- '2'
+        prefix <- '3'
       } else if (plotdat$id[1] > 1500 & plotdat$id[1] < 2000) {
           fldr <- 'CountyCPA'
-          prefix <- '3'
+          prefix <- '4'
       } else if (geo_list[i] == 'Not in a CPA') {
         fldr <- ''
-        prefix <- '4'
+        prefix <- '5'
     } else {
           fldr <- ''
-          prefix <-'0'
+          prefix <-'1'
     }
+    
+    if (geo_list[i] %in% outliers) {
+      prefix <- paste('0outlier','_',prefix,sep='')}
+    
     print(geo_list[i])
     vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix,plotsuffix)
 
   }
 
+##############################################################
+# create divider pdf pages
+#############################################################
+
+### first page - cover page
+
+# count total number of unique geographies, jurisdictions, cpas 
+totalgeo <- length(unique(vacancy$geozone))
+geo0 <- subset(vacancy,units==0) # geographies w/ no residential units
+geonot0 <- subset(vacancy,units!=0) # have residential units
+n0 <- length(unique(subset(geo0,!(geozone %in% unique(geonot0$geozone)))$geozone))
+nplots <- totalgeo - n0 # total number of plots
 njur <- length(unique(subset(vacancy,geotype=='jurisdiction')$geozone))
 ncpa <- length(unique(subset(vacancy,geotype=='cpa' & geozone != 'Not in a CPA')$geozone))
-totalgeo <- length(unique(vacancy$geozone))
-geo0 <- subset(vacancy,units==0)
-geonot0 <- subset(vacancy,units!=0)
-n0 <- length(unique(subset(geo0,!(geozone %in% unique(geonot0$geozone)))$geozone))
-nplots <- totalgeo - n0
-#"\ntotal geographies = ",totalgeo,
-#"\ncities (including unincorporated) =",njur,"\ncpas=",ncpa,"\n+ 1 region + 1 Not in a CPA\n",
 
+no_units_string <- paste( unique(subset(geo0,!(geozone %in% unique(geonot0$geozone) ))$geozone), 
+                          collapse=",  "  )
+coverlabel = textGrob("Vacancy Rate Plots for Region, Jurisdictions and CPAs\n",
+                   x = unit(.1, "npc"), just = c("left"), 
+                   gp = gpar(fontsize = 20))
 
-# create divider pdf pages
-lab = textGrob(paste("\n\nVacancy Rate Plots for Region, Jurisdictions and CPAs: ",
-                     "\n\n\nTotal geographies = ",totalgeo,
-                     "\n\nTotal plots=",nplots,
-                     
-                     "\n\n\n\n      total cities (including unincorporated) = ",njur,
-                    "\n      total cpas = ",ncpa,
-                    "\n      region = 1",
-                    "\n      \'Not in a CPA\' = 1",
-                    "\n      excluded geographies with no residential units = ",n0,
-                     sep=''),
-               x = unit(.1, "npc"), just = c("left"), 
-               gp = gpar(fontsize = 12))
-ggsave(lab, file= paste("0AACoverPage", ".pdf", sep=''),
+sources = textGrob(paste("\n\nSource: Demographic Warehouse: ",datasource_names[2], 
+                            " and ",datasource_names[1],sep=''),
+                      x = unit(.1, "npc"), just = c("left"), 
+                      gp = gpar(fontsize = 10))
+plotout <- grid.arrange(
+  grobs = list(coverlabel,sources),
+  widths = c(1,1,1),
+  heights = c(3,1,1,3),
+  layout_matrix = rbind(c(NA,NA,NA),
+                        c(1,1,1),
+                        c(2,2,2),
+                        c(NA,NA,NA)),
+  bottom = textGrob(
+    paste("Total geographies:",totalgeo,",  Total plots:",nplots,"    \n",
+          "Count of geography by type:    ",
+          "(cities including unincorporated = ",njur,
+          ", cpas = ",ncpa,", region = 1",",  \'Not in a CPA\' = 1)   \n",
+          "Excluded geo w no res units (n = ",n0,"): ",
+          gsub('(.{1,70})(\\s|$)', '\\1    \n', no_units_string),sep=''),
+    gp = gpar(fontface = 3, fontsize = 11),
+    hjust = 1,
+    x = 1
+  ))
+ggsave(plotout, file= paste("0AAACoverPage", ".pdf", sep=''),
        width=10, height=6, dpi=100)
+# end first page
+########################################################################
 
-lab = textGrob("\n\n\n Vacancy Rate for Jurisdictions\n\n
-               (vacancy plots on the same scale unless indicated otherwise)",
-               x = unit(.1, "npc"), just = c("left"), 
-               gp = gpar(fontsize = 12))
-ggsave(lab, file= paste("1AAJurisdictions", ".pdf", sep=''),
-       width=10, height=6, dpi=100)
-lab = textGrob("\n\n\n Vacancy Rate for City CPAs\n\n
-               (vacancy plots on the same scale unless indicated otherwise)",
-               x = unit(.1, "npc"), just = c("left"), 
-               gp = gpar(fontsize = 12))
-ggsave(lab, file= paste("2AACityCPA", ".pdf", sep=''),
-       width=10, height=6, dpi=100)
-
-lab = textGrob("\n\n\n Vacancy Rate for County CPAs\n\n
-               (vacancy plots on the same scale unless indicated otherwise)",
-               x = unit(.1, "npc"), just = c("left"), 
-               gp = gpar(fontsize = 12))
-ggsave(lab, file= paste("3AACountyCPAs", ".pdf", sep=''),
-       width=10, height=6, dpi=100)
-
-lab = textGrob("\n\n\n Vacancy Rate for \'NOT IN A CPA\' and boxplot\n\n
-               (vacancy plots on the same scale unless indicated otherwise)",
-               x = unit(.1, "npc"), just = c("left"), 
-               gp = gpar(fontsize = 12))
-ggsave(lab, file= paste("4AANotinCPA", ".pdf", sep=''),
-       width=10, height=6, dpi=100)
-
-
-
-
-source = datasource_names[2]
-boxplot_df <- subset(vacancy,units >= 500 & series==source)
-
-n <- length(unique(boxplot_df$geozone))
-
-#small_geo <- subset(vacancy,!(geozone %in% unique(boxplot_df$geozone)))
-#length(unique(small_geo$geozone))
+# outlier description page w boxplot and thresholds table
 
 IQR_df <- read.csv(file="IQR.csv", header=TRUE, sep=",")
+
+# outliers
+outlier_string <- paste(sort(outliers),collapse=",  ")
+# outlier description
+outlierdef = textGrob(paste("Outliers defined as vacancy rate less than Q1-1.5*IQR or greater than Q3+1.5*IQR,\n",
+                            "where Q1 and Q3 are the first and third quartile and IQR is the interquartile range\n",
+                            "and units > 500",
+                             sep=''),gp = gpar(fontsize = 10))
+# list of outliers
+outlierlist = textGrob(paste("Outliers (n=",length(outliers),"): ",
+                      gsub('(.{1,70})(\\s|$)', '\\1\n', outlier_string ), # add line returns to string
+                      sep=''),gp = gpar(fontsize = 10))
+# list of outliers where units less than 500
+vac2 <- subset(vacancy, series==datasource_names[2])
+poutliers <- subset(vac2, pc_vacancy_rate > mild.threshold.upper)
+poutlierslist <- unique(poutliers$geozone)
+sm_outliers <- poutlierslist[!(poutlierslist %in% outliers)]
+sm_outlierlist <- paste( sm_outliers, collapse=",  "  )
+
+# create table w thresholds
+tt <- ttheme_default(base_size = 8   ,colhead=list(fg_params = list(parse=TRUE)))
+table <- tableGrob(IQR_df,theme=tt)
+title <- textGrob("Vacancy Rate Thresholds for Outlier Identification",gp=gpar(fontsize=8))
+footnote <- textGrob(paste("Outliers defined for geographies with units>500\n", 
+                           "Threshold is Q1-1.5*IQR and Q3+1.5*IQR",
+                      sep=''),
+                     x=0, hjust=0,
+                     gp=gpar( fontsize=6,fontface="italic"))
+padding <- unit(0.5,"line")
+table <- gtable_add_rows(table, 
+                         heights = grobHeight(title) + padding,
+                         pos = 0)
+table <- gtable_add_rows(table, 
+                         heights = grobHeight(footnote)+ padding)
+table <- gtable_add_grob(table, list(title, footnote),
+                         t=c(1, nrow(table)), l=c(1,2), 
+                         r=ncol(table))
+
+# create boxplot to show outliers
+source = datasource_names[2]
+boxplot_df <- subset(vacancy,series==source)
+n <- length(unique(boxplot_df$geozone))
 vacbox <- ggplot(boxplot_df, aes(x=as.factor(yr_id),y=pc_vacancy_rate)) + 
   geom_boxplot() + 
-  labs(title=paste("Vacancy at Forecast Increments (n=",n,", jurisdictions & CPAs w units > 500)",sep=''), 
-       subtitle="Outliers are defined as 1.5 times IQR (shown as points on plot)",
-       caption=paste("Source: Demographic Warehouse: ",source, sep=''),
+  labs(title=paste("Vacancy at Forecast Increments (n=",n," at each increment)",sep=''), 
+       subtitle="Outliers shown as points on plot (whisker length is 1.5*IQR)",
+       caption=paste("Source: Demographic Warehouse: ",source,sep=''),
        y="Vacancy %", x="Increment",
-       color=NULL)  # title and caption
-tt <- ttheme_default(base_size = 10,colhead=list(fg_params = list(parse=TRUE)))
-# quant <- tableGrob(quantiles_df, rows=NULL, theme=tt)
-quant <- tableGrob(IQR_df, rows=NULL, theme=tt)
-lab = textGrob(paste("Number of unique outliers =",length(outliers), "\n\n Plots for each unique outlier on previous pages.\n\n",
-                     "note: vacancy calculation includes \"unoccupiable\" units\n",
-                     #"Outliers shown as points on plot are defined as:\n", "1.5 * IQR at any increment\n",
-                      #"e.g. for all increments combined:","\n    ",
-                     #"= 1.5 * (",quantiles_df$percent_vacancy[4],"- ",quantiles_df$percent_vacancy[2],
-                    #  ") + ",quantiles_df$percent_vacancy[4]," = ",mild.threshold.upper,
-                     # "\nupper vacancy threshold = ",mild.threshold.upper,"%\n\n",
-                  sep = " "),
-               x = unit(.1, "npc"), just = c("left"), 
-               gp = gpar(fontsize = 10))
+       color=NULL)  +
+  theme(plot.title = element_text(size=8),
+        plot.subtitle = element_text(size=6),
+        plot.caption = element_text(size=6, face = "italic"))
+# create outlier methodology page w boxplot and table
 plotout <- grid.arrange(
-  grobs = list(vacbox,quant,lab),
-  widths = c(2,1,1),
-  layout_matrix = rbind(c(1,1,NA),
-                        c(2,3,NA)))
-
-
-ggsave(plotout, file= paste("6vacancy_boxplot_units_grth_500", "outlier.pdf", sep=''),
+  grobs = list(outlierdef,vacbox,table,outlierlist),
+  widths = c(1, 1),
+  heights = c(1,2,1),
+  layout_matrix = rbind(c(1, 1),c(2, 3),c(4, 4)),
+  top=paste("Outlier Methodology and Results",sep=''),
+  bottom = textGrob(paste("Excluded outliers where units<500 (n = ",length(sm_outliers),"): ",
+  gsub('(.{1,80})(\\s|$)', '\\1    \n', sm_outlierlist ),sep=''),gp = gpar(fontface = 3, fontsize = 8),
+hjust = 1,
+x = 1
+))
+ggsave(plotout, file= paste("0AACoverPage", ".pdf", sep=''),
        width=10, height=6, dpi=100)
+# END outlier description page
+###########################################################################
 
+# create all other divider pages
+create_divider_page <- function(section_name,idx) {
+  pagetext <- textGrob(paste("\n\n\n                               ",
+                             section_name,sep=''),
+                       x = unit(.1, "npc"), just = c("left"), 
+                       gp = gpar(fontsize = 12)) 
+  file_output <- paste(idx,"AA",section_name,".pdf", sep='')
+  ggsave(pagetext,file=file_output,width=10, height=6, dpi=100)
+}
 
-# 
-# 
-# # include all geographies including CPAs with less than 500 units
-# plot_outliers_sm <- subset(vacancy, pc_vacancy_rate > mild.threshold.upper & units < 500 &
-#                              series==source)
-# plot_outliers_list_sm <- unique(plot_outliers_sm$geozone)
-# 
-# for(i in 1:length(plot_outliers_list_sm)) {  
-#   
-#   plotdat = subset(vacancy, geozone==plot_outliers_list_sm[i])
-#   
-#   if (max(plotdat$pc_vacancy_rate) > max(outliersdf$pc_vacancy_rate)) {
-#       s = 'outlier'
-#       ymax <- max(plotdat$pc_vacancy_rate)
-#   }
-#   else {
-#     ymax <- max(outliersdf$pc_vacancy_rate)
-#     s = ''
-#   }
-#   
-#   if (nrow(plotdat)==0) {
-#     next
-#   }
-#   
-#   prefix <- 6
-#   
-#   vacancy_plot_all_in_one(plotdat,ymin,ymax,geo_list[i],s,prefix)
-#   
-# }
-# 
-# lab = textGrob("\n\n\n Outliers where units < 500\n\n",
-#                x = unit(.1, "npc"), just = c("left"), 
-#                gp = gpar(fontsize = 12))
-# 
-# ggsave(lab, file= paste("5TitlePage", ".pdf", sep=''),
-#        width=10, height=6, dpi=100)
-# 
+sectionnames <- c("Outliers","Region","Jurisdictions","City CPAs","County CPAs","NOT IN A CPA")
 
+counter <- 0
+for(aname in sectionnames) {
+  create_divider_page(aname,counter)
+  counter <- counter + 1
+}
+
+# output all data
 write.csv(vacancy,"vacancy.csv")
 
