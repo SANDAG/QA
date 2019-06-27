@@ -4,15 +4,15 @@ USE demographic_warehouse;
 SELECT
 	housing.yr_id
 	,housing.datasource_id
-	,mgra.geotype
+	,mgra.geotype 
 	,mgra.geozone
 	,SUM(housing.unoccupiable) as unoccupiable
 	,SUM(housing.occupied) as hh
 	,SUM(housing.units) as units
-	,ROUND(CASE WHEN SUM(housing.occupied) = 0 THEN 0 
-				ELSE 1.0 - SUM(housing.occupied)  / 
-				CASE WHEN (SUM(housing.units))=0 THEN 0 
-					ELSE CAST(SUM(housing.units) as float) END END, 4) as vacancy_rate
+	,CASE
+		  WHEN (SUM(housing.units))=0 THEN 0 
+		  ELSE round(1 - SUM(housing.occupied)/CAST(SUM(housing.units) as float),4) 
+	END as vacancy_rate
 FROM fact.housing
 	INNER JOIN dim.mgra
 	ON mgra.mgra_id = housing.mgra_id
