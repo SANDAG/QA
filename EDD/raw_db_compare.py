@@ -21,6 +21,7 @@ def importFromRaw(pat):
     df = pd.read_csv(pat)
     # df.columns = ['OBJECTID', 'dba', 'address', 'city', 'zip', 'emp1', 'emp2', 'emp3', 'payroll', 'naics', 'own',
     #               'meei', 'init', 'end', 'react', 'x', 'y']
+    df = df.replace(' ', np.nan)
     return df
 
 
