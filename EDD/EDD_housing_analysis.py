@@ -26,7 +26,7 @@ database = 'urbansim'
 mpl.rc('xtick', labelsize=15)
 mpl.rc('ytick', labelsize=15)
 
-
+###Not currently used, we call the sql file above
 sql = '''SELECT p.parcel_id AS parcel_id, 
     m.emp_id AS emp_id, SUM(m.emp1) AS emp1,SUM(m.emp2) AS emp2,SUM(m.emp3) AS emp3, SUM(m.naics) AS naics, m.dba, 
     SUM(m.payroll) as payroll, b.building_id AS building_id, SUM(b.non_residential_sqft) AS nonresSqft,
