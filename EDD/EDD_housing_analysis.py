@@ -6,12 +6,12 @@ import pymssql
 import tabulate
 import os
 import getpass
-import raw_db_compare
 import math
 import seaborn as sns
 from sqlalchemy import create_engine
 
 from sklearn import cluster
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cm as mplcm
 import matplotlib.colors as colors
@@ -19,9 +19,12 @@ import matplotlib.colors as colors
 pat = os.path.dirname(__file__)
 sqlFile = 'EDD_housing_link_functionized.sql'
 sqlPat = os.path.join(pat, sqlFile)
-naicsLookupPat = os.path.join(pat,r'naicsLookup.csv')
+naicsLookupPat = os.path.join(pat, r'naicsLookup.csv')
 server = 'Sql2014A8'
 database = 'urbansim'
+
+mpl.rc('xtick', labelsize=15)
+mpl.rc('ytick', labelsize=15)
 
 
 sql = '''SELECT p.parcel_id AS parcel_id, 
@@ -63,17 +66,27 @@ def sqlAlchemyTest():
     df['sumSqft'] = df['nonresSqft'] + df['resSqft']
     df['resFlag'] = np.where(df['resSqft'] > 0, 'Residential', 'Industrial')
     df['sqftPerEmp'] = df['sumSqft'] / df['maxE'].where(df['maxE'] != 0)
-    df['logMaxE'] = np.log(df['maxE']+ 1)
-    df['moneyPerE'] = df['payroll'] / df['maxE'].where(df['maxE'] != 0)
-    df['logMoneyPerE'] = np.log(df['payroll'] / df['maxE'].where(df['maxE'] != 0) + 1)
-    df['logPayroll'] = np.log(df['payroll'] + 1)
+    # df['logMaxE'] = np.log(df['maxE']+ 1)
+    df['moneyPerE'] = df['payroll'] * 4/ df['maxE'].where(df['maxE'] != 0)
+    df['group'] = pd.qcut(df[df['maxE']>0]['maxE'],[0, .4, .6, .8, 1])
+    # df['logMoneyPerE'] = np.log(df['payroll'] / df['maxE'].where(df['maxE'] != 0) + 1)
+    # df['logPayroll'] = np.log(df['payroll'] + 1)
+    ###extra columns for building-averaged numbers
+    df['count'] = 1
+    zz = df.groupby('building_id').sum()
+    zz = zz.reset_index()
+
+    df['buildingEmp'] = np.interp(df['building_id'].values, zz['building_id'], zz['maxE'])
+
 
     return df
+
 
 def naicsLookup():
     #Get sorted list of all naics Code meanings
     df = pd.read_csv(naicsLookupPat)
     return df['Name'].to_list()
+
 
 def getSyncedEddBuildingData():
     while True:
@@ -210,45 +223,53 @@ def groupbyPlot(df, groupId = 'naicsInd2', x = 'maxE',y = 'sumSqft'):
 
     ax.grid(False)
     ax.legend(loc = 'upper left')
-    ax.set_ylabel(y)
-    ax2.set_ylabel('Average of ' + y)
+    ax.set_ylabel(y, fontsize=17)
+    # ax2.set_ylabel('Average of ' + y, fontsize=17)
     # ax.xaxis.set_ticks(naicsLookup())
     # ax2.xaxis.set_ticks(naicsLookup())
-    ax.set_xlabel(x)
+    ax.set_xlabel(x, fontsize=17)
     zz = naicsLookup()
     plt.xticks(xx)#, naicsLookup())
-    ax2.legend(loc= 'upper right')
+    # ax.legend(loc= 'upper right')
     plt.show()
 
     return plt, [np.mean(df[df['naicsInd2'] == i][y]) for i in xx]
 
-def empCompare(tt):
+def empCompare(tt, title = ' '):
     #Compare different truncs of employees
 
     y = ['sqftPerEmp','moneyPerE']
-    fig, ax = plt.subplots(211, figsize=(10, 4))
-    plt.style.use('ggplot')
+    fig, ax = plt.subplots(figsize=(10, 4))
+    # plt.style.use('ggplot')
 
-    tt = tt[tt['maxE'] > 0]
-    tt['group'] = pd.qcut(tt['maxE'],[0, .4, .6, .8, 1])
+    # tt = tt[tt['maxE'] > 0]
+    # tt['group'] = pd.qcut(tt['maxE'],[0, .4, .6, .8, 1])
 
     #for y[0]
     for key, group in tt.groupby('group'):
         xx = np.unique(group['naicsInd2'])
         yy = [np.mean(group[group['naicsInd2'] == i][y[0]]) for i in xx]
-        plt.plot(xx, yy, label='<' + str(key.right) + ' Average', linestyle='-.', marker='o')
+        ax.plot(xx, yy, label=str(key.left) + '> - <' + str(key.right) + ' MaxE', linestyle='-.', marker='o')
+    ax.set_ylabel(y[0], fontsize=17)
+    ax.set_xlabel('NaicsInd2', fontsize = 17)
+    plt.legend(loc= 'upper right')
+    plt.title(y[0] + ' vs NAICS')
 
-    plt.subplot(212)
+    fig, ax = plt.subplots(figsize=(10, 4))
     #for y[1]
     for key, group in tt.groupby('group'):
         xx = np.unique(group['naicsInd2'])
         yy = [np.mean(group[group['naicsInd2'] == i][y[1]]) for i in xx]
-        plt.plot(xx, yy, label='<' + str(key.right) + ' Average', linestyle='-.', marker='o')
+        ax.plot(xx, yy, label=str(key.left) + '> - <' + str(key.right) + ' MaxE', linestyle='-.', marker='o')
+    ax.set_ylabel(y[1], fontsize=17)
+    ax.set_xlabel('NaicsInd2', fontsize = 17)
+    plt.title(title + y[1] + ' vs NAICS')
+
 
     plt.legend(loc= 'upper right')
     plt.show()
 
-def stackedPairPlot(df):
+def stackedPairPlot(df, flag = 1):
     #Plot stacked bar charts comparing naics codes to building types
 
     MINIMAL_USE = ['Active Park','Agriculture and Mining','College Dormitory','Depot','Dump Space','Heavy Industry',
@@ -257,7 +278,8 @@ def stackedPairPlot(df):
                    'Undeveloped Open Space','Vacant Developable Land','Water','Government Operations','Health Care',
                    'Hotel/Motel','Mixed Use','Primary Schools']
     y = 'naicsInd2'
-
+    df[y] = df[y].astype(str)
+    df = df.sort_values(by = 'naicsInd2')
 
     for i in range(0,2):
         fig, ax = plt.subplots(figsize=(10, 4))
@@ -269,16 +291,28 @@ def stackedPairPlot(df):
         else:
             tt = df[~df['name'].isin(MINIMAL_USE)]
 
-        if 1: #Turn on to remove residential fields from the plots
+        if flag == 1:
             tt = tt[tt['resFlag'] == 'Industrial']
+        elif flag == -1:
+            tt = tt[tt['resFlag'] == 'Residential']
+
 
         xx = pd.unique(tt[y])
         for key, group in tt.groupby('name'):
-            yy = [np.log2(np.count_nonzero(group[group[y] == i][y])) for i in xx]
+            yy = [np.count_nonzero(group[group[y] == i][y]) for i in xx]
             ax.bar(xx, yy, label=key)
 
+        # ax.set(yscale="log")
         plt.xlabel('naicsInd2')
         plt.ylabel('Log - Count of Building type in each 2-digit NAICS number, greater than 100 counts')
+        if flag == 1 and i == 0:
+            plt.title('Industrial Only - major contributors')
+        elif flag == 1 and i == 1:
+            plt.title('Industrial Only - minor contributors')
+        elif flag == 0 and i == 0:
+            plt.title('Industrial and Residential - major contributors')
+        elif flag == 1 and i == 1:
+            plt.title('Industrial and Residential - minor contributors')
         ax.legend()
         plt.show()
 
@@ -300,7 +334,7 @@ def jobsOnRes(df, state = 1):
     tt[x] = tt[x].astype(str)
     xx = pd.unique(tt[x])
     yy1 = [np.sum(tt[tt[x] == i][y]) for i in xx]
-    ax = sns.barplot(xx, yy1, data=tt)
+    ax = sns.barplot(xx, yy1, data=tt, color = 'black')
     ax.set(xlabel = "NAICS number, first 2 digits", ylabel = 'Sum of Employees', title = title)
     tempDF1 = pd.DataFrame(list(zip(xx, yy1, ['Employment' for i in xx])), columns= ['x','y','flag'])
 
@@ -324,32 +358,39 @@ def jobsOnRes(df, state = 1):
 
     #Find scale value to scale second y axis
     scale = int(np.mean(yy1)/np.mean(yy2))
-    yy2Scale = yy2*scale
+    #yy2Scale = [i*scale for i in yy2]
 
-    tempDF2 = pd.DataFrame(list(zip(xx, yy2Scale,['Buildings' for i in xx])), columns= ['x','y','flag'])
+    tempDF2 = pd.DataFrame(list(zip(xx, yy2,['Buildings' for i in xx])), columns= ['x','y','flag'])
     concatDf = pd.concat([tempDF1,tempDF2])
-    ax = sns.barplot('x', 'y', data=concatDf, hue = 'flag', dodge = True, ax = ax, ci = None)
+    sns.barplot('x', 'y', data=tempDF1, dodge = True, color = 'red')
     ax.set_ylabel('Sum of Employees')
-    ax2 = ax.twinx()
-    ax2.set_ylim(ax.get_ylim())
-    ax2.set_yticklabels(np.round(ax.get_yticks()/scale, 1))
+
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
+    sns.barplot('x', 'y', data=tempDF2, dodge = True, color = 'black')
     ax2.set_ylabel('Count of Buildings')
-    ax2.grid(False)
-    ax.set(xlabel = "NAICS number, first 2 digits", ylabel = 'Count of Employees', title = title)
+    ax.set(ylabel = 'Count of Employees', title = title)
+    ax2.set(xlabel = "NAICS number, first 2 digits", ylabel = 'Count of Buildings')
+    ax.set_xlabel(' ')
 
-
-def groupedBoxplots(df):
+def groupedBoxplots(df, title = '', yy = 'moneyPerE'):
     #make grouped boxplots comparing discriptive statistics of companies by naics
 
-    yy = 'payroll'#'moneyPerE'#'moneyPerE' #logMaxE, logPayroll
+    #yy = 'moneyPerE'#'moneyPerE'#'payroll' #logMaxE, logPayroll
     df[yy].replace(0,np.nan,inplace = True)
     df['naicsInd2'] = df['naicsInd2'].astype(str)
 
     fig, ax = plt.subplots(figsize=(10, 4))
     ax = sns.boxplot(x='naicsInd2', y=yy, data=df)
     ax.set(yscale="log")
+    ax.set_ylabel(yy, fontsize = 20)
+    ax.set_xlabel('naicsInd2', fontsize = 20)
+    # locs, labels = plt.xticks()
+    # plt.xticks(df['naicsInd2'].sort_values().unique(), naicsLookup())
+
+    ax.set(title =  title + ' Boxplots comparing ' + yy + ' per NAICS.  Total Avg = ' + str(df[yy].mean().__round__(2)))
 
 
 df = sqlAlchemyTest()
+
 
 print('tt')
