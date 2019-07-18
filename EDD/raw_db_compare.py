@@ -22,6 +22,8 @@ def importFromRaw(pat):
     # df.columns = ['OBJECTID', 'dba', 'address', 'city', 'zip', 'emp1', 'emp2', 'emp3', 'payroll', 'naics', 'own',
     #               'meei', 'init', 'end', 'react', 'x', 'y']
     df = df.replace(' ', np.nan)
+    for i in ['payroll', 'emp1', 'emp2', 'emp3']:
+        df[i] = pd.to_numeric(df[i])
     return df
 
 
@@ -52,7 +54,7 @@ def summaryStatistics(df1, df2, uniqueId = 'emp_id'):
         out2.append(np.sum(df2[i]>highThresh2[i]))
     df.loc[len(df)]= ['Num Outliers (>3sig)', np.sum(out1), np.sum(out2), np.sum(out2)- np.sum(out1)]
     print(tabulate.tabulate(df,headers = 'keys', tablefmt = 'psql',showindex=False))
-    df.to_csv(r'C:\Users\skl\Desktop\temp\summary.csv')
+    # df.to_csv(r'C:\Users\skl\Desktop\temp\summary.csv')
 
 def columnSum(df1,df2):
     #Column names present in each database
@@ -85,7 +87,7 @@ def columnSum(df1,df2):
     df.loc[len(df)] = nanCount2
 
     print(tabulate.tabulate(df, headers='keys', tablefmt='psql', showindex=False))
-    df.to_csv(r'C:\Users\skl\Desktop\temp\ColSummary.csv')
+    # df.to_csv(r'C:\Users\skl\Desktop\temp\ColSummary.csv')
 
 
 def digData(tt):
