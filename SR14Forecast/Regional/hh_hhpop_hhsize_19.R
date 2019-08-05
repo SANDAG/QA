@@ -196,9 +196,27 @@ for(i in jur_list[1:2]) {
 }
 
 
+long <- reshape2::melt(plotdat, id.vars = c("Year","geotype","geozone","ds_id","yr_id","HH_HHs"))
+long$variable2 = factor(long$variable, levels=c("Household_Pop","Num_Households", "Persons_per_Household"))
+plot <- ggplot(data=long, aes(y=value, x=Year,group=variable2,label=value)) + geom_point() + geom_line()  + geom_text_repel() +
+  #facet_grid(variable2 ~ .,scales="free_y")
+  facet_wrap( variable2 ~., ncol=1,scales="free_y") +
+  theme(strip.text.x = element_text(size=12)) +
+  ggtitle(long$geozone[1])
+ggsave(plot, width=10, height=8, dpi=100, 
+       file= paste(results,'hh_hhpop_hhsize ',
+                   plotdat$geozone[1], ".png", sep=''))
 
+df = mtcars
+ggplot(data = df, aes(x = mpg, y = hp)) + 
+  geom_point(color='blue') +
+  geom_smooth(method = "lm", se = FALSE)
 
+df = subset(long,variable %in% c('Household_Pop','Num_Households'))
 
+ggplot(data = df, aes(x = Year, y = value)) + 
+  geom_point(color='blue') +
+  geom_smooth(method = "lm", se = FALSE)
 
 
 
