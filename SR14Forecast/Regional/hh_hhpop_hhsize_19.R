@@ -56,77 +56,78 @@ results<-"plots\\hh_variable_comparison\\PopvsHH_19only2\\"
 ifelse(!dir.exists(file.path(maindir,results)), 
        dir.create(file.path(maindir,results), 
                   showWarnings = TRUE, recursive=TRUE),0)
-# library(ggrepel)
-# for(i in jur_list) {
-for(i in jur_list[1:2]) {
-  plotdat <- subset(hh,geozone==i & datasource_id %in% c(19))
-  plotdat$yr_id = plotdat$Year
-  plotdat$Year = as.factor(plotdat$Year)
-  plotdat$YearHHpop <- paste(plotdat$Year,plotdat$Household_Pop,sep=',')
-  #plot <- ggplot(data=plotdat, aes(y=Num_Households, x=Household_Pop,label=Year)) + 
-  #plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Household_Pop,label=Year)) + 
-  #plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Num_Households,label=Year)) +
-  plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Num_Households,label=YearHHpop)) +
-    #geom_point(aes(size=Persons_per_Household)) + geom_line() +
-    geom_point() + geom_line() +
-    #scale_size(range=c(2,3.6),expand=c(2,0),breaks=c(2,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6),labels=c(2,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6),guide="legend") +
-    # scale_size(range = c(2.4, 2.6)) +
-    # geom_text(aes(label=Year),hjust=0.5, vjust=0.5) +
-    geom_text_repel() +
-    #geom_label_repel(aes(label = Year),
-    #                 box.padding   = 0.35, 
-    #                 point.padding = 0.5,
-    #                 segment.color = 'grey50') +
-    theme(legend.position = "bottom") +
-    #labs(subtitle="Household Pop, Households, and Household Size", 
-    #     x="Household Population", 
-    #     y="Number of Households", 
-    #     title=i
-         #caption = paste("Source: Demographic Warehouse Datsource id=", 
-         #                toString(unique(plotdat$datasource_id),sep=''))
-    # ) +
-    labs(subtitle="Household Pop, Households, and Household Size", 
-         x="Num_Households", 
-         y="Persons_per_Household", 
-         title=i
-         #caption = paste("Source: Demographic Warehouse Datsource id=", 
-         #                toString(unique(plotdat$datasource_id),sep=''))
-    ) +
-    # scale_y_continuous(limits=c(0, 8)) +
-    scale_y_continuous(limits=c(2, 3.6)) +
-    theme(plot.subtitle=element_text(size=12, hjust=0.5, face="italic", color="black"))
-  output_table = plotdat[,c("Year","Num_Households","Household_Pop","Persons_per_Household")]
-  # t1 = gridExtra::tableGrob(output_table)
-  
-  
-  
-  tt <- ttheme_default(colhead = 
-                         # first unit is the wdith, and second the height
-                         list(padding=unit.c(unit(4, "mm"), unit(10, "mm"))))
-  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-  title <- textGrob(paste("HH Pop and Size, ds id ",datasource_id,sep=""),
-                    gp=gpar(fontsize=16))
-  title <- textGrob('',
-                    gp=gpar(fontsize=16))
-  padding <- unit(5,"mm")
-  table <- gtable_add_rows(
-    tbl, 
-   heights = grobHeight(title) + padding,
-    pos = 0)
-  table <- gtable_add_grob(
-    table, 
-   title, 
-    1, 1, 1, ncol(table))
-  output<-grid.arrange(plot,table,as.table=TRUE,nrow = 2,#layout_matrix=lay,
-                       bottom = textGrob(paste("Source:", 
-                                               "SR14: demographic warehouse: fact.population table ",datasource_id,sep=''),
-                                         x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
-  ggsave(output, width=6, height=8, dpi=100, 
-         file= paste(results,'hh_hhpop_hhsize ',
-                     plotdat$geozone[1], ".png", sep=''))
-  
-}
+# # library(ggrepel)
+# # for(i in jur_list) {
+# for(i in jur_list[1:2]) {
+#   plotdat <- subset(hh,geozone==i & datasource_id %in% c(19))
+#   plotdat$yr_id = plotdat$Year
+#   plotdat$Year = as.factor(plotdat$Year)
+#   plotdat$YearHHpop <- paste(plotdat$Year,plotdat$Household_Pop,sep=',')
+#   #plot <- ggplot(data=plotdat, aes(y=Num_Households, x=Household_Pop,label=Year)) + 
+#   #plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Household_Pop,label=Year)) + 
+#   #plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Num_Households,label=Year)) +
+#   plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Num_Households,label=YearHHpop)) +
+#     #geom_point(aes(size=Persons_per_Household)) + geom_line() +
+#     geom_point() + geom_line() +
+#     #scale_size(range=c(2,3.6),expand=c(2,0),breaks=c(2,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6),labels=c(2,2.2,2.4,2.6,2.8,3.0,3.2,3.4,3.6),guide="legend") +
+#     # scale_size(range = c(2.4, 2.6)) +
+#     # geom_text(aes(label=Year),hjust=0.5, vjust=0.5) +
+#     geom_text_repel() +
+#     #geom_label_repel(aes(label = Year),
+#     #                 box.padding   = 0.35, 
+#     #                 point.padding = 0.5,
+#     #                 segment.color = 'grey50') +
+#     theme(legend.position = "bottom") +
+#     #labs(subtitle="Household Pop, Households, and Household Size", 
+#     #     x="Household Population", 
+#     #     y="Number of Households", 
+#     #     title=i
+#          #caption = paste("Source: Demographic Warehouse Datsource id=", 
+#          #                toString(unique(plotdat$datasource_id),sep=''))
+#     # ) +
+#     labs(subtitle="Household Pop, Households, and Household Size", 
+#          x="Num_Households", 
+#          y="Persons_per_Household", 
+#          title=i
+#          #caption = paste("Source: Demographic Warehouse Datsource id=", 
+#          #                toString(unique(plotdat$datasource_id),sep=''))
+#     ) +
+#     # scale_y_continuous(limits=c(0, 8)) +
+#     scale_y_continuous(limits=c(2, 3.6)) +
+#     theme(plot.subtitle=element_text(size=12, hjust=0.5, face="italic", color="black"))
+#   output_table = plotdat[,c("Year","Num_Households","Household_Pop","Persons_per_Household")]
+#   # t1 = gridExtra::tableGrob(output_table)
+#   
+#   
+#   
+#   tt <- ttheme_default(colhead = 
+#                          # first unit is the wdith, and second the height
+#                          list(padding=unit.c(unit(4, "mm"), unit(10, "mm"))))
+#   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+#   title <- textGrob(paste("HH Pop and Size, ds id ",datasource_id,sep=""),
+#                     gp=gpar(fontsize=16))
+#   title <- textGrob('',
+#                     gp=gpar(fontsize=16))
+#   padding <- unit(5,"mm")
+#   table <- gtable_add_rows(
+#     tbl, 
+#    heights = grobHeight(title) + padding,
+#     pos = 0)
+#   table <- gtable_add_grob(
+#     table, 
+#    title, 
+#     1, 1, 1, ncol(table))
+#   output<-grid.arrange(plot,table,as.table=TRUE,nrow = 2,#layout_matrix=lay,
+#                        bottom = textGrob(paste("Source:", 
+#                                                "SR14: demographic warehouse: fact.population table ",datasource_id,sep=''),
+#                                          x = .01, y = 0.5, just = 'left', gp = gpar(fontsize = 6.5)))
+#   ggsave(output, width=6, height=8, dpi=100, 
+#          file= paste(results,'hh_hhpop_hhsize ',
+#                      plotdat$geozone[1], ".png", sep=''))
+#   
+# }
  
+names(hh) <- c("Year","geotype","geozone","Num_Households","Household_Pop","Persons_per_Household","ds_id")
 
 
 for(i in jur_list[1:2]) {
@@ -160,6 +161,44 @@ for(i in jur_list[1:2]) {
                      plotdat$geozone[1], ".png", sep=''))
   
 }
+
+
+for(i in jur_list[1:2]) {
+  plotdat <- subset(hh,geozone==i & datasource_id %in% c(19))
+  plotdat$yr_id = plotdat$Year
+  plotdat$Year = as.factor(plotdat$Year)
+  # plotdat$YearHHpop <- paste(plotdat$Year,plotdat$Household_Pop,sep=',')
+  plotdat$HH_HHs <- paste(plotdat$Num_Households,plotdat$Persons_per_Household,sep=',')
+  
+  plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Num_Households,label=HH_HHs)) +
+    facet_grid(Year ~ Household_Pop)+
+    geom_point() + geom_line() +
+    geom_text_repel() +
+    theme(legend.position = "bottom") +
+    labs(subtitle="Household Pop, Households, and Household Size", 
+         x="Num_Households", 
+         y="Persons_per_Household", 
+         title=i
+    ) +
+    scale_y_continuous(limits=c(2, 3.6)) +
+    theme(plot.subtitle=element_text(size=12, hjust=0.5, face="italic", color="black"))
+
+  
+  title <- textGrob(paste("HH Pop and Size, ds id ",datasource_id,sep=""),
+                    gp=gpar(fontsize=16))
+  title <- textGrob('',
+                    gp=gpar(fontsize=16))
+  
+  ggsave(plot, width=10, height=8, dpi=100, 
+         file= paste(results,'hh_hhpop_hhsize ',
+                     plotdat$geozone[1], ".png", sep=''))
+  
+}
+
+
+
+
+
 
 
 
