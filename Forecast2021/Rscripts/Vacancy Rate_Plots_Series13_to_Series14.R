@@ -25,12 +25,24 @@ sourcename <- data.frame()
 # change these 4 lines depending on datasource ids
 # **********************************************************
 ############################################################
-datasource_ids = c(13,28)
-datasource_names = c("Series 13 (ds 13)","Series 14 (ds 28)")
-datasource_name_short = c("Series 13","Series 14")
-datasource_outfolder = "vacancyds28"
+# datasource_ids = c(13,28)
+# datasource_names = c("Series 13 (ds 13)","Series 14 (ds 28)")
+# datasource_name_short = c("Series 13","Series 14")
+# datasource_outfolder = "vacancyds28"
 ############################################################
 # **********************************************************
+
+
+# change these 4 lines depending on datasource ids
+# **********************************************************
+############################################################
+datasource_ids = c(17,28)
+datasource_names = c("Series 14 (ds 17)","Series 14 (ds 28)")
+datasource_name_short = c("Series 14","Series 14")
+datasource_outfolder = "vacancy_ds17_and_ds28"
+############################################################
+# **********************************************************
+
 
 for(i in 1:length(datasource_ids)) {
   
@@ -110,8 +122,10 @@ vacancy$vacancy_rate_effective <-round(vacancy$vacancy_rate_effective,digits=4)
 vacancy$available <- NULL
 vacancy$occupiable_unit <- NULL 
 
-
-vacancy$unoccupiable[vacancy$series == datasource_names[1]] <- NA
+# star
+if (datasource_ids[1]==13) {
+  vacancy$unoccupiable[vacancy$series == datasource_names[1]] <- NA
+}
 vacancy$vacant_units <- vacancy$units - vacancy$hh
 
 
@@ -196,7 +210,8 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
   df$pc_vacancy_rate_wo_unoccupiable[is.nan(df$pc_vacancy_rate_wo_unoccupiable)] <- NA
   df$series <- as.factor(df$series)
   df$vacant_units <- df$units - df$hh
-  df$pc_vacancy_rate_wo_unoccupiable[df$series == datasource_names[1]] <- NA
+  if (datasource_ids[1]==13) {
+    df$pc_vacancy_rate_wo_unoccupiable[df$series == datasource_names[1]] <- NA}
   df$geozone[df$geozone == "~San Diego Region"] <- "San Diego Region"
   
   hh_and_vacant_units <- df %>% select("series", "geozone","yr_id","geotype","name","hh","vacant_units")
@@ -209,7 +224,8 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
   
   long2$variable[long2$variable == 'pc_vacancy_rate'] <- "vacancy_classic"
   long2$variable[long2$variable == 'pc_vacancy_rate_wo_unoccupiable'] <- "vacancy_eff"
-  long2<-long2[!(long2$variable=="vacancy_eff" & long2$series == datasource_names[1]),]
+  if (datasource_ids[1]==13) {
+    long2<-long2[!(long2$variable=="vacancy_eff" & long2$series == datasource_names[1]),]}
   
   long$variable = factor(long$variable, levels=c("hh","vacant_units"))
   levels(long$variable) <- c("Occupied Units","Vacant Units")
@@ -279,13 +295,19 @@ vacancy_plot_all_in_one <- function(geo,ylim_min,ylim_max,geo_name,status,pre,su
 
     # ugly code to make nice tables!
     # set years 2012 to NA for series 14 and year 2018 to NA for series 13
-    d2012 <- data.frame("2012",NA,NA,NA,NA,NA,NA)
-    names(d2012) <- c("increment","units","occupied","un_occup","vacant","vac_eff","vacancy")
-    d2018 <- data.frame("2018",NA,NA,NA,NA,NA,NA)
-    names(d2018) <- c("increment","units","occupied","un_occup","vacant","vac_eff","vacancy")
+    if (datasource_ids[1]==13) {
+      d2012 <- data.frame("2012",NA,NA,NA,NA,NA,NA)
+      names(d2012) <- c("increment","units","occupied","un_occup","vacant","vac_eff","vacancy")
+      d2018 <- data.frame("2018",NA,NA,NA,NA,NA,NA)
+      names(d2018) <- c("increment","units","occupied","un_occup","vacant","vac_eff","vacancy")
+      out132020 <- rbind(out13, d2018)
+      out142020 <- rbind(out14, d2012)}
     
-    out132020 <- rbind(out13, d2018)
-    out142020 <- rbind(out14, d2012)
+    if (datasource_ids[1]==17) {
+      d2016 <- data.frame("2016",NA,NA,NA,NA,NA,NA)
+      names(d2016) <- c("increment","units","occupied","un_occup","vacant","vac_eff","vacancy")
+      out132020 <- rbind(out13)
+      out142020 <- rbind(out14, d2016)}
     
     # order by year
     out132020 <- out132020[order(out132020$increment),]
@@ -345,7 +367,7 @@ plot_outliers_list <- unique(plot_outliers$geozone)
 
 
 for(i in 1:length(geo_list)) {
-# for(i in 1:12) { # test plot loop for CPA outlier
+#for(i in 1:2) { # test plot loop for CPA outlier
   
     plotdat = subset(vacancy, vacancy$geozone==geo_list[i])
     
