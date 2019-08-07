@@ -1,41 +1,17 @@
 # vacancy rate plots compared to Series 13
 
-
-# change these 4 lines depending on datasource ids
-# **********************************************************
-############################################################
-datasource_ids = c(13,28)
-datasource_names = c("Series 13 (ds 13)","Series 14 (ds 28)")
-datasource_name_short = c("Series 13","Series 14")
-datasource_outfolder = "vacancyds28"
-############################################################
-# **********************************************************
-
-
-# change these 4 lines depending on datasource ids
-# **********************************************************
-############################################################
-# datasource_ids = c(17,28)
-# datasource_names = c("Series 14 (ds 17)","Series 14 (ds 28)")
-# datasource_name_short = c("Series 14","Series 14")
-# datasource_outfolder = "vacancy_ds17_and_ds28"
-############################################################
-# **********************************************************
+source("config.R")
+source("../Queries/readSQL.R")
+source("common_functions.R")
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
 
-pkgTest <- function(pkg){
-  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg))
-    install.packages(new.pkg, dep = TRUE)
-  sapply(pkg, require, character.only = TRUE)}
 packages <- c("RODBC","tidyverse","gridExtra","grid","gtable") #"ggsci"
 pkgTest(packages)
 
 # get data from database
-source("../Queries/readSQL.R")
-source("common_functions.R")
+
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
 
@@ -47,17 +23,11 @@ sourcename <- data.frame()
 for(i in 1:length(datasource_ids)) {
   
   # get the name of the datasource
-  ds_sql = getSQL("../Queries/datasource_name.sql")
-  ds_sql <- gsub("ds_id", datasource_ids[i],ds_sql)
-  datasource_name<-sqlQuery(channel,ds_sql,stringsAsFactors = FALSE)
-  
+  datasource_name <- readDB("../Queries/datasource_name.sql",datasource_ids[i])
   sourcename <- rbind(sourcename,datasource_name)
   
   # get vacancy data
-  Vacancy_sql = getSQL("../Queries/vacancy_ds_id.sql")
-  Vacancy_sql <- gsub("ds_id", datasource_ids[i],Vacancy_sql)
-  vac<-sqlQuery(channel,Vacancy_sql,stringsAsFactors = FALSE)
-  
+  vac <- readDB("../Queries/vacancy_ds_id.sql",datasource_ids[i])
   vac$datasource_id = datasource_ids[i]
   vac$series = datasource_names[i]
   vacancy <- rbind(vacancy,vac)
@@ -65,27 +35,19 @@ for(i in 1:length(datasource_ids)) {
 }
 
 # get cpa id
-geo_id_sql = getSQL("../Queries/get_cpa_and_jurisdiction_id.sql")
-geo_id<-sqlQuery(channel,geo_id_sql,stringsAsFactors = FALSE)
-
+geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_ids[i])
 odbcClose(channel)
 
 # fix names of sr13 cpas to match sr14 cpas
 vacancy <- rename_sr13_cpas(vacancy)
 
-
-
 # merge vacancy with datasource name
 vacancy <- merge(x = vacancy, y =sourcename[ , c("name","datasource_id")],by = "datasource_id", all.x = TRUE)
-
 
 # cleanup
 rm(vac,datasource_name,sourcename)
 
-
-# rename San Diego region to 'San Diego Region' and then aggregate
-# since city of san diego and san diego region are both named san diego
-
+# rename San Diego region to '~San Diego Region'
 levels(vacancy$geozone) <- c(levels(vacancy$geozone), "~San Diego Region")
 vacancy$geozone[vacancy$geotype=='region'] <- '~San Diego Region'
 
@@ -113,10 +75,12 @@ vacancy$vacancy_rate_effective <-round(vacancy$vacancy_rate_effective,digits=4)
 vacancy$available <- NULL
 vacancy$occupiable_unit <- NULL 
 
-# star
+# for series 13 there are no unoccupiable units
 if (datasource_ids[1]==13) {
   vacancy$unoccupiable[vacancy$series == datasource_names[1]] <- NA
 }
+
+# calculate vacant units
 vacancy$vacant_units <- vacancy$units - vacancy$hh
 
 

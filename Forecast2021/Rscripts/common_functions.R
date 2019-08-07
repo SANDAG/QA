@@ -12,11 +12,25 @@ rename_sr13_cpas <- function(df) {
   return(df)
 }
 
-
+# clean up cpa names removing asterick and dashes etc.
 rm_special_chr <- function(df) {
-  # clean up cpa names removing asterick and dashes etc.
   df$geozone <- gsub("\\*","",df$geozone)
   df$geozone <- gsub("\\-","_",df$geozone)
   df$geozone <- gsub("\\:","_",df$geozone)
+  return(df)
+}
+
+# load packages
+pkgTest <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dep = TRUE)
+  sapply(pkg, require, character.only = TRUE)}
+
+# get data from database
+readDB <- function(sql_query,datasource_id_to_use){
+  ds_sql = getSQL(sql_query)
+  ds_sql <- gsub("ds_id",datasource_id_to_use,ds_sql)
+  df<-sqlQuery(channel,ds_sql,stringsAsFactors = FALSE)
   return(df)
 }
