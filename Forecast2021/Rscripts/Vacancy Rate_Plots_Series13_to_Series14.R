@@ -1,6 +1,27 @@
 # vacancy rate plots compared to Series 13
 
 
+# change these 4 lines depending on datasource ids
+# **********************************************************
+############################################################
+datasource_ids = c(13,28)
+datasource_names = c("Series 13 (ds 13)","Series 14 (ds 28)")
+datasource_name_short = c("Series 13","Series 14")
+datasource_outfolder = "vacancyds28"
+############################################################
+# **********************************************************
+
+
+# change these 4 lines depending on datasource ids
+# **********************************************************
+############################################################
+# datasource_ids = c(17,28)
+# datasource_names = c("Series 14 (ds 17)","Series 14 (ds 28)")
+# datasource_name_short = c("Series 14","Series 14")
+# datasource_outfolder = "vacancy_ds17_and_ds28"
+############################################################
+# **********************************************************
+
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
 
@@ -14,6 +35,7 @@ pkgTest(packages)
 
 # get data from database
 source("../Queries/readSQL.R")
+source("common_functions.R")
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
 
@@ -22,40 +44,20 @@ vacancy <- data.frame()
 sourcename <- data.frame()
 
 
-# change these 4 lines depending on datasource ids
-# **********************************************************
-############################################################
-# datasource_ids = c(13,28)
-# datasource_names = c("Series 13 (ds 13)","Series 14 (ds 28)")
-# datasource_name_short = c("Series 13","Series 14")
-# datasource_outfolder = "vacancyds28"
-############################################################
-# **********************************************************
-
-
-# change these 4 lines depending on datasource ids
-# **********************************************************
-############################################################
-datasource_ids = c(17,28)
-datasource_names = c("Series 14 (ds 17)","Series 14 (ds 28)")
-datasource_name_short = c("Series 14","Series 14")
-datasource_outfolder = "vacancy_ds17_and_ds28"
-############################################################
-# **********************************************************
-
-
 for(i in 1:length(datasource_ids)) {
   
   # get the name of the datasource
   ds_sql = getSQL("../Queries/datasource_name.sql")
   ds_sql <- gsub("ds_id", datasource_ids[i],ds_sql)
   datasource_name<-sqlQuery(channel,ds_sql,stringsAsFactors = FALSE)
+  
   sourcename <- rbind(sourcename,datasource_name)
   
   # get vacancy data
   Vacancy_sql = getSQL("../Queries/vacancy_ds_id.sql")
   Vacancy_sql <- gsub("ds_id", datasource_ids[i],Vacancy_sql)
   vac<-sqlQuery(channel,Vacancy_sql,stringsAsFactors = FALSE)
+  
   vac$datasource_id = datasource_ids[i]
   vac$series = datasource_names[i]
   vacancy <- rbind(vacancy,vac)
@@ -68,18 +70,10 @@ geo_id<-sqlQuery(channel,geo_id_sql,stringsAsFactors = FALSE)
 
 odbcClose(channel)
 
-###############################################################################
-# rename series 13 CPA to the same name as Series 14 CPA names
-vacancy$geozone[vacancy$geozone == "City Heights"] <- "Mid-City:City Heights"
-vacancy$geozone[vacancy$geozone == "Normal Heights"] <- "Mid-City:Normal Heights"
-vacancy$geozone[vacancy$geozone == "Kensington-Talmadge"] <- "Mid-City:Kensington-Talmadge"
-vacancy$geozone[vacancy$geozone == "Ncfua Reserve"] <- "NCFUA Reserve"
-vacancy$geozone[vacancy$geozone == "Ncfua Subarea 2"] <- "NCFUA Subarea 2"
-vacancy$geozone[vacancy$geozone == "Nestor"] <- "Otay Mesa-Nestor"
-vacancy$geozone[vacancy$geozone == "Encanto"] <- "Southeastern:Encanto Neighborhoods"
-vacancy$geozone[vacancy$geozone == "Eastern Area"] <- "Mid-City:Eastern Area"
-vacancy$geozone[vacancy$geozone == "Southeastern San Diego"] <- "Southeastern:Southeastern San Diego"
-###############################################################################
+# fix names of sr13 cpas to match sr14 cpas
+vacancy <- rename_sr13_cpas(vacancy)
+
+
 
 # merge vacancy with datasource name
 vacancy <- merge(x = vacancy, y =sourcename[ , c("name","datasource_id")],by = "datasource_id", all.x = TRUE)
@@ -109,10 +103,7 @@ vacancy$id[vacancy$geozone=="~San Diego Region"] <- 9999
 #subset(t,n>16)
 
 # clean up cpa names removing asterick and dashes etc.
-vacancy$geozone <- gsub("\\*","",vacancy$geozone)
-vacancy$geozone <- gsub("\\-","_",vacancy$geozone)
-vacancy$geozone <- gsub("\\:","_",vacancy$geozone)
-
+vacancy <- rm_special_chr(vacancy)
 
 #calculate the effective vacancy rate by subtracting out unoccupiable units
 vacancy$occupiable_unit<-vacancy$units-vacancy$unoccupiable
@@ -366,8 +357,8 @@ plot_outliers_list <- unique(plot_outliers$geozone)
 
 
 
-for(i in 1:length(geo_list)) {
-#for(i in 1:2) { # test plot loop for CPA outlier
+#for(i in 1:length(geo_list)) {
+for(i in 1:5) { # test plot loop for CPA outlier
   
     plotdat = subset(vacancy, vacancy$geozone==geo_list[i])
     
