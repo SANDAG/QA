@@ -8,7 +8,7 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
 
 #load packages
-packages <- c("data.table", "sqldf", "rstudioapi", "RODBC", "tidyverse", "reshape2", 
+packages <- c("sqldf", "rstudioapi", "RODBC", "tidyverse", "reshape2", 
               "stringr")
 pkgTest(packages)
 
@@ -22,7 +22,7 @@ dem<-sqlQuery(channel,dem_sql,stringsAsFactors = FALSE)
 odbcClose(channel)
 
 #order the data in the file
-dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
+#dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
 
 #deletes extra characters in geozone for matching later
 dem <- rm_special_chr(dem)
@@ -130,7 +130,7 @@ setnames(dem_ethn, old=c("short_name", "yr_id", "pop"),new=c("Ethnicity", "Year"
 summary(dem_age$geozone_pop)
 
 head(dem_gender[dem_gender$geotype=="region",],10)
-head(dem_gender[is.na(dem_gender$chg_pct),],10)
+head(dem_gender[is.na(dem_gender$chg_pct),],18)
 
 #recode wrong values for 2018 because of lag calculation from 2050-2018 records
 #recode NA and NAN values for 2018 change
