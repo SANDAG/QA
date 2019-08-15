@@ -22,9 +22,10 @@ pkgTest(packages)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
-ds_id = 28
+ds_id = 29
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+# hh_sql = getSQL("C:/Users/jyen/Documents/QA/SR14Forecast/Queries/hh_hhp_hhs_ds_id.sql")
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
 hh_sql <- gsub("ds_id", ds_id, hh_sql)
 hh<-sqlQuery(channel,hh_sql)
