@@ -130,53 +130,64 @@ ifelse(!dir.exists(file.path(maindir,results)),
 names(hh) <- c("Year","geotype","geozone","Num_Households","Household_Pop","Persons_per_Household","ds_id")
 
 
-# for(i in jur_list[1:2]) {
-#   plotdat <- subset(hh,geozone==i & datasource_id %in% c(19))
-#   plotdat$yr_id = plotdat$Year
-#   plotdat$Year = as.factor(plotdat$Year)
-#   # plotdat$YearHHpop <- paste(plotdat$Year,plotdat$Household_Pop,sep=',')
-#   plotdat$HH_HHs <- paste(plotdat$Num_Households,plotdat$Persons_per_Household,sep=',')
-#   
-#   plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Num_Households,label=HH_HHs)) +
-#     facet_grid(Year ~ Household_Pop)+
-#     geom_point() + geom_line() +
-#     geom_text_repel() +
-#     theme(legend.position = "bottom") +
-#     labs(subtitle="Household Pop, Households, and Household Size", 
-#          x="Num_Households", 
-#          y="Persons_per_Household", 
-#          title=i
-#     ) +
-#     scale_y_continuous(limits=c(2, 3.6)) +
-#     theme(plot.subtitle=element_text(size=12, hjust=0.5, face="italic", color="black"))
-# 
-#   
-#   title <- textGrob(paste("HH Pop and Size, ds id ",datasource_id,sep=""),
-#                     gp=gpar(fontsize=16))
-#   title <- textGrob('',
-#                     gp=gpar(fontsize=16))
-#   
-#   ggsave(plot, width=10, height=8, dpi=100, 
-#          file= paste(results,'hh_hhpop_hhsize ',
-#                      plotdat$geozone[1], ".png", sep=''))
-#   
-# }
+for(i in jur_list[1:2]) {
+  plotdat <- subset(hh,geozone==i & datasource_id %in% c(19))
+  plotdat$yr_id = plotdat$Year
+  plotdat$Year = as.factor(plotdat$Year)
+  # plotdat$YearHHpop <- paste(plotdat$Year,plotdat$Household_Pop,sep=',')
+  plotdat$HH_HHs <- paste(plotdat$Num_Households,plotdat$Persons_per_Household,sep=',')
 
+  plot <- ggplot(data=plotdat, aes(y=Persons_per_Household, x=Num_Households,label=HH_HHs)) +
+    facet_grid(Year ~ Household_Pop)+
+    geom_point() + geom_line() +
+    geom_text_repel() +
+    theme(legend.position = "bottom") +
+    labs(subtitle="Household Pop, Households, and Household Size",
+         x="Num_Households",
+         y="Persons_per_Household",
+         title=i
+    ) +
+    scale_y_continuous(limits=c(2, 3.6)) +
+    theme(plot.subtitle=element_text(size=12, hjust=0.5, face="italic", color="black"))
+
+
+  title <- textGrob(paste("HH Pop and Size, ds id ",datasource_id,sep=""),
+                    gp=gpar(fontsize=16))
+  title <- textGrob('',
+                    gp=gpar(fontsize=16))
+
+  ggsave(plot, width=10, height=8, dpi=100,
+         file= paste(results,'hh_hhpop_hhsize ',
+                     plotdat$geozone[1], ".png", sep=''))
+
+}
 
 long <- reshape2::melt(plotdat, id.vars = c("Year","geotype","geozone","ds_id","yr_id","HH_HHs"))
 long$variable2 = factor(long$variable, levels=c("Household_Pop","Num_Households", "Persons_per_Household"))
+
+# setting individual y axis limits for "Persons_per_Household"
+long <- data.table(long)
+long[variable2 == "Persons_per_Household", y_min := 1]
+long[variable2 == "Persons_per_Household", y_max := 5]
+
 plot <- ggplot(data=long, aes(y=value, x=Year,group=variable2)) + geom_point() + geom_line()  + 
   #facet_grid(variable2 ~ .,scales="free_y")
   geom_text(aes(label=value),size = 4, hjust=1, vjust=-0.7) +
   facet_wrap( variable2 ~., ncol=1,scales="free_y") +
-  theme(strip.text.x = element_text(size=15), axis.text.x = element_text(size=12), axis.text.y = element_text(size=12)
-        , axis.title.x = element_blank(), axis.title.y = element_blank()) +
-  ggtitle(long$geozone[1])+
-  theme(plot.title = element_text(size = 18, face = "bold"))
+  theme(strip.text.x = element_text(size=15), 
+        axis.text.x = element_text(size=12), 
+        axis.text.y = element_text(size=12),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) +
+  ggtitle(paste(long$geozone[1],"_ds",datasource_id,sep="")) +
+  theme(plot.title = element_text(size = 18, face = "bold")) +
+  geom_blank(aes(y = y_min)) +
+  geom_blank(aes(y = y_max))
 
 ggsave(plot, width=9, height=16, dpi=100, 
        file= paste(results,'hh_hhpop_hhsize ',
                    plotdat$geozone[1], ".png", sep=''))
+
 
 df = mtcars
 ggplot(data = df, aes(x = mpg, y = hp)) + 

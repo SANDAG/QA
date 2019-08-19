@@ -14,6 +14,10 @@ getSQL <- function(filepath)
     {
       line <- paste(sub("--","/*",line),"*/")
     }
+    if(grepl("USE",line) == TRUE)
+    {
+      line <- paste(sub("USE","/*",line),"*/")
+    }
     
     sql.string <- paste(sql.string, line)
   }
