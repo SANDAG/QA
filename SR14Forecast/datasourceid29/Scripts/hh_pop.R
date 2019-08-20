@@ -10,7 +10,7 @@ source("../Queries/readSQL.R")
 source("common_functions.R")
 
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice", "gtable")
+              "stringr","gridExtra","grid","lattice", "gtable","tidyverse")
 pkgTest(packages)
 
 ###setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -65,14 +65,19 @@ odbcClose(channel)
 # fix names of sr13 cpas to match sr14 cpas
 #hhp <- rename_sr13_cpas(hhp)
 
-hhp <- subset(hhp, yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
+hhp <- subset(hhp, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
 
 head(hhp)
-hhp <- hhp[order(hhp$geotype,hhp$geozone,hhp$yr_id),]
+hhp <- hhp[order(hhp$datasource_id,hhp$geotype,hhp$geozone,hhp$yr_id),]
 hhp$N_chg <- ave(hhp$hhp, factor(hhp$geozone), FUN=function(x) c(NA,diff(x)))
 hhp$N_pct <- (hhp$N_chg / lag(hhp$hhp))*100
 hhp$N_pct <- round(hhp$N_pct, digits = 2)
 
+# write.csv(hhp,'hhp.csv')
+
+
+hhp$N_chg[hhp$yr_id == 2012] <- 0
+hhp$N_pct[hhp$yr_id == 2012] <- 0
 hhp$N_chg[hhp$yr_id == 2016] <- 0
 hhp$N_pct[hhp$yr_id == 2016] <- 0
 hhp$N_pct[is.nan(hhp$N_pct)] <- 0
@@ -121,44 +126,88 @@ hhp_jur$N <-  hhp_jur$hhp
 jur_list = unique(hhp_jur[["cityname"]])
 jur_list2 = unique(hhp_jur[["cityname"]])
 
-for(i in jur_list) { #1:length(unique(hhp_jur[["cityname"]]))){
+for(i in jur_list[1:1]) { #1:length(unique(hhp_jur[["cityname"]]))){
   plotdat = subset(hhp_jur, hhp_jur$cityname==i)
+  # plotdat = subset(plotdat, datasource_id==29)
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
   plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity") + 
     geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
     labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
          y=paste("Chg in ",i,sep=''), x="Year",
-         caption=paste("Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=",ds_id,sep=''))+
+         caption=paste("Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=",
+                       datasource_ids[1]," and ",datasource_ids[2],sep=''))+
     scale_fill_manual(values = c("blue", "red")) +
-    guides(fill = guide_legend(order = 1))+
+    guides(fill = guide_legend(order = 1))+ facet_grid(. ~ datasource_id)
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+   
     theme(legend.position = "bottom",
           legend.title=element_blank())
+    
+    #output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct,plotdat$series)
+    output_table <- plotdat %>% select("yr_id","hhp","N_chg","N_pct","regN","reg","regN_pct","series")
+    
+    outt <- output_table %>% complete(series, nesting(yr_id))  
+    outt <- outt[order(outt$yr_id),] # order by year
+    # outt$name <- NULL # remove name (e.g. Barrio Logan)
+    
+    
+    lefttable <- subset(outt,series==datasource_names[1])
+    righttable <- subset(outt,series==datasource_names[2])
+    names(lefttable)[names(lefttable)=="increment"] <- datasource_name_short[1]
+    names(righttable)[names(righttable)=="increment"] <- datasource_name_short[2]
+    lefttable$series <- NULL
+    righttable$series <- NULL
+    tt <- ttheme_default(base_size = 7,colhead=list(fg_params = list(parse=TRUE)))
+    tbl1 <- tableGrob(lefttable, rows=NULL, theme=tt)
+    tbl2 <- tableGrob(righttable, rows=NULL, theme=tt)  
+    
   # ggsave(plot, file= paste(results, 'Total Household Pop',  i, ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct)
-  output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2018'] <- ''
-  output_table$plotdat.reg[output_table$plotdat.yr == 'y2018'] <- ''
-  hhptitle = paste("HH Pop ",i,sep='')
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.hhp","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg",
-                               "plotdat.regN_pct"),new=c("Year",hhptitle,"Chg", "Pct","HH Pop Region","Chg","Pct"))
-  tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
-  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-  lay <- rbind(c(1,1,1,1,1),
-               c(1,1,1,1,1),
-               c(1,1,1,1,1),
-               c(2,2,2,2,2),
-               c(2,2,2,2,2))
-    output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
-    i = gsub("\\*","",i)
-    i = gsub("\\-","_",i)
-    i = gsub("\\:","_",i)
-  ggsave(output, file= paste(results, 'total household pop', i, ds_id,".png", sep=''),
-         width=6, height=8, dpi=100)#, scale=2)
+
+  #output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2018'] <- ''
+  #output_table$plotdat.reg[output_table$plotdat.yr == 'y2018'] <- ''
+  #hhptitle = paste("HH Pop ",i,sep='')
+  #setnames(output_table, old=c("plotdat.yr_id","plotdat.hhp","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg",
+  #                             "plotdat.regN_pct"),new=c("Year",hhptitle,"Chg", "Pct","HH Pop Region","Chg","Pct"))
+  # tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
+  # tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  # lay <- rbind(c(1,1,1,1,1),
+  #              c(1,1,1,1,1),
+  #              c(1,1,1,1,1),
+  #              c(2,2,2,2,2),
+  #              c(2,2,2,2,2))
+  #   output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
+  #   i = gsub("\\*","",i)
+  #   i = gsub("\\-","_",i)
+  #   i = gsub("\\:","_",i)
+  #   
+    
+    lay <- rbind(c(1,1,1,1),
+                 c(1,1,1,1),
+                 c(1,1,1,1),
+                 c(2,2,3,3),
+                 c(2,2,3,3))
+    output<-grid.arrange(plot,tbl1,tbl2,ncol=2,as.table=TRUE,layout_matrix=lay)
+    
+    
+ ggsave(output, file= paste(results, 'total household pop', i, datasource_ids[2],".png", sep=''),
+         width=10, height=8, dpi=100)#, scale=2)
+    
+    
+    
+  #   plotout <- grid.arrange(
+  #     grobs = list(plot,tbl1,tbl2),
+  #    # widths = c(1,1,1),
+  #     layout_matrix = rbind(c(1,1),
+  #                           c(1,1),
+  #                           c(2,3)))
+  #   
+  #   
+  # ggsave(plotout, file= paste(results, 'total household pop', i, datasource_ids[2],".png", sep=''))#, scale=2)
 }
 
 
