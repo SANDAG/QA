@@ -69,8 +69,12 @@ vacancy$id[vacancy$geozone=="Not in a CPA"] <- 9999
 #calculate the effective vacancy rate by subtracting out unoccupiable units from total units
 vacancy$occupiable_unit<-vacancy$units-vacancy$unoccupiable
 vacancy$available <-(vacancy$occupiable_unit-vacancy$hh)
-vacancy$vacancy_rate_effective <-(vacancy$available/vacancy$occupiable_unit)
-vacancy$vacancy_rate_effective <-round(vacancy$vacancy_rate_effective,digits=4)
+#vacancy$vacancy_rate_effective <-(vacancy$available/vacancy$occupiable_unit)
+#vacancy$vacancy_rate_effective <-round(vacancy$vacancy_rate_effective,digits=4)
+vacancy$vacancy_rate_effective <- round(1 - (vacancy$hh/(vacancy$units-vacancy$unoccupiable)),digits=4)
+# write.csv(vacancy,'vacancy.csv')
+
+
 
 # remove unnecessary columns
 vacancy$available <- NULL
@@ -105,7 +109,7 @@ region_vacancy <- subset(vacancy,geozone=='San Diego Region')
 ##################################################################
 
 # out folder for plots
-outfolder<-paste("..\\output\\",datasource_outfolder,"\\plots3\\",sep='')
+outfolder<-paste("..\\output\\",datasource_outfolder,sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
@@ -238,13 +242,14 @@ plot_outliers_list <- unique(plot_outliers$geozone)
 
 
 # all geographies
+region = unique(subset(vacancy,geotype=='region')$geozone)
 jur_list = unique(subset(vacancy,geotype=='jurisdiction')$geozone)
 cpa_list = unique(subset(vacancy,geotype=='cpa')$geozone)
-geos <- c(jur_list,cpa_list)
+geos <- c(region,jur_list,cpa_list)
 #create pdf with all plots
-pdf(paste("vacancy","_ds",datasource_ids[2],".pdf",sep=''), 8, 8)
+pdf(paste("vacancy","_ds",datasource_ids[2],"_and_ds",datasource_ids[1],".pdf",sep=''), 8, 8)
 # loop through all geographies
-for(i in geos) {
+for(i in geos[1:5]) {
     print(i)
     watermark = 'white'
     plotsuffix <- ''
