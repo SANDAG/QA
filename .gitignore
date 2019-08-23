@@ -60,7 +60,9 @@ pysandag-master/
 .sps
 .docx
 .sav
+*.pbix
 
 # Images #
 ################
 *.png
+.Rproj.user
