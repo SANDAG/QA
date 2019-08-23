@@ -1,5 +1,3 @@
-#forecast id=29.
-#hhpop plots change
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
@@ -9,33 +7,18 @@ source("config.R")
 source("../Queries/readSQL.R")
 source("common_functions.R")
 
-packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice", "gtable","tidyverse")
+packages <- c("RODBC","tidyverse","gridExtra","grid","scales")
 pkgTest(packages)
 
-###setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-###source("../Queries/readSQL.R")
 
-###ds_id = 29
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-###hh_sql = getSQL("C:/Users/lho/Documents/QA/SR14Forecast/Queries/hh_hhp_hhs_ds_id.sql")
-###hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
-###hh_sql <- gsub("ds_id", ds_id, hh_sql)
-###hhp<-sqlQuery(channel,hh_sql)
-###odbcClose(channel)
-
-###table(hhp$yr_id)
-
-
-
 
 #create dataframes
  hhp <- data.frame()
  sourcename <- data.frame()
  hh <- data.frame()
 
-#work with AK to fix code
  for(i in 1:length(datasource_ids)) {
    # get the name of the datasource
    datasource_name <- readDB("../Queries/datasource_name.sql",datasource_ids[i])
@@ -48,22 +31,14 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
    hhp <- rbind(hhp,hh)
  }
 
-
-
-# #config contents - For reference only
-# datasource_id_current <- 28
-# datasource_ids <- c(13,28)
-# datasource_names <- c("Series 13 (ds 13)","Series 14 (ds 28)")
-# datasource_name_short <- c("Series 13","Series 14")
-# datasource_outfolder <- "vacancyds28"
-
-
 # get cpa id
 geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_ids[i])
 odbcClose(channel)
 
+rm(hh)
+
 # fix names of sr13 cpas to match sr14 cpas
-#hhp <- rename_sr13_cpas(hhp)
+hhp <- rename_sr13_cpas(hhp)
 
 hhp <- subset(hhp, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
 
@@ -91,14 +66,14 @@ colnames(hhp_cpa)[colnames(hhp_cpa)=="geozone"] <- "cpaname"
 hhp_region = subset(hhp,geotype=='region')
 colnames(hhp_region)[colnames(hhp_region)=="geozone"] <- "SanDiegoRegion"
 
-hhp_jur$reg<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id),"N_chg"]
-hhp_cpa$reg<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id),"N_chg"]
+hhp_jur$reg<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_chg"]
+hhp_cpa$reg<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_chg"]
 
-hhp_jur$regN<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id),"hhp"]
-hhp_cpa$regN<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id),"hhp"]
+hhp_jur$regN<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"hhp"]
+hhp_cpa$regN<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"hhp"]
 
-hhp_jur$regN_pct<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id),"N_pct"]
-hhp_cpa$regN_pct<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id),"N_pct"]
+hhp_jur$regN_pct<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_pct"]
+hhp_cpa$regN_pct<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_pct"]
 
 ##test Dave's qa parameters
 
@@ -131,22 +106,29 @@ for(i in jur_list[1:1]) { #1:length(unique(hhp_jur[["cityname"]]))){
   # plotdat = subset(plotdat, datasource_id==29)
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
-  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cityname)) +
+  plot<-ggplot(plotdat,aes(x=yr_id, y=N_chg,fill=cityname)) +
     geom_bar(stat = "identity") + 
-    geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
-    labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
-         y=paste("Chg in ",i,sep=''), x="Year",
-         caption=paste("Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=",
-                       datasource_ids[1]," and ",datasource_ids[2],sep=''))+
-    scale_fill_manual(values = c("blue", "red")) +
-    guides(fill = guide_legend(order = 1))+ facet_grid(. ~ datasource_id)
-    theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
-   
-    theme(legend.position = "bottom",
-          legend.title=element_blank())
+    geom_line(aes(y = reg/ravg, group=1,colour = series),size=2) +
+    labs(title=paste("Change in Household Population\n ", i,' and Region',sep=''), 
+         y=paste("Change in ",i,sep=''), x="Year",
+         caption=paste("Sources: Demographic Warehouse\n datasource_id= ",
+                       datasource_ids[1]," and ",datasource_ids[2],sep='')) + 
+    theme_bw(base_size = 14) +
+    theme(axis.title.y = element_text(face = "bold", size = 16),
+          #plot.background = element_rect(fill = "#FED633"),
+          plot.title = element_text(hjust = 0.5),
+          panel.grid.major = element_line(linetype = "dashed"),
+          panel.grid.minor = element_line(linetype = "dotted"),
+          legend.title = element_blank(),
+          # axis.text.y = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1) ) +
+    scale_fill_manual(values = c("blue", "red"))   +
+    guides(fill = guide_legend(order = 1))+ facet_grid(. ~ series) 
+    
+  
+    # theme(legend.position = "bottom",legend.title=element_blank()) +
     
     #output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct,plotdat$series)
     output_table <- plotdat %>% select("yr_id","hhp","N_chg","N_pct","regN","reg","regN_pct","series")
@@ -165,27 +147,6 @@ for(i in jur_list[1:1]) { #1:length(unique(hhp_jur[["cityname"]]))){
     tt <- ttheme_default(base_size = 7,colhead=list(fg_params = list(parse=TRUE)))
     tbl1 <- tableGrob(lefttable, rows=NULL, theme=tt)
     tbl2 <- tableGrob(righttable, rows=NULL, theme=tt)  
-    
-  # ggsave(plot, file= paste(results, 'Total Household Pop',  i, ".png", sep=''))#, scale=2)
-
-  #output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2018'] <- ''
-  #output_table$plotdat.reg[output_table$plotdat.yr == 'y2018'] <- ''
-  #hhptitle = paste("HH Pop ",i,sep='')
-  #setnames(output_table, old=c("plotdat.yr_id","plotdat.hhp","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg",
-  #                             "plotdat.regN_pct"),new=c("Year",hhptitle,"Chg", "Pct","HH Pop Region","Chg","Pct"))
-  # tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
-  # tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-  # lay <- rbind(c(1,1,1,1,1),
-  #              c(1,1,1,1,1),
-  #              c(1,1,1,1,1),
-  #              c(2,2,2,2,2),
-  #              c(2,2,2,2,2))
-  #   output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
-  #   i = gsub("\\*","",i)
-  #   i = gsub("\\-","_",i)
-  #   i = gsub("\\:","_",i)
-  #   
-    
     lay <- rbind(c(1,1,1,1),
                  c(1,1,1,1),
                  c(1,1,1,1),
@@ -193,22 +154,9 @@ for(i in jur_list[1:1]) { #1:length(unique(hhp_jur[["cityname"]]))){
                  c(2,2,3,3))
     output<-grid.arrange(plot,tbl1,tbl2,ncol=2,as.table=TRUE,layout_matrix=lay)
     
-    
  ggsave(output, file= paste(results, 'total household pop', i, datasource_ids[2],".png", sep=''),
          width=10, height=8, dpi=100)#, scale=2)
-    
-    
-    
-  #   plotout <- grid.arrange(
-  #     grobs = list(plot,tbl1,tbl2),
-  #    # widths = c(1,1,1),
-  #     layout_matrix = rbind(c(1,1),
-  #                           c(1,1),
-  #                           c(2,3)))
-  #   
-  #   
-  # ggsave(plotout, file= paste(results, 'total household pop', i, datasource_ids[2],".png", sep=''))#, scale=2)
-}
+} 
 
 
 ####CPA
