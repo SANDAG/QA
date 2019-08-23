@@ -42,6 +42,13 @@ hhp <- rename_sr13_cpas(hhp)
 
 hhp <- subset(hhp, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
 
+hhp <- hhp %>% select(datasource_id,yr_id,geotype,geozone,hhp,series)
+
+# remove special characters like * from names of cpas
+hhp <- rm_special_chr(hhp)
+hhp <- subset(hhp,geozone != 'Not in a CPA')
+
+
 head(hhp)
 hhp <- hhp[order(hhp$datasource_id,hhp$geotype,hhp$geozone,hhp$yr_id),]
 hhp$N_chg <- ave(hhp$hhp, factor(hhp$geozone), FUN=function(x) c(NA,diff(x)))
@@ -57,23 +64,31 @@ hhp$N_chg[hhp$yr_id == 2016] <- 0
 hhp$N_pct[hhp$yr_id == 2016] <- 0
 hhp$N_pct[is.nan(hhp$N_pct)] <- 0
 
-hhp_jur = subset(hhp,geotype=='jurisdiction')
-colnames(hhp_jur)[colnames(hhp_jur)=="geozone"] <- "cityname"
-
-hhp_cpa = subset(hhp,geotype=='cpa')
-colnames(hhp_cpa)[colnames(hhp_cpa)=="geozone"] <- "cpaname"
 
 hhp_region = subset(hhp,geotype=='region')
+
+hhp_region <- hhp_region %>% rename('reg'= N_chg,'regN' = hhp, 'regN_pct' = N_pct)
+region <- hhp_region %>% select(datasource_id,yr_id,regN,reg,regN_pct)
+#merge(hhp,hhp_region)
+hhpmerge <- merge(x = hhp, y = region ,by = c("datasource_id","yr_id"), all = TRUE)
+hhpmerge$plotlegend <- paste(hhpmerge$series,' Region HHPop change',sep='')
+
 colnames(hhp_region)[colnames(hhp_region)=="geozone"] <- "SanDiegoRegion"
 
-hhp_jur$reg<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_chg"]
-hhp_cpa$reg<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_chg"]
+hhp_jur = subset(hhpmerge,geotype=='jurisdiction')
+colnames(hhp_jur)[colnames(hhp_jur)=="geozone"] <- "cityname"
 
-hhp_jur$regN<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"hhp"]
-hhp_cpa$regN<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"hhp"]
+hhp_cpa = subset(hhpmerge,geotype=='cpa')
+colnames(hhp_cpa)[colnames(hhp_cpa)=="geozone"] <- "cpaname"
 
-hhp_jur$regN_pct<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_pct"]
-hhp_cpa$regN_pct<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_pct"]
+# hhp_jur$reg<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_chg"]
+# hhp_cpa$reg<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_chg"]
+# 
+# hhp_jur$regN<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"hhp"]
+# hhp_cpa$regN<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"hhp"]
+# 
+# hhp_jur$regN_pct<-hhp_region[match(hhp_jur$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_pct"]
+# hhp_cpa$regN_pct<-hhp_region[match(hhp_cpa$yr_id, hhp_region$yr_id) & match(hhp_jur$datasource_id, hhp_region$datasource_id),"N_pct"]
 
 ##test Dave's qa parameters
 
@@ -99,9 +114,9 @@ hhp_jur$yr <- as.factor(paste(hhp_jur$year, hhp_jur$yr, sep = ""))
 hhp_jur$N <-  hhp_jur$hhp
 
 jur_list = unique(hhp_jur[["cityname"]])
-jur_list2 = unique(hhp_jur[["cityname"]])
 
-for(i in jur_list[1:1]) { #1:length(unique(hhp_jur[["cityname"]]))){
+
+for(i in jur_list) { #1:length(unique(hhp_jur[["cityname"]]))){
   plotdat = subset(hhp_jur, hhp_jur$cityname==i)
   # plotdat = subset(plotdat, datasource_id==29)
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
@@ -110,7 +125,7 @@ for(i in jur_list[1:1]) { #1:length(unique(hhp_jur[["cityname"]]))){
     geom_bar(stat = "identity") + 
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
-    geom_line(aes(y = reg/ravg, group=1,colour = series),size=2) +
+    geom_line(aes(y = reg/ravg, group=1,colour = plotlegend),size=2) +
     labs(title=paste("Change in Household Population\n ", i,' and Region',sep=''), 
          y=paste("Change in ",i,sep=''), x="Year",
          caption=paste("Sources: Demographic Warehouse\n datasource_id= ",
@@ -156,97 +171,79 @@ for(i in jur_list[1:1]) { #1:length(unique(hhp_jur[["cityname"]]))){
     
  ggsave(output, file= paste(results, 'total household pop', i, datasource_ids[2],".png", sep=''),
          width=10, height=8, dpi=100)#, scale=2)
-} 
+}
 
+##cpa
 
-####CPA
-
-hhp_cpa$year<- "y"
-hhp_cpa$yr <- as.factor(paste(hhp_cpa$year, hhp_cpa$yr, sep = ""))
-hhp_cpa$N <-  hhp_cpa$hhpp
-
-
-cpa_list = unique(hhp_cpa[["cpaname"]])
-
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 results<-"plots\\hh_pop\\cpa\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 
-###facet of all jurisdiction and region plot lines for hhpop
+hhp_cpa$year<- "y"
+hhp_cpa$yr <- as.factor(paste(hhp_cpa$year, hhp_cpa$yr, sep = ""))
+hhp_cpa$N <-  hhp_cpa$hhp
 
+cpa_list = unique(hhp_cpa[["cpaname"]])
 
-pop_large <- hhp_jur[hhp_jur$hhp>=100000 & hhp_jur$yr_id==2050,]
-pop_small <- hhp_jur[hhp_jur$hhp<100000 & hhp_jur$yr_id==2050,]
-
-
-hhp_geos_100Kplus <- unique(pop_large$geozone)
-hhp_geos_under100K <- unique(pop_small$geozone)
-
-
-hhp_jur_100Kplus <- hhp_jur[hhp_jur$geozone %in% hhp_geos_100Kplus,]
-hhp_jur_under100K <- hhp_jur[hhp_jur$geozone %in% hhp_geos_under100K,]
-
-
-
-hhp_plot_100Kplus <- rbind(hhp_jur_100Kplus,hhp_region)
-sp<-ggplot(hhp_plot_100Kplus,aes(x=yr_id,y=hhp)) + geom_point(shape=1) + geom_line()
-plus100K <- sp + facet_wrap(~geozone,ncol=3,scales="free")
-
-
-hhp_plot_under100K <- rbind(hhp_jur_under100K,hhp_region)
-sp<-ggplot(hhp_plot_under100K,aes(x=yr_id,y=hhp)) + geom_point(shape=1) + geom_line()
-#under100K <- sp + facet_wrap(~geozone,ncol=3,scales="free")
-sp + facet_wrap(~geozone,ncol=3,scales="free")
-
-
-ggsave(plus100K, file= paste(results, 'total household pop 100K plus', ds_id,".png", sep=''),
-       width=6, height=8, dpi=100)#, scale=2)
-
-ggsave(under100K, file= paste(results, 'total household pop under 100K', ds_id,".png", sep=''),
-       width=6, height=8, dpi=100)#, scale=2)
-
-
-##cpa ggplot
-
-for(i in cpa_list) { #1:length(unique(hhp_cpa[["cpaname"]]))){
+for(i in cpa_list) { 
   plotdat = subset(hhp_cpa, hhp_cpa$cpaname==i)
+  # plotdat = subset(plotdat, datasource_id==29)
   ravg = max(plotdat$reg,na.rm=TRUE)/max(plotdat$N_chg,na.rm=TRUE)
   ravg[which(!is.finite(ravg))] <- 0
-  plot<-ggplot(plotdat,aes(x=yr, y=N_chg,fill=cpaname)) +
-    geom_bar(stat = "identity") +
-    geom_line(aes(y = reg/ravg, group=1,colour = "Region"),size=2) +
+  plot<-ggplot(plotdat,aes(x=yr_id, y=N_chg,fill=cpaname)) +
+    geom_bar(stat = "identity") + 
     scale_y_continuous(label=comma,sec.axis = 
                          sec_axis(~.*ravg, name = "Chg Region",label=comma)) +
-    labs(title=paste("Change in Total Household Pop\n ", i,' and Region',sep=''), 
-         y=paste("Chg in ",i,sep=''), x="Year",
-         caption=paste("Sources: demographic_warehouse.fact.population\n demographic_warehouse.dim.mgra\n housing.datasource_id=",ds_id, sep=''))+
-    scale_fill_manual(values = c("blue", "red")) +
-    guides(fill = guide_legend(order = 1))+
-    theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    theme(legend.position = "bottom",
-          legend.title=element_blank())
-  # ggsave(plot, file= paste(results, 'Total Household Pop',  i, ".png", sep=''))#, scale=2)
-  output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct)
-  output_table$plotdat.N_chg[output_table$plotdat.yr == 'y2018'] <- ''
-  output_table$plotdat.reg[output_table$plotdat.yr == 'y2018'] <- ''
-  hhptitle = paste("HH Pop ",i,sep='')
-  setnames(output_table, old=c("plotdat.yr_id","plotdat.hhp","plotdat.N_chg","plotdat.N_pct","plotdat.regN","plotdat.reg",
-                               "plotdat.regN_pct"),new=c("Year",hhptitle,"Chg", "Pct","HH Pop Region","Chg","Pct"))
-  tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
-  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-  lay <- rbind(c(1,1,1,1,1),
-               c(1,1,1,1,1),
-               c(1,1,1,1,1),
-               c(2,2,2,2,2),
-               c(2,2,2,2,2))
-  output<-grid.arrange(plot,tbl,ncol=2,as.table=TRUE,layout_matrix=lay)
-  i = gsub("\\*","",i)
-  i = gsub("\\-","_",i)
-  i = gsub("\\:","_",i)
-  ggsave(output, file= paste(results, 'total household pop', i, ds_id,".png", sep=''),
-         width=6, height=8, dpi=100)#, scale=2)
-}
+    geom_line(aes(y = reg/ravg, group=1,colour = plotlegend),size=2) +
+    labs(title=paste("Change in Household Population\n ", i,' and Region',sep=''), 
+         y=paste("Change in ",i,sep=''), x="Year",
+         caption=paste("Sources: Demographic Warehouse\n datasource_id= ",
+                       datasource_ids[1]," and ",datasource_ids[2],sep='')) + 
+    theme_bw(base_size = 14) +
+    theme(axis.title.y = element_text(face = "bold", size = 16),
+          #plot.background = element_rect(fill = "#FED633"),
+          plot.title = element_text(hjust = 0.5),
+          panel.grid.major = element_line(linetype = "dashed"),
+          panel.grid.minor = element_line(linetype = "dotted"),
+          legend.title = element_blank(),
+          # axis.text.y = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1) ) +
+    scale_fill_manual(values = c("blue", "red"))   +
+    guides(fill = guide_legend(order = 1))+ facet_grid(. ~ series) 
+  
+  
+  # theme(legend.position = "bottom",legend.title=element_blank()) +
+  
+  #output_table<-data.frame(plotdat$yr_id,plotdat$hhp,plotdat$N_chg,plotdat$N_pct,plotdat$regN,plotdat$reg,plotdat$regN_pct,plotdat$series)
+  output_table <- plotdat %>% select("yr_id","hhp","N_chg","N_pct","regN","reg","regN_pct","series")
+  
+  outt <- output_table %>% complete(series, nesting(yr_id))  
+  outt <- outt[order(outt$yr_id),] # order by year
+  # outt$name <- NULL # remove name (e.g. Barrio Logan)
+  
+  
+  lefttable <- subset(outt,series==datasource_names[1])
+  righttable <- subset(outt,series==datasource_names[2])
+  names(lefttable)[names(lefttable)=="increment"] <- datasource_name_short[1]
+  names(righttable)[names(righttable)=="increment"] <- datasource_name_short[2]
+  lefttable$series <- NULL
+  righttable$series <- NULL
+  tt <- ttheme_default(base_size = 7,colhead=list(fg_params = list(parse=TRUE)))
+  tbl1 <- tableGrob(lefttable, rows=NULL, theme=tt)
+  tbl2 <- tableGrob(righttable, rows=NULL, theme=tt)  
+  lay <- rbind(c(1,1,1,1),
+               c(1,1,1,1),
+               c(1,1,1,1),
+               c(2,2,3,3),
+               c(2,2,3,3))
+  output<-grid.arrange(plot,tbl1,tbl2,ncol=2,as.table=TRUE,layout_matrix=lay)
+  
+  ggsave(output, file= paste(results, 'total household pop', i, datasource_ids[2],".png", sep=''),
+         width=10, height=8, dpi=100)#, scale=2)
+} 
+
+
 
 
 
