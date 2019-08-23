@@ -246,8 +246,8 @@ for(i in jur_list) {
     geom_point(aes(color=measure)) +
     geom_line(aes(color=measure),size=1) +
     geom_text(aes(label=ifelse(measure=="hh_pop",
-                               ifelse(!is.na(numchg),paste(round(numchg,0),"\n",sep=""),""),
-                               ifelse(!is.na(numchg),paste("\n",round(numchg,0),sep=""),""))),
+                               ifelse(!is.na(values),paste("\n",comma(round(values,0)),sep=""),""),
+                               ifelse(!is.na(values),paste("\n",comma(round(values,0)),sep=""),""))),
               size=3) +
     theme(plot.title=element_text(hjust = 0.5,size=16),
           #panel.spacing=unit(1,"lines"),

@@ -17,7 +17,7 @@ FROM fact.housing
 	INNER JOIN dim.mgra
 	ON mgra.mgra_id = housing.mgra_id
 	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
-WHERE housing.datasource_id IN (ds_id) 
+WHERE housing.datasource_id IN (ds_id) AND housing.yr_id NOT IN (2023,2026,2029,2032)
 GROUP BY 
 	housing.yr_id
 	,mgra.geotype
