@@ -1,84 +1,34 @@
 USE demographic_warehouse;
 --HH, HHP, HHS
 
-(SELECT
-	population.yr_id
-	,'jurisdiction' as geotype
-	,mgra_denormalize.jurisdiction as geozone
+SELECT
+	population.datasource_id
+	,population.yr_id
+	,mgra.geotype
+	,mgra.geozone
 	,hh.hh AS households
-	,hh.unoccupied as unoccupiable
-	,hh.du as units
+	,hh.units as units
 	,SUM(population) as hhp
 	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
 FROM fact.population
-		 INNER JOIN dim.mgra_denormalize
-         ON mgra_denormalize.mgra_id = population.mgra_id	
+	INNER JOIN dim.mgra
+	ON mgra.mgra_id = population.mgra_id
+	AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
 		INNER JOIN
 		(
-			SELECT yr_id, 'jurisdiction' as geotype,mgra_denormalize.jurisdiction as geozone, SUM(occupied) as hh,
-					SUM(units) as du, SUM(housing.unoccupiable) as unoccupied
+			SELECT yr_id, mgra.geotype, mgra.geozone, SUM(occupied) as hh,sum(units) as units
 			FROM fact.housing
-					 INNER JOIN dim.mgra_denormalize
-					ON mgra_denormalize.mgra_id = housing.mgra_id
-			WHERE housing.datasource_id = ds_id
-			GROUP BY yr_id, mgra_denormalize.jurisdiction
+				INNER JOIN dim.mgra
+				ON mgra.mgra_id = housing.mgra_id
+				AND mgra.geotype IN ('jurisdiction', 'region', 'cpa')
+			WHERe housing.datasource_id = ds_id
+			GROUP BY yr_id, mgra.geotype, mgra.geozone
 		) hh
-		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.jurisdiction
+		ON hh.yr_id = population.yr_id
+		AND hh.geozone = mgra.geozone
+		AND hh.geotype = mgra.geotype
 WHERE datasource_id = ds_id
 AND population.housing_type_id = 1
-GROUP BY population.yr_id, mgra_denormalize.jurisdiction, hh.hh, hh.unoccupied, hh.du)
-UNION
-(SELECT
-	population.yr_id
-	,'cpa' as geotype
-	,mgra_denormalize.cpa as geozone
-	,hh.hh AS households
-	,hh.unoccupied as unoccupiable
-	,hh.du as units
-	,SUM(population) as hhp
-	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
-FROM fact.population
-		 INNER JOIN dim.mgra_denormalize
-         ON mgra_denormalize.mgra_id = population.mgra_id	
-		INNER JOIN
-		(
-			SELECT yr_id, 'cpa' as geotype,mgra_denormalize.cpa as geozone, SUM(occupied) as hh,
-					SUM(units) as du, SUM(housing.unoccupiable) as unoccupied
-			FROM fact.housing
-					 INNER JOIN dim.mgra_denormalize
-					ON mgra_denormalize.mgra_id = housing.mgra_id
-			WHERE housing.datasource_id = ds_id
-			GROUP BY yr_id, mgra_denormalize.cpa
-		) hh
-		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.cpa
-WHERE datasource_id = ds_id
-AND population.housing_type_id = 1
-GROUP BY population.yr_id, mgra_denormalize.cpa, hh.hh, hh.unoccupied, hh.du)
-UNION
-(SELECT
-	population.yr_id
-	,'region' as geotype
-	,mgra_denormalize.region as geozone
-	,hh.hh AS households
-	,hh.unoccupied as unoccupiable
-	,hh.du as units
-	,SUM(population) as hhp
-	,ROUND(CASE WHEN hh.hh IS NULL OR hh.hh = 0 THEN 0 ELSE SUM(population) / CAST(hh.hh as float) END, 2) as hhs
-FROM fact.population
-		 INNER JOIN dim.mgra_denormalize
-         ON mgra_denormalize.mgra_id = population.mgra_id	
-		INNER JOIN
-		(
-			SELECT yr_id, 'region' as geotype,mgra_denormalize.region as geozone, SUM(occupied) as hh,
-					SUM(units) as du, SUM(housing.unoccupiable) as unoccupied
-			FROM fact.housing
-					 INNER JOIN dim.mgra_denormalize
-					ON mgra_denormalize.mgra_id = housing.mgra_id
-			WHERE housing.datasource_id = ds_id
-			GROUP BY yr_id, mgra_denormalize.region
-		) hh
-		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.region
-WHERE datasource_id = ds_id
-AND population.housing_type_id = 1
-GROUP BY population.yr_id, mgra_denormalize.region, hh.hh, hh.unoccupied, hh.du)
-ORDER BY population.yr_id, geotype, geozone, hh.hh
+GROUP BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh,population.datasource_id,hh.units
+ORDER BY population.yr_id, mgra.geotype, mgra.geozone, hh.hh
+
