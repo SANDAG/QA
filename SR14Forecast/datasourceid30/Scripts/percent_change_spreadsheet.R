@@ -112,10 +112,10 @@ shtjurhh = addWorksheet(wb, "HHByJur", tabColour = "green")
 shtcpahh = addWorksheet(wb, "HHByCPA", tabColour = "green")
 shtjurhhp = addWorksheet(wb, "HHPopByJur", tabColour = "blue")
 shtcpahhp = addWorksheet(wb, "HHPopByCPA", tabColour = "blue")
-shtjurjobs = addWorksheet(wb, "JobsByJur", tabColour = "yellow")
-shtcpajobs = addWorksheet(wb, "JobsByCPA", tabColour = "yellow")
-shtjurgqpop = addWorksheet(wb, "GQPopByJur", tabColour = "purple")
-shtcpagqpop = addWorksheet(wb, "GQPopByCPA", tabColour = "purple")
+shtjurgqpop = addWorksheet(wb, "GQPopByJur", tabColour = "yellow")
+shtcpagqpop = addWorksheet(wb, "GQPopByCPA", tabColour = "yellow")
+shtjurjobs = addWorksheet(wb, "JobsByJur", tabColour = "purple")
+shtcpajobs = addWorksheet(wb, "JobsByCPA", tabColour = "purple")
 
 # formatting style
 negStyle <- createStyle(fontColour = "#9C0006", bgFill = "#FFC7CE")
@@ -189,7 +189,7 @@ outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-saveWorkbook(wb, "EDAM_Forecast_var_counts.xlsx",overwrite=TRUE)
+saveWorkbook(wb, "units_hh_hhpop_gqpop_jobs.xlsx",overwrite=TRUE)
 
 
 
