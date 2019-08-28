@@ -10,9 +10,7 @@ source("functions_for_percent_change.R")
 packages <- c("RODBC","tidyverse","openxlsx")
 pkgTest(packages)
 
-# read email message from Dave and attach to excel spreadsheet
-fileName <- 'M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\QATestsDavidTedrow.txt'
-email_msg <- read.delim(fileName)
+
 
 
 # connect to database
@@ -86,11 +84,26 @@ gqpop_jur <- subset_by_geotype(gqpop,'jurisdiction')
 ########################################################### 
 # create excel workbook
 
+# read email message from Dave and attach to excel spreadsheet
+## Insert email as images
+imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
+img1a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 1.png",sep='')
+img2a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 2.png",sep='')
+img3a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 3.png",sep='')
+img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.png",sep='')
+
+
+
 wb = createWorkbook()
 
 # add sheet with email info
-sht1 = addWorksheet(wb, "Email")
-writeData(wb, sht1, email_msg)
+shtemail = addWorksheet(wb, "Email")
+
+insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, height = 4.77,units = "in") # divide by 96
+insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
+insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
+insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
+
 
 # add sheets with data 
 shtjurunits = addWorksheet(wb, "UnitsByJur", tabColour = "red")
@@ -99,10 +112,10 @@ shtjurhh = addWorksheet(wb, "HHByJur", tabColour = "green")
 shtcpahh = addWorksheet(wb, "HHByCPA", tabColour = "green")
 shtjurhhp = addWorksheet(wb, "HHPopByJur", tabColour = "blue")
 shtcpahhp = addWorksheet(wb, "HHPopByCPA", tabColour = "blue")
-shtjurjobs = addWorksheet(wb, "JobsByJur", tabColour = "yellow")
-shtcpajobs = addWorksheet(wb, "JobsByCPA", tabColour = "yellow")
-shtjurgqpop = addWorksheet(wb, "GQPopByJur", tabColour = "purple")
-shtcpagqpop = addWorksheet(wb, "GQPopByCPA", tabColour = "purple")
+shtjurgqpop = addWorksheet(wb, "GQPopByJur", tabColour = "yellow")
+shtcpagqpop = addWorksheet(wb, "GQPopByCPA", tabColour = "yellow")
+shtjurjobs = addWorksheet(wb, "JobsByJur", tabColour = "purple")
+shtcpajobs = addWorksheet(wb, "JobsByCPA", tabColour = "purple")
 
 # formatting style
 negStyle <- createStyle(fontColour = "#9C0006", bgFill = "#FFC7CE")
@@ -176,6 +189,15 @@ outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-saveWorkbook(wb, "EDAM_Forecast_var_counts.xlsx",overwrite=TRUE)
+saveWorkbook(wb, "units_hh_hhpop_gqpop_jobs.xlsx",overwrite=TRUE)
+
+
+
+
+
+
+
+
+
 
 
