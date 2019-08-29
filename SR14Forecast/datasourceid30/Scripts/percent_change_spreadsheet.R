@@ -74,7 +74,7 @@ units <- calculate_pct_chg(countvars, units)
 units <- calculate_pass_fail(units,2500,.20)
 units <- sort_dataframe(units)
 units <- rename_dataframe(units)
-units_cpa <- subset_by_geotype(units,c(c('cpa')))
+units_cpa <- subset_by_geotype(units,c('cpa'))
 units_jur <- subset_by_geotype(units,c('jurisdiction'))
 units_region <- subset_by_geotype(units,c('region'))
 
