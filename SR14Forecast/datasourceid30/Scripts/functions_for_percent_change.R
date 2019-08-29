@@ -1,7 +1,7 @@
 
 calculate_pct_chg <- function(df, edam_var) {
   edam_var <- enquo(edam_var)
-  df1 <- df %>% select("datasource_id","yr_id","geotype","geozone",!!edam_var)
+  df1 <- df %>% select("datasource_id","yr_id","geotype","geo_id","geozone",!!edam_var)
   #change over increments 
   df1 <- df1 %>% 
     group_by(geozone,geotype) %>% 

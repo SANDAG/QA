@@ -20,7 +20,7 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
 hhvars <- readDB("../Queries/hh_hhp_hhs_ds_id.sql",datasource_id_current)
 jobs <- readDB("../Queries/jobs.sql",datasource_id_current)
 gq <- readDB("../Queries/group_quarter_w_description.sql",datasource_id_current)
-
+geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
 odbcClose(channel)
 
 merge1 <- merge(x = hhvars, y = jobs,by = c("datasource_id","yr_id","geotype","geozone"), all = TRUE)
@@ -35,6 +35,11 @@ rm(merge1,hhvars,jobs,gq)
 
 
 subset(countvars,geozone=='San Diego Region')
+
+countvars <- merge(x = countvars, y =geo_id,by = "geozone", all.x = TRUE)
+# clean up cpa names removing asterick and dashes etc.
+countvars$id[countvars$geozone=="San Diego Region"] <- 9999
+countvars <- countvars %>% rename('geo_id'= id)
 
 
 # clean up cpa names removing asterick and dashes etc.
@@ -150,7 +155,7 @@ insideBorders <- openxlsx::createStyle(
 )
 rangeRowscpa = 2:(nrow(jobs_cpa)+1)
 rangeRowsjur = 2:(nrow(jobs_jur)+1)
-rangeCols = 1:9
+rangeCols = 1:10
 pct = createStyle(numFmt="0%") # percent 
 
 for (curr_sheet in names(wb)[-1]) {
@@ -163,15 +168,15 @@ for (curr_sheet in names(wb)[-1]) {
     gridExpand = TRUE,
     stack = TRUE
   )
-  addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(7), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(10), rows=1:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9), widths = c(16,14,33,15,16,18,18,18,14))
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=1:(nrow(hhp_cpa)+1), rule="$J1==2", style = lightgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=1:(nrow(hhp_cpa)+1), rule="$J1==1", style = darkgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="fail", style = negStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="check", style = checkStyle)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(11), rows=1:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,14,8,33,15,16,18,18,18,14))
+  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=1:(nrow(hhp_cpa)+1), rule="$K1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=1:(nrow(hhp_cpa)+1), rule="$K1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="fail", style = negStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="check", style = checkStyle)
 }
 
 # out folder for excel
