@@ -1,0 +1,202 @@
+#ask Anne about 167,$J1==2, $J1==1 Where is this value assigned?
+
+
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(maindir)
+
+source("config.R")
+source("../Queries/readSQL.R")
+source("common_functions.R")
+source("functions_for_percent_change.R")
+
+packages <- c("RODBC","tidyverse","openxlsx")
+pkgTest(packages)
+
+# connect to database
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+
+# get hhpop data
+dem <- readDB("../Queries/age_ethn_gender.sql",datasource_id_current)
+
+odbcClose(channel)
+
+dem <- subset(dem, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
+
+dem$geozone[dem$geotype=='region'] <- 'San Diego Region'
+
+subset(dem,geozone=='San Diego Region')
+
+dem$ethn_group <- ifelse(dem$short_name=="Hispanic","Hispanic",
+                         ifelse(dem$short_name=="White","White",
+                                ifelse(dem$short_name=="Black","Black",
+                                       ifelse(dem$short_name=="Asian","Asian","Other"))))
+
+
+
+dem_ethn<-aggregate(pop~ethn_group+geotype+geozone+yr_id, data=dem, sum)
+
+dem_ethn<- mutate(dem_ethn, ethn_id=
+              ifelse(grepl("Hisp", ethn_group), 1,
+                     ifelse(grepl("White", ethn_group),2,
+                            ifelse(grepl("Black", ethn_group),3,
+                                   ifelse(grepl("Asian", ethn_group),4,5)))))
+
+
+dem_ethn  %>%  group_by(ethn_group) %>% tally(pop)
+
+dem_ethn  %>%  group_by(ethn_id) %>% tally(pop)
+
+head(dem_ethn)
+
+# clean up cpa names removing asterisk and dashes etc.
+dem_ethn<- rm_special_chr(dem_ethn)
+dem_ethn<- subset(dem_ethn,geozone != 'Not in a CPA')
+
+#creates file with pop totals by geozone and year
+geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem_ethn, sum)
+
+tail(geozone_pop)
+
+head(dem_ethn,15)
+#order dataframe for lag calc
+dem_ethn <- dem_ethn[order(dem_ethn$ethn_id,dem_ethn$geotype,dem_ethn$geozone,dem_ethn$yr_id),]
+#lag for pop change
+##SHOULD THIS BE A FUNCTION FROM FUNCTIONS SCRIPTS
+dem_ethn$N_chg <- dem_ethn$pop - lag(dem_ethn$pop)
+dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), "pop"]
+dem_ethn$pct_of_total<-(dem_ethn$pop / dem_ethn$geozone_pop)*100
+dem_ethn$pct_of_total<-round(dem_ethn$pct_of_total,digits=2)
+dem_ethn$chg_pct <- dem_ethn$pct_of_total - lag(dem_ethn$pct_of_total)
+dem_ethn$chg_pct<-round(dem_ethn$chg_pct,digits=2)
+dem_ethn <- dem_ethn %>% rename(change=N_chg, percent_change=chg_pct)
+
+dem_ethn$N_chg[dem_ethn$yr_id == "2016"] <- 0
+dem_ethn$chg_pct[dem_ethn$yr_id == "2016"] <- 0
+dem_ethn$N_chg[dem_ethn$N_chg == "NA"] <- 0
+dem_ethn$pct_of_total[dem_ethn$pct_of_total == "NaN"] <- 0
+dem_ethn$chg_pct[dem_ethn$chg_pct == "NaN"] <- 0
+
+dem_ethn <- dem_ethn %>%
+  mutate(pass.or.fail = case_when(((ethn_id==1 & change > 2500 & percent_change > 20)| 
+                                   (ethn_id==2 & change > 2500 & percent_change > 20)|
+                                   (ethn_id==3 & change > 250 & percent_change > 20)|
+                                   (ethn_id==4 & change > 1000 & percent_change > 20)|
+                                   (ethn_id==5 & change > 500 & percent_change > 20)) ~ "fail",
+                                  TRUE ~ "pass"))
+
+table(dem_ethn$pass.or.fail,dem_ethn$ethn_id)
+
+
+#not using calculate_pct_chg
+#not using calculate_pass_fail
+#FIX below or rewrite
+#dem_ethn <- sort_dataframe(dem_ethn)
+#dem_ethn <- rename_dataframe(dem_ethn)
+dem_ethn_cpa <- subset(dem_ethn,dem_ethn$geotype=='cpa')
+dem_ethn_jur <- subset(dem_ethn,dem_ethn$geotype=='jurisdiction'| dem_ethn$geotype=='region')
+
+
+#ANNE SAMPLE
+# households <- calculate_pct_chg(countvars, households)
+# households <- calculate_pass_fail(households,2500,.20)
+# households <- sort_dataframe(households)
+# households <- rename_dataframe(households)
+# households_cpa <- subset_by_geotype(households,'cpa')
+# households_jur <- subset_by_geotype(households,'jurisdiction')
+
+
+rm(dem,dem_ethn,geozone_pop)
+########################################################### 
+# create excel workbook
+
+# read email message from Dave and attach to excel spreadsheet
+## Insert email as images
+imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
+img1a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 1.png",sep='')
+img2a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 2.png",sep='')
+img3a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 3.png",sep='')
+img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.png",sep='')
+
+wb = createWorkbook()
+
+# add sheet with email info
+shtemail = addWorksheet(wb, "Email")
+
+insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, height = 4.77,units = "in") # divide by 96
+insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
+insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
+insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
+
+# add sheets with data 
+shtjurethn = addWorksheet(wb, "EthnicityByJur", tabColour = "blue")
+shtcpaethn = addWorksheet(wb, "EthnicityByCPA", tabColour = "blue")
+
+# formatting style
+negStyle <- createStyle(fontColour = "#9C0006", bgFill = "#FFC7CE")
+posStyle <- createStyle(fontColour = "#006100", bgFill = "#C6EFCE")
+checkStyle <- createStyle(fontColour = "#9C5700", bgFill = "#FFEB9C")
+lightgreyStyle <- createStyle(bgFill = "#dce6f1") #"#fcfcfa" #dce6f1 "#f5f5e6"
+darkgreyStyle <- createStyle(bgFill = "#c5d9f1") # "#e3e3e1" #c5d9f1 #b8cce4
+headerStyle <- createStyle(fontSize = 13, fontColour = "#FFFFFF", halign = "center",
+                           fgFill = "#4F81BD", border="TopBottom", borderColour = "#4F81BD",
+                           wrapText = TRUE)
+invisibleStyle <- createStyle(fontColour = "#FFFFFF")
+insideBorders <- openxlsx::createStyle(
+  border = c("top", "bottom", "left", "right"),
+  borderStyle = "dashed",borderColour="white"
+)
+rangeRowscpa = 2:(nrow(dem_ethn_cpa)+1)
+rangeRowsjur = 2:(nrow(dem_ethn_jur)+1)
+rangeCols = 1:11
+pct = createStyle(numFmt="0%") # percent 
+
+for (curr_sheet in names(wb)[-1]) {
+  addStyle(
+    wb = wb,
+    sheet = curr_sheet,
+    style = insideBorders,
+    rows = rangeRowscpa,
+    cols = rangeCols,
+    gridExpand = TRUE,
+    stack = TRUE
+  )
+  addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(10), rows=1:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,14,33,15,16,18,18,18,14))
+  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$J1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$J1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=2:(nrow(dem_ethn_cpa)+1), type="contains", rule="fail", style = negStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=2:(nrow(dem_ethn_cpa)+1), type="contains", rule="check", style = checkStyle)
+}
+
+
+writeData(wb, shtcpaethn,dem_ethn_cpa)
+writeData(wb, shtjurethn,dem_ethn_jur)
+
+#LH TO REVISE
+# add comment with cutoffs to each sheet
+# c1 <- createComment(comment = "> 2,500 and > 20%")
+# writeComment(wb, shtjurunits, col = "I", row = 1, comment = c1)
+# writeComment(wb, shtcpaunits, col = "I", row = 1, comment = c1)
+# writeComment(wb, shtjurhh, col = "I", row = 1, comment = c1)
+# writeComment(wb, shtcpahh, col = "I", row = 1, comment = c1)
+# c2 <- createComment(comment = "> 7,500 and > 20%")
+# writeComment(wb, shtjurhhp, col = "I", row = 1, comment = c2)
+# writeComment(wb, shtcpahhp, col = "I", row = 1, comment = c2)
+# c3 <- createComment(comment = "> 5,000 and > 20%")
+# writeComment(wb, shtjurjobs, col = "I", row = 1, comment = c3)
+# writeComment(wb, shtcpajobs, col = "I", row = 1, comment = c3)
+# c4 <- createComment(comment = "> 500 and > 20%")
+# writeComment(wb, shtjurgqpop, col = "I", row = 1, comment = c4)
+# writeComment(wb, shtcpagqpop, col = "I", row = 1, comment = c4)
+
+# out folder for excel
+outfolder<-paste("..\\Output\\",sep='')
+ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
+setwd(file.path(maindir,outfolder))
+
+saveWorkbook(wb, "EDAM_Forecast_ethnicity_counts.xlsx",overwrite=TRUE)
+
+
