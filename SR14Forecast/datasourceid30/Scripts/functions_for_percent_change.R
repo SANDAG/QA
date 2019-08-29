@@ -72,10 +72,32 @@ add_id_for_excel_formatting <- function(df) {
 }
 
 subset_by_geotype <- function(df,the_geotype) {
-  df1 <- subset(df,geotype == the_geotype)
+  df1 <- subset(df,geotype %in% the_geotype)
   df2 <- add_id_for_excel_formatting(df1)
-  df2 <- df2 %>% rename(!!the_geotype := geozone)
+  df2 <- df2 %>% rename(!!the_geotype[1] := geozone)
   #df %>% rename(!!variable := name_of_col_from_df)
   df2$geotype <- NULL
   return(df2)
 }
+
+# add sheets with data 
+add_worksheets_to_excel <- function(workbook,demographic_variable,colorfortab) {
+  tabname <- paste(demographic_variable,"ByJur",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+  tabname <- paste(demographic_variable,"ByCpa",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+  tabname <- paste(demographic_variable,"ByRegion",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+}
+
+add_data_to_excel <- function(workbook,demographic_variable,j,m) {
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
+  writeData(wb,j,dataframe_name)
+  writeComment(wb,j,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
+  writeData(wb, j+1,dataframe_name)
+  writeComment(wb,j+1,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
+  writeData(wb, j+2,dataframe_name)
+  writeComment(wb,j+2,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+}  
