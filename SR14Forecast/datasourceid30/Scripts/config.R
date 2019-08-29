@@ -4,8 +4,13 @@
 datasource_id_current <- 30
 
 
-datasource_ids <- c(17,30)
-datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 30)")
+# datasource_ids <- c(17,30)
+# datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 30)")
+# datasource_name_short <- c("Series 14","Series 14")
+# datasource_outfolder <- "vacancy"
+
+datasource_ids <- c(28,30)
+datasource_names <- c("Series 14 (ds 28)","Series 14 (ds 30)")
 datasource_name_short <- c("Series 14","Series 14")
 datasource_outfolder <- "vacancy"
 
