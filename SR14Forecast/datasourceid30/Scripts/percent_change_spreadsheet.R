@@ -7,7 +7,7 @@ source("../Queries/readSQL.R")
 source("common_functions.R")
 source("functions_for_percent_change.R")
 
-packages <- c("RODBC","tidyverse","openxlsx")
+packages <- c("RODBC","tidyverse","openxlsx","hash")
 pkgTest(packages)
 
 
@@ -49,40 +49,49 @@ jobs <- calculate_pct_chg(countvars, jobs)
 jobs <- calculate_pass_fail(jobs,5000,.20)
 jobs <- sort_dataframe(jobs)
 jobs <- rename_dataframe(jobs)
-jobs_cpa <- subset_by_geotype(jobs,'cpa')
-jobs_jur <- subset_by_geotype(jobs,'jurisdiction')
+jobs_cpa <- subset_by_geotype(jobs,c('cpa'))
+jobs_jur <- subset_by_geotype(jobs,c('jurisdiction'))
+jobs_region <- subset_by_geotype(jobs,c('region'))
 
 households <- calculate_pct_chg(countvars, households)
 households <- calculate_pass_fail(households,2500,.20)
 households <- sort_dataframe(households)
 households <- rename_dataframe(households)
-households_cpa <- subset_by_geotype(households,'cpa')
-households_jur <- subset_by_geotype(households,'jurisdiction')
+households_cpa <- subset_by_geotype(households,c('cpa'))
+households_jur <- subset_by_geotype(households,c('jurisdiction'))
+households_region <- subset_by_geotype(households,c('region'))
 
 hhp <- calculate_pct_chg(countvars, hhp)
 hhp <- calculate_pass_fail(hhp,7500,.20)
 hhp <- sort_dataframe(hhp)
 hhp <- rename_dataframe(hhp)
 hhp <- hhp %>% rename('hhpop'= hhp)
-hhp_cpa <- subset_by_geotype(hhp,'cpa')
-hhp_jur <- subset_by_geotype(hhp,'jurisdiction')
+hhp_cpa <- subset_by_geotype(hhp,c('cpa'))
+hhp_jur <- subset_by_geotype(hhp,c('jurisdiction'))
+hhp_region <- subset_by_geotype(hhp,c('region'))
 
 units <- calculate_pct_chg(countvars, units)
 units <- calculate_pass_fail(units,2500,.20)
 units <- sort_dataframe(units)
 units <- rename_dataframe(units)
-units_cpa <- subset_by_geotype(units,'cpa')
-units_jur <- subset_by_geotype(units,'jurisdiction')
+units_cpa <- subset_by_geotype(units,c(c('cpa')))
+units_jur <- subset_by_geotype(units,c('jurisdiction'))
+units_region <- subset_by_geotype(units,c('region'))
+
 
 gqpop <- calculate_pct_chg(countvars, gqpop)
 gqpop <- calculate_pass_fail(gqpop,500,.20)
 gqpop <- sort_dataframe(gqpop)
 gqpop <- rename_dataframe(gqpop)
-gqpop_cpa <- subset_by_geotype(gqpop,'cpa')
-gqpop_jur <- subset_by_geotype(gqpop,'jurisdiction')
+gqpop_cpa <- subset_by_geotype(gqpop,c('cpa'))
+gqpop_jur <- subset_by_geotype(gqpop,c('jurisdiction'))
+gqpop_region <- subset_by_geotype(gqpop,c('region'))
+
 
 ########################################################### 
 # create excel workbook
+
+wb = createWorkbook()
 
 # read email message from Dave and attach to excel spreadsheet
 ## Insert email as images
@@ -91,10 +100,6 @@ img1a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 1.p
 img2a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 2.png",sep='')
 img3a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 3.png",sep='')
 img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.png",sep='')
-
-
-
-wb = createWorkbook()
 
 # add sheet with email info
 shtemail = addWorksheet(wb, "Email")
@@ -105,17 +110,29 @@ insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, he
 insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
 
 
-# add sheets with data 
-shtjurunits = addWorksheet(wb, "UnitsByJur", tabColour = "red")
-shtcpaunits = addWorksheet(wb, "UnitsByCPA", tabColour = "red")
-shtjurhh = addWorksheet(wb, "HHByJur", tabColour = "green")
-shtcpahh = addWorksheet(wb, "HHByCPA", tabColour = "green")
-shtjurhhp = addWorksheet(wb, "HHPopByJur", tabColour = "blue")
-shtcpahhp = addWorksheet(wb, "HHPopByCPA", tabColour = "blue")
-shtjurgqpop = addWorksheet(wb, "GQPopByJur", tabColour = "yellow")
-shtcpagqpop = addWorksheet(wb, "GQPopByCPA", tabColour = "yellow")
-shtjurjobs = addWorksheet(wb, "JobsByJur", tabColour = "purple")
-shtcpajobs = addWorksheet(wb, "JobsByCPA", tabColour = "purple")
+# specify sheetname and tab colors
+add_worksheets_to_excel(wb,"Units","red")
+add_worksheets_to_excel(wb,"HH","green")
+add_worksheets_to_excel(wb,"HHPop","blue")
+add_worksheets_to_excel(wb,"GQPop","yellow")
+add_worksheets_to_excel(wb,"Jobs","purple")
+
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+comments_to_add <- hash()
+comments_to_add['units'] <- "> 2,500 and > 20%"
+comments_to_add['households'] <- "> 2,500 and > 20%"
+comments_to_add['hhp'] <- "> 7,500 and > 20%"
+comments_to_add['gqpop'] <- "> 500 and > 20%"
+comments_to_add['jobs'] <- "> 5,000 and > 20%"
+
+
+i <-2 # starting sheet number (sheet 1 is email message)
+for (demographic_var in c('units','households','hhp','gqpop','jobs')) {
+  add_data_to_excel(wb,demographic_var,i)
+  i <- i + 3 # 3 sheets for each variable: jur,cpa,region
+}
+
 
 # formatting style
 negStyle <- createStyle(fontColour = "#9C0006", bgFill = "#FFC7CE")
@@ -157,47 +174,10 @@ for (curr_sheet in names(wb)[-1]) {
   conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="check", style = checkStyle)
 }
 
-writeData(wb, shtjurunits,units_jur)
-writeData(wb, shtcpaunits,units_cpa)
-writeData(wb, shtjurhh,households_jur )
-writeData(wb, shtcpahh,households_cpa )
-writeData(wb, shtjurhhp,hhp_jur)
-writeData(wb, shtcpahhp,hhp_cpa)
-writeData(wb, shtjurjobs,jobs_jur)
-writeData(wb, shtcpajobs,jobs_cpa)
-writeData(wb, shtjurgqpop,gqpop_jur)
-writeData(wb, shtcpagqpop,gqpop_cpa)
-
-# add comment with cutoffs to each sheet
-c1 <- createComment(comment = "> 2,500 and > 20%")
-writeComment(wb, shtjurunits, col = "I", row = 1, comment = c1)
-writeComment(wb, shtcpaunits, col = "I", row = 1, comment = c1)
-writeComment(wb, shtjurhh, col = "I", row = 1, comment = c1)
-writeComment(wb, shtcpahh, col = "I", row = 1, comment = c1)
-c2 <- createComment(comment = "> 7,500 and > 20%")
-writeComment(wb, shtjurhhp, col = "I", row = 1, comment = c2)
-writeComment(wb, shtcpahhp, col = "I", row = 1, comment = c2)
-c3 <- createComment(comment = "> 5,000 and > 20%")
-writeComment(wb, shtjurjobs, col = "I", row = 1, comment = c3)
-writeComment(wb, shtcpajobs, col = "I", row = 1, comment = c3)
-c4 <- createComment(comment = "> 500 and > 20%")
-writeComment(wb, shtjurgqpop, col = "I", row = 1, comment = c4)
-writeComment(wb, shtcpagqpop, col = "I", row = 1, comment = c4)
-
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
 saveWorkbook(wb, "units_hh_hhpop_gqpop_jobs.xlsx",overwrite=TRUE)
-
-
-
-
-
-
-
-
-
-
 
