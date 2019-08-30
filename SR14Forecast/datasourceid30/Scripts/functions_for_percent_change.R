@@ -1,7 +1,7 @@
 
 calculate_pct_chg <- function(df, edam_var) {
   edam_var <- enquo(edam_var)
-  df1 <- df %>% select("datasource_id","yr_id","geotype","geo_id","geozone",!!edam_var)
+  df1 <- df %>% select("datasource_id","geotype","geo_id","geozone","yr_id",!!edam_var)
   #change over increments 
   df1 <- df1 %>% 
     group_by(geozone,geotype) %>% 
@@ -11,17 +11,17 @@ calculate_pct_chg <- function(df, edam_var) {
     group_by(geozone,geotype) %>%  # avoid divide by zero with ifelse
     mutate(percent_change = ifelse(lag(!!edam_var)==0, NA, (!!edam_var - lag(!!edam_var))/lag(!!edam_var)))
   df1$percent_change <- round(df1$percent_change, digits = 2)
-  #average annual change
-  df1 <- df1 %>% 
-    group_by(geozone,geotype) %>% 
-    mutate(average_annual_change = (!!edam_var - lag(!!edam_var))/(yr_id - lag(yr_id)) )
-  df1$average_annual_change  <- round(df1$average_annual_change, digits = 0)
-  #average annual percent change
-  df1 <- df1 %>%
-    group_by(geozone,geotype) %>%  # avoid divide by zero with ifelse
-    mutate(avg_ann_pct_chg = ifelse(lag(!!edam_var)==0, NA, 
-                                    (!!edam_var - lag(!!edam_var))/lag(!!edam_var)/(yr_id - lag(yr_id))))
-  df1$avg_ann_pct_chg <- round(df1$avg_ann_pct_chg, digits = 2)
+  # #average annual change
+  # df1 <- df1 %>% 
+  #   group_by(geozone,geotype) %>% 
+  #   mutate(average_annual_change = (!!edam_var - lag(!!edam_var))/(yr_id - lag(yr_id)) )
+  # df1$average_annual_change  <- round(df1$average_annual_change, digits = 0)
+  # #average annual percent change
+  # df1 <- df1 %>%
+  #   group_by(geozone,geotype) %>%  # avoid divide by zero with ifelse
+  #   mutate(avg_ann_pct_chg = ifelse(lag(!!edam_var)==0, NA, 
+  #                                   (!!edam_var - lag(!!edam_var))/lag(!!edam_var)/(yr_id - lag(yr_id))))
+  # df1$avg_ann_pct_chg <- round(df1$avg_ann_pct_chg, digits = 2)
   return(df1)
 }
 
@@ -50,10 +50,11 @@ sort_dataframe <- function(df) {
 }
 
 rename_dataframe <- function(df) {
-  df <- df %>% rename('increment'= yr_id,'increment change' = change,
-                      'average annual change' = average_annual_change,
-                      'average annual percent change' = avg_ann_pct_chg,
-                      'increment percent change' = percent_change,
+  df <- df %>% rename('datasource id'= datasource_id,'geo id'=geo_id,
+                      'increment'= yr_id,'change in units per increment' = change,
+                      #'average annual change' = average_annual_change,
+                      #'average annual percent change' = avg_ann_pct_chg,
+                      'percent change in units per increment' = percent_change,
                       'pass/fail' = pass.or.fail)
   return(df)
 }
@@ -81,23 +82,39 @@ subset_by_geotype <- function(df,the_geotype) {
 }
 
 # add sheets with data 
-add_worksheets_to_excel <- function(workbook,demographic_variable,colorfortab) {
+add_worksheets_to_excel <- function(workbook,demographic_variable,colorfortab,rowtouse,namehash,ahash) {
   tabname <- paste(demographic_variable,"ByJur",sep='')
   addWorksheet(wb, tabname, tabColour = colorfortab)
+  ## Internal - Text to display
+  writeFormula(wb, tableofcontents, startRow = rowtouse, 
+               x = makeHyperlinkString(sheet = tabname, row = 1, col = 1,text = tabname))
+  writeData(wb, tableofcontents, x = paste(namehash[[demographic_variable]]," by Jurisdiction",sep=''), startCol = 2, startRow = rowtouse)
+  writeData(wb, tableofcontents, x = ahash[[demographic_variable]], startCol = 3, startRow = rowtouse) 
   tabname <- paste(demographic_variable,"ByCpa",sep='')
   addWorksheet(wb, tabname, tabColour = colorfortab)
+  writeFormula(wb, tableofcontents, startRow = rowtouse + 1, 
+               x = makeHyperlinkString(sheet = tabname, row = 1, col = 1,text = tabname))
+  writeData(wb, tableofcontents, x = paste(namehash[[demographic_variable]]," by CPA",sep=''), 
+            startCol = 2, startRow = rowtouse+1)
+  
+  writeData(wb, tableofcontents, x = ahash[[demographic_variable]], startCol = 3, startRow = rowtouse+1)
   tabname <- paste(demographic_variable,"ByRegion",sep='')
   addWorksheet(wb, tabname, tabColour = colorfortab)
+  writeFormula(wb, tableofcontents, startRow = rowtouse + 2, 
+               x = makeHyperlinkString(sheet = tabname, row = 1, col = 1,text = tabname))
+  writeData(wb, tableofcontents, x = paste(namehash[[demographic_variable]]," by Region",sep=''), 
+            startCol = 2, startRow = rowtouse +2)
+  writeData(wb, tableofcontents, x = ahash[[demographic_variable]], startCol = 3, startRow = rowtouse+2)
 }
 
 add_data_to_excel <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
   writeData(wb,j,dataframe_name)
-  writeComment(wb,j,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
   writeData(wb, j+1,dataframe_name)
-  writeComment(wb,j+1,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j+1,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
   writeData(wb, j+2,dataframe_name)
-  writeComment(wb,j+2,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j+2,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
 }  

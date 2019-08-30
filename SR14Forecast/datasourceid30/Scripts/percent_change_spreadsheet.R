@@ -98,6 +98,18 @@ gqpop_region <- subset_by_geotype(gqpop,c('region'))
 
 wb = createWorkbook()
 
+tableofcontents = addWorksheet(wb, "TableofContents")
+
+writeData(wb, tableofcontents, x = "Worksheet Name", startCol = 1, startRow = 1)
+writeData(wb, tableofcontents, x = "Worksheet Description", startCol = 2, startRow = 1)
+writeData(wb, tableofcontents, x = "Test Criteria", startCol = 3, startRow = 1)
+setColWidths(wb, tableofcontents, cols = c(1,2), widths = c(45,45))
+
+
+writeFormula(wb, tableofcontents, startRow = 3, 
+             x = makeHyperlinkString(sheet = "Emails", row = 1, col = 1,text = "Emails"))
+writeData(wb, tableofcontents,x = "QA Emails with EDAM", startRow = 3, startCol = 2)
+
 # read email message from Dave and attach to excel spreadsheet
 ## Insert email as images
 imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
@@ -107,7 +119,10 @@ img3a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 3.p
 img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.png",sep='')
 
 # add sheet with email info
-shtemail = addWorksheet(wb, "Email")
+shtemail = addWorksheet(wb, "Emails")
+
+
+
 
 insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, height = 4.77,units = "in") # divide by 96
 insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
@@ -115,12 +130,33 @@ insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, he
 insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
 
 
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+fullname <- hash()
+fullname['Units'] <- "Housing units"
+fullname['HH'] <- "Households"
+fullname['HHPop'] <- "Household Population"
+fullname['GQPop'] <- "Group Quarter Population"
+fullname['Jobs'] <- "Jobs"
+
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+acceptance_criteria <- hash()
+acceptance_criteria['Units'] <- "> 2,500 and > 20%"
+acceptance_criteria['HH'] <- "> 2,500 and > 20%"
+acceptance_criteria['HHPop'] <- "> 7,500 and > 20%"
+acceptance_criteria['GQPop'] <- "> 500 and > 20%"
+acceptance_criteria['Jobs'] <- "> 5,000 and > 20%"
+
+
 # specify sheetname and tab colors
-add_worksheets_to_excel(wb,"Units","red")
-add_worksheets_to_excel(wb,"HH","green")
-add_worksheets_to_excel(wb,"HHPop","blue")
-add_worksheets_to_excel(wb,"GQPop","yellow")
-add_worksheets_to_excel(wb,"Jobs","purple")
+add_worksheets_to_excel(wb,"Units","red",5,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"HH","green",9,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"HHPop","blue",13,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"GQPop","yellow",17,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"Jobs","purple",21,fullname,acceptance_criteria)
+
+
 
 # add comments to sheets with cutoff
 # create dictionary hash of comments
@@ -132,7 +168,7 @@ comments_to_add['gqpop'] <- "> 500 and > 20%"
 comments_to_add['jobs'] <- "> 5,000 and > 20%"
 
 
-i <-2 # starting sheet number (sheet 1 is email message)
+i <-3 # starting sheet number (sheet 1 is email message, sheet 2 is table of contents)
 for (demographic_var in c('units','households','hhp','gqpop','jobs')) {
   add_data_to_excel(wb,demographic_var,i)
   i <- i + 3 # 3 sheets for each variable: jur,cpa,region
@@ -153,12 +189,14 @@ insideBorders <- openxlsx::createStyle(
   border = c("top", "bottom", "left", "right"),
   borderStyle = "dashed",borderColour="white"
 )
+rangeRows = 1:(nrow(jobs_cpa)+1)
 rangeRowscpa = 2:(nrow(jobs_cpa)+1)
 rangeRowsjur = 2:(nrow(jobs_jur)+1)
-rangeCols = 1:10
+rangeCols = 1:(ncol(jobs_jur)-1)
 pct = createStyle(numFmt="0%") # percent 
+aligncenter = createStyle(halign = "center")
 
-for (curr_sheet in names(wb)[-1]) {
+for (curr_sheet in names(wb)[3:length(names(wb))]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -168,15 +206,16 @@ for (curr_sheet in names(wb)[-1]) {
     gridExpand = TRUE,
     stack = TRUE
   )
-  addStyle(wb, curr_sheet, style=pct, cols=c(7), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(7), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=aligncenter, cols=c(1:4,8), rows=rangeRows, gridExpand=TRUE,stack = TRUE)
+  #addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(11), rows=1:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,14,8,33,15,16,18,18,18,14))
-  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=1:(nrow(hhp_cpa)+1), rule="$K1==2", style = lightgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=1:(nrow(hhp_cpa)+1), rule="$K1==1", style = darkgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="fail", style = negStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:10, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="check", style = checkStyle)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(ncol(jobs_jur)), rows=1:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8), widths = c(16,12,33,12,15,16,18,18))
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$I1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$I1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="fail", style = negStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="check", style = checkStyle)
 }
 
 # out folder for excel
