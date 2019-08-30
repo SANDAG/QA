@@ -1,4 +1,4 @@
-#ask Anne about 167,$J1==2, $J1==1 Where is this value assigned?
+#Fix - Datasource id current isn't not reading in
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
@@ -62,48 +62,58 @@ head(dem_ethn,15)
 dem_ethn <- dem_ethn[order(dem_ethn$ethn_id,dem_ethn$geotype,dem_ethn$geozone,dem_ethn$yr_id),]
 #lag for pop change
 ##SHOULD THIS BE A FUNCTION FROM FUNCTIONS SCRIPTS
-dem_ethn$N_chg <- dem_ethn$pop - lag(dem_ethn$pop)
+dem_ethn$change <- dem_ethn$pop - lag(dem_ethn$pop)
 dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), "pop"]
-dem_ethn$pct_of_total<-(dem_ethn$pop / dem_ethn$geozone_pop)*100
-dem_ethn$pct_of_total<-round(dem_ethn$pct_of_total,digits=2)
-dem_ethn$chg_pct <- dem_ethn$pct_of_total - lag(dem_ethn$pct_of_total)
-dem_ethn$chg_pct<-round(dem_ethn$chg_pct,digits=2)
-dem_ethn <- dem_ethn %>% rename(change=N_chg, percent_change=chg_pct)
+dem_ethn$proportion_of_pop<-(dem_ethn$pop / dem_ethn$geozone_pop)
+dem_ethn$proportion_of_pop<-round(dem_ethn$proportion_of_pop,digits=2)
+dem_ethn$percent_change <- dem_ethn$proportion_of_pop - lag(dem_ethn$proportion_of_pop)
+dem_ethn$percent_change<-round(dem_ethn$percent_change,digits=2)
 
-dem_ethn$N_chg[dem_ethn$yr_id == "2016"] <- 0
-dem_ethn$chg_pct[dem_ethn$yr_id == "2016"] <- 0
-dem_ethn$N_chg[dem_ethn$N_chg == "NA"] <- 0
-dem_ethn$pct_of_total[dem_ethn$pct_of_total == "NaN"] <- 0
-dem_ethn$chg_pct[dem_ethn$chg_pct == "NaN"] <- 0
+dem_ethn$change[dem_ethn$yr_id == "2016"] <- 0
+dem_ethn$percent_change[dem_ethn$yr_id == "2016"] <- 0
+dem_ethn$change[dem_ethn$change == "NA"] <- 0
+dem_ethn$proportion_of_pop[dem_ethn$proportion_of_pop == "NaN"] <- 0
+dem_ethn$percent_change[dem_ethn$percent_change == "NaN"] <- 0
+
+dem_ethn$change_abs <- abs(dem_ethn$change)
+dem_ethn$percent_change_abs <- abs(dem_ethn$percent_change)
+
+head(dem_ethn,12)
 
 dem_ethn <- dem_ethn %>%
-  mutate(pass.or.fail = case_when(((ethn_id==1 & change > 2500 & percent_change > 20)| 
-                                   (ethn_id==2 & change > 2500 & percent_change > 20)|
-                                   (ethn_id==3 & change > 250 & percent_change > 20)|
-                                   (ethn_id==4 & change > 1000 & percent_change > 20)|
-                                   (ethn_id==5 & change > 500 & percent_change > 20)) ~ "fail",
+  mutate(pass.or.fail = case_when(((ethn_id==1 & change_abs > 2500 & percent_change_abs > 20)| 
+                                     (ethn_id==2 & change_abs > 2500 & percent_change_abs > 20)|
+                                     (ethn_id==3 & change_abs > 250 & percent_change_abs > 20)|
+                                     (ethn_id==4 & change_abs > 1000 & percent_change_abs > 20)|
+                                     (ethn_id==5 & change_abs > 500 & percent_change_abs > 20)) ~ "fail",
                                   TRUE ~ "pass"))
 
-table(dem_ethn$pass.or.fail,dem_ethn$ethn_id)
+
+sort_dataframe <- function(df) {
+  df_fail <- unique(subset(df,pass.or.fail=="fail")$geozone)
+  #df_check <- unique(subset(df,pass.or.fail=="check")$geozone)
+  df <- df %>% 
+    mutate(sort_order = case_when(geozone %in% df_fail ~ 1,
+                                  #geozone %in% df_check ~ 2,
+                                  TRUE ~ 3))
+  df <- df[order(df$sort_order,df$geotype,df$geozone,df$ethn_id,df$yr_id),]
+  df$sort_order <- NULL
+  return(df)
+}
+
+dem_ethn <- sort_dataframe(dem_ethn)
+
+#need to add datasource id to file
+dem_ethn <- dem_ethn %>% select(geotype,geozone,yr_id,ethn_group,ethn_id,pop,change,proportion_of_pop,percent_change,pass.or.fail)
+
+dem_ethn <- dem_ethn %>% rename('increment'= yr_id,'increment change' = change,'ethnicity'=ethn_group,'ethnicity id'=ethn_id,
+                                'proportion of pop'= proportion_of_pop,'increment percent change' = percent_change,
+                                'pass/fail' = pass.or.fail)
 
 
-#not using calculate_pct_chg
-#not using calculate_pass_fail
-#FIX below or rewrite
-#dem_ethn <- sort_dataframe(dem_ethn)
-#dem_ethn <- rename_dataframe(dem_ethn)
 dem_ethn_cpa <- subset(dem_ethn,dem_ethn$geotype=='cpa')
-dem_ethn_jur <- subset(dem_ethn,dem_ethn$geotype=='jurisdiction'| dem_ethn$geotype=='region')
-
-
-#ANNE SAMPLE
-# households <- calculate_pct_chg(countvars, households)
-# households <- calculate_pass_fail(households,2500,.20)
-# households <- sort_dataframe(households)
-# households <- rename_dataframe(households)
-# households_cpa <- subset_by_geotype(households,'cpa')
-# households_jur <- subset_by_geotype(households,'jurisdiction')
-
+dem_ethn_jur <- subset(dem_ethn,dem_ethn$geotype=='jurisdiction')
+dem_ethn_reg <- subset(dem_ethn,dem_ethn$geotype=='region')
 
 rm(dem,dem_ethn,geozone_pop)
 ########################################################### 
@@ -128,6 +138,7 @@ insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, he
 insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
 
 # add sheets with data 
+shtregethn = addWorksheet(wb, "EthnicityByRegion", tabColour = "blue")
 shtjurethn = addWorksheet(wb, "EthnicityByJur", tabColour = "blue")
 shtcpaethn = addWorksheet(wb, "EthnicityByCPA", tabColour = "blue")
 
@@ -147,6 +158,7 @@ insideBorders <- openxlsx::createStyle(
 )
 rangeRowscpa = 2:(nrow(dem_ethn_cpa)+1)
 rangeRowsjur = 2:(nrow(dem_ethn_jur)+1)
+rangeRowsjur = 2:(nrow(dem_ethn_reg)+1)
 rangeCols = 1:11
 pct = createStyle(numFmt="0%") # percent 
 
@@ -160,13 +172,13 @@ for (curr_sheet in names(wb)[-1]) {
     gridExpand = TRUE,
     stack = TRUE
   )
-  addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(10), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(10), rows=1:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(11), rows=1:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
   setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,14,33,15,16,18,18,18,14))
-  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$J1==2", style = lightgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$J1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$K1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$K1==1", style = darkgreyStyle)
   conditionalFormatting(wb, curr_sheet, cols=1:11, rows=2:(nrow(dem_ethn_cpa)+1), type="contains", rule="fail", style = negStyle)
   conditionalFormatting(wb, curr_sheet, cols=1:11, rows=2:(nrow(dem_ethn_cpa)+1), type="contains", rule="check", style = checkStyle)
 }
@@ -174,23 +186,14 @@ for (curr_sheet in names(wb)[-1]) {
 
 writeData(wb, shtcpaethn,dem_ethn_cpa)
 writeData(wb, shtjurethn,dem_ethn_jur)
+writeData(wb, shtregethn,dem_ethn_reg)
 
 #LH TO REVISE
 # add comment with cutoffs to each sheet
-# c1 <- createComment(comment = "> 2,500 and > 20%")
-# writeComment(wb, shtjurunits, col = "I", row = 1, comment = c1)
-# writeComment(wb, shtcpaunits, col = "I", row = 1, comment = c1)
-# writeComment(wb, shtjurhh, col = "I", row = 1, comment = c1)
-# writeComment(wb, shtcpahh, col = "I", row = 1, comment = c1)
-# c2 <- createComment(comment = "> 7,500 and > 20%")
-# writeComment(wb, shtjurhhp, col = "I", row = 1, comment = c2)
-# writeComment(wb, shtcpahhp, col = "I", row = 1, comment = c2)
-# c3 <- createComment(comment = "> 5,000 and > 20%")
-# writeComment(wb, shtjurjobs, col = "I", row = 1, comment = c3)
-# writeComment(wb, shtcpajobs, col = "I", row = 1, comment = c3)
-# c4 <- createComment(comment = "> 500 and > 20%")
-# writeComment(wb, shtjurgqpop, col = "I", row = 1, comment = c4)
-# writeComment(wb, shtcpagqpop, col = "I", row = 1, comment = c4)
+c1 <- createComment(comment = "Hispanic change > 2,500 and > 20%\nWhite change > 2,500 and > 20%\nBlack + 
+                    change > 250 and > 20%\nAsian change > 1,000 and > 20%\nOther change > 500 and > 20%")
+writeComment(wb, shtjurethn, col = "J", row = 1, comment = c1)
+writeComment(wb, shtcpaethn, col = "J", row = 1, comment = c1)
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
