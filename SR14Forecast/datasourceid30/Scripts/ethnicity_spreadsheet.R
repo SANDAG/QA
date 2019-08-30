@@ -111,6 +111,20 @@ dem_ethn <- dem_ethn %>% rename('increment'= yr_id,'increment change' = change,'
                                 'pass/fail' = pass.or.fail)
 
 
+# dem_ethn <- add_id_for_excel_formatting(dem_ethn)
+t <- dem_ethn %>% group_by(geozone) %>% tally()
+if (nrow(subset(t,n!=9))!=0) {
+    print("ERROR: expecting 9 years per geography")
+    print(subset(t,n!=9)) } 
+  
+ids <- rep(1:2, times=nrow(t)/2, each=9)
+if (nrow(t)%%2!=0 ) {ids <- append(ids, c(1,1,1,1,1,1,1,1,1))}
+dem_ethn$id <- ids
+
+
+
+
+
 dem_ethn_cpa <- subset(dem_ethn,dem_ethn$geotype=='cpa')
 dem_ethn_jur <- subset(dem_ethn,dem_ethn$geotype=='jurisdiction')
 dem_ethn_reg <- subset(dem_ethn,dem_ethn$geotype=='region')
