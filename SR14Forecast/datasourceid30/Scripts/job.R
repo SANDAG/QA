@@ -21,16 +21,9 @@ jobs <- readDB("../Queries/jobs-2.sql",datasource_id_current)
 
 odbcClose(channel)
 
-# merge1 <- merge(x = hhvars, y = jobs,by = c("datasource_id","yr_id","geotype","geozone"), all = TRUE)
-# countvars <- merge(x = merge1, y = gq,by = c("datasource_id","yr_id","geotype","geozone"), all = TRUE)
-
 countvars <- subset(jobs, yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
 
 countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
-
-
-# rm(merge1,hhvars,jobs,gq)
-
 
 subset(countvars,geozone=='San Diego Region')
 
@@ -118,15 +111,6 @@ for (curr_sheet in names(wb)[-1]) {
     gridExpand = TRUE,
     stack = TRUE
   )
-  # addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  # addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  # addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
-  # addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(10), rows=1:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  # setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9), widths = c(16,14,33,15,16,18,18,18,14))
-  # conditionalFormatting(wb, curr_sheet, cols=1:9, rows=1:(nrow(hhp_cpa)+1), rule="$J1==2", style = lightgreyStyle)
-  # conditionalFormatting(wb, curr_sheet, cols=1:9, rows=1:(nrow(hhp_cpa)+1), rule="$J1==1", style = darkgreyStyle)
-  # conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="fail", style = negStyle)
-  # conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(hhp_cpa)+1), type="contains", rule="check", style = checkStyle)
   addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
