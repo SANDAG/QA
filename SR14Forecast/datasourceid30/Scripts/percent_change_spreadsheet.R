@@ -54,40 +54,76 @@ jobs <- calculate_pct_chg(countvars, jobs)
 jobs <- calculate_pass_fail(jobs,5000,.20)
 jobs <- sort_dataframe(jobs)
 jobs <- rename_dataframe(jobs)
-jobs_cpa <- subset_by_geotype(jobs,c('cpa'))
-jobs_jur <- subset_by_geotype(jobs,c('jurisdiction'))
-jobs_region <- subset_by_geotype(jobs,c('region'))
 
 households <- calculate_pct_chg(countvars, households)
 households <- calculate_pass_fail(households,2500,.20)
 households <- sort_dataframe(households)
 households <- rename_dataframe(households)
-households_cpa <- subset_by_geotype(households,c('cpa'))
-households_jur <- subset_by_geotype(households,c('jurisdiction'))
-households_region <- subset_by_geotype(households,c('region'))
 
 hhp <- calculate_pct_chg(countvars, hhp)
 hhp <- calculate_pass_fail(hhp,7500,.20)
 hhp <- sort_dataframe(hhp)
 hhp <- rename_dataframe(hhp)
 hhp <- hhp %>% rename('hhpop'= hhp)
-hhp_cpa <- subset_by_geotype(hhp,c('cpa'))
-hhp_jur <- subset_by_geotype(hhp,c('jurisdiction'))
-hhp_region <- subset_by_geotype(hhp,c('region'))
 
 units <- calculate_pct_chg(countvars, units)
 units <- calculate_pass_fail(units,2500,.20)
 units <- sort_dataframe(units)
 units <- rename_dataframe(units)
-units_cpa <- subset_by_geotype(units,c('cpa'))
-units_jur <- subset_by_geotype(units,c('jurisdiction'))
-units_region <- subset_by_geotype(units,c('region'))
-
 
 gqpop <- calculate_pct_chg(countvars, gqpop)
 gqpop <- calculate_pass_fail(gqpop,500,.20)
 gqpop <- sort_dataframe(gqpop)
 gqpop <- rename_dataframe(gqpop)
+
+
+
+get_fails <- function(df) {
+  df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","pass/fail")
+  df2 <- spread(df1,increment,'pass/fail')
+  df3 <-df2 %>% filter_all(any_vars(. %in% c('fail')))
+  drops <- c("2016","2018","2020","2025","2030","2035","2040","2045","2050")
+  df4 <- df3[ , !(names(jobs3) %in% drops)]
+return(df4) 
+}  
+
+units_failed <- get_fails(units)
+units_failed$units <- 'fail'
+households_failed <- get_fails(households)
+households_failed$hh <- 'fail'
+hhp_failed <- get_fails(hhp)
+hhp_failed$hhp <- 'fail'
+gqpop_failed <- get_fails(gqpop)
+gqpop_failed$gqpop <- 'fail' 
+jobs_failed <- get_fails(jobs)
+jobs_failed$jobs <- 'fail' 
+
+
+allvars <- Reduce(function(x, y) merge(x, y, all=TRUE), 
+                  list(units_failed,households_failed,hhp_failed,gqpop_failed,jobs_failed))
+allvars <- allvars[order(allvars['geo id']),]
+ids <- rep(1:2, times=nrow(allvars)/2)
+allvars$id <- ids
+allvars[is.na(allvars)] <- 'pass'
+
+
+
+jobs_cpa <- subset_by_geotype(jobs,c('cpa'))
+jobs_jur <- subset_by_geotype(jobs,c('jurisdiction'))
+jobs_region <- subset_by_geotype(jobs,c('region'))
+
+households_cpa <- subset_by_geotype(households,c('cpa'))
+households_jur <- subset_by_geotype(households,c('jurisdiction'))
+households_region <- subset_by_geotype(households,c('region'))
+
+hhp_cpa <- subset_by_geotype(hhp,c('cpa'))
+hhp_jur <- subset_by_geotype(hhp,c('jurisdiction'))
+hhp_region <- subset_by_geotype(hhp,c('region'))
+
+units_cpa <- subset_by_geotype(units,c('cpa'))
+units_jur <- subset_by_geotype(units,c('jurisdiction'))
+units_region <- subset_by_geotype(units,c('region'))
+
 gqpop_cpa <- subset_by_geotype(gqpop,c('cpa'))
 gqpop_jur <- subset_by_geotype(gqpop,c('jurisdiction'))
 gqpop_region <- subset_by_geotype(gqpop,c('region'))
@@ -110,6 +146,10 @@ writeFormula(wb, tableofcontents, startRow = 3,
              x = makeHyperlinkString(sheet = "Emails", row = 1, col = 1,text = "Emails"))
 writeData(wb, tableofcontents,x = "QA Emails with EDAM", startRow = 3, startCol = 2)
 
+writeFormula(wb, tableofcontents, startRow = 5, 
+             x = makeHyperlinkString(sheet = "Summary of Findings", row = 1, col = 1,text = "Summary of Findings"))
+writeData(wb, tableofcontents,x = "Geographies that failed for any variable:units,households,household pop,group quarter pop,jobs", startRow = 5, startCol = 2)
+
 # read email message from Dave and attach to excel spreadsheet
 ## Insert email as images
 imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
@@ -120,9 +160,6 @@ img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.p
 
 # add sheet with email info
 shtemail = addWorksheet(wb, "Emails")
-
-
-
 
 insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, height = 4.77,units = "in") # divide by 96
 insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
@@ -148,14 +185,51 @@ acceptance_criteria['HHPop'] <- "> 7,500 and > 20%"
 acceptance_criteria['GQPop'] <- "> 500 and > 20%"
 acceptance_criteria['Jobs'] <- "> 5,000 and > 20%"
 
+#add summary worksheet
+headerStyle2 <- createStyle(fontSize = 14)
+summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
+writeData(wb, summary, x = "List of geographies that failed for any of the following variables: units, households, household pop, group quarter pop, jobs", 
+          startCol = 1, startRow = 1,headerStyle = headerStyleSummary)
+# writeData(wb, summary, x = "units, households, household pop,group quarter pop, jobs", startCol = 2, startRow = 2,headerStyle = headerStyleSummary)
+
+
+addStyle(wb, summary, style = headerStyle2, rows = c(1,2), cols = 1, gridExpand = TRUE)
+
+writeData(wb, summary, x = "Variable:", startCol = 1, startRow = nrow(allvars)+6)
+writeData(wb, summary, x = "Description:", startCol = 2, startRow = nrow(allvars)+6)
+writeData(wb, summary, x = "Acceptance Criteria:", startCol = 4, startRow = nrow(allvars)+6)
+
+writeData(wb, summary, x = "units", startCol = 1, startRow = nrow(allvars)+7)
+writeData(wb, summary, x = "Number of housing units", startCol = 2, startRow = nrow(allvars)+7)
+writeData(wb, summary, x = acceptance_criteria[['Units']], startCol = 4, startRow = nrow(allvars)+7)
+
+writeData(wb, summary, x = "hh", startCol = 1, startRow = nrow(allvars)+8)
+writeData(wb, summary, x = "Number of households", startCol = 2, startRow = nrow(allvars)+8)
+writeData(wb, summary, x = acceptance_criteria[['HH']], startCol = 4, startRow = nrow(allvars)+8)
+
+writeData(wb, summary, x = "hhp", startCol = 1, startRow = nrow(allvars)+9)
+writeData(wb, summary, x = "Household Population", startCol = 2, startRow = nrow(allvars)+9)
+writeData(wb, summary, x = acceptance_criteria[['HHPop']], startCol = 4, startRow = nrow(allvars)+9)
+
+writeData(wb, summary, x = "gqpop", startCol = 1, startRow = nrow(allvars)+10)
+writeData(wb, summary, x = "Group Quarter Population", startCol = 2, startRow = nrow(allvars)+10)
+writeData(wb, summary, x = acceptance_criteria[['GQPop']], startCol = 4, startRow = nrow(allvars)+10)
+
+writeData(wb, summary, x = "jobs", startCol = 1, startRow = nrow(allvars)+11)
+writeData(wb, summary, x = "Number of Jobs", startCol = 2, startRow = nrow(allvars)+11)
+writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 4, startRow = nrow(allvars)+11)
+
+
+
+
+writeData(wb,summary,allvars,startCol = 1, startRow = 4)
 
 # specify sheetname and tab colors
-add_worksheets_to_excel(wb,"Units","red",5,fullname,acceptance_criteria)
-add_worksheets_to_excel(wb,"HH","green",9,fullname,acceptance_criteria)
-add_worksheets_to_excel(wb,"HHPop","blue",13,fullname,acceptance_criteria)
-add_worksheets_to_excel(wb,"GQPop","yellow",17,fullname,acceptance_criteria)
-add_worksheets_to_excel(wb,"Jobs","purple",21,fullname,acceptance_criteria)
-
+add_worksheets_to_excel(wb,"Units","blue",8,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"HH","green",12,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"HHPop","orange",16,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"GQPop","yellow",20,fullname,acceptance_criteria)
+add_worksheets_to_excel(wb,"Jobs","purple",24,fullname,acceptance_criteria)
 
 
 # add comments to sheets with cutoff
@@ -168,7 +242,7 @@ comments_to_add['gqpop'] <- "> 500 and > 20%"
 comments_to_add['jobs'] <- "> 5,000 and > 20%"
 
 
-i <-3 # starting sheet number (sheet 1 is email message, sheet 2 is table of contents)
+i <-4 # starting sheet number (sheet 1 is email message, sheet 2 is table of contents, sheet 3 is summary)
 for (demographic_var in c('units','households','hhp','gqpop','jobs')) {
   add_data_to_excel(wb,demographic_var,i)
   i <- i + 3 # 3 sheets for each variable: jur,cpa,region
@@ -176,6 +250,7 @@ for (demographic_var in c('units','households','hhp','gqpop','jobs')) {
 
 
 # formatting style
+
 negStyle <- createStyle(fontColour = "#9C0006", bgFill = "#FFC7CE")
 posStyle <- createStyle(fontColour = "#006100", bgFill = "#C6EFCE")
 checkStyle <- createStyle(fontColour = "#9C5700", bgFill = "#FFEB9C")
@@ -187,8 +262,8 @@ headerStyle <- createStyle(fontSize = 13, fontColour = "#FFFFFF", halign = "cent
 invisibleStyle <- createStyle(fontColour = "#FFFFFF")
 insideBorders <- openxlsx::createStyle(
   border = c("top", "bottom", "left", "right"),
-  borderStyle = "dashed",borderColour="white"
-)
+  borderStyle = "dashed",borderColour="white")
+
 rangeRows = 1:(nrow(jobs_cpa)+1)
 rangeRowscpa = 2:(nrow(jobs_cpa)+1)
 rangeRowsjur = 2:(nrow(jobs_jur)+1)
@@ -196,16 +271,9 @@ rangeCols = 1:(ncol(jobs_jur)-1)
 pct = createStyle(numFmt="0%") # percent 
 aligncenter = createStyle(halign = "center")
 
-for (curr_sheet in names(wb)[3:length(names(wb))]) {
-  addStyle(
-    wb = wb,
-    sheet = curr_sheet,
-    style = insideBorders,
-    rows = rangeRowscpa,
-    cols = rangeCols,
-    gridExpand = TRUE,
-    stack = TRUE
-  )
+
+for (curr_sheet in names(wb)[4:length(names(wb))]) {
+  addStyle(wb = wb,sheet = curr_sheet,style = insideBorders,rows = rangeRowscpa,cols = rangeCols,gridExpand = TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=pct, cols=c(7), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=aligncenter, cols=c(1:4,8), rows=rangeRows, gridExpand=TRUE,stack = TRUE)
   #addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(hhp_cpa)+1), gridExpand=TRUE,stack = TRUE)
@@ -217,6 +285,25 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="fail", style = negStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="check", style = checkStyle)
 }
+
+# format for summary sheet
+conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows =1:(nrow(allvars)+4), rule="$J1==2", style = lightgreyStyle)
+conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=1:(nrow(allvars)+4), rule="$J1==1", style = darkgreyStyle)
+
+addStyle(wb = wb,summary,style = insideBorders,rows = 4:(nrow(allvars)+4),cols = 1:(ncol(allvars)-1),gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, headerStyle, rows = 4, cols = 1:(ncol(allvars)-1), gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(allvars)), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
+#conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=3:(nrow(allvars)+3), rule="$J1==1", style = darkgreyStyle)
+conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="fail", style = negStyle)
+conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="check", style = checkStyle)
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,18,10,18,18,18,18,18,18,18))
+addStyle(wb, summary, style=aligncenter,cols=c(1:10), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
+
+
+
+#addStyle(wb, summary, style=fontStyle,cols=c(1:10), rows=3:(nrow(allvars)+3), gridExpand=TRUE,stack = TRUE)
+## end format for summary sheet
+
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
