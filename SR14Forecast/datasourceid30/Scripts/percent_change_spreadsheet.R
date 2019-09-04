@@ -77,13 +77,14 @@ gqpop <- sort_dataframe(gqpop)
 gqpop <- rename_dataframe(gqpop)
 
 
-
+# create dataframe with summary of results
+# include only geographies that fail in summary
 get_fails <- function(df) {
   df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","pass/fail")
   df2 <- spread(df1,increment,'pass/fail')
   df3 <-df2 %>% filter_all(any_vars(. %in% c('fail')))
   drops <- c("2016","2018","2020","2025","2030","2035","2040","2045","2050")
-  df4 <- df3[ , !(names(jobs3) %in% drops)]
+  df4 <- df3[ , !(names(df3) %in% drops)]
 return(df4) 
 }  
 
@@ -98,33 +99,43 @@ gqpop_failed$gqpop <- 'fail'
 jobs_failed <- get_fails(jobs)
 jobs_failed$jobs <- 'fail' 
 
-
+# summary dataframe - merge all variables
 allvars <- Reduce(function(x, y) merge(x, y, all=TRUE), 
                   list(units_failed,households_failed,hhp_failed,gqpop_failed,jobs_failed))
-allvars <- allvars[order(allvars['geo id']),]
+allvars <- allvars[order(allvars['units'],allvars['hhp'],allvars['geotype'],allvars['geozone']),]
 ids <- rep(1:2, times=nrow(allvars)/2)
 allvars$id <- ids
 allvars[is.na(allvars)] <- 'pass'
 
+# order cpa worksheets the same as summary worksheet
+cpas <- subset(countvars,yr_id==2016 & geotype=='cpa')
+failedcpas <- subset(allvars, geotype=='cpa')
+targetorder<- cpas[!(cpas$geozone %in% failedcpas$geozone),]
+cpaorder <- c(failedcpas$geozone,targetorder$geozone)
 
 
 jobs_cpa <- subset_by_geotype(jobs,c('cpa'))
+jobs_cpa[match(cpaorder, jobs_cpa$cpa),]
 jobs_jur <- subset_by_geotype(jobs,c('jurisdiction'))
 jobs_region <- subset_by_geotype(jobs,c('region'))
 
 households_cpa <- subset_by_geotype(households,c('cpa'))
+households_cpa[match(cpaorder, households_cpa$cpa),]
 households_jur <- subset_by_geotype(households,c('jurisdiction'))
 households_region <- subset_by_geotype(households,c('region'))
 
 hhp_cpa <- subset_by_geotype(hhp,c('cpa'))
+hhp_cpa[match(cpaorder, hhp_cpa$cpa),]
 hhp_jur <- subset_by_geotype(hhp,c('jurisdiction'))
 hhp_region <- subset_by_geotype(hhp,c('region'))
 
 units_cpa <- subset_by_geotype(units,c('cpa'))
+units_cpa[match(cpaorder, units_cpa$cpa),]
 units_jur <- subset_by_geotype(units,c('jurisdiction'))
 units_region <- subset_by_geotype(units,c('region'))
 
 gqpop_cpa <- subset_by_geotype(gqpop,c('cpa'))
+gqpop_cpa[match(cpaorder, gqpop_cpa$cpa),]
 gqpop_jur <- subset_by_geotype(gqpop,c('jurisdiction'))
 gqpop_region <- subset_by_geotype(gqpop,c('region'))
 
@@ -186,39 +197,47 @@ acceptance_criteria['GQPop'] <- "> 500 and > 20%"
 acceptance_criteria['Jobs'] <- "> 5,000 and > 20%"
 
 #add summary worksheet
-headerStyle2 <- createStyle(fontSize = 14)
+
 summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
+
 writeData(wb, summary, x = "List of geographies that failed for any of the following variables: units, households, household pop, group quarter pop, jobs", 
-          startCol = 1, startRow = 1,headerStyle = headerStyleSummary)
-# writeData(wb, summary, x = "units, households, household pop,group quarter pop, jobs", startCol = 2, startRow = 2,headerStyle = headerStyleSummary)
+          startCol = 1, startRow = 1)
+headerStyleforsummary <- createStyle(fontSize = 14) #,textDecoration = "bold")
+addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
+
+# add summary table of cutoffs
+writeData(wb, summary, x = "Variable", startCol = 1, startRow = nrow(allvars)+6)
+writeData(wb, summary, x = "Description", startCol = 2, startRow = nrow(allvars)+6)
+writeData(wb, summary, x = "Test Criteria", startCol = 3, startRow = nrow(allvars)+6)
+headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
+addStyle(wb, summary, headerStyle1, rows = nrow(allvars)+6, cols = 1:3, gridExpand = TRUE,stack = TRUE)
 
 
-addStyle(wb, summary, style = headerStyle2, rows = c(1,2), cols = 1, gridExpand = TRUE)
-
-writeData(wb, summary, x = "Variable:", startCol = 1, startRow = nrow(allvars)+6)
-writeData(wb, summary, x = "Description:", startCol = 2, startRow = nrow(allvars)+6)
-writeData(wb, summary, x = "Acceptance Criteria:", startCol = 4, startRow = nrow(allvars)+6)
+tableStyle1 <- createStyle(fontSize = 10, halign = "center")
+tableStyle2 <- createStyle(fontSize = 10, halign = "left")
 
 writeData(wb, summary, x = "units", startCol = 1, startRow = nrow(allvars)+7)
 writeData(wb, summary, x = "Number of housing units", startCol = 2, startRow = nrow(allvars)+7)
-writeData(wb, summary, x = acceptance_criteria[['Units']], startCol = 4, startRow = nrow(allvars)+7)
+writeData(wb, summary, x = acceptance_criteria[['Units']], startCol = 3, startRow = nrow(allvars)+7)
 
 writeData(wb, summary, x = "hh", startCol = 1, startRow = nrow(allvars)+8)
 writeData(wb, summary, x = "Number of households", startCol = 2, startRow = nrow(allvars)+8)
-writeData(wb, summary, x = acceptance_criteria[['HH']], startCol = 4, startRow = nrow(allvars)+8)
+writeData(wb, summary, x = acceptance_criteria[['HH']], startCol = 3, startRow = nrow(allvars)+8)
 
 writeData(wb, summary, x = "hhp", startCol = 1, startRow = nrow(allvars)+9)
 writeData(wb, summary, x = "Household Population", startCol = 2, startRow = nrow(allvars)+9)
-writeData(wb, summary, x = acceptance_criteria[['HHPop']], startCol = 4, startRow = nrow(allvars)+9)
+writeData(wb, summary, x = acceptance_criteria[['HHPop']], startCol = 3, startRow = nrow(allvars)+9)
 
 writeData(wb, summary, x = "gqpop", startCol = 1, startRow = nrow(allvars)+10)
 writeData(wb, summary, x = "Group Quarter Population", startCol = 2, startRow = nrow(allvars)+10)
-writeData(wb, summary, x = acceptance_criteria[['GQPop']], startCol = 4, startRow = nrow(allvars)+10)
+writeData(wb, summary, x = acceptance_criteria[['GQPop']], startCol = 3, startRow = nrow(allvars)+10)
 
 writeData(wb, summary, x = "jobs", startCol = 1, startRow = nrow(allvars)+11)
 writeData(wb, summary, x = "Number of Jobs", startCol = 2, startRow = nrow(allvars)+11)
-writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 4, startRow = nrow(allvars)+11)
+writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 3, startRow = nrow(allvars)+11)
 
+addStyle(wb, summary, tableStyle1, rows = (nrow(allvars)+7):(nrow(allvars)+11), cols = 1, gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, tableStyle2, rows = (nrow(allvars)+7):(nrow(allvars)+11), cols = 2:3, gridExpand = TRUE,stack = TRUE)
 
 
 
@@ -296,7 +315,7 @@ addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(allvars)), rows=4:(nrow(
 #conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=3:(nrow(allvars)+3), rule="$J1==1", style = darkgreyStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="fail", style = negStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="check", style = checkStyle)
-setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,18,10,18,18,18,18,18,18,18))
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,22,15,18,18,18,18,18,18,18))
 addStyle(wb, summary, style=aligncenter,cols=c(1:10), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
 
 
