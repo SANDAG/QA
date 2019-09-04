@@ -48,6 +48,21 @@ jobs <- calculate_pct_chg_jobs(countvars, jobs)
 jobs <- calculate_pass_fail(jobs,500,.20)
 jobs <- sort_dataframe_jobs(jobs)
 jobs <- rename_dataframe(jobs)
+
+get_fails <- function(df) {
+  df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","employment_type_id","pass/fail")
+  df2 <- spread(df1,increment,'pass/fail')
+  df3 <-df2 %>% filter_all(any_vars(. %in% c('fail')))
+  drops <- c("2016","2018","2020","2025","2030","2035","2040","2045","2050")
+  df4 <- df3[ , !(names(df3) %in% drops)]
+  return(df4) 
+}  
+
+jobs_failed <- get_fails(jobs)
+jobs_failed$jobs <- 'fail'
+
+
+
 jobs_cpa <- subset_by_geotype_jobs(jobs,c('cpa'))
 jobs_jur <- subset_by_geotype_jobs(jobs,c('jurisdiction'))
 jobs_region <- subset_by_geotype_jobs(jobs,c('region'))
