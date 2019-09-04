@@ -10,3 +10,7 @@ FROM [demographic_warehouse].[dim].[mgra_denormalize]
 WHERE series = 14
 GROUP BY cpa,cpa_id,jurisdiction,jurisdiction_id
 ORDER BY id
+
+
+--select 19 + 87 + 1 --(not in a cpa) = 107
+

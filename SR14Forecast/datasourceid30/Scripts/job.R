@@ -18,6 +18,7 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
 
 # get job data
 jobs <- readDB("../Queries/jobs-2.sql",datasource_id_current)
+geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
 
 odbcClose(channel)
 
@@ -25,8 +26,13 @@ countvars <- subset(jobs, yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 
 
 countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
 
-subset(countvars,geozone=='San Diego Region')
+#subset(countvars,geozone=='San Diego Region')
 
+# add jur and cpa id
+countvars <- merge(x = countvars, y =geo_id,by = "geozone", all.x = TRUE)
+# add dummy cpa id to region
+countvars$id[countvars$geozone=="San Diego Region"] <- 9999
+countvars <- countvars %>% rename('geo_id'= id)
 
 # clean up cpa names removing asterick and dashes etc.
 countvars <- rm_special_chr(countvars)
@@ -34,20 +40,25 @@ countvars <- subset(countvars,geozone != 'Not in a CPA')
 #head(countvars)
 
 # order dataframe for doing lag calculation
-countvars <- countvars[order(countvars$datasource_id,countvars$geotype,countvars$geozone,countvars$yr_id),]
+countvars <- countvars[order(countvars$employment_type_id,countvars$datasource_id,countvars$geotype,countvars$geozone,
+                             countvars$yr_id),]
 
-jobs <- calculate_pct_chg(countvars, jobs)
+
+jobs <- calculate_pct_chg_jobs(countvars, jobs)
 jobs <- calculate_pass_fail(jobs,500,.20)
-jobs <- sort_dataframe(jobs)
+jobs <- sort_dataframe_jobs(jobs)
 jobs <- rename_dataframe(jobs)
-jobs_cpa <- subset_by_geotype(jobs,c('cpa'))
-jobs_jur <- subset_by_geotype(jobs,c('jurisdiction'))
-jobs_region <- subset_by_geotype(jobs,c('region'))
+jobs_cpa <- subset_by_geotype_jobs(jobs,c('cpa'))
+jobs_jur <- subset_by_geotype_jobs(jobs,c('jurisdiction'))
+jobs_region <- subset_by_geotype_jobs(jobs,c('region'))
 
 ########################################################### 
 # create excel workbook
 
 wb = createWorkbook()
+
+tableofcontents = addWorksheet(wb, "TableofContents")
+
 
 # read email message from Dave and attach to excel spreadsheet
 ## Insert email as images
@@ -65,19 +76,30 @@ insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, he
 insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
 insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
 
+#add_worksheets_to_excel(wb,"Units","blue",8,fullname,acceptance_criteria)
+
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+fullname <- hash()
+fullname['Jobs'] <- "Jobs"
+
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+acceptance_criteria <- hash()
+acceptance_criteria['Jobs'] <- "> 500 and > 20%"
 
 # specify sheetname and tab colors
-add_worksheets_to_excel(wb,"Jobs","purple")
+add_worksheets_to_excel(wb,"Jobs","purple",8,fullname,acceptance_criteria)
 
 # add comments to sheets with cutoff
 # create dictionary hash of comments
 comments_to_add <- hash()
-comments_to_add['jobs'] <- "> 5,00 and > 20%"
+comments_to_add['jobs'] <- "> 500 and > 20%"
 
 
-i <-2 # starting sheet number (sheet 1 is email message)
+i <-3 # starting sheet number (sheet 1 is email message)
 for (demographic_var in c('jobs')) {
-  add_data_to_excel(wb,demographic_var,i)
+  add_data_to_excel_jobs(wb,demographic_var,i)
   i <- i + 3 # 3 sheets for each variable: jur,cpa,region
 }
 
@@ -101,7 +123,7 @@ rangeRowsjur = 2:(nrow(jobs_jur)+1)
 rangeCols = 1:9
 pct = createStyle(numFmt="0%") # percent 
 
-for (curr_sheet in names(wb)[-1]) {
+for (curr_sheet in names(wb)[3:length(names(wb))]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -111,7 +133,7 @@ for (curr_sheet in names(wb)[-1]) {
     gridExpand = TRUE,
     stack = TRUE
   )
-  addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  #addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(10), rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)

@@ -25,6 +25,23 @@ calculate_pct_chg <- function(df, edam_var) {
   return(df1)
 }
 
+
+calculate_pct_chg_jobs <- function(df, edam_var) {
+  edam_var <- enquo(edam_var)
+  df1 <- df %>% select("datasource_id","geotype","geo_id","geozone","yr_id","employment_type_id",!!edam_var)
+  #change over increments 
+  df1 <- df1 %>% 
+    group_by(geozone,geotype,employment_type_id) %>% 
+    mutate(change = !!edam_var - lag(!!edam_var))
+  #percent change over increments
+  df1 <- df1 %>%
+    group_by(geozone,geotype,employment_type_id) %>%  # avoid divide by zero with ifelse
+    mutate(percent_change = ifelse(lag(!!edam_var)==0, NA, (!!edam_var - lag(!!edam_var))/lag(!!edam_var)))
+  df1$percent_change <- round(df1$percent_change, digits = 2)
+  return(df1)
+}
+
+
 calculate_pass_fail <- function(df, cutoff1,cutoff2) {
   df <- df %>%
     mutate(pass.or.fail = case_when(change > cutoff1 & percent_change > cutoff2 ~ "fail",
@@ -46,6 +63,22 @@ sort_dataframe <- function(df) {
                                   TRUE ~ 3))
   df <- df[order(df$sort_order,df$geotype,df$geozone,df$yr_id),]
   df$sort_order <- NULL
+  return(df)
+}
+#df <- jobs
+sort_dataframe_jobs <- function(df) {
+  df$geozone_and_sector <-paste(df$geozone,'_',df$employment_type_id)
+  df_fail <- unique(subset(df,pass.or.fail=="fail")$geozone_and_sector)
+  df_check <- unique(subset(df,pass.or.fail=="check")$geozone)
+  df <- df %>% 
+    mutate(sort_order = case_when(geozone_and_sector %in% df_fail  ~ 1,
+                                  geozone %in% df_check ~ 2,
+                                  TRUE ~ 3))
+  df <- df[order(df$sort_order,df$employment_type_id,df$geotype,df$geozone,df$yr_id,df$sort_order),]
+   #df <- df[order(df$sort_order),]
+  
+  df$sort_order <- NULL
+  df$geozone_and_sector <- NULL
   return(df)
 }
 
@@ -72,9 +105,30 @@ add_id_for_excel_formatting <- function(df) {
   return(df)
 }
 
+add_id_for_excel_formatting_jobs <- function(df) {
+  t <- df %>% group_by(geozone,employment_type_id) %>% tally()
+  if (nrow(subset(t,n!=9))!=0) {
+    print("ERROR: expecting 9 years per geography")
+    print(subset(t,n!=9)) } 
+  
+  ids <- rep(1:2, times=nrow(t)/2, each=9)
+  if (nrow(t)%%2!=0 ) {ids <- append(ids, c(1,1,1,1,1,1,1,1,1))}
+  df$id <- ids
+  return(df)
+}
+
 subset_by_geotype <- function(df,the_geotype) {
   df1 <- subset(df,geotype %in% the_geotype)
   df2 <- add_id_for_excel_formatting(df1)
+  df2 <- df2 %>% rename(!!the_geotype[1] := geozone)
+  #df %>% rename(!!variable := name_of_col_from_df)
+  df2$geotype <- NULL
+  return(df2)
+}
+
+subset_by_geotype_jobs <- function(df,the_geotype) {
+  df1 <- subset(df,geotype %in% the_geotype)
+  df2 <- add_id_for_excel_formatting_jobs(df1)
   df2 <- df2 %>% rename(!!the_geotype[1] := geozone)
   #df %>% rename(!!variable := name_of_col_from_df)
   df2$geotype <- NULL
@@ -117,4 +171,15 @@ add_data_to_excel <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
   writeData(wb, j+2,dataframe_name)
   writeComment(wb,j+2,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+}  
+add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
+  writeData(wb,j,dataframe_name)
+  writeComment(wb,j,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
+  writeData(wb, j+1,dataframe_name)
+  writeComment(wb,j+1,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
+  writeData(wb, j+2,dataframe_name)
+  writeComment(wb,j+2,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
 }  
