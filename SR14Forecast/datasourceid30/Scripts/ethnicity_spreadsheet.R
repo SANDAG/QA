@@ -1,4 +1,3 @@
-#Fix - Datasource id current isn't not reading in
 
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
@@ -17,21 +16,16 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
 
 # get hhpop data
 dem <- readDB("../Queries/age_ethn_gender.sql",datasource_id_current)
-
 odbcClose(channel)
 
 dem <- subset(dem, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
 
 dem$geozone[dem$geotype=='region'] <- 'San Diego Region'
 
-subset(dem,geozone=='San Diego Region')
-
 dem$ethn_group <- ifelse(dem$short_name=="Hispanic","Hispanic",
                          ifelse(dem$short_name=="White","White",
                                 ifelse(dem$short_name=="Black","Black",
                                        ifelse(dem$short_name=="Asian","Asian","Other"))))
-
-
 
 dem_ethn<-aggregate(pop~ethn_group+geotype+geozone+yr_id, data=dem, sum)
 
@@ -41,6 +35,7 @@ dem_ethn<- mutate(dem_ethn, ethn_id=
                             ifelse(grepl("Black", ethn_group),3,
                                    ifelse(grepl("Asian", ethn_group),4,5)))))
 
+dem_ethn$datasource_id <- datasource_id_current
 
 dem_ethn  %>%  group_by(ethn_group) %>% tally(pop)
 
@@ -104,6 +99,7 @@ sort_dataframe <- function(df) {
 dem_ethn <- sort_dataframe(dem_ethn)
 
 #need to add datasource id to file
+
 dem_ethn <- dem_ethn %>% select(geotype,geozone,yr_id,ethn_group,ethn_id,pop,change,proportion_of_pop,percent_change,pass.or.fail)
 
 dem_ethn <- dem_ethn %>% rename('increment'= yr_id,'increment change' = change,'ethnicity'=ethn_group,'ethnicity id'=ethn_id,
@@ -120,10 +116,6 @@ if (nrow(subset(t,n!=9))!=0) {
 ids <- rep(1:2, times=nrow(t)/2, each=9)
 if (nrow(t)%%2!=0 ) {ids <- append(ids, c(1,1,1,1,1,1,1,1,1))}
 dem_ethn$id <- ids
-
-
-
-
 
 dem_ethn_cpa <- subset(dem_ethn,dem_ethn$geotype=='cpa')
 dem_ethn_jur <- subset(dem_ethn,dem_ethn$geotype=='jurisdiction')
@@ -170,10 +162,11 @@ insideBorders <- openxlsx::createStyle(
   border = c("top", "bottom", "left", "right"),
   borderStyle = "dashed",borderColour="white"
 )
+rangeRows = 1:(nrow(dem_ethn_cpa)+1)
 rangeRowscpa = 2:(nrow(dem_ethn_cpa)+1)
 rangeRowsjur = 2:(nrow(dem_ethn_jur)+1)
-rangeRowsjur = 2:(nrow(dem_ethn_reg)+1)
-rangeCols = 1:11
+rangeRowsreg = 2:(nrow(dem_ethn_reg)+1)
+rangeCols = 1:(ncol(dem_ethn_cpa)-1)
 pct = createStyle(numFmt="0%") # percent 
 
 for (curr_sheet in names(wb)[-1]) {
@@ -186,15 +179,15 @@ for (curr_sheet in names(wb)[-1]) {
     gridExpand = TRUE,
     stack = TRUE
   )
-  addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=pct, cols=c(10), rows=2:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(7,9), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=createStyle(halign = 'center'), cols=c(1:5,10), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(11), rows=1:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,14,33,15,16,18,18,18,14))
-  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$K1==2", style = lightgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=1:(nrow(dem_ethn_cpa)+1), rule="$K1==1", style = darkgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=2:(nrow(dem_ethn_cpa)+1), type="contains", rule="fail", style = negStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:11, rows=2:(nrow(dem_ethn_cpa)+1), type="contains", rule="check", style = checkStyle)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(ncol(dem_ethn_jur)), rows=1:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,33,10,15,10,18,18,18,14))
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$K1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$K1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="fail", style = negStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="check", style = checkStyle)
 }
 
 
@@ -202,10 +195,9 @@ writeData(wb, shtcpaethn,dem_ethn_cpa)
 writeData(wb, shtjurethn,dem_ethn_jur)
 writeData(wb, shtregethn,dem_ethn_reg)
 
-#LH TO REVISE
+
 # add comment with cutoffs to each sheet
-c1 <- createComment(comment = "Hispanic change > 2,500 and > 20%\nWhite change > 2,500 and > 20%\nBlack + 
-                    change > 250 and > 20%\nAsian change > 1,000 and > 20%\nOther change > 500 and > 20%")
+c1 <- createComment(comment = "Hispanic change > 2,500 and > 20%\nWhite change > 2,500 and > 20%\nBlack change > 250 and > 20%\nAsian change > 1,000 and > 20%\nOther change > 500 and > 20%")
 writeComment(wb, shtjurethn, col = "J", row = 1, comment = c1)
 writeComment(wb, shtcpaethn, col = "J", row = 1, comment = c1)
 
