@@ -76,6 +76,7 @@ allvars <- Reduce(function(x, y) merge(x, y, all=TRUE),
                   list(units_failed,households_failed,hhp_failed,gqpop_failed,jobs_failed))
 allvars <- allvars[order(allvars['units'],allvars['hhp'],allvars['geotype'],allvars['geozone']),]
 ids <- rep(1:2, times=nrow(allvars)/2)
+if (length(ids) < nrow(allvars)) {ids<-c(ids,1)}
 allvars$id <- ids
 allvars[is.na(allvars)] <- 'pass'
 

@@ -44,7 +44,7 @@ calculate_pct_chg_jobs <- function(df, edam_var) {
 
 calculate_pass_fail <- function(df, cutoff1,cutoff2) {
   df <- df %>%
-    mutate(pass.or.fail = case_when(change > cutoff1 & percent_change > cutoff2 ~ "fail",
+    mutate(pass.or.fail = case_when(abs(change) > cutoff1 & abs(percent_change) > cutoff2 ~ "fail",
                                     #average_annual_change >= cutoff1 & avg_ann_pct_chg >= cutoff2 ~ "fail",
                                     #change >= cutoff1 & percent_change  >= cutoff2 ~ "check",
                                     #change >= cutoff1 & percent_change < cutoff2 & geotype == 'cpa' ~ "check",
