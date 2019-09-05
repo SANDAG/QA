@@ -53,13 +53,26 @@ calculate_pass_fail <- function(df, cutoff1,cutoff2) {
   return(df)
 }
 
-
+# df <- units
+# df <- units
 sort_dataframe <- function(df) {
   df_fail <- unique(subset(df,pass.or.fail=="fail")$geozone)
   df_check <- unique(subset(df,pass.or.fail=="check")$geozone)
   df <- df %>% 
     mutate(sort_order = case_when(geozone %in% df_fail ~ 1,
                                   geozone %in% df_check ~ 2,
+                                  TRUE ~ 3))
+  df <- df[order(df$sort_order,df$geotype,df$geozone,df$yr_id),]
+  df$sort_order <- NULL
+  return(df)
+}
+# df <- jobs
+# failures <- failedgeos
+sort_dataframe_geos <- function(df,failures) {
+  #df_fail <- unique(subset(df,pass.or.fail=="fail")$geozone)
+  #df_check <- unique(subset(df,pass.or.fail=="check")$geozone)
+  df <- df %>% 
+    mutate(sort_order = case_when(geozone %in% failures ~ 1,
                                   TRUE ~ 3))
   df <- df[order(df$sort_order,df$geotype,df$geozone,df$yr_id),]
   df$sort_order <- NULL
@@ -117,11 +130,13 @@ add_id_for_excel_formatting_jobs <- function(df) {
   return(df)
 }
 
+#df <- units
+#the_geotype <- 'cpa'
 subset_by_geotype <- function(df,the_geotype) {
   df1 <- subset(df,geotype %in% the_geotype)
   df2 <- add_id_for_excel_formatting(df1)
   df2 <- df2 %>% rename(!!the_geotype[1] := geozone)
-  #df %>% rename(!!variable := name_of_col_from_df)
+  # df %>% rename(!!variable := name_of_col_from_df)
   df2$geotype <- NULL
   return(df2)
 }
@@ -182,4 +197,17 @@ add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
   writeData(wb, j+2,dataframe_name)
   writeComment(wb,j+2,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+}  
+
+# create dataframe with summary of results
+# include only geographies that fail in summary
+df <- units
+
+get_fails <- function(df) {
+  df <- df %>% select("datasource_id","geotype","geo_id","geozone","yr_id","pass.or.fail")
+  df <- spread(df,yr_id,'pass.or.fail')
+  df <-df %>% filter_all(any_vars(. %in% c('fail')))
+  drops <- c("2016","2018","2020","2025","2030","2035","2040","2045","2050")
+  df <- df[ , !(names(df) %in% drops)]
+  return(df) 
 }  

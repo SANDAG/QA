@@ -10,9 +10,6 @@ source("functions_for_percent_change.R")
 packages <- c("RODBC","tidyverse","openxlsx","hash")
 pkgTest(packages)
 
-
-
-
 # connect to database
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
@@ -34,7 +31,7 @@ countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
 rm(merge1,hhvars,jobs,gq)
 
 
-subset(countvars,geozone=='San Diego Region')
+# subset(countvars,geozone=='San Diego Region')
 
 countvars <- merge(x = countvars, y =geo_id,by = "geozone", all.x = TRUE)
 # clean up cpa names removing asterick and dashes etc.
@@ -50,44 +47,19 @@ countvars <- subset(countvars,geozone != 'Not in a CPA')
 # order dataframe for doing lag calculation
 countvars <- countvars[order(countvars$datasource_id,countvars$geotype,countvars$geozone,countvars$yr_id),]
 
+# calculate pass/fail
 jobs <- calculate_pct_chg(countvars, jobs)
 jobs <- calculate_pass_fail(jobs,5000,.20)
-jobs <- sort_dataframe(jobs)
-jobs <- rename_dataframe(jobs)
-
 households <- calculate_pct_chg(countvars, households)
 households <- calculate_pass_fail(households,2500,.20)
-households <- sort_dataframe(households)
-households <- rename_dataframe(households)
-
 hhp <- calculate_pct_chg(countvars, hhp)
 hhp <- calculate_pass_fail(hhp,7500,.20)
-hhp <- sort_dataframe(hhp)
-hhp <- rename_dataframe(hhp)
-hhp <- hhp %>% rename('hhpop'= hhp)
-
 units <- calculate_pct_chg(countvars, units)
 units <- calculate_pass_fail(units,2500,.20)
-units <- sort_dataframe(units)
-units <- rename_dataframe(units)
-
 gqpop <- calculate_pct_chg(countvars, gqpop)
 gqpop <- calculate_pass_fail(gqpop,500,.20)
-gqpop <- sort_dataframe(gqpop)
-gqpop <- rename_dataframe(gqpop)
 
-
-# create dataframe with summary of results
-# include only geographies that fail in summary
-get_fails <- function(df) {
-  df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","pass/fail")
-  df2 <- spread(df1,increment,'pass/fail')
-  df3 <-df2 %>% filter_all(any_vars(. %in% c('fail')))
-  drops <- c("2016","2018","2020","2025","2030","2035","2040","2045","2050")
-  df4 <- df3[ , !(names(df3) %in% drops)]
-return(df4) 
-}  
-
+# create dataframe of failed geos for summary tab
 units_failed <- get_fails(units)
 units_failed$units <- 'fail'
 households_failed <- get_fails(households)
@@ -107,35 +79,42 @@ ids <- rep(1:2, times=nrow(allvars)/2)
 allvars$id <- ids
 allvars[is.na(allvars)] <- 'pass'
 
-# order cpa worksheets the same as summary worksheet
-cpas <- subset(countvars,yr_id==2016 & geotype=='cpa')
-failedcpas <- subset(allvars, geotype=='cpa')
-targetorder<- cpas[!(cpas$geozone %in% failedcpas$geozone),]
-cpaorder <- c(failedcpas$geozone,targetorder$geozone)
+# list of failed geographies for sorting dataframe by failures
+failedgeosunitshhhhp <- subset(allvars,hhp=='fail')$geozone
+failedgeosgqpop <- subset(allvars,gqpop=='fail')$geozone
+failedgeosjobs <- subset(allvars,jobs=='fail')$geozone
 
+# sort and rename dataframes
+jobs <- sort_dataframe_geos(jobs,failedgeosjobs)
+jobs <- rename_dataframe(jobs)
+households <- sort_dataframe_geos(households,failedgeosunitshhhhp)
+households <- rename_dataframe(households)
+hhp <- sort_dataframe_geos(hhp,failedgeosunitshhhhp)
+hhp <- rename_dataframe(hhp)
+hhp <- hhp %>% rename('hhpop'= hhp)
+units <- sort_dataframe_geos(units,failedgeosunitshhhhp)
+units <- rename_dataframe(units)
+gqpop <- sort_dataframe_geos(gqpop,failedgeosgqpop)
+gqpop <- rename_dataframe(gqpop)
 
+# create dataframe for cpa, jur, and region
 jobs_cpa <- subset_by_geotype(jobs,c('cpa'))
-jobs_cpa[match(cpaorder, jobs_cpa$cpa),]
 jobs_jur <- subset_by_geotype(jobs,c('jurisdiction'))
 jobs_region <- subset_by_geotype(jobs,c('region'))
 
 households_cpa <- subset_by_geotype(households,c('cpa'))
-households_cpa[match(cpaorder, households_cpa$cpa),]
 households_jur <- subset_by_geotype(households,c('jurisdiction'))
 households_region <- subset_by_geotype(households,c('region'))
 
 hhp_cpa <- subset_by_geotype(hhp,c('cpa'))
-hhp_cpa[match(cpaorder, hhp_cpa$cpa),]
 hhp_jur <- subset_by_geotype(hhp,c('jurisdiction'))
 hhp_region <- subset_by_geotype(hhp,c('region'))
 
 units_cpa <- subset_by_geotype(units,c('cpa'))
-units_cpa[match(cpaorder, units_cpa$cpa),]
 units_jur <- subset_by_geotype(units,c('jurisdiction'))
 units_region <- subset_by_geotype(units,c('region'))
 
 gqpop_cpa <- subset_by_geotype(gqpop,c('cpa'))
-gqpop_cpa[match(cpaorder, gqpop_cpa$cpa),]
 gqpop_jur <- subset_by_geotype(gqpop,c('jurisdiction'))
 gqpop_region <- subset_by_geotype(gqpop,c('region'))
 
@@ -161,7 +140,6 @@ writeFormula(wb, tableofcontents, startRow = 5,
              x = makeHyperlinkString(sheet = "Summary of Findings", row = 1, col = 1,text = "Summary of Findings"))
 writeData(wb, tableofcontents,x = "Geographies that failed for any variable:units,households,household pop,group quarter pop,jobs", startRow = 5, startCol = 2)
 
-# read email message from Dave and attach to excel spreadsheet
 ## Insert email as images
 imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
 img1a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 1.png",sep='')
@@ -239,8 +217,6 @@ writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 3, startRow
 addStyle(wb, summary, tableStyle1, rows = (nrow(allvars)+7):(nrow(allvars)+11), cols = 1, gridExpand = TRUE,stack = TRUE)
 addStyle(wb, summary, tableStyle2, rows = (nrow(allvars)+7):(nrow(allvars)+11), cols = 2:3, gridExpand = TRUE,stack = TRUE)
 
-
-
 writeData(wb,summary,allvars,startCol = 1, startRow = 4)
 
 # specify sheetname and tab colors
@@ -249,7 +225,6 @@ add_worksheets_to_excel(wb,"HH","green",12,fullname,acceptance_criteria)
 add_worksheets_to_excel(wb,"HHPop","orange",16,fullname,acceptance_criteria)
 add_worksheets_to_excel(wb,"GQPop","yellow",20,fullname,acceptance_criteria)
 add_worksheets_to_excel(wb,"Jobs","purple",24,fullname,acceptance_criteria)
-
 
 # add comments to sheets with cutoff
 # create dictionary hash of comments
@@ -317,12 +292,6 @@ conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvar
 conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="check", style = checkStyle)
 setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,22,15,18,18,18,18,18,18,18))
 addStyle(wb, summary, style=aligncenter,cols=c(1:10), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
-
-
-
-#addStyle(wb, summary, style=fontStyle,cols=c(1:10), rows=3:(nrow(allvars)+3), gridExpand=TRUE,stack = TRUE)
-## end format for summary sheet
-
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
