@@ -22,3 +22,13 @@ ORDER BY parcel_acres
 
 
 select * from #selection4
+
+
+
+SELECT *
+FROM urbansim.[urbansim].parcel p
+WHERE p.parcel_id IN 
+	(select parcel_id from  [urbansim].[urbansim].[urbansim_lite_output] where  run_id = 444 and capacity_type = 'adu') AND
+	 p.parcel_id NOT IN 
+	(select parcel_id from #selection4)
+
