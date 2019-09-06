@@ -13,6 +13,7 @@ SELECT
  ,uspa.[parcel_acres]
  ,uspa.[mgra_id]
  ,uspa.[jurisdiction_id]
+ ,uspa.site_id
 INTO #selection4
 FROM #uspa AS uspa
 JOIN [ws].[dbo].[CWA_DEMAND_FORECAST_2019] AS cwa
@@ -26,9 +27,13 @@ select * from #selection4
 
 
 SELECT *
+--INTO ws.dbo.adu_outside_CWA
 FROM urbansim.[urbansim].parcel p
 WHERE p.parcel_id IN 
 	(select parcel_id from  [urbansim].[urbansim].[urbansim_lite_output] where  run_id = 444 and capacity_type = 'adu') AND
 	 p.parcel_id NOT IN 
-	(select parcel_id from #selection4)
+	(select parcel_id from #selection4) and jurisdiction_id !=3
+
+
+
 
