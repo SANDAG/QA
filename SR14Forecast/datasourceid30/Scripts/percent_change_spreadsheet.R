@@ -126,11 +126,12 @@ gqpop_region <- subset_by_geotype(gqpop,c('region'))
 wb = createWorkbook()
 
 tableofcontents = addWorksheet(wb, "TableofContents")
-
+headerStylecontents <- createStyle(fontSize = 14,textDecoration = "bold")
 writeData(wb, tableofcontents, x = "Worksheet Name", startCol = 1, startRow = 1)
 writeData(wb, tableofcontents, x = "Worksheet Description", startCol = 2, startRow = 1)
 writeData(wb, tableofcontents, x = "Test Criteria", startCol = 3, startRow = 1)
 setColWidths(wb, tableofcontents, cols = c(1,2), widths = c(45,45))
+addStyle(wb, tableofcontents, style = headerStylecontents, rows = 1, cols = 1:3, gridExpand = TRUE)
 
 
 writeFormula(wb, tableofcontents, startRow = 3, 
@@ -291,7 +292,7 @@ addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(allvars)), rows=4:(nrow(
 #conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=3:(nrow(allvars)+3), rule="$J1==1", style = darkgreyStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="fail", style = negStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="check", style = checkStyle)
-setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,22,15,18,18,18,18,18,18,18))
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,22,15,30,18,18,18,18,18,18))
 addStyle(wb, summary, style=aligncenter,cols=c(1:10), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
 
 # out folder for excel

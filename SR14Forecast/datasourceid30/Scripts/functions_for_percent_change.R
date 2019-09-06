@@ -1,4 +1,5 @@
 
+
 calculate_pct_chg <- function(df, edam_var) {
   edam_var <- enquo(edam_var)
   df1 <- df %>% select("datasource_id","geotype","geo_id","geozone","yr_id",!!edam_var)
@@ -8,8 +9,15 @@ calculate_pct_chg <- function(df, edam_var) {
     mutate(change = !!edam_var - lag(!!edam_var))
   #percent change over increments
   df1 <- df1 %>%
-    group_by(geozone,geotype) %>%  # avoid divide by zero with ifelse
-    mutate(percent_change = ifelse(lag(!!edam_var)==0, NA, (!!edam_var - lag(!!edam_var))/lag(!!edam_var)))
+    group_by(geozone,geotype) %>% 
+    mutate(percent_change = case_when(lag(!!edam_var)==0 & (!!edam_var==0)  ~ 0,
+                                      lag(!!edam_var)==0   ~ 1 ,
+                                      TRUE ~ (!!edam_var - lag(!!edam_var))/lag(!!edam_var))) 
+ 
+ # df1 <- df1 %>%
+  #  group_by(geozone,geotype) %>%  # avoid divide by zero with ifelse
+    #mutate(percent_change = ifelse(lag(!!edam_var)==0, NA, (!!edam_var - lag(!!edam_var))/lag(!!edam_var)))
+  
   df1$percent_change <- round(df1$percent_change, digits = 2)
   # #average annual change
   # df1 <- df1 %>% 
