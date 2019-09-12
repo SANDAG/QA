@@ -109,7 +109,7 @@ region_vacancy <- subset(vacancy,geozone=='San Diego Region')
 ##################################################################
 
 # out folder for plots
-outfolder<-paste("..\\output\\",datasource_outfolder,sep='')
+outfolder<-paste("..\\Output\\",datasource_outfolder,sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
@@ -249,7 +249,7 @@ geos <- c(region,jur_list,cpa_list)
 #create pdf with all plots
 pdf(paste("vacancy","_ds",datasource_ids[2],"_and_ds",datasource_ids[1],".pdf",sep=''), 8, 8)
 # loop through all geographies
-for(i in geos[1:5]) {
+for(i in geos) {
     print(i)
     watermark = 'white'
     plotsuffix <- ''

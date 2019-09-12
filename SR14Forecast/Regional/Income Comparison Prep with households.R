@@ -7,7 +7,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice")
+              "stringr","gridExtra","grid","lattice","ddply")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -33,6 +33,12 @@ inc_abm_13_2035<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\inpu
 inc_abm_13_2050<- read.csv("T:\\ABM\\release\\ABM\\archive\\version_13.2.2\\input\\2050\\households.csv", stringsAsFactors = FALSE)
 
 
+
+inc_abm_13_2020<- read.csv("T:\\ABM\\release\\ABM\\version_13_3_2\\input\\2020\\households.csv", stringsAsFactors = FALSE)
+inc_abm_13_2025<- read.csv("T:\\ABM\\release\\ABM\\version_13_3_2\\input\\2025\\households.csv", stringsAsFactors = FALSE)
+inc_abm_13_2035<- read.csv("T:\\ABM\\release\\ABM\\version_13_3_2\\input\\2035\\households.csv", stringsAsFactors = FALSE)
+inc_abm_13_2050<- read.csv("T:\\ABM\\release\\ABM\\version_13_3_2\\input\\2050\\households.csv", stringsAsFactors = FALSE)
+
 inc_abm_13_2020$yr = 2020
 inc_abm_13_2025$yr = 2025
 inc_abm_13_2035$yr = 2035
@@ -40,13 +46,14 @@ inc_abm_13_2050$yr = 2050
 
 inc_abm_13<-rbind(inc_abm_13_2020,inc_abm_13_2025,inc_abm_13_2035,inc_abm_13_2050)
 
-inc_abm_13<-select(inc_abm_13, MGRA, HINCCAT1, yr)
-setnames(inc_abm_13, old=c("MGRA","HINCCAT1"), new=c("mgra","income_group_id"))
+# inc_abm_13<-select(inc_abm_13, MGRA, HINCCAT1, yr)
+inc_abm_13<-select(inc_abm_13, mgra, hinccat1, hinc, yr)
+setnames(inc_abm_13, old=c("hinccat1"), new=c("income_group_id"))
 inc_abm_13$hh<-1
 head(inc_abm_13)
 
-inc_abm_13 <-aggregate(hh~yr + mgra + income_group_id, data= inc_abm_13, sum,na.rm = TRUE)
-tail(inc_abm_13)
+# inc_abm_13 <-aggregate(hh~yr + mgra + income_group_id, data= inc_abm_13, sum,na.rm = TRUE)
+# tail(inc_abm_13)
 
 inc_2020<-subset(inc_abm_13_2020, inc_abm_13_2020$BLDGSZ==9)
 table(inc_2020$HINCCAT1)
@@ -72,10 +79,22 @@ inc_abm_13$cpa_13[is.na(inc_abm_13$cpa_13)]<- 0
 inc_abm_13_cpa<-inc_abm_13
 inc_abm_13_cpa$income_group_id <-as.character(inc_abm_13_cpa$income_group_id)
 
-inc_abm_13_cpa<-aggregate(hh~cpa_13+yr+income_group_id, data = inc_abm_13_cpa, sum)
+# inc_abm_13_cpa<-aggregate(hh~cpa_13+yr+income_group_id, data = inc_abm_13_cpa, sum)
 
-inc_abm_13_cpa<- inc_abm_13_cpa[order(inc_abm_13_cpa$cpa_13,inc_abm_13_cpa$yr,inc_abm_13_cpa$income_group_id),]
+inc_abm_13_cpa<- inc_abm_13_cpa[order(inc_abm_13_cpa$yr,inc_abm_13_cpa$hinc),] #inc_abm_13_cpa$cpa_13,inc_abm_13_cpa$yr
 head(inc_abm_13_cpa,15)
+class(inc_abm_13_cpa$hinc)
+
+barrioLogan = subset(inc_abm_13_cpa,cicpa_13==1402)
+ddply(barrioLogan,~yr,summarise,median=median(hinc))
+
+barrioLogan_greaterthan0 = subset(barrioLogan, hinc>0)
+
+aggregate(barrioLogan[, c("hinc")], list(barrioLogan$yr), median)
+aggregate(barrioLogan_greaterthan0[, c("hinc")], list(barrioLogan_greaterthan0$yr), median)
+
+head(barrioLogan,25)
+
 
 inc_abm_13_cpa$lower_bound[inc_abm_13_cpa$income_group_id=="1"]<- 0
 inc_abm_13_cpa$upper_bound[inc_abm_13_cpa$income_group_id=="1"]<- 29999

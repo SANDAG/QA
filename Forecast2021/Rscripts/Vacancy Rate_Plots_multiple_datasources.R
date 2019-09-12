@@ -74,20 +74,19 @@ vacancy <- merge(x = vacancy, y =geo_id,by = "geozone", all.x = TRUE)
 vacancy$id[vacancy$geozone=="~San Diego Region"] <- 9999
 
 # find any double counted rows
-# t <- vacancy %>% group_by(geozone) %>% tally()
-# subset(t,n>8)
-# subset(vacancy,geozone=='Via De La Valle')
+# NOTE: Nick fixed the error in database with via de la valle having 2 cpa ids june 2019
+#t <- vacancy %>% group_by(geozone) %>% tally()
+#subset(t,n>17)
+#subset(vacancy,geozone=='Via De La Valle')
 
 #check mid city name gets fixed
-vacancy$geozone[vacancy$id==1459]
+#vacancy$geozone[vacancy$id==1459]
 
 # clean up names
 vacancy$geozone <- gsub("\\*","",vacancy$geozone)
 vacancy$geozone <- gsub("\\-","_",vacancy$geozone)
 vacancy$geozone <- gsub("\\:","_",vacancy$geozone)
 
-#check mid city name is fixed
-vacancy$geozone[vacancy$id==1459]
 
 #calculate the effective vacancy rate subtracting out unoccupiable units
 vacancy$occupiable_unit<-vacancy$units-vacancy$unoccupiable

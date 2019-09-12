@@ -1,4 +1,4 @@
-#Estimates
+# Estimates
 
 # install R packages ####################################
 pkgTest <- function(pkg){
@@ -31,7 +31,7 @@ datasource_name<-sqlQuery(channel,ds_sql,stringsAsFactors = FALSE)
 sourcename <- rbind(sourcename,datasource_name)
 
 # get race ethnicity
-demo_sql = getSQL("../Queries/age_ethn_gender.sql")
+demo_sql = getSQL("../Queries/age_ethn_gender20102018.sql")
 demo_sql <- gsub("ds_id", ds_id,demo_sql)
 demo<-sqlQuery(channel,demo_sql,stringsAsFactors = FALSE)
 demo$datasource_id = ds_id
@@ -69,7 +69,7 @@ rm(householdpop)
 
 ################ DATA CHECK  ##########################################
 # datasource 27: 627 tracts + 89 cpa + 19 jurs + 1 region = 736
-#   8 race/eth multiplied by 9 years multiplied by 736 geo = 52992 rows
+#   8 race/eth multiplied by 2 years multiplied by 736 geo = 11776 rows
 #######################################################################
   
 
@@ -85,7 +85,7 @@ race_ethnicity$geozone <- gsub("\\:","_",race_ethnicity$geozone)
 geozone_pop<-aggregate(pop~geotype+geozone+yr_id+datasource_id, data=race_ethnicity, sum)
 names(geozone_pop)[names(geozone_pop) == 'pop'] <- 'totalpop'
 ################ DATA CHECK  ##########################################
-#   9 years multiplied by 736 geo = 6624 rows 
+#   2 years multiplied by 736 geo = 1472 rows 
 # (note: includes: "not in a cpa",Via De La Valle Reserve, Marine Corps Recruit Depot)
 #######################################################################
 
@@ -109,6 +109,79 @@ race_ethnicity$pct_of_total<-ifelse(race_ethnicity$totalpop==0,NA,race_ethnicity
 
 # check data
 # subset(race_ethnicity,geozone=='Alpine'& short_name=='Black')
+
+# tracts only
+tract = subset(race_ethnicity,geotype == 'tract')
+################ DATA CHECK  ##########################################
+#   2 years multiplied by 8 race/ethnicity times 627 tracts = 10032 rows 
+#######################################################################
+# add FIPS code from geozone by string pad and adding state code
+tract$FIPS <- tract$geozone
+tract$FIPS[tract$geotype!='tract'] <- NA
+tract$FIPS <- as.numeric(tract$FIPS) * 100
+tract$FIPS <- str_pad(tract$FIPS, 5, side = 'left', pad = '0')
+tract$FIPS <- paste("060730",tract$FIPS,sep='')
+
+# replace geozone with FIPS
+tract$geozone[tract$geotype=='tract'] <- tract$FIPS[tract$geotype=='tract']
+tract$FIPS <- NULL 
+
+# subset file by 2010 and 2018
+r2010 <- subset(tract,yr_id==2010)
+r2018 <- subset(tract,yr_id==2018)
+################ DATA CHECK  ##########################################
+#   627 tracts * 8 race/ethn categories = 5016 TOTAL ROWS
+#######################################################################
+
+
+# merge 2010 and 2018
+r_2010_2018 <- merge(x=r2010 , y=r2018,by = c("geozone","datasource_id",
+                                              "geotype","short_name","datasource",
+                                              "description"),
+                     suffixes = c(".2010",".2018"))
+
+
+# calculate percent of total population year over year difference
+r_2010_2018$pct_of_total_chg <-r_2010_2018$pct_of_total.2018 - r_2010_2018$pct_of_total.2010
+r_2010_2018$pop_chg <- r_2010_2018$pop.2018 - r_2010_2018$pop.2010
+
+
+# calculate ABSOLUTE percent of total population year over year difference
+r_2010_2018$abs_pct_of_total_chg <-abs(r_2010_2018$pct_of_total.2018 - r_2010_2018$pct_of_total.2010)
+r_2010_2018$abs_pop_chg <- abs(r_2010_2018$pop.2018 - r_2010_2018$pop.2010)
+
+
+
+outfolder = paste("..\\Data\\ethnicity\\ds20102018",ds_id,sep='')
+dir.create(file.path(outfolder), showWarnings = FALSE)
+setwd(file.path(outfolder))
+
+# remove unnecessary columns
+r_2010_2018['geotype'] <- NULL
+r_2010_2018['yr_id.2010'] <- NULL
+r_2010_2018['yr_id.2018'] <- NULL
+
+
+names(r_2010_2018)[names(r_2010_2018) == 'pop.2010'] <- 'race_ethn_pop.2010'
+names(r_2010_2018)[names(r_2010_2018) == 'pop.2018'] <- 'race_ethn_pop.2018'
+
+r_2010_2018_out <- r_2010_2018[,c('datasource_id','datasource','description','geozone','short_name',
+                                'race_ethn_pop.2010','race_ethn_pop.2018','abs_pop_chg','pct_of_total.2010','pct_of_total.2018',
+                                'abs_pct_of_total_chg','totalpop.2010','totalpop.2018')]
+
+
+# replace all NA and Inf with "null" otherwise get an error in PowerBI
+r_2010_2018_out <- r_2010_2018_out %>% 
+  mutate_all(~replace(.,is.na(.)|is.infinite(.),'null'))
+
+# write.csv(r_2010_2018, "race_ethinicity_compare_2010_2018.csv",row.names=FALSE)
+write.csv(r_2010_2018_out, "race_ethinicity_compare_2010_2018.csv",row.names=FALSE)
+
+##############################################
+
+
+
+
 
 
 # calculate lag
@@ -310,13 +383,18 @@ race_yr_o_yr$pop.GRE.1000 <- NULL
 race_yr_o_yr$pop.lessthan.1000 <- NULL
 
 
-write.csv(threshold_race_ethn, paste("..\\Data\\ethnicity\\ds",ds_id,"\\threshold_raceethn.csv",sep=''),row.names=FALSE)
-write.csv(race_yr_o_yr, paste("..\\Data\\ethnicity\\ds",ds_id,"\\race_yr_o_yr.csv",sep=''),row.names=FALSE)
+outfolder = paste("..\\Data\\ethnicity\\ds20102018",ds_id,sep='')
+dir.create(file.path(outfolder), showWarnings = FALSE)
+setwd(file.path(outfolder))
 
-write.csv(region, paste("..\\Data\\ethnicity\\ds",ds_id,"\\region.csv",sep=''),row.names=FALSE)
-write.csv(tract_summary,paste("..\\Data\\ethnicity\\ds",ds_id,"\\tract_summary.csv",sep=''),row.names=FALSE)
-write.csv(outlier_df, paste("..\\Data\\ethnicity\\ds",ds_id,"\\outlier_df.csv",sep=''),row.names=FALSE)
-write.csv(outliers_singleyr, paste("..\\Data\\ethnicity\\ds",ds_id,"\\outliers_singleyr.csv",sep=''),row.names=FALSE)
-write.csv(unique_tracts, paste("..\\Data\\ethnicity\\ds",ds_id,"\\unique_tracts.csv",sep=''),row.names=FALSE)
-write.csv(outliers_allyr, paste("..\\Data\\ethnicity\\ds",ds_id,"\\outliers_allyr.csv",sep=''),row.names=FALSE)
+
+write.csv(threshold_race_ethn, 'threshold_raceethn.csv',row.names=FALSE)
+write.csv(race_yr_o_yr,"race_yr_o_yr.csv",row.names=FALSE)
+
+write.csv(region, "region.csv",row.names=FALSE)
+write.csv(tract_summary,"tract_summary.csv",row.names=FALSE)
+write.csv(outlier_df, "outlier_df.csv",row.names=FALSE)
+write.csv(outliers_singleyr, "outliers_singleyr.csv",row.names=FALSE)
+write.csv(unique_tracts, "unique_tracts.csv",row.names=FALSE)
+write.csv(outliers_allyr, "outliers_allyr.csv",row.names=FALSE)
 

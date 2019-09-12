@@ -15,7 +15,8 @@ pkgTest(packages)
 # get data from database
 source("../Queries/readSQL.R")
 
-datasource_ids = c(28)
+# 28
+datasource_ids = c(17)
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
@@ -47,6 +48,8 @@ geo_id<-sqlQuery(channel,geo_id_sql,stringsAsFactors = FALSE)
 
 odbcClose(channel)
 
+datasource_outfolder = paste("ds",plotsource,sep='')
+
 # merge vacancy with datasource name
 vacancy <- merge(x = vacancy, y =sourcename[ , c("name","datasource_id")],by = "datasource_id", all.x = TRUE)
 
@@ -65,22 +68,10 @@ vacancy$geozone[vacancy$geotype=='region'] <- '~San Diego Region'
 # merge vacancy with jurisdiction and cpa id
 # note: must be after change San Diego to San Diego Region 
 #       otherwise region will be considered city of San Diego
-geo_id <- subset(geo_id,id != 1493) # database error
+# geo_id <- subset(geo_id,id != 1493) # database error
 vacancy <- merge(x = vacancy, y =geo_id,by = "geozone", all.x = TRUE)
 # add dummy id for region
 vacancy$id[vacancy$geozone=="~San Diego Region"] <- 9999
-
-# had to remove CPA id for via de la valle 1493
-# sql query to check database for error
-# SELECT * 
-#   FROM [demographic_warehouse].[dim].[mgra_denormalize]
-# WHERE cpa = 'Via De La Valle' and series = 14 and cpa_id = 1493
-# SELECT * 
-#   FROM [demographic_warehouse].[dim].[mgra_denormalize]
-# WHERE mgra_id = 1401333804
-# SELECT * 
-#   FROM [demographic_warehouse].[dim].[mgra_denormalize]
-# WHERE cpa_id = 1493
 
 # find any double counted rows
 # t <- vacancy %>% group_by(geozone) %>% tally()
@@ -114,10 +105,11 @@ vacancy$pc_vacancy_rate <- vacancy$vacancy_rate * 100
 
 
 #save a time stamped verion of the raw file from SQL
-# write.csv(vacancy, paste("M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\vacancy",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
-# vacancy_outfile = vacancy[ , c("datasource_id","name","geotype","id","geozone","yr_id","units","unoccupiable",
+### write.csv(vacancy, paste("M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\vacancy",format(Sys.time(), "_%Y%m%d_%H%M%S"),".csv",sep=""))
+#vacancy_outfile = vacancy[ , c("datasource_id","name","geotype","id","geozone","yr_id","units","unoccupiable",
 #                          "hh","pc_vacancy_rate_wo_unoccupiable","pc_vacancy_rate")]
-# write.csv(vacancy_outfile, "M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\vacancy.csv",row.names=FALSE)
+#write.csv(vacancy_outfile, paste("M:\\Technical Services\\QA Documents\\Projects\\Forecast 2021\\Data files\\vacancy\\",
+#                                 datasource_outfolder,"vacancy.csv",sep=''),row.names=FALSE)
 
 
 
@@ -201,7 +193,7 @@ vacancy_plot <- function(geo,reg,subtitle,ylim_min,ylim_max,status,geo_name) {
 geo_list = unique(subset(vacancy, geotype=="cpa")[["geozone"]])
 
 # boxplot
-outfolder<-"..\\output\\vacancy\\boxplot\\"
+outfolder<-paste("..\\output\\vacancy\\",datasource_outfolder,"\\boxplot\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
@@ -217,7 +209,9 @@ ggsave(cpabox, file= paste("cpa_boxplot","_ds",plotsource,"vacancy", ".png", sep
        width=10, height=6, dpi=100)
 
 # CPA
-outfolder<-"..\\output\\vacancy\\CPAplots\\"
+
+outfolder<-paste("..\\output\\vacancy\\",datasource_outfolder,"\\CPAplots\\",sep='')
+
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
@@ -258,7 +252,8 @@ for(i in 1:length(outliers)){
 # jurisdiction
 geo_list = unique(subset(vacancy, geotype=="jurisdiction")[["geozone"]])
 
-outfolder<-"..\\output\\vacancy\\boxplot\\"
+outfolder<-paste("..\\output\\vacancy\\",datasource_outfolder,"\\boxplot\\",sep='')
+
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
@@ -274,8 +269,8 @@ ggsave(jurbox, file= paste("jur_boxplot","_ds",plotsource,"vacancy", ".png", sep
        width=10, height=6, dpi=100)
 
 
-# jurisdiction 
-outfolder<-"..\\output\\vacancy\\JURplots\\"
+outfolder<-paste("..\\output\\vacancy\\",datasource_outfolder,"\\JURplots\\",sep='')
+
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
@@ -311,5 +306,7 @@ for(i in 1:length(outliers)){
 alloutliers <- rbind(dfoutliersJUR,dfoutliersCPA)
 outfile =alloutliers[ , c("datasource_id","name","geotype","id","geozone","yr_id","units","unoccupiable",
                           "hh","pc_vacancy_rate","threshold.lower","threshold.upper")]
-setwd(file.path(maindir,"..\\output\\vacancy\\"))
+
+
+setwd(file.path(maindir,paste("..\\output\\vacancy\\",datasource_outfolder,sep='')))
 write.csv(outfile,'outliersby1.5IQR.csv',row.names = FALSE)
