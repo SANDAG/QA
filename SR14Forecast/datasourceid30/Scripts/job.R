@@ -19,6 +19,8 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
 # get job data
 jobs <- readDB("../Queries/jobs-2.sql",datasource_id_current)
 geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
+employment_name <- readDB("../Queries/employment_type.sql",datasource_id_current)
+
 
 odbcClose(channel)
 
@@ -60,19 +62,78 @@ get_fails <- function(df) {
 
 jobs_failed <- get_fails(jobs)
 jobs_failed$jobs <- 'fail'
+allvars <- jobs_failed
 
 
+
+wide_DF <- allvars %>%  spread(employment_type_id, jobs)
+head(wide_DF, 24)
+
+ids <- rep(1:2, times=nrow(wide_DF)/2)
+if (length(ids) < nrow(wide_DF)) {ids<-c(ids,1)}
+wide_DF$id <- ids
+wide_DF[is.na(wide_DF)] <- 'pass'
+
+#wide_DF <- wide_DF[order(wide_DF['geotype'],wide_DF['geozone']),]
+#allvars <- allvars[order(allvars['units'],allvars['hhp'],allvars['geotype'],allvars['geozone']),]
+wide_DF <- wide_DF %>% arrange(desc(geotype))
 
 jobs_cpa <- subset_by_geotype_jobs(jobs,c('cpa'))
 jobs_jur <- subset_by_geotype_jobs(jobs,c('jurisdiction'))
 jobs_region <- subset_by_geotype_jobs(jobs,c('region'))
 
+
+
+
 ########################################################### 
 # create excel workbook
 
+# add sheets with data 
+add_worksheets_to_excel_jobs <- function(workbook,demographic_variable,colorfortab,rowtouse,namehash,ahash) {
+  tabname <- paste(demographic_variable,"ByJur",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+  ## Internal - Text to display
+  tabname <- paste(demographic_variable,"ByCpa",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+  tabname <- paste(demographic_variable,"ByRegion",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+}
+
+
+
 wb = createWorkbook()
 
-tableofcontents = addWorksheet(wb, "TableofContents")
+#add summary worksheet
+summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
+
+writeData(wb, summary, x = "List of geographies that failed for any of the job sectors", 
+          startCol = 1, startRow = 1)
+headerStyleforsummary <- createStyle(fontSize = 14) #,textDecoration = "bold")
+addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
+
+writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
+writeData(wb, summary, x = "Variable", startCol = 1, startRow = nrow(wide_DF)+6)
+writeData(wb, summary, x = "Description", startCol = 2, startRow = nrow(wide_DF)+6)
+writeData(wb, summary, x = "Test Criteria", startCol = 3, startRow = nrow(wide_DF)+6)
+headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
+addStyle(wb, summary, headerStyle1, rows = nrow(wide_DF)+6, cols = 1:3, gridExpand = TRUE,stack = TRUE)
+
+
+tableStyle1 <- createStyle(fontSize = 10, halign = "center")
+tableStyle2 <- createStyle(fontSize = 10, halign = "left")
+
+writeData(wb, summary, x = "jobs", startCol = 1, startRow = nrow(wide_DF)+7)
+writeData(wb, summary, x = "Number of jobs per sector", startCol = 2, startRow = nrow(wide_DF)+7)
+writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 3, startRow = nrow(wide_DF)+7)
+
+addStyle(wb, summary, tableStyle1, rows = (nrow(wide_DF)+7):(nrow(wide_DF)+25), cols = 1, gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, tableStyle2, rows = (nrow(wide_DF)+7):(nrow(wide_DF)+25), cols = 2:3, gridExpand = TRUE,stack = TRUE)
+
+writeData(wb, summary, x = "EDAM review", startCol = (ncol(wide_DF) + 1), startRow = 4)
+# specify sheetname and tab colors
+
+
+#tableofcontents = addWorksheet(wb, "TableofContents")
 
 
 # read email message from Dave and attach to excel spreadsheet
@@ -104,7 +165,7 @@ acceptance_criteria <- hash()
 acceptance_criteria['Jobs'] <- "> 500 and > 20%"
 
 # specify sheetname and tab colors
-add_worksheets_to_excel(wb,"Jobs","purple",8,fullname,acceptance_criteria)
+add_worksheets_to_excel_jobs(wb,"Jobs","purple",8,fullname,acceptance_criteria)
 
 # add comments to sheets with cutoff
 # create dictionary hash of comments
@@ -137,6 +198,7 @@ rangeRowscpa = 2:(nrow(jobs_cpa)+1)
 rangeRowsjur = 2:(nrow(jobs_jur)+1)
 rangeCols = 1:9
 pct = createStyle(numFmt="0%") # percent 
+aligncenter = createStyle(halign = "center")
 
 for (curr_sheet in names(wb)[3:length(names(wb))]) {
   addStyle(
@@ -158,6 +220,24 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
   conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
   conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="check", style = checkStyle)
 }
+
+# format for summary sheet
+conditionalFormatting(wb, summary, cols=c(1:(ncol(wide_DF)-1)), rows =1:(nrow(wide_DF)+4), rule="$M1==2", style = lightgreyStyle)
+conditionalFormatting(wb, summary, cols=c(1:(ncol(wide_DF)-1)), rows=1:(nrow(wide_DF)+4), rule="$M1==1", style = darkgreyStyle)
+
+
+addStyle(wb = wb,summary,style = insideBorders,rows = 4:(nrow(wide_DF)+3),cols = c(1:(ncol(wide_DF)-1),ncol(wide_DF)+1),gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, headerStyle, rows = 4, cols = c(1:(ncol(wide_DF)-1),ncol(wide_DF)+1), gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(wide_DF)), rows=4:(nrow(wide_DF)+4), gridExpand=TRUE,stack = TRUE)
+#conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=3:(nrow(wide_DF)+3), rule="$J1==1", style = darkgreyStyle)
+conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="fail", style = negStyle)
+conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="check", style = checkStyle)
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14), widths = c(15,21,14,28,11,11,11,11,11,11,11,11,2,40))
+addStyle(wb, summary, style=aligncenter,cols=c(1:12), rows=4:(nrow(wide_DF)+4), gridExpand=TRUE,stack = TRUE)
+
+writeData(wb,summary,employment_name,startCol = 2, startRow = nrow(wide_DF)+9)
+
+
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
