@@ -220,7 +220,7 @@ addStyle(wb, summary, tableStyle1, rows = (nrow(allvars)+7):(nrow(allvars)+11), 
 addStyle(wb, summary, tableStyle2, rows = (nrow(allvars)+7):(nrow(allvars)+11), cols = 2:3, gridExpand = TRUE,stack = TRUE)
 
 writeData(wb,summary,allvars,startCol = 1, startRow = 4)
-
+writeData(wb, summary, x = "EDAM review", startCol = (ncol(allvars) + 1), startRow = 4)
 # specify sheetname and tab colors
 add_worksheets_to_excel(wb,"Units","blue",8,fullname,acceptance_criteria)
 add_worksheets_to_excel(wb,"HH","green",12,fullname,acceptance_criteria)
@@ -283,17 +283,17 @@ for (curr_sheet in names(wb)[4:length(names(wb))]) {
 }
 
 # format for summary sheet
-conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows =1:(nrow(allvars)+4), rule="$J1==2", style = lightgreyStyle)
-conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=1:(nrow(allvars)+4), rule="$J1==1", style = darkgreyStyle)
+conditionalFormatting(wb, summary, cols=c(1:(ncol(allvars)-1)), rows =1:(nrow(allvars)+4), rule="$J1==2", style = lightgreyStyle)
+conditionalFormatting(wb, summary, cols=c(1:(ncol(allvars)-1)), rows=1:(nrow(allvars)+4), rule="$J1==1", style = darkgreyStyle)
 
-addStyle(wb = wb,summary,style = insideBorders,rows = 4:(nrow(allvars)+4),cols = 1:(ncol(allvars)-1),gridExpand = TRUE,stack = TRUE)
-addStyle(wb, summary, headerStyle, rows = 4, cols = 1:(ncol(allvars)-1), gridExpand = TRUE,stack = TRUE)
+addStyle(wb = wb,summary,style = insideBorders,rows = 4:(nrow(allvars)+3),cols = c(1:(ncol(allvars)-1),ncol(allvars)+1),gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, headerStyle, rows = 4, cols = c(1:(ncol(allvars)-1),ncol(allvars)+1), gridExpand = TRUE,stack = TRUE)
 addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(allvars)), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
 #conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=3:(nrow(allvars)+3), rule="$J1==1", style = darkgreyStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="fail", style = negStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="check", style = checkStyle)
-setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,22,15,30,18,18,18,18,18,18))
-addStyle(wb, summary, style=aligncenter,cols=c(1:10), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,22,15,30,18,18,18,18,18,2,40))
+addStyle(wb, summary, style=aligncenter,cols=c(1:11), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
