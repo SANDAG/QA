@@ -80,7 +80,7 @@ for(i in jur_list) {
     results<-"plots\\hhsize\\jur\\"
     output_table<-plotdat[,c("yr_id","hhp","households","hhs","reg_hhp","reg_hh","reg_hhs")]
     colnames(output_table)[colnames(output_table)=="households"] <- "hh"
-    tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
+    tt <- ttheme_default(base_size=12,colhead=list(fg_params = list(parse=TRUE)))
     tbl <- tableGrob(output_table, rows=NULL, theme=tt)
     lay <- rbind(c(1,1,1,1,1),
                  c(1,1,1,1,1),
@@ -126,7 +126,7 @@ for(i in cpa_list) {
   results<-"plots\\hhsize\\cpa\\"
   output_table<-plotdat[,c("yr_id","hhp","households","hhs","reg_hhp","reg_hh","reg_hhs")]
   colnames(output_table)[colnames(output_table)=="households"] <- "hh"
-  tt <- ttheme_default(base_size=8,colhead=list(fg_params = list(parse=TRUE)))
+  tt <- ttheme_default(base_size=12,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
                c(1,1,1,1,1),
