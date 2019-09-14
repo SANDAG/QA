@@ -83,7 +83,15 @@ jobs_jur <- subset_by_geotype_jobs(jobs,c('jurisdiction'))
 jobs_region <- subset_by_geotype_jobs(jobs,c('region'))
 
 
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+acceptance_criteria <- hash()
+acceptance_criteria['Jobs'] <- "> 500 and > 20%"
 
+
+sector_names <- merge(x=allvars,y=employment_name, by = 'employment_type_id')
+
+full_names <- unique(sector_names$full_name)
 
 ########################################################### 
 # create excel workbook
@@ -159,10 +167,7 @@ insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, he
 fullname <- hash()
 fullname['Jobs'] <- "Jobs"
 
-# add comments to sheets with cutoff
-# create dictionary hash of comments
-acceptance_criteria <- hash()
-acceptance_criteria['Jobs'] <- "> 500 and > 20%"
+
 
 # specify sheetname and tab colors
 add_worksheets_to_excel_jobs(wb,"Jobs","purple",8,fullname,acceptance_criteria)
