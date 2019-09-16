@@ -13,6 +13,7 @@ import matplotlib.cm as mplcm
 import matplotlib.colors as colors
 
 pat = r'M:\RES\DataSolutions\GIS\Data\EDD_QCEW_Microdata\SANDAG 2017-3ascii.csv'
+pat2 = os.path.dirname(__file__)
 server = 'Sql2014B8'
 database = 'EMPCORE'
 table = 'dbo.CA_EDD_EMP2017'
@@ -30,7 +31,25 @@ def importFromRaw(pat):
 def importFromDb(server, database, table):
     sql = 'select * from ' + table
     conn = pymssql.connect(server = server, database = database)
+    #df['emp1', 'emp2', 'emp3', 'payroll'] = pd.to_numeric(df['emp1', 'emp2', 'emp3', 'payroll'])
     return pd.read_sql(sql,conn)
+
+def diffCalc(df1,df2):
+    #Calculate row-wise differences (df1 is the original, df2 is the sql)
+    #Find which rows exist in the sql db
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+
+    availEmp = df2['emp_id']
+    tempDf1 = df1[df1['emp_id'].isin(availEmp)].sort_values('emp_id')
+    tempDf2 = df2.sort_values('emp_id')
+
+    diff1 = tempDf1.select_dtypes(include=numerics).diff()
+    diff2 = tempDf2.select_dtypes(include=numerics).diff().reset_index()
+    colsTot = list(set(list(diff2.columns)) &  set(list(diff1.columns)))
+
+
+    print(diff1[colsTot].equals(diff2[colsTot]))
+
 
 
 def summaryStatistics(df1, df2, uniqueId = 'emp_id'):
@@ -54,7 +73,7 @@ def summaryStatistics(df1, df2, uniqueId = 'emp_id'):
         out2.append(np.sum(df2[i]>highThresh2[i]))
     df.loc[len(df)]= ['Num Outliers (>3sig)', np.sum(out1), np.sum(out2), np.sum(out2)- np.sum(out1)]
     print(tabulate.tabulate(df,headers = 'keys', tablefmt = 'psql',showindex=False))
-    # df.to_csv(r'C:\Users\skl\Desktop\temp\summary.csv')
+    df.to_csv(os.path.join(pat2,'summary.csv'))
 
 def columnSum(df1,df2):
     #Column names present in each database
@@ -86,8 +105,16 @@ def columnSum(df1,df2):
     df.loc[len(df)] = nanCount1
     df.loc[len(df)] = nanCount2
 
+    # descriptive statistics
+    desCount1 = [df1[i].describe() if i in df1.columns else '-' for i in colsTot]
+    desCount2 = [df2[i].describe() if i in df2.columns else '-' for i in colsTot]
+    desCount1[0] = 'Original Descriptive Statistics'
+    desCount2[0] = 'SQL Descriptive Statistics'
+    df.loc[len(df)] = desCount1
+    df.loc[len(df)] = desCount2
+
     print(tabulate.tabulate(df, headers='keys', tablefmt='psql', showindex=False))
-    # df.to_csv(r'C:\Users\skl\Desktop\temp\ColSummary.csv')
+    df.to_csv(os.path.join(pat2,'ColSummary.csv'))
 
 
 def digData(tt):
@@ -106,18 +133,18 @@ def digData(tt):
 
     return tt
 
-def groupbyPlot(df):
+def groupbyPlot(df, group = 'naicsInd', x = 'maxE',y = 'payroll'):
     plt.style.use('ggplot')
 
-    NUM_COLORS = df['naicsInd'].nunique()
+    NUM_COLORS = df[group].nunique()
 
     fig, ax = plt.subplots(figsize=(10, 4))
 
     cm = plt.get_cmap('gist_rainbow')
 
     ax.set_prop_cycle(color=[cm(1. * i / NUM_COLORS) for i in range(NUM_COLORS)])
-    for key, group in df.groupby(['naicsInd']):
-        ax.plot(group['maxE'],group['payroll'], label = key, linestyle = 'None',marker = 'o')
+    for key, group in df.groupby([group]):
+        ax.plot(group[x],group[y], label = key, linestyle = 'None',marker = 'o')
     ax.legend()
     plt.show()
 
@@ -155,6 +182,4 @@ if __name__ == '__main__':
 
     tt = digData(importFromDb(server, database, table))
 
-print('tt')
-
-
+    print('tt')

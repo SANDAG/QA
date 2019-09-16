@@ -50,6 +50,7 @@ def sqlAlchemyTest():
     mssql_engine = create_engine(db_connection_string)
     query = open(sqlPat, 'r')
     df = pd.read_sql(query.read(), mssql_engine)
+    query.close()
 
     for i in ['emp1', 'emp2', 'emp3', 'payroll']:
         df[i] = pd.to_numeric(df[i])
