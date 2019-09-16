@@ -125,7 +125,11 @@ gqpop_region <- subset_by_geotype(gqpop,c('region'))
 
 wb = createWorkbook()
 
+#add summary worksheet
+summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
+# add table of contents
 tableofcontents = addWorksheet(wb, "TableofContents")
+
 headerStylecontents <- createStyle(fontSize = 14,textDecoration = "bold")
 writeData(wb, tableofcontents, x = "Worksheet Name", startCol = 1, startRow = 1)
 writeData(wb, tableofcontents, x = "Worksheet Description", startCol = 2, startRow = 1)
@@ -176,9 +180,7 @@ acceptance_criteria['HHPop'] <- "> 7,500 and > 20%"
 acceptance_criteria['GQPop'] <- "> 500 and > 20%"
 acceptance_criteria['Jobs'] <- "> 5,000 and > 20%"
 
-#add summary worksheet
 
-summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
 
 writeData(wb, summary, x = "List of geographies that failed for any of the following variables: units, households, household pop, group quarter pop, jobs", 
           startCol = 1, startRow = 1)
@@ -301,4 +303,5 @@ ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,o
 setwd(file.path(maindir,outfolder))
 
 saveWorkbook(wb, "units_hh_hhpop_gqpop_jobs.xlsx",overwrite=TRUE)
+
 
