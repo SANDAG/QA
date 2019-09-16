@@ -32,6 +32,8 @@ hh$yr <- as.factor(paste(hh$year, hh$yr, sep = ""))
 hh$geozone <- gsub("\\*","",hh$geozone)
 hh$geozone <- gsub("\\-","_",hh$geozone)
 hh$geozone <- gsub("\\:","_",hh$geozone)
+hh$geozone[hh$geozone=="Southeastern_Encanto Neighborhoods"] <- "SE_Encanto Neighborhoods"
+hh$geozone[hh$geozone=="Southeastern_Southeastern San Diego"] <- "SE_Southeastern Neighborhoods"
 
 hh_jur = subset(hh,geotype=='jurisdiction')
 colnames(hh_jur)[colnames(hh_jur)=="geozone"] <- "cityname"
@@ -41,6 +43,7 @@ colnames(hh_cpa)[colnames(hh_cpa)=="geozone"] <- "cpaname"
 
 hh_region = subset(hh,geotype=='region')
 colnames(hh_region)[colnames(hh_region)=="geozone"] <- "SanDiegoRegion"
+
 
 hh_jur$reg_hhs<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),'hhs']
 hh_jur$reg_hh<-hh_region[match(hh_jur$yr_id, hh_region$yr_id),'households']
@@ -72,23 +75,23 @@ for(i in jur_list) {
     theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
-        legend.title=element_blank(),
-        plot.caption = element_text(size = 7)) +
+          legend.title=element_blank(),
+          plot.caption = element_text(size = 9)) +
     labs(title=paste("Household Size:", i,' and Region\n datasource_id ',ds_id,sep=''), 
          y="Household size", x="Year",
          caption=paste("Sources: demographic_warehouse",ds_id,"; Notes: Refer to table below for out of range hh size values",sep=''))
-    results<-"plots\\hhsize\\jur\\"
-    output_table<-plotdat[,c("yr_id","hhp","households","hhs","reg_hhp","reg_hh","reg_hhs")]
-    colnames(output_table)[colnames(output_table)=="households"] <- "hh"
-    tt <- ttheme_default(base_size=12,colhead=list(fg_params = list(parse=TRUE)))
-    tbl <- tableGrob(output_table, rows=NULL, theme=tt)
-    lay <- rbind(c(1,1,1,1,1),
-                 c(1,1,1,1,1),
-                 c(1,1,1,1,1),
-                 c(2,2,2,2,2),
-                 c(2,2,2,2,2))
-    output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
-    ggsave(output, file= paste(results, 'hhsize', i, ds_id,".png", sep=''),
+  results<-"plots\\hhsize\\jur\\"
+  output_table<-plotdat[,c("yr_id","hhp","households","hhs","reg_hhp","reg_hh","reg_hhs")]
+  colnames(output_table)[colnames(output_table)=="households"] <- "hh"
+  tt <- ttheme_default(base_size=12,colhead=list(fg_params = list(parse=TRUE)))
+  tbl <- tableGrob(output_table, rows=NULL, theme=tt)
+  lay <- rbind(c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(1,1,1,1,1),
+               c(2,2,2,2,2),
+               c(2,2,2,2,2))
+  output<-grid.arrange(plot,tbl,ncol=1,as.table=TRUE,layout_matrix=lay)
+  ggsave(output, file= paste(results, 'hhsize', i, ds_id,".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
 
@@ -116,10 +119,10 @@ for(i in cpa_list) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank(),
-          plot.caption = element_text(size = 7)) +
+          plot.caption = element_text(size = 10)) +
     labs(title=paste("Household Size ", i,' and Region\ndatasource_id: ',ds_id,sep=''), 
          y="Household size", x="Year",
-         caption=paste("Sources: demographic_warehouse",ds_id,"; Notes: Refer to table below for out of range hh size values",sep='')) 
+         caption=paste("Sources: demographic_warehouse",ds_id,";\nNotes: Refer to table below for out of range hh size values",sep='')) 
   i = gsub("\\*","",i)
   i = gsub("\\-","_",i)
   i = gsub("\\:","_",i)
@@ -137,6 +140,7 @@ for(i in cpa_list) {
   ggsave(output, file= paste(results, 'hhsize', i, ds_id,".png", sep=''),
          width=6, height=8, dpi=100)#, scale=2)
 }
+
 
  
  
