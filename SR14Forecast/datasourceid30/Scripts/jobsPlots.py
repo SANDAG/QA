@@ -43,6 +43,8 @@ def makePlots(df):
         time.sleep(2)
     
     os.mkdir(os.path.join(pat,'img'))
+    os.mkdir(os.path.join(os.path.join(pat, 'img'),'cpa'))
+    os.mkdir(os.path.join(os.path.join(pat, 'img'), 'jurisdiction'))
 
     geo = df['geozone'].unique()
 
@@ -52,16 +54,19 @@ def makePlots(df):
         plt.xlabel('Year',fontsize = 20)
         plt.ylabel(idx + ' Jobs', fontsize = 20)
         plt.title(idx)
-        plt.show()
         plt.grid(True)
         name = ''.join(ch for ch in idx if ch.isalnum())
-        plt.savefig(os.path.join(os.path.join(pat,'img'),name + '.png'))
+        if group['geotype'].iloc[1] == 'cpa':
+            pat2 = os.path.join(os.path.join(pat,'img'),'cpa')
+        else:
+            pat2 = os.path.join(os.path.join(pat,'img'),'jurisdiction')
+        plt.savefig(os.path.join(pat2, name + '.png'))
         plt.close(tt)
 
 
 
 if __name__=="__main__":
     df = sqlAlchemyTest()
-
+    makePlots(df)
 
     print('tt')
