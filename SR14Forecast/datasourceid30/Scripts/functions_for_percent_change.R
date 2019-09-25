@@ -34,20 +34,6 @@ calculate_pct_chg <- function(df, edam_var) {
 }
 
 
-calculate_pct_chg_jobs <- function(df, edam_var) {
-  edam_var <- enquo(edam_var)
-  df1 <- df %>% select("datasource_id","geotype","geo_id","geozone","yr_id","employment_type_id",!!edam_var)
-  #change over increments 
-  df1 <- df1 %>% 
-    group_by(geozone,geotype,employment_type_id) %>% 
-    mutate(change = !!edam_var - lag(!!edam_var))
-  #percent change over increments
-  df1 <- df1 %>%
-    group_by(geozone,geotype,employment_type_id) %>%  # avoid divide by zero with ifelse
-    mutate(percent_change = ifelse(lag(!!edam_var)==0, NA, (!!edam_var - lag(!!edam_var))/lag(!!edam_var)))
-  df1$percent_change <- round(df1$percent_change, digits = 2)
-  return(df1)
-}
 
 
 calculate_pass_fail <- function(df, cutoff1,cutoff2) {
@@ -86,22 +72,7 @@ sort_dataframe_geos <- function(df,failures) {
   df$sort_order <- NULL
   return(df)
 }
-#df <- jobs
-sort_dataframe_jobs <- function(df) {
-  df$geozone_and_sector <-paste(df$geozone,'_',df$employment_type_id)
-  df_fail <- unique(subset(df,pass.or.fail=="fail")$geozone_and_sector)
-  df_check <- unique(subset(df,pass.or.fail=="check")$geozone)
-  df <- df %>% 
-    mutate(sort_order = case_when(geozone_and_sector %in% df_fail  ~ 1,
-                                  geozone %in% df_check ~ 2,
-                                  TRUE ~ 3))
-  df <- df[order(df$sort_order,df$employment_type_id,df$geotype,df$geozone,df$yr_id,df$sort_order),]
-   #df <- df[order(df$sort_order),]
-  
-  df$sort_order <- NULL
-  df$geozone_and_sector <- NULL
-  return(df)
-}
+
 
 rename_dataframe <- function(df) {
   df <- df %>% rename('datasource id'= datasource_id,'geo id'=geo_id,
@@ -127,7 +98,7 @@ add_id_for_excel_formatting <- function(df) {
 }
 
 add_id_for_excel_formatting_jobs <- function(df) {
-  t <- df %>% group_by(geozone,employment_type_id) %>% tally()
+  t <- df %>% group_by(geozone,sector) %>% tally()
   if (nrow(subset(t,n!=9))!=0) {
     print("ERROR: expecting 9 years per geography")
     print(subset(t,n!=9)) } 
@@ -198,13 +169,13 @@ add_data_to_excel <- function(workbook,demographic_variable,j,m) {
 add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
   writeData(wb,j,dataframe_name)
-  writeComment(wb,j,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
   writeData(wb, j+1,dataframe_name)
-  writeComment(wb,j+1,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j+1,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
   writeData(wb, j+2,dataframe_name)
-  writeComment(wb,j+2,col = "I",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j+2,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
 }  
 
 # create dataframe with summary of results

@@ -7,7 +7,7 @@ source("../Queries/readSQL.R")
 source("common_functions.R")
 source("functions_for_percent_change.R")
 
-packages <- c("RODBC","tidyverse","openxlsx","hash")
+packages <- c("RODBC","tidyverse","openxlsx","hash","janitor")
 pkgTest(packages)
 
 
@@ -24,7 +24,8 @@ employment_name <- readDB("../Queries/employment_type.sql",datasource_id_current
 
 odbcClose(channel)
 
-countvars <- subset(jobs, yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
+countvars <- subset(jobs, yr_id %in% c(2016,2018,2020,2025,2030,2035,2040,2045,2050))
+rm(jobs)
 
 countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
 
@@ -32,6 +33,18 @@ countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
 
 # add jur and cpa id
 countvars <- merge(x = countvars, y =geo_id,by = "geozone", all.x = TRUE)
+rm(geo_id)
+countvars <- merge(x = countvars, y =employment_name,by = "employment_type_id", all.x = TRUE)
+
+countvars$short_name <- NULL
+countvars$civilian <- NULL
+
+
+
+countvars <- countvars[,c("datasource_id","geotype","id","geozone","yr_id","employment_type_id","full_name","jobs")]
+
+
+
 # add dummy cpa id to region
 countvars$id[countvars$geozone=="San Diego Region"] <- 9999
 countvars <- countvars %>% rename('geo_id'= id)
@@ -45,14 +58,48 @@ countvars <- subset(countvars,geozone != 'Not in a CPA')
 countvars <- countvars[order(countvars$employment_type_id,countvars$datasource_id,countvars$geotype,countvars$geozone,
                              countvars$yr_id),]
 
+#difference over increments
+jobs <- countvars %>% 
+    group_by(geozone,geotype,employment_type_id,full_name) %>% 
+    mutate(change = jobs - lag(jobs))
 
-jobs <- calculate_pct_chg_jobs(countvars, jobs)
-jobs <- calculate_pass_fail(jobs,500,.20)
-jobs <- sort_dataframe_jobs(jobs)
-jobs <- rename_dataframe(jobs)
+#percent change over increments
+jobs <- jobs %>% 
+    group_by(geozone,geotype,employment_type_id,full_name) %>%  
+    # avoid divide by zero with ifelse
+    mutate(percent_change = ifelse(lag(jobs)==0, NA, (jobs - lag(jobs))/lag(jobs)))
+
+# round
+jobs$percent_change <- round(jobs$percent_change, digits = 3)
+
+
+jobs <- jobs %>%
+    mutate(pass.or.fail = case_when(abs(change) >= 500 & abs(percent_change) >= .20 ~ "fail",
+                                    TRUE ~ "pass"))
+
+jobs$geozone_and_sector <-paste(jobs$geozone,'_',jobs$employment_type_id)
+df_fail <- unique(subset(jobs,pass.or.fail=="fail")$geozone_and_sector)
+df_check <- unique(subset(jobs,pass.or.fail=="check")$geozone)
+jobs <- jobs %>% 
+    mutate(sort_order = case_when(geozone_and_sector %in% df_fail  ~ 1,
+                                  geozone %in% df_check ~ 2,
+                                  TRUE ~ 3))
+jobs <- jobs[order(jobs$sort_order,jobs$geotype,jobs$geo_id,jobs$employment_type_id,jobs$yr_id),]
+jobs$sort_order <- NULL
+jobs$geozone_and_sector <- NULL
+
+
+jobs <- jobs %>% rename('datasource id'= datasource_id,'geo id'=geo_id,
+                      'increment'= yr_id,'change' = change,
+                      'percent change' = percent_change,
+                      'pass/fail' = pass.or.fail,"sector" = full_name)
+ 
+
+
 
 get_fails <- function(df) {
-  df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","employment_type_id","pass/fail")
+  df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","employment_type_id",
+                       "sector","pass/fail")
   df2 <- spread(df1,increment,'pass/fail')
   df3 <-df2 %>% filter_all(any_vars(. %in% c('fail')))
   drops <- c("2016","2018","2020","2025","2030","2035","2040","2045","2050")
@@ -64,10 +111,22 @@ jobs_failed <- get_fails(jobs)
 jobs_failed$jobs <- 'fail'
 allvars <- jobs_failed
 
+jobs_region <- subset(jobs,geotype=='region')
+
+region1 <- jobs_region %>% select("datasource id","geotype","geo id","geozone","increment","employment_type_id",
+                                  "sector","jobs")
+region2 <- spread(region1,increment,'jobs')
+region2['geo id'] <- NULL
+region2['geotype'] <- NULL
+ 
+region2['2050minus2016'] <- region2['2050'] - region2['2016']
 
 
-wide_DF <- allvars %>%  spread(employment_type_id, jobs)
-head(wide_DF, 24)
+region3 <- region2 %>% adorn_totals("row")
+
+
+wide_DF <- allvars[ , c("datasource id","geotype","geo id","geozone", "sector","jobs")] %>%  spread(sector, jobs)
+#head(wide_DF, 24)
 
 ids <- rep(1:2, times=nrow(wide_DF)/2)
 if (length(ids) < nrow(wide_DF)) {ids<-c(ids,1)}
@@ -78,9 +137,21 @@ wide_DF[is.na(wide_DF)] <- 'pass'
 #allvars <- allvars[order(allvars['units'],allvars['hhp'],allvars['geotype'],allvars['geozone']),]
 wide_DF <- wide_DF %>% arrange(desc(geotype))
 
+wide_DF <- wide_DF[,c("datasource id","geotype","geo id","geozone","Retail Trade","Leisure and Hospitality",
+                      "Professional and Business Services","Construction","Education and Healthcare",
+                      "Manufacturing","Military","Transporation, Warehousing, and Utilities","id")]
+
+
+jobs['geo id'] <- NULL
+jobs$employment_type_id <- NULL
+
 jobs_cpa <- subset_by_geotype_jobs(jobs,c('cpa'))
 jobs_jur <- subset_by_geotype_jobs(jobs,c('jurisdiction'))
 jobs_region <- subset_by_geotype_jobs(jobs,c('region'))
+
+wide_DF <- allvars[ , c("datasource id","geotype","geo id","geozone", "sector","jobs")] %>%  spread(sector, jobs)
+
+region_wide <- jobs_region[ , c("datasource id", "sector","jobs")] %>%  spread(sector, jobs)
 
 
 # add comments to sheets with cutoff
@@ -89,9 +160,9 @@ acceptance_criteria <- hash()
 acceptance_criteria['Jobs'] <- "> 500 and > 20%"
 
 
-sector_names <- merge(x=allvars,y=employment_name, by = 'employment_type_id')
+# sector_names <- merge(x=allvars,y=employment_name, by = 'employment_type_id')
 
-full_names <- unique(sector_names$full_name)
+full_names <- unique(allvars$sector)
 
 ########################################################### 
 # create excel workbook
@@ -114,28 +185,19 @@ wb = createWorkbook()
 #add summary worksheet
 summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
 
-writeData(wb, summary, x = "List of geographies that failed for any of the job sectors", 
+writeData(wb, summary, x = "Cities & CPAs that failed based on the following criteria:", 
           startCol = 1, startRow = 1)
-headerStyleforsummary <- createStyle(fontSize = 14) #,textDecoration = "bold")
+writeData(wb, summary, x = paste('Test Criteria: ',acceptance_criteria[['Jobs']],sep=''), 
+          startCol = 1, startRow = 2)
+
+headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
 addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
 
 writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
-writeData(wb, summary, x = "Variable", startCol = 1, startRow = nrow(wide_DF)+6)
-writeData(wb, summary, x = "Description", startCol = 2, startRow = nrow(wide_DF)+6)
-writeData(wb, summary, x = "Test Criteria", startCol = 3, startRow = nrow(wide_DF)+6)
+
 headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
 addStyle(wb, summary, headerStyle1, rows = nrow(wide_DF)+6, cols = 1:3, gridExpand = TRUE,stack = TRUE)
 
-
-tableStyle1 <- createStyle(fontSize = 10, halign = "center")
-tableStyle2 <- createStyle(fontSize = 10, halign = "left")
-
-writeData(wb, summary, x = "jobs", startCol = 1, startRow = nrow(wide_DF)+7)
-writeData(wb, summary, x = "Number of jobs per sector", startCol = 2, startRow = nrow(wide_DF)+7)
-writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 3, startRow = nrow(wide_DF)+7)
-
-addStyle(wb, summary, tableStyle1, rows = (nrow(wide_DF)+7):(nrow(wide_DF)+25), cols = 1, gridExpand = TRUE,stack = TRUE)
-addStyle(wb, summary, tableStyle2, rows = (nrow(wide_DF)+7):(nrow(wide_DF)+25), cols = 2:3, gridExpand = TRUE,stack = TRUE)
 
 writeData(wb, summary, x = "EDAM review", startCol = (ncol(wide_DF) + 1), startRow = 4)
 # specify sheetname and tab colors
@@ -201,7 +263,7 @@ insideBorders <- openxlsx::createStyle(
 )
 rangeRowscpa = 2:(nrow(jobs_cpa)+1)
 rangeRowsjur = 2:(nrow(jobs_jur)+1)
-rangeCols = 1:9
+rangeCols = 1:8
 pct = createStyle(numFmt="0%") # percent 
 aligncenter = createStyle(halign = "center")
 
@@ -216,14 +278,15 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
     stack = TRUE
   )
   #addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(7), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(10), rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9), widths = c(16,14,33,15,16,18,18,18,14))
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=1:(nrow(jobs_cpa)+1), rule="$J1==2", style = lightgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=1:(nrow(jobs_cpa)+1), rule="$J1==1", style = darkgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
-  conditionalFormatting(wb, curr_sheet, cols=1:9, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="check", style = checkStyle)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(9), rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=aligncenter, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9), widths = c(16,30,15,38,16,18,18,18,14))
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$I1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$I1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="check", style = checkStyle)
 }
 
 # format for summary sheet
@@ -237,10 +300,10 @@ addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(wide_DF)), rows=4:(nrow(
 #conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=3:(nrow(wide_DF)+3), rule="$J1==1", style = darkgreyStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="fail", style = negStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="check", style = checkStyle)
-setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14), widths = c(15,21,14,28,11,11,11,11,11,11,11,11,2,40))
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14), widths = c(15,21,14,28,21,21,21,21,21,21,21,21,2,40))
 addStyle(wb, summary, style=aligncenter,cols=c(1:12), rows=4:(nrow(wide_DF)+4), gridExpand=TRUE,stack = TRUE)
 
-writeData(wb,summary,employment_name,startCol = 2, startRow = nrow(wide_DF)+9)
+# writeData(wb,summary,employment_name,startCol = 2, startRow = nrow(wide_DF)+9)
 
 
 
@@ -249,5 +312,5 @@ outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-saveWorkbook(wb, "jobs.xlsx",overwrite=TRUE)
+saveWorkbook(wb, "JobsBySector.xlsx",overwrite=TRUE)
 
