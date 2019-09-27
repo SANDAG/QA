@@ -126,6 +126,7 @@ region3 <- region2 %>% adorn_totals("row")
 
 
 wide_DF <- allvars[ , c("datasource id","geotype","geo id","geozone", "sector","jobs")] %>%  spread(sector, jobs)
+
 #head(wide_DF, 24)
 
 ids <- rep(1:2, times=nrow(wide_DF)/2)
@@ -137,10 +138,11 @@ wide_DF[is.na(wide_DF)] <- 'pass'
 #allvars <- allvars[order(allvars['units'],allvars['hhp'],allvars['geotype'],allvars['geozone']),]
 wide_DF <- wide_DF %>% arrange(desc(geotype))
 
-wide_DF <- wide_DF[,c("datasource id","geotype","geo id","geozone","Retail Trade","Leisure and Hospitality",
-                      "Professional and Business Services","Construction","Education and Healthcare",
-                      "Manufacturing","Military","Transporation, Warehousing, and Utilities","id")]
+#wide_DF <- wide_DF[,c("datasource id","geotype","geo id","geozone","Retail Trade","Leisure and Hospitality",
+##                      "Professional and Business Services","Construction","Education and Healthcare",
+#                      "Manufacturing","Military","Transporation, Warehousing, and Utilities","id")]
 
+letters[which( colnames(wide_DF)=="id" )]
 
 jobs['geo id'] <- NULL
 jobs$employment_type_id <- NULL
@@ -149,9 +151,8 @@ jobs_cpa <- subset_by_geotype_jobs(jobs,c('cpa'))
 jobs_jur <- subset_by_geotype_jobs(jobs,c('jurisdiction'))
 jobs_region <- subset_by_geotype_jobs(jobs,c('region'))
 
-wide_DF <- allvars[ , c("datasource id","geotype","geo id","geozone", "sector","jobs")] %>%  spread(sector, jobs)
 
-region_wide <- jobs_region[ , c("datasource id", "sector","jobs")] %>%  spread(sector, jobs)
+# region_wide <- jobs_region[ , c("datasource id", "sector","jobs")] %>%  spread(sector, jobs)
 
 
 # add comments to sheets with cutoff
@@ -185,9 +186,9 @@ wb = createWorkbook()
 #add summary worksheet
 summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
 
-writeData(wb, summary, x = "Cities & CPAs that failed based on the following criteria:", 
+writeData(wb, summary, x = "Cities & CPAs that QC failed based on the following criteria:", 
           startCol = 1, startRow = 1)
-writeData(wb, summary, x = paste('Test Criteria: ',acceptance_criteria[['Jobs']],sep=''), 
+writeData(wb, summary, x = paste('      change by increment: ',acceptance_criteria[['Jobs']],sep=''), 
           startCol = 1, startRow = 2)
 
 headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
@@ -290,8 +291,13 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
 }
 
 # format for summary sheet
-conditionalFormatting(wb, summary, cols=c(1:(ncol(wide_DF)-1)), rows =1:(nrow(wide_DF)+4), rule="$M1==2", style = lightgreyStyle)
+idcolumn <- letters[which( colnames(wide_DF)=="id" )]
+iddarkgrey <- paste("$",idcolumn,"1")
+idlightgrey <- paste("$",idcolumn,"2")
+
 conditionalFormatting(wb, summary, cols=c(1:(ncol(wide_DF)-1)), rows=1:(nrow(wide_DF)+4), rule="$M1==1", style = darkgreyStyle)
+conditionalFormatting(wb, summary, cols=c(1:(ncol(wide_DF)-1)), rows =1:(nrow(wide_DF)+4), rule="$M1==2", style = lightgreyStyle)
+
 
 
 addStyle(wb = wb,summary,style = insideBorders,rows = 4:(nrow(wide_DF)+3),cols = c(1:(ncol(wide_DF)-1),ncol(wide_DF)+1),gridExpand = TRUE,stack = TRUE)
@@ -312,5 +318,5 @@ outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-saveWorkbook(wb, "JobsBySector.xlsx",overwrite=TRUE)
+saveWorkbook(wb, "JobsBySector2.xlsx",overwrite=TRUE)
 
