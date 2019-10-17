@@ -72,6 +72,21 @@ jobs <- jobs %>%
 # round
 jobs$percent_change <- round(jobs$percent_change, digits = 3)
 
+jobtotals <- jobs %>% 
+  group_by(geotype,geozone,yr_id) %>% 
+  summarise(jobtotal = sum(jobs))
+
+jobs <- merge(x = jobs, y = jobtotals, by = c("geotype","geozone","yr_id"), all.x = TRUE)
+
+jobs$prop <- jobs$jobs/jobs$jobtotal
+
+#proportion change over increments
+jobs <- jobs %>% 
+  group_by(geozone,geotype,employment_type_id,full_name) %>%  
+  # avoid divide by zero with ifelse
+  mutate(prop_change = prop - lag(prop))
+
+
 
 jobs <- jobs %>%
     mutate(pass.or.fail = case_when(abs(change) >= 500 & abs(percent_change) >= .20 ~ "fail",
@@ -91,7 +106,7 @@ jobs$geozone_and_sector <- NULL
 
 jobs <- jobs %>% rename('datasource id'= datasource_id,'geo id'=geo_id,
                       'increment'= yr_id,'change' = change,
-                      'percent change' = percent_change,
+                      #'percent change' = percent_change,
                       'pass/fail' = pass.or.fail,"sector" = full_name)
  
 
@@ -145,12 +160,45 @@ wide_DF <- wide_DF %>% arrange(desc(geotype))
 letters[which( colnames(wide_DF)=="id" )]
 
 jobs['geo id'] <- NULL
-jobs$employment_type_id <- NULL
+# jobs['employment_type_id'] <- NULL
 
-jobs_cpa <- subset_by_geotype_jobs(jobs,c('cpa'))
-jobs_jur <- subset_by_geotype_jobs(jobs,c('jurisdiction'))
-jobs_region <- subset_by_geotype_jobs(jobs,c('region'))
+jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","employment_type_id","sector","jobtotal","jobs","change","percent_change","prop","prop_change","pass/fail")
 
+subset_by_geotype_jobs <- function(df,the_geotype) {
+  df1 <- subset(df,geotype %in% the_geotype)
+  df2 <- add_id_for_excel_formatting_jobs(df1)
+  df2 <- df2 %>% rename(!!the_geotype[1] := geozone)
+  #df %>% rename(!!variable := name_of_col_from_df)
+  # df2$geotype <- NULL
+  return(df2)
+}
+
+
+jobs_cpa <- subset_by_geotype_jobs(jobs2,c('cpa'))
+jobs_jur <- subset_by_geotype_jobs(jobs2,c('jurisdiction'))
+jobs_region <- subset_by_geotype_jobs(jobs2,c('region'))
+
+jobs_jur <- jobs_jur %>% rename('Total Jobs in Jurisdiction'= jobtotal)
+jobs_jur <- jobs_jur %>% rename('Jobs by Sector'= jobs)
+jobs_jur <- jobs_jur %>% rename('Change in Jobs by Sector'= change)
+jobs_jur <- jobs_jur %>% rename('Percent Change in Jobs by Sector'= percent_change)
+jobs_jur <- jobs_jur %>% rename('Jobs by Sector as a Share of Total Jobs in Jurisdiction'= prop)
+jobs_jur <- jobs_jur %>% rename('Change in Sector Share'= prop_change)
+
+
+jobs_cpa <- jobs_cpa %>% rename('Total Jobs in CPA'= jobtotal)
+jobs_cpa <- jobs_cpa %>% rename('Jobs by Sector'= jobs)
+jobs_cpa <- jobs_cpa %>% rename('Change in Jobs by Sector'= change)
+jobs_cpa <- jobs_cpa %>% rename('Percent Change in Jobs by Sector'= percent_change)
+jobs_cpa <- jobs_cpa %>% rename('Jobs by Sector as a Share of Total Jobs in CPA'= prop)
+jobs_cpa <- jobs_cpa %>% rename('Change in Sector Share'= prop_change)
+
+jobs_region <- jobs_region %>% rename('Total Jobs in region'= jobtotal)
+jobs_region <- jobs_region %>% rename('Jobs by Sector'= jobs)
+jobs_region <- jobs_region %>% rename('Change in Jobs by Sector'= change)
+jobs_region <- jobs_region %>% rename('Percent Change in Jobs by Sector'= percent_change)
+jobs_region <- jobs_region %>% rename('Jobs by Sector as a Share of Total Jobs in Region'= prop)
+jobs_region <- jobs_region %>% rename('Change in Sector Share'= prop_change)
 
 # region_wide <- jobs_region[ , c("datasource id", "sector","jobs")] %>%  spread(sector, jobs)
 
@@ -164,6 +212,13 @@ acceptance_criteria['Jobs'] <- "> 500 and > 20%"
 # sector_names <- merge(x=allvars,y=employment_name, by = 'employment_type_id')
 
 full_names <- unique(allvars$sector)
+
+jobs_jur['employment_type_id'] <-NULL
+jobs_jur['geotype'] <-NULL
+jobs_cpa['employment_type_id'] <-NULL
+jobs_cpa['geotype'] <-NULL
+jobs_region['employment_type_id'] <-NULL
+jobs_region['geotype'] <-NULL
 
 ########################################################### 
 # create excel workbook
@@ -179,7 +234,17 @@ add_worksheets_to_excel_jobs <- function(workbook,demographic_variable,colorfort
   addWorksheet(wb, tabname, tabColour = colorfortab)
 }
 
-
+add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
+  writeData(wb,j,dataframe_name)
+  writeComment(wb,j,col = "L",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
+  writeData(wb, j+1,dataframe_name)
+  writeComment(wb,j+1,col = "L",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
+  writeData(wb, j+2,dataframe_name)
+  writeComment(wb,j+2,col = "L",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+}  
 
 wb = createWorkbook()
 
@@ -264,7 +329,7 @@ insideBorders <- openxlsx::createStyle(
 )
 rangeRowscpa = 2:(nrow(jobs_cpa)+1)
 rangeRowsjur = 2:(nrow(jobs_jur)+1)
-rangeCols = 1:8
+rangeCols = 1:11
 pct = createStyle(numFmt="0%") # percent 
 aligncenter = createStyle(halign = "center")
 
@@ -279,13 +344,16 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
     stack = TRUE
   )
   #addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=pct, cols=c(7), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(10), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(9), rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(12), rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=aligncenter, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9), widths = c(16,30,15,38,16,18,18,18,14))
-  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$I1==2", style = lightgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$I1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$L1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$L1==1", style = darkgreyStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="check", style = checkStyle)
 }
