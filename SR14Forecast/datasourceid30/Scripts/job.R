@@ -164,6 +164,8 @@ jobs['geo id'] <- NULL
 
 jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","employment_type_id","sector","jobtotal","jobs","change","percent_change","prop","prop_change","pass/fail")
 
+jobs2 <- jobs2 %>% rename('pass/fail (based on change in jobs by sector and percent change)'= 'pass/fail')
+
 subset_by_geotype_jobs <- function(df,the_geotype) {
   df1 <- subset(df,geotype %in% the_geotype)
   df2 <- add_id_for_excel_formatting_jobs(df1)
@@ -237,13 +239,13 @@ add_worksheets_to_excel_jobs <- function(workbook,demographic_variable,colorfort
 add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
   writeData(wb,j,dataframe_name)
-  writeComment(wb,j,col = "L",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j,col = "K",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
   writeData(wb, j+1,dataframe_name)
-  writeComment(wb,j+1,col = "L",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j+1,col = "K",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
   writeData(wb, j+2,dataframe_name)
-  writeComment(wb,j+2,col = "L",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  writeComment(wb,j+2,col = "K",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
 }  
 
 wb = createWorkbook()
@@ -260,6 +262,7 @@ headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
 addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
 
 writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
+
 
 headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
 addStyle(wb, summary, headerStyle1, rows = nrow(wide_DF)+6, cols = 1:3, gridExpand = TRUE,stack = TRUE)
@@ -351,7 +354,7 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(12), rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=aligncenter, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
-  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9), widths = c(16,30,15,38,16,18,18,18,14))
+  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,30,15,38,16,18,18,18,22,20,25))
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$L1==2", style = lightgreyStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$L1==1", style = darkgreyStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
@@ -374,7 +377,7 @@ addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(wide_DF)), rows=4:(nrow(
 #conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=3:(nrow(wide_DF)+3), rule="$J1==1", style = darkgreyStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="fail", style = negStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="check", style = checkStyle)
-setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14), widths = c(15,21,14,28,21,21,21,21,21,21,21,21,2,40))
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14), widths = c(15,21,14,28,21,21,21,21,21,21,26,21,2,40))
 addStyle(wb, summary, style=aligncenter,cols=c(1:12), rows=4:(nrow(wide_DF)+4), gridExpand=TRUE,stack = TRUE)
 
 # writeData(wb,summary,employment_name,startCol = 2, startRow = nrow(wide_DF)+9)
