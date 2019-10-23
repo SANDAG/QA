@@ -7,15 +7,7 @@ source("../Queries/readSQL.R")
 source("common_functions.R")
 source("functions_for_percent_change.R")
 
-#install.packages("conflicted")
-#library(conflicted)
-#conflict_prefer("rename","dplyr")
-#conflict_prefer("mutate","dplyr")
-# conflict_scout()
-# library()
-#remove.packages("conflicted")
-
-packages <- c("RODBC","tidyverse","openxlsx")
+packages <- c("RODBC","tidyverse","openxlsx","hash","zip")
 pkgTest(packages)
 
 # connect to database
@@ -63,12 +55,12 @@ dem_ethn  %>%  group_by(ethn_id) %>% tally(pop)
 
 head(dem_ethn)
 
-#creates file with pop totals by geozone and year
+#creates file with pop totals by geozone and year for proportion change
 #geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem_ethn, sum)
 
 #tail(geozone_pop)
 
-# #lag for pop change
+# #lag for pop change based on proportion
 # dem_ethn$change <- dem_ethn$pop - lag(dem_ethn$pop)
 # dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), "pop"]
 # dem_ethn$proportion_of_pop<-(dem_ethn$pop / dem_ethn$geozone_pop)
@@ -85,18 +77,22 @@ dem_ethn$change <- dem_ethn$pop - lag(dem_ethn$pop)
 dem_ethn$percent_change<-(dem_ethn$pop-lag(dem_ethn$pop)) / lag(dem_ethn$pop)
 dem_ethn$percent_change<-round(dem_ethn$percent_change,digits=2)
 
-head(dem_ethn[dem_ethn$geozone=="Flower Hill",])
-
+#recode values for 2016 change and NAN values
 dem_ethn$change[dem_ethn$yr_id == "2016"] <- NA
 dem_ethn$percent_change[dem_ethn$yr_id == "2016"] <- NA
 #dem_ethn$change[dem_ethn$change == "NA"] <- 0
 dem_ethn$percent_change[dem_ethn$percent_change == "NaN"] <- 0
 
+#check flower hill as example of NAN
+head(dem_ethn[dem_ethn$geozone=="Flower Hill",])
+
+#create absolute value to use in identifying fails
 dem_ethn$change_abs <- abs(dem_ethn$change)
 dem_ethn$percent_change_abs <- abs(dem_ethn$percent_change)
 
 head(dem_ethn,12)
 
+#identify fails by EDAM parameters
 dem_ethn <- dem_ethn %>%
   mutate(pass.or.fail = case_when(((ethn_id==1 & change_abs > 2500 & percent_change_abs > .20)| 
                                      (ethn_id==2 & change_abs > 2500 & percent_change_abs > .20)|
@@ -105,6 +101,7 @@ dem_ethn <- dem_ethn %>%
                                      (ethn_id==5 & change_abs > 500 & percent_change_abs > .20)) ~ 1,
                                   TRUE ~ 0))
 
+#function to sort by fail
 sort_dataframe <- function(df) {
   df_fail <- unique(subset(df,pass.or.fail=="fail")$geozone)
   #df_check <- unique(subset(df,pass.or.fail=="check")$geozone)
@@ -116,15 +113,17 @@ sort_dataframe <- function(df) {
   df$sort_order <- NULL
   return(df)
 }
-
+#apply sort function to dataset
 dem_ethn <- sort_dataframe(dem_ethn)
-
+#select variables for final dataset
 dem_ethn <- dem_ethn %>% select(geotype,geozone,geo_id,yr_id,ethn_group,ethn_id,pop,change,percent_change,pass.or.fail)
 
+#create datasource id variable
 dem_ethn$datasource_id <- datasource_id_current
 
 head(dem_ethn)
 # dem_ethn <- add_id_for_excel_formatting(dem_ethn)
+#check that each geozone has record for 9 years
 t <- dem_ethn %>% group_by(geozone,ethn_group) %>% tally()
 if (nrow(subset(t,n!=9))!=0) {
     print("ERROR: expecting 9 years per geography")
@@ -136,12 +135,17 @@ if (nrow(t)%%2!=0 ) {ids <- append(ids, c(1,1,1,1,1,1,1,1,1))}
 dem_ethn$id <- ids
 
 #create summary sheet
-ethn_summary <- aggregate(pass.or.fail~ethn_group+geozone, data=dem_ethn, max)
+ethn_summary <- aggregate(pass.or.fail~datasource_id+geotype+geozone+ethn_group, data=dem_ethn, max)
 ethn_summary$pass.or.fail[ethn_summary$pass.or.fail==0] <- "pass"
 ethn_summary$pass.or.fail[ethn_summary$pass.or.fail==1] <- "fail"
 ethn_summary <- spread(ethn_summary,ethn_group,pass.or.fail)
 ethn_summary <- subset(ethn_summary,(Asian=="fail"|Black=="fail"|Hispanic=="fail"|Other=="fail"|White=="fail"))
 
+head(ethn_summary)
+
+#rename values for pass/fail in file with all records
+dem_ethn$pass.or.fail[dem_ethn$pass.or.fail==0] <- "pass"
+dem_ethn$pass.or.fail[dem_ethn$pass.or.fail==1] <- "fail"
 
 #rename variables for output file
 dem_ethn <- dem_ethn %>% rename('year' = yr_id,'increment change'= change,'ethnicity' =ethn_group,'ethnicity id'=ethn_id,'Population by Ethnicity' = pop, 'Change in Population by Ethnicity' = change,
@@ -155,11 +159,12 @@ dem_ethn_cpa <- subset(dem_ethn,dem_ethn$geotype=='cpa')
 dem_ethn_jur <- subset(dem_ethn,dem_ethn$geotype=='jurisdiction')
 dem_ethn_reg <- subset(dem_ethn,dem_ethn$geotype=='region')
 
-#rename geozone for cpa and jurisdiction
+#rename geozone for cpa and jurisdiction and region
 dem_ethn_cpa <- dem_ethn_cpa %>% rename('cpa'= geozone)
 dem_ethn_jur <- dem_ethn_jur %>% rename('jurisdiction'= geozone)
 dem_ethn_reg <- dem_ethn_reg %>% rename('region'= geozone)
 
+#delete unneeded columns
 dem_ethn_cpa$geotype <-NULL
 dem_ethn_cpa$geo_id <-NULL
 
@@ -171,15 +176,19 @@ dem_ethn_reg$geo_id <-NULL
 
 head(dem_ethn_reg)
 
-
+#remove unneeded objects
 rm(dem,dem_ethn)
+
 ########################################################### 
+###########################################################
+
 # create excel workbook
 
 wb = createWorkbook()
 
-#add summary worksheet
+#add blank summary worksheet
 summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
+
 #no table of contents included
 
 # read email message from Dave and attach to excel spreadsheet
@@ -197,6 +206,73 @@ insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, hei
 insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
 insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
 insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
+
+
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+fullname <- hash()
+fullname['As'] <- "Asian"
+fullname['Bl'] <- "Black"
+fullname['His'] <- "Hispanic"
+fullname['Oth'] <- "Other"
+fullname['Wh'] <- "White"
+
+# add comments to sheets with cutoff
+# create dictionary hash of comments
+acceptance_criteria <- hash()
+acceptance_criteria['His'] <- "> 2,500 and > 20%"
+acceptance_criteria['Wh'] <- "> 2,500 and > 20%"
+acceptance_criteria['Bl'] <- "> 250 and > 20%"
+acceptance_criteria['As'] <- "> 1,000 and > 20%"
+acceptance_criteria['Oth'] <- "> 500 and > 20%"
+
+#add summary text to summary sheet
+writeData(wb, summary, x = "List of geographies that failed QC for ethnicity/race based on test criteria:", 
+          startCol = 1, startRow = 1)
+headerStyleforsummary <- createStyle(fontSize = 14) #,textDecoration = "bold")
+addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
+
+# add summary table of cutoffs
+writeData(wb, summary, x = "Ethnicity", startCol = 1, startRow = nrow(ethn_summary)+6)
+#writeData(wb, summary, x = "Description", startCol = 2, startRow = nrow(ethn_summary)+6)
+writeData(wb, summary, x = "Test Criteria", startCol = 2, startRow = nrow(ethn_summary)+6)
+headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
+addStyle(wb, summary, headerStyle1, rows = nrow(ethn_summary)+6, cols = 1:2, gridExpand = TRUE,stack = TRUE)
+
+
+tableStyle1 <- createStyle(fontSize = 10, halign = "center")
+tableStyle2 <- createStyle(fontSize = 10, halign = "left")
+
+#headerStyleforsummary <- createStyle(fontSize = 14) #,textDecoration = "bold")
+#addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
+
+#write list of failed geographies into summary sheet
+writeData(wb, summary, ethn_summary, startCol = 1, startRow = 5)
+
+#write ethnic group and test parameters 
+writeData(wb, summary, x = "Asian", startCol = 1, startRow = nrow(ethn_summary)+7)
+writeData(wb, summary, x = acceptance_criteria[['As']], startCol = 2, startRow = nrow(ethn_summary)+7)
+
+writeData(wb, summary, x = "Black", startCol = 1, startRow = nrow(ethn_summary)+8)
+writeData(wb, summary, x = acceptance_criteria[['Bl']], startCol = 2, startRow = nrow(ethn_summary)+8)
+
+writeData(wb, summary, x = "Hispanic", startCol = 1, startRow = nrow(ethn_summary)+9)
+writeData(wb, summary, x = acceptance_criteria[['His']], startCol = 2, startRow = nrow(ethn_summary)+9)
+
+writeData(wb, summary, x = "Other", startCol = 1, startRow = nrow(ethn_summary)+10)
+writeData(wb, summary, x = acceptance_criteria[['Oth']], startCol = 2, startRow = nrow(ethn_summary)+10)
+
+writeData(wb, summary, x = "White", startCol = 1, startRow = nrow(ethn_summary)+11)
+writeData(wb, summary, x = acceptance_criteria[['Wh']], startCol = 2, startRow = nrow(ethn_summary)+11)
+
+#format the summary table with test parameters 
+addStyle(wb, summary, tableStyle1, rows = (nrow(ethn_summary)+7):(nrow(ethn_summary)+11), cols = 1, gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, tableStyle2, rows = (nrow(ethn_summary)+7):(nrow(ethn_summary)+11), cols = 2, gridExpand = TRUE,stack = TRUE)
+
+#add and format area for EDAM comments
+writeData(wb,summary,ethn_summary,startCol = 1, startRow = 4)
+writeData(wb, summary, x = "EDAM review", startCol = (ncol(ethn_summary) + 2), startRow = 4)
+
 
 # add sheets with data 
 shtregethn = addWorksheet(wb, "EthnicityByRegion", tabColour = "blue")
@@ -225,75 +301,45 @@ rangeCols = 1:(ncol(dem_ethn_cpa)-1)
 pct = createStyle(numFmt="0%") # percent 
 
 for (curr_sheet in names(wb)[-1]) {
-  addStyle(
-    wb = wb,
-    sheet = curr_sheet,
-    style = insideBorders,
-    rows = rangeRowscpa,
-    cols = rangeCols,
-    gridExpand = TRUE,
-    stack = TRUE
-  )
-  addStyle(wb, curr_sheet, style=pct, cols=c(7,8), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
-  addStyle(wb, curr_sheet, style=createStyle(halign = 'center'), cols=c(1:5,10), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
+  addStyle(wb = wb, sheet = curr_sheet,style = insideBorders, rows = rangeRowscpa, cols = rangeCols, gridExpand = TRUE, stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=createStyle(halign = 'center'), cols=c(1:5,9), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(ncol(dem_ethn_jur)), rows=1:(nrow(dem_ethn_cpa)+1), gridExpand=TRUE,stack = TRUE)
   setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,33,10,15,10,18,18,18,14))
-  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$K1==2", style = lightgreyStyle)
-  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$K1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$J1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRows, rule="$J1==1", style = darkgreyStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="fail", style = negStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=rangeRowscpa, type="contains", rule="check", style = checkStyle)
 }
 
-#add summary text to summary sheet
-writeData(wb, summary, x = "Cities and CPAs that failed QC for ethnicity/race based on following criteria:", 
-          startCol = 1, startRow = 1)
-headerStyleforsummary <- createStyle(fontSize = 14) #,textDecoration = "bold")
-addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
-
-# add summary table of cutoffs
-writeData(wb, summary, x = "Variable", startCol = 1, startRow = nrow(allvars)+6)
-writeData(wb, summary, x = "Description", startCol = 2, startRow = nrow(allvars)+6)
-writeData(wb, summary, x = "Test Criteria", startCol = 3, startRow = nrow(allvars)+6)
-headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
-addStyle(wb, summary, headerStyle1, rows = nrow(allvars)+6, cols = 1:3, gridExpand = TRUE,stack = TRUE)
-
-
-tableStyle1 <- createStyle(fontSize = 10, halign = "center")
-tableStyle2 <- createStyle(fontSize = 10, halign = "left")
-
-#headerStyleforsummary <- createStyle(fontSize = 14) #,textDecoration = "bold")
-#addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
-
+########FIX SUMMARY
 
 # format for summary sheet
-conditionalFormatting(wb, summary, cols=c(1:(ncol(allvars)-1)), rows =1:(nrow(allvars)+4), rule="$J1==2", style = lightgreyStyle)
-conditionalFormatting(wb, summary, cols=c(1:(ncol(allvars)-1)), rows=1:(nrow(allvars)+4), rule="$J1==1", style = darkgreyStyle)
+conditionalFormatting(wb, summary, cols=c(1:(ncol(ethn_summary)-1)), rows =1:(nrow(ethn_summary)+4), rule="$I1==2", style = lightgreyStyle)
+conditionalFormatting(wb, summary, cols=c(1:(ncol(ethn_summary)-1)), rows=1:(nrow(ethn_summary)+4), rule="$I1==1", style = darkgreyStyle)
 
-addStyle(wb = wb,summary,style = insideBorders,rows = 4:(nrow(allvars)+3),cols = c(1:(ncol(allvars)-1),ncol(allvars)+1),gridExpand = TRUE,stack = TRUE)
-addStyle(wb, summary, headerStyle, rows = 4, cols = c(1:(ncol(allvars)-1),ncol(allvars)+1), gridExpand = TRUE,stack = TRUE)
-addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(allvars)), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
-#conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=3:(nrow(allvars)+3), rule="$J1==1", style = darkgreyStyle)
-conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="fail", style = negStyle)
-conditionalFormatting(wb, summary, cols=1:(ncol(allvars)-1), rows=4:(nrow(allvars)+4), type="contains", rule="check", style = checkStyle)
-setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,22,15,30,18,18,18,18,18,2,40))
-addStyle(wb, summary, style=aligncenter,cols=c(1:11), rows=4:(nrow(allvars)+4), gridExpand=TRUE,stack = TRUE)
+addStyle(wb = wb,summary,style = insideBorders,rows = 3:(nrow(ethn_summary)+3),cols = c(1:(ncol(ethn_summary)),ncol(ethn_summary)+2),gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, headerStyle, rows = 4, cols = c(1:(ncol(ethn_summary)),ncol(ethn_summary)+2), gridExpand = TRUE,stack = TRUE)
+addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(ethn_summary)+1), rows=4:(nrow(ethn_summary)+4), gridExpand=TRUE,stack = TRUE)
+conditionalFormatting(wb, summary, cols=1:(ncol(ethn_summary)), rows=3:(nrow(ethn_summary)+3), rule="$I1==1", style = darkgreyStyle)
+conditionalFormatting(wb, summary, cols=1:(ncol(ethn_summary)), rows=4:(nrow(ethn_summary)+4), type="contains", rule="fail", style = negStyle)
+conditionalFormatting(wb, summary, cols=1:(ncol(ethn_summary)), rows=4:(nrow(ethn_summary)+4), type="contains", rule="check", style = checkStyle)
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10), widths = c(16,22,30,18,18,18,18,18,2,40))
+addStyle(wb, summary, style=aligncenter,cols=c(1:10), rows=4:(nrow(ethn_summary)+4), gridExpand=TRUE,stack = TRUE)
 
-
+######END OF SUMMARY TO FIX
 
 
 writeData(wb, shtcpaethn,dem_ethn_cpa)
 writeData(wb, shtjurethn,dem_ethn_jur)
 writeData(wb, shtregethn,dem_ethn_reg)
 
-
 # add comment with cutoffs to each sheet
 c1 <- createComment(comment = "Hispanic change > 2,500 and > 20%\nWhite change > 2,500 and > 20%\nBlack change > 250 and > 20%\nAsian change > 1,000 and > 20%\nOther change > 500 and > 20%")
-writeComment(wb, shtregethn, col = "J", row = 1, comment = c1)
-writeComment(wb, shtjurethn, col = "J", row = 1, comment = c1)
-writeComment(wb, shtcpaethn, col = "J", row = 1, comment = c1)
-
-
+writeComment(wb, shtregethn, col = "I", row = 1, comment = c1)
+writeComment(wb, shtjurethn, col = "I", row = 1, comment = c1)
+writeComment(wb, shtcpaethn, col = "I", row = 1, comment = c1)
 
 
 # out folder for excel
@@ -301,7 +347,8 @@ outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-saveWorkbook(wb, "Ethnicity_counts.xlsx",overwrite=TRUE)
+
+saveWorkbook(wb, "Ethnicity_counts1.xlsx",overwrite=TRUE)
 
 
 
