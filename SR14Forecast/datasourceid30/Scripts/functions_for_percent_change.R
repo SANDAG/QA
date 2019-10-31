@@ -76,10 +76,10 @@ sort_dataframe_geos <- function(df,failures) {
 
 rename_dataframe <- function(df) {
   df <- df %>% rename('datasource id'= datasource_id,'geo id'=geo_id,
-                      'increment'= yr_id,'change in units per increment' = change,
+                      'increment'= yr_id,'change per increment' = change,
                       #'average annual change' = average_annual_change,
                       #'average annual percent change' = avg_ann_pct_chg,
-                      'percent change in units per increment' = percent_change,
+                      'percent change per increment' = percent_change,
                       'pass/fail' = pass.or.fail)
   return(df)
 }
@@ -153,6 +153,7 @@ add_worksheets_to_excel <- function(workbook,demographic_variable,colorfortab,ro
   writeData(wb, tableofcontents, x = paste(namehash[[demographic_variable]]," by Region",sep=''), 
             startCol = 2, startRow = rowtouse +2)
   writeData(wb, tableofcontents, x = ahash[[demographic_variable]], startCol = 3, startRow = rowtouse+2)
+  freezePane(wb, tabname, firstRow = TRUE)
 }
 
 add_data_to_excel <- function(workbook,demographic_variable,j,m) {
