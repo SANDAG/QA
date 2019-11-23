@@ -270,8 +270,10 @@ for(i in geos) {
     # make the table pretty!
     lefttable <- subset(vtable,series==datasource_names[1])
     righttable <- subset(vtable,series==datasource_names[2])
-    names(lefttable)[names(lefttable)=="increment"] <- datasource_name_short[1]
-    names(righttable)[names(righttable)=="increment"] <- datasource_name_short[2]
+    #names(lefttable)[names(lefttable)=="increment"] <- datasource_name_short[1]
+    #names(righttable)[names(righttable)=="increment"] <- datasource_name_short[2]
+    names(lefttable)[names(lefttable)=="increment"] <- as.character(lefttable$series[1])
+    names(righttable)[names(righttable)=="increment"] <- as.character(righttable$series[1])
     lefttable$series <- NULL
     righttable$series <- NULL
     tt <- ttheme_default(base_size = 7,colhead=list(fg_params = list(parse=TRUE)))
@@ -286,8 +288,8 @@ for(i in geos) {
                             c(2,2),
                             c(3, 4)))
     
-    #ggsave(plotout, file= paste(plotdat$geozone[1],'_',plotdat$id[1],"_vacancy",plotsuffix,".pdf", sep=''),
-    #       width=8, height=8, dpi=100)
+    ggsave(plotout, file= paste(plotdat$geozone[1],'_',plotdat$id[1],"_vacancy",plotsuffix,".pdf", sep=''),
+           width=8, height=8, dpi=100)
   }
 dev.off()
 
