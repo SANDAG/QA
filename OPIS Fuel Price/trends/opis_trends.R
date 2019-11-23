@@ -42,6 +42,18 @@ eia_prem_us <- read_excel("M:\\Technical Services\\QA Documents\\Projects\\OPIS 
 
 eia_diesel_us <- read_excel("M:\\Technical Services\\QA Documents\\Projects\\OPIS and CARB Fleet\\Data Files\\EIA gas price data\\psw18vwall.xlsx", sheet = "Data 2", skip = 2)[,1:2]
 
+
+#set the columns to select
+# eia_reg_ca <- read_excel("M:\\Technical Services\\QA Documents\\Projects\\OPIS and CARB Fleet\\Data Files\\EIA gas price data\\pswrgvwall (1).xlsx", sheet = "Data 3", skip = 2)[,1:2]
+# 
+# eia_mid_ca <- read_excel("M:\\Technical Services\\QA Documents\\Projects\\OPIS and CARB Fleet\\Data Files\\EIA gas price data\\pswrgvwall (1).xlsx", sheet = "Data 6", skip = 2)[,1:2]
+# 
+# eia_prem_ca <- read_excel("M:\\Technical Services\\QA Documents\\Projects\\OPIS and CARB Fleet\\Data Files\\EIA gas price data\\pswrgvwall (1).xlsx", sheet = "Data 9", skip = 2)[,1:2]
+# 
+# eia_diesel_ca <- read_excel("M:\\Technical Services\\QA Documents\\Projects\\OPIS and CARB Fleet\\Data Files\\EIA gas price data\\psw18vwall.xlsx", sheet = "Data 2", skip = 2)[,1:2]
+
+
+
 head(eia_reg_us)
 head(eia_mid_us)
 head(eia_prem_us)
@@ -49,10 +61,10 @@ head(eia_diesel_us)
 
 
 #rename eia data columns
-names(eia_reg)[2] <- "eia_reg_ret_avg"
-names(eia_mid)[2] <- "eia_mid_ret_avg"
-names(eia_prem)[2] <- "eia_prem_ret_avg"
-names(eia_diesel)[2] <- "eia_diesel_ret_avg"
+names(eia_reg_us)[2] <- "eia_reg_ret_avg"
+names(eia_mid_us)[2] <- "eia_mid_ret_avg"
+names(eia_prem_us)[2] <- "eia_prem_ret_avg"
+names(eia_diesel_us)[2] <- "eia_diesel_ret_avg"
 
 #run frequencies
 #options(frequency_render = FALSE)
@@ -71,17 +83,17 @@ IsDate <- function(mydate) {
 }
 
 IsDate(opis$date_code_rc)
-IsDate(eia_reg$Date)
+IsDate(eia_reg_us$Date)
 
 #recode EIA date
-eia_reg$date <- as.Date(eia_reg$Date, format = "%Y-%m-%d")
-eia_reg <- eia_reg[eia_reg$date>="2005-01-01",]
+eia_reg_us$date <- as.Date(eia_reg_us$Date, format = "%Y-%m-%d")
+eia_reg_us <- eia_reg_us[eia_reg_us$date>="2005-01-01",]
 
-head(eia_reg$date)
+head(eia_reg_us$date)
 
 
 
-opis_reg <- opis[(opis$product=="Unleaded Gas" | opis$product=="Regular Gas"),]
+opis_reg_us <- opis[(opis$product=="Unleaded Gas" | opis$product=="Regular Gas"),]
 #calculate average price across gas types
 #opis_agg <- opis  %>%  group_by(date_code_rc) %>% tally(retail_avg)
 #opis_agg$retail_avg_rc <- opis_agg$n/4
@@ -92,10 +104,10 @@ results <- "plots\\opis_fuel\\"
 ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,results), showWarnings = TRUE, recursive=TRUE),0)
 
 head(opis)
-head(eia_reg)
+head(eia_reg_us)
 
 p <- ggplot() + geom_line(data=opis_reg, aes(x=date_code_rc, y = retail_avg), color= "red") + 
-  geom_line(data=eia_reg_ca, aes(x=date,y=eia_reg_ret_avg), color = "green")
+#  geom_line(data=eia_reg_ca, aes(x=date,y=eia_reg_ret_avg), color = "green")
   geom_line(data=eia_reg_us, aes(x=date,y=eia_reg_ret_avg), color = "blue")
   scale_y_continuous(limits = c(2, 3.5)) +
   theme_bw(base_size = 14) +  theme(plot.title = element_text(hjust = 0.5)) +
