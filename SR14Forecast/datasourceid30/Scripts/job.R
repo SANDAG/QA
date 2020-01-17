@@ -164,7 +164,7 @@ jobs['geo id'] <- NULL
 
 jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","employment_type_id","sector","jobtotal","jobs","change","percent_change","prop","prop_change","pass/fail")
 
-jobs2 <- jobs2 %>% rename('pass/fail (based on change in jobs by sector and percent change)'= 'pass/fail')
+#jobs2 <- jobs2 %>% rename('pass/fail (based on change in jobs by sector and percent change)'= 'pass/fail')
 
 subset_by_geotype_jobs <- function(df,the_geotype) {
   df1 <- subset(df,geotype %in% the_geotype)
@@ -263,6 +263,65 @@ addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gr
 
 writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
 
+sn <- colnames(wide_DF)[-(13)] # all but the last column (id)
+sectors <- sn[-(1:4)] # from column 5 to the end
+
+for (index in 1:nrow(wide_DF)) { 
+  row = wide_DF[index, ]
+  for (sectorname in sectors){
+    if ((row[[sectorname]] == 'fail') & (row$geotype == 'cpa')) {
+      rnfail = max(which((jobs_cpa$cpa ==row$geozone) & (jobs_cpa['pass/fail'] =='fail') & 
+                           (jobs_cpa['sector'] == sectorname))) + 1
+      writeFormula(wb, summary, startRow = index + 4,startCol = grep(sectorname, colnames(wide_DF)), 
+                      x = makeHyperlinkString(sheet = 'JobsByCpa', row = rnfail, col = 11,text = "fail"))
+    }
+    if ((row[[sectorname]] == 'fail') & (row$geotype == 'jurisdiction')) {
+      rnfail = max(which((jobs_jur$jurisdiction ==row$geozone) & (jobs_jur['pass/fail'] =='fail') & 
+                           (jobs_jur['sector'] == sectorname))) + 1
+      writeFormula(wb, summary, startRow = index + 4,startCol = grep(sectorname, colnames(wide_DF)), 
+                   x = makeHyperlinkString(sheet = 'JobsByJur', row = rnfail, col = 11,text = "fail"))
+    }
+  }
+}
+
+
+#   if ((row$units == 'fail') & (row$geotype == 'cpa')) {
+#     rnfail = max(which((units_cpa$cpa ==row$geozone) & (units_cpa['pass/fail'] =='fail'))) + 1
+#     writeFormula(wb, summary, startRow = index + 4,startCol = 5, 
+#                  x = makeHyperlinkString(sheet = 'UnitsByCpa', row = rnfail, col = 8,text = "fail"))
+#   }
+#   if ((row$hh == 'fail') & (row$geotype == 'cpa')) {
+#     rnfail = max(which((households_cpa$cpa ==row$geozone) & (households_cpa['pass/fail'] =='fail'))) + 1
+#     writeFormula(wb, summary, startRow = index + 4,startCol = 6, 
+#                  x = makeHyperlinkString(sheet = 'HHByCpa', row = rnfail, col = 8,text = "fail"))
+#   }
+#   if ((row$hhp == 'fail') & (row$geotype == 'cpa')) {
+#     rnfail = max(which((hhp_cpa$cpa ==row$geozone) & (hhp_cpa['pass/fail'] =='fail'))) + 1
+#     writeFormula(wb, summary, startRow = index + 4,startCol = 7, 
+#                  x = makeHyperlinkString(sheet = 'HHPopByCpa', row = rnfail, col = 8,text = "fail"))
+#   }
+#   if ((row$gqpop == 'fail') & (row$geotype == 'cpa')) {
+#     rnfail = max(which((gqpop_cpa$cpa ==row$geozone) & (gqpop_cpa['pass/fail'] =='fail'))) + 1
+#     writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
+#                  x = makeHyperlinkString(sheet = 'GQPopByCpa', row = rnfail, col = 8,text = "fail"))
+#   }
+#   if ((row$gqpop == 'fail') & (row$geotype == 'jurisdiction')) {
+#     rnfail = max(which((gqpop_jur$jurisdiction ==row$geozone) & (gqpop_jur['pass/fail'] =='fail'))) + 1
+#     writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
+#                  x = makeHyperlinkString(sheet = 'GQPopByJur', row = rnfail, col = 8,text = "fail"))
+#   }
+#   
+#   if ((row$jobs == 'fail') & (row$geotype == 'cpa')) {
+#     rnfail = max(which((jobs_cpa$cpa ==row$geozone) & (jobs_cpa['pass/fail'] =='fail'))) + 1
+#     writeFormula(wb, summary, startRow = index + 4,startCol = 9, 
+#                  x = makeHyperlinkString(sheet = 'JobsByCpa', row = rnfail, col = 8,text = "fail"))
+#   }
+# }
+
+
+
+
+
 
 headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
 addStyle(wb, summary, headerStyle1, rows = nrow(wide_DF)+6, cols = 1:3, gridExpand = TRUE,stack = TRUE)
@@ -359,7 +418,8 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$L1==1", style = darkgreyStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="check", style = checkStyle)
-}
+  freezePane(wb, curr_sheet, firstRow = TRUE)
+  }
 
 # format for summary sheet
 idcolumn <- letters[which( colnames(wide_DF)=="id" )]
@@ -389,5 +449,5 @@ outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-saveWorkbook(wb, "JobsBySector2.xlsx",overwrite=TRUE)
+saveWorkbook(wb, "JobsBySector.xlsx",overwrite=TRUE)
 
