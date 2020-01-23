@@ -1,5 +1,5 @@
 
-datasource_id_current <- 30
+datasource_id_current <- 31
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -126,13 +126,13 @@ jobs <- merge(x = jobs, y = jobtotals, by = c("geotype","geozone","yr_id"), all.
 
 # subset(jobs,geozone=='Carlsbad' & full_name=='Manufacturing')
 
-#? jobs$prop <- jobs$jobs/jobs$jobtotal
+jobs$prop <- jobs$jobs/jobs$jobtotal
 
 #proportion change over increments
-#? jobs <- jobs %>% 
-#?   group_by(geozone,geotype,employment_type_id,full_name) %>%  
-#?   # avoid divide by zero with ifelse
-#?   mutate(prop_change = prop - lag(prop))
+jobs <- jobs %>% 
+   group_by(geozone,geotype,employment_type_id,full_name) %>%  
+   # avoid divide by zero with ifelse
+   mutate(prop_change = prop - lag(prop))
 
 
 
@@ -215,8 +215,8 @@ letters[which( colnames(wide_DF)=="id" )]
 jobs['geo id'] <- NULL
 # jobs['employment_type_id'] <- NULL
 
-# jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","employment_type_id","sector","jobtotal","jobs","change","percent_change","prop","prop_change","pass/fail")
-jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","employment_type_id","sector","jobtotal","jobs","change","percent_change","pass/fail")
+jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","employment_type_id","sector","jobtotal","jobs","change","percent_change","prop","prop_change","pass/fail")
+# jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","employment_type_id","sector","jobtotal","jobs","change","percent_change","pass/fail")
 
 #jobs2 <- jobs2 %>% rename('pass/fail (based on change in jobs by sector and percent change)'= 'pass/fail')
 
@@ -238,25 +238,25 @@ jobs_jur <- jobs_jur %>% rename('Total Jobs in Jurisdiction'= jobtotal)
 jobs_jur <- jobs_jur %>% rename('Jobs by Sector'= jobs)
 jobs_jur <- jobs_jur %>% rename('Change in Jobs by Sector'= change)
 jobs_jur <- jobs_jur %>% rename('Percent Change in Jobs by Sector'= percent_change)
-#jobs_jur <- jobs_jur %>% rename('Jobs by Sector as a Share of Total Jobs in Jurisdiction'= prop)
-#jobs_jur <- jobs_jur %>% rename('Change in Sector Share'= prop_change)
+jobs_jur <- jobs_jur %>% rename('Jobs by Sector as a Share of Total Jobs in Jurisdiction'= prop)
+jobs_jur <- jobs_jur %>% rename('Change in Sector Share'= prop_change)
 
 
 jobs_cpa <- jobs_cpa %>% rename('Total Jobs in CPA'= jobtotal)
 jobs_cpa <- jobs_cpa %>% rename('Jobs by Sector'= jobs)
 jobs_cpa <- jobs_cpa %>% rename('Change in Jobs by Sector'= change)
 jobs_cpa <- jobs_cpa %>% rename('Percent Change in Jobs by Sector'= percent_change)
-#jobs_cpa <- jobs_cpa %>% rename('Jobs by Sector as a Share of Total Jobs in CPA'= prop)
-#jobs_cpa <- jobs_cpa %>% rename('Change in Sector Share'= prop_change)
+jobs_cpa <- jobs_cpa %>% rename('Jobs by Sector as a Share of Total Jobs in CPA'= prop)
+jobs_cpa <- jobs_cpa %>% rename('Change in Sector Share'= prop_change)
 
 jobs_region <- jobs_region %>% rename('Total Jobs in region'= jobtotal)
 jobs_region <- jobs_region %>% rename('Jobs by Sector'= jobs)
 jobs_region <- jobs_region %>% rename('Change in Jobs by Sector'= change)
 jobs_region <- jobs_region %>% rename('Percent Change in Jobs by Sector'= percent_change)
-#jobs_region <- jobs_region %>% rename('Jobs by Sector as a Share of Total Jobs in Region'= prop)
-#jobs_region <- jobs_region %>% rename('Change in Sector Share'= prop_change)
+jobs_region <- jobs_region %>% rename('Jobs by Sector as a Share of Total Jobs in Region'= prop)
+jobs_region <- jobs_region %>% rename('Change in Sector Share'= prop_change)
 
-# region_wide <- jobs_region[ , c("datasource id", "sector","jobs")] %>%  spread(sector, jobs)
+#### region_wide <- jobs_region[ , c("datasource id", "sector","jobs")] %>%  spread(sector, jobs)
 
 
 # add comments to sheets with cutoff
@@ -271,10 +271,17 @@ full_names <- unique(allvars$sector)
 
 jobs_jur['employment_type_id'] <-NULL
 jobs_jur['geotype'] <-NULL
+jobs_jur['Jobs by Sector as a Share of Total Jobs in Region'] <- NULL
+jobs_jur['Change in Sector Share'] <- NULL
 jobs_cpa['employment_type_id'] <-NULL
 jobs_cpa['geotype'] <-NULL
+jobs_cpa['Jobs by Sector as a Share of Total Jobs in Region'] <- NULL
+jobs_cpa['Change in Sector Share'] <- NULL
 jobs_region['employment_type_id'] <-NULL
 jobs_region['geotype'] <-NULL
+jobs_region['Jobs by Sector as a Share of Total Jobs in Region'] <- NULL
+jobs_region['Change in Sector Share'] <- NULL
+
 
 ########################################################### 
 # create excel workbook
