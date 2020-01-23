@@ -89,6 +89,7 @@ if (geozone_to_fix == "Marine Corps Recruit Depot") {
   temp1<- subset(countvars,geozone == 'Marine Corps Recruit Depot' & yr_id ==2018)
   temp1['yr_id'] = 2016
   temp1[,5:11] = 0
+  temp1$geo_id = 1492
   countvars = rbind(countvars,temp1)
 }
 
