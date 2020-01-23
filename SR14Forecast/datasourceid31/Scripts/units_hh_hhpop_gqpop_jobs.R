@@ -10,7 +10,7 @@ outputfile <- paste("units_hh_hhpop_gqpop","_ds",datasource_id_current,"_",forma
 outputfile2 <- paste("Units_HH_Pop_Jobs_Forecast","_ds",datasource_id_current,"_QA",".xlsx",sep='')
 print(paste("output filename: ",outputfile))
 
-outfolder<-paste("Output/",sep='')
+outfolder<-paste("../Output/",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 
 outfile <- paste(maindir,"/",outfolder,outputfile,sep='')
@@ -18,7 +18,7 @@ outfile2 <- paste(maindir,"/",outfolder,outputfile2,sep='')
 print(paste("output filepath: ",outfile))
 
 
-source("Queries/readSQL.R")
+source("../Queries/readSQL.R")
 source("common_functions.R")
 source("functions_for_percent_change.R")
 
@@ -30,10 +30,10 @@ pkgTest(packages)
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
 # get hhpop data
-hhvars <- readDB("Queries/hh_hhp_hhs_ds_id.sql",datasource_id_current)
-jobs <- readDB("Queries/jobs.sql",datasource_id_current)
-gq <- readDB("Queries/group_quarter_w_description.sql",datasource_id_current)
-geo_id <- readDB("Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
+hhvars <- readDB("../Queries/hh_hhp_hhs_ds_id.sql",datasource_id_current)
+jobs <- readDB("../Queries/jobs.sql",datasource_id_current)
+gq <- readDB("../Queries/group_quarter_w_description.sql",datasource_id_current)
+geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
 odbcClose(channel)
 
 merge1 <- merge(x = hhvars, y = jobs,by = c("datasource_id","yr_id","geotype","geozone"), all = TRUE)
