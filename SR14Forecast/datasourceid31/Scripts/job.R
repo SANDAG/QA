@@ -271,14 +271,17 @@ full_names <- unique(allvars$sector)
 
 jobs_jur['employment_type_id'] <-NULL
 jobs_jur['geotype'] <-NULL
-jobs_jur['Jobs by Sector as a Share of Total Jobs in Region'] <- NULL
+jobs_jur_sector_share <- jobs_jur
+jobs_jur['Jobs by Sector as a Share of Total Jobs in Jurisdiction'] <- NULL
 jobs_jur['Change in Sector Share'] <- NULL
 jobs_cpa['employment_type_id'] <-NULL
 jobs_cpa['geotype'] <-NULL
-jobs_cpa['Jobs by Sector as a Share of Total Jobs in Region'] <- NULL
+jobs_cpa_sector_share <- jobs_cpa
+jobs_cpa['Jobs by Sector as a Share of Total Jobs in CPA'] <- NULL
 jobs_cpa['Change in Sector Share'] <- NULL
 jobs_region['employment_type_id'] <-NULL
 jobs_region['geotype'] <-NULL
+jobs_region_sector_share <- jobs_region
 jobs_region['Jobs by Sector as a Share of Total Jobs in Region'] <- NULL
 jobs_region['Change in Sector Share'] <- NULL
 
@@ -295,6 +298,14 @@ add_worksheets_to_excel_jobs <- function(workbook,demographic_variable,colorfort
   addWorksheet(wb, tabname, tabColour = colorfortab)
   tabname <- paste(demographic_variable,"ByRegion",sep='')
   addWorksheet(wb, tabname, tabColour = colorfortab)
+  
+  tabname <- paste(demographic_variable,"SectorShareByJur",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+  ## Internal - Text to display
+  tabname <- paste(demographic_variable,"SectorShareByCpa",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
+  tabname <- paste(demographic_variable,"SectorShareByRegion",sep='')
+  addWorksheet(wb, tabname, tabColour = colorfortab)
 }
 
 add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
@@ -307,6 +318,13 @@ add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
   writeData(wb, j+2,dataframe_name)
   writeComment(wb,j+2,col = "K",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
+  
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur_sector_share',sep='')))
+  writeData(wb,j+3,dataframe_name)
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa_sector_share',sep='')))
+  writeData(wb, j+4,dataframe_name)
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_region_sector_share',sep='')))
+  writeData(wb, j+5,dataframe_name)
 }  
 
 wb = createWorkbook()
@@ -451,7 +469,7 @@ comments_to_add['jobs'] <- "> 500 and > 20%"
 i <-3 # starting sheet number (sheet 1 is email message)
 for (demographic_var in c('jobs')) {
   add_data_to_excel_jobs(wb,demographic_var,i)
-  i <- i + 3 # 3 sheets for each variable: jur,cpa,region
+  i <- i + 6 # 3 sheets for each variable: jur,cpa,region
 }
 
 
@@ -475,7 +493,7 @@ rangeCols = 1:9
 pct = createStyle(numFmt="0%") # percent 
 aligncenter = createStyle(halign = "center")
 
-for (curr_sheet in names(wb)[3:length(names(wb))]) {
+for (curr_sheet in names(wb)[3:5]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -499,7 +517,35 @@ for (curr_sheet in names(wb)[3:length(names(wb))]) {
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
   conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="check", style = checkStyle)
   freezePane(wb, curr_sheet, firstRow = TRUE)
-  }
+}
+
+rangeCols = 1:11
+for (curr_sheet in names(wb)[6:8]) {
+  addStyle(
+    wb = wb,
+    sheet = curr_sheet,
+    style = insideBorders,
+    rows = rangeRowscpa,
+    cols = rangeCols,
+    gridExpand = TRUE,
+    stack = TRUE
+  )
+  #addStyle(wb, curr_sheet, style=pct, cols=c(6), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(8), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(9), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=pct, cols=c(10), rows=2:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  
+  addStyle(wb, curr_sheet, headerStyle, rows = 1, cols = rangeCols, gridExpand = TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=invisibleStyle, cols=c(12), rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  addStyle(wb, curr_sheet, style=aligncenter, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), gridExpand=TRUE,stack = TRUE)
+  setColWidths(wb, curr_sheet, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18), widths = c(16,30,15,38,16,18,18,18,22,20,25,20,20,20,20,20,6,25))
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$L1==2", style = lightgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=1:(nrow(jobs_cpa)+1), rule="$L1==1", style = darkgreyStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="fail", style = negStyle)
+  conditionalFormatting(wb, curr_sheet, cols=rangeCols, rows=2:(nrow(jobs_cpa)+1), type="contains", rule="check", style = checkStyle)
+  freezePane(wb, curr_sheet, firstRow = TRUE)
+}
+
 
 # format for summary sheet
 idcolumn <- letters[which( colnames(wide_DF)=="id" )]
