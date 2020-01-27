@@ -1,5 +1,6 @@
 #forcast QA ID 31
-#why is there an error when running pkgTest(packages)
+#seems like there should be some checks by age group
+#calculate % change when lag value is 0
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -25,7 +26,7 @@ geography_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_i
 odbcClose(channel)
 
 #select only years of interest for QA
-dem <- subset(dem, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
+dem <- subset(dem, yr_id %in% c(2016,2018,2020,2025,2030,2035,2040,2045,2050))
 
 #since cpa Marine Corps Recruit Depot was not part of ID 17 2016 dataset records are added here with zero pop
 marine <- subset(dem, geozone=="Marine Corps Recruit Depot" & yr_id=="2018")
@@ -35,44 +36,45 @@ marine_2016[,"pop"] = 0
 
 dem <- rbind(dem,marine_2016)
 
-table(dem$yr_id)
-
-
+#merge in geography ids
 dem <- merge(dem,geography_id, by.x="geozone",by.y="geozone", all = TRUE)
-
+#recode id and geozone name for region records
 dem$id[dem$geotype=='region'] <- 9999
 dem$geozone[dem$geotype=='region'] <- 'San Diego Region'
-
+rm(geography_id)
 head(dem)
 
+#rename id variable
 dem <- dem %>% rename(geo_id= id)
 # clean up cpa names removing asterick and dashes etc.
 dem <- rm_special_chr(dem)
 dem <- subset(dem,geozone != 'Not in a CPA')
 head(dem)
 
+#recode ethnicity and collapse Asian and Other categories
 dem$ethn_group <- ifelse(dem$short_name=="Hispanic","Hispanic",
                          ifelse(dem$short_name=="White","White",
                                 ifelse(dem$short_name=="Black","Black",
                                        ifelse(dem$short_name=="Asian","Asian","Other"))))
 
+#aggregate pop by ethnic group, geography and year
 dem_ethn<-aggregate(pop~ethn_group+geotype+geozone+geo_id+yr_id, data=dem, sum)
 
+#create numeric id for ethnicity for sorting purposes
 dem_ethn<- mutate(dem_ethn, ethn_id=
               ifelse(grepl("Hisp", ethn_group), 1,
                      ifelse(grepl("White", ethn_group),2,
                             ifelse(grepl("Black", ethn_group),3,
                                    ifelse(grepl("Asian", ethn_group),4,5)))))
 
-
+#compare totals by ethn_group and ethn_id to confirm a match - therefore code is correct
 dem_ethn  %>%  group_by(ethn_group) %>% tally(pop)
-
 dem_ethn  %>%  group_by(ethn_id) %>% tally(pop)
 
-head(dem_ethn)
 
 
-####testing
+
+####testing of marine and lindbergh field
 
 marine <- subset(dem_ethn, geozone=="Marine Corps Recruit Depot" & (yr_id=="2018" | yr_id=="2016"))
 head(marine)
@@ -84,68 +86,126 @@ marine <- rename(marine, Marine_Corps_pop = pop)
 lindbergh <- rename(lindbergh, Lindbergh_pop = pop)
 marine <- select(marine, yr_id,ethn_group,ethn_id,Marine_Corps_pop)
 
-dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
-
 marine$Lindbergh_pop <- lindbergh[match(paste(marine$yr_id,marine$ethn_group), paste(lindbergh$yr_id,marine$ethn_group)),"Lindbergh_pop"]
-head(marine)
+marine
 
-marine$tot_pop_2018 <- marine$Marine_Corps_pop+marine$Lindbergh_pop
+marine$tot_pop <- marine$Marine_Corps_pop+marine$Lindbergh_pop
 
+marine2lindbergh <- dcast(marine,ethn_group+ethn_id~yr_id, value.var = "tot_pop")
+marine2lindbergh <- rename(marine2lindbergh, lindbergh_2016="2016")
+marine2lindbergh <- rename(marine2lindbergh, marine_plus_lindbergh_2018="2018")
+marine2lindbergh
 
-age_pop_wide <- dcast(age_pop,yr_id+age_group_name~yr_id,value.var="pop")
-
-head(age_pop_wide)  
-
-
-table(age_pop$age_group_name)  
-table(age_pop$yr_id)
-colnames(age_pop_wide)
-
-ethn_summary <- subset(ethn_summary,(Asian=="fail"|Black=="fail"|Hispanic=="fail"|Other=="fail"|White=="fail"))
-ethn_summary <- arrange(ethn_summary, Asian,Black,Hispanic,Other,White)
-
-ethn_summary <- spread(ethn_summary,ethn_group,pass.or.fail)
-ethn_summary <- subset(ethn_summary,(Asian=="fail"|Black=="fail"|Hispanic=="fail"|Other=="fail"|White=="fail"))
-ethn_summary <- arrange(ethn_summary, Asian,Black,Hispanic,Other,White)
-
-
+write.csv(marine2lindbergh,)
+rm(marine,lindbergh,marine_2016,marine2lindbergh)
 
 #####end testing
 
 
+#creates file with pop totals by geozone and year for proportion change calculation
+geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem_ethn, sum)
 
+tail(geozone_pop)
 
-
-
-#creates file with pop totals by geozone and year for proportion change
-#geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem_ethn, sum)
-
-#tail(geozone_pop)
-
-# #lag for pop change based on proportion
-# dem_ethn$change <- dem_ethn$pop - lag(dem_ethn$pop)
-# dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), "pop"]
-# dem_ethn$proportion_of_pop<-(dem_ethn$pop / dem_ethn$geozone_pop)
-# dem_ethn$proportion_of_pop<-round(dem_ethn$proportion_of_pop,digits=2)
-# dem_ethn$percent_change <- dem_ethn$proportion_of_pop - lag(dem_ethn$proportion_of_pop)
-# dem_ethn$percent_change<-round(dem_ethn$percent_change,digits=2)
-
-head(dem_ethn,15)
-#order dataframe for lag calc
+#order dataframe for lag calcs
 dem_ethn <- dem_ethn[order(dem_ethn$ethn_id,dem_ethn$geotype,dem_ethn$geozone,dem_ethn$yr_id),]
+
+#lag for pop change based on proportion
+ethn_proportion <- data.frame(dem_ethn)
+ethn_proportion$change <- ethn_proportion$pop - lag(ethn_proportion$pop)
+ethn_proportion$geozone_pop<-geozone_pop[match(paste(ethn_proportion$yr_id, ethn_proportion$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), "pop"]
+ethn_proportion$proportion_of_pop<-(ethn_proportion$pop / ethn_proportion$geozone_pop)
+ethn_proportion$proportion_of_pop<-round(ethn_proportion$proportion_of_pop,digits=2)
+ethn_proportion$percent_change <- ethn_proportion$proportion_of_pop - lag(ethn_proportion$proportion_of_pop)
+ethn_proportion$percent_change<-round(ethn_proportion$percent_change,digits=2)
+
+head(ethn_proportion,15)
+
+#recode values for 2016 change and NAN values
+ethn_proportion$change[ethn_proportion$yr_id == "2016"] <- NA
+ethn_proportion$percent_change[ethn_proportion$yr_id == "2016"] <- NA
+#ethn_proportion$change[ethn_proportion$change == "NA"] <- 0
+ethn_proportion$percent_change[ethn_proportion$percent_change == "NaN"] <- 0
+ethn_proportion$percent_change[ethn_proportion$percent_change == "Inf"] <- 0
+
+#check flower hill as example of NAN
+head(ethn_proportion[ethn_proportion$geozone=="Flower Hill",])
+head(ethn_proportion[ethn_proportion$geozone=="Marine Corps Recruit Depot",])
+head(ethn_proportion[ethn_proportion$geozone=="Lindbergh Field",])
+head(ethn_proportion[ethn_proportion$geozone=="Via De La Valle",],20)
+head(ethn_proportion[ethn_proportion$geozone=="Otay",],20)
+head(ethn_proportion[ethn_proportion$geozone=="Fairbanks Country Club",],20)
+
+max(ethn_proportion$percent_change[!is.na(ethn_proportion$percent_change)])
+min(ethn_proportion$percent_change[!is.na(ethn_proportion$percent_change)])
+
+#create absolute value to use in identifying fails
+ethn_proportion$change_abs <- abs(ethn_proportion$change)
+ethn_proportion$percent_change_abs <- abs(ethn_proportion$percent_change)
+
+head(ethn_proportion,12)
+
+#identify fails by EDAM parameters
+ethn_proportion <- ethn_proportion %>%
+  mutate(pass.or.fail = case_when(((ethn_id==1 & change_abs > 2500 & percent_change_abs > .20)| 
+                                     (ethn_id==2 & change_abs > 2500 & percent_change_abs > .20)|
+                                     (ethn_id==3 & change_abs > 250 & percent_change_abs > .20)|
+                                     (ethn_id==4 & change_abs > 1000 & percent_change_abs > .20)|
+                                     (ethn_id==5 & change_abs > 500 & percent_change_abs > .20)) ~ 1,
+                                  TRUE ~ 0))
+
+head(ethn_proportion)
+
+ethn_proportion <- ethn_proportion %>%
+  mutate(pass.or.fail.QA = case_when(((ethn_id==1 & change_abs > 500 & percent_change_abs > .05)| 
+                                     (ethn_id==2 & change_abs > 500 & percent_change_abs > .05)|
+                                     (ethn_id==3 & change_abs > 250 & percent_change_abs > .05)|
+                                     (ethn_id==4 & change_abs > 500 & percent_change_abs > .05)|
+                                     (ethn_id==5 & change_abs > 500 & percent_change_abs > .05)) ~ 1,
+                                  TRUE ~ 0))
+
+
+ethn_flag_QA <- aggregate(pass.or.fail~geozone+geotype+ethn_group+geo_id,data = ethn_proportion,max)
+ethn_proportion$sort_flag <-  ethn_flag_QA[match(paste(ethn_proportion$geotype,ethn_proportion$geozone,ethn_proportion$ethn_group),paste(ethn_flag_QA$geotype,ethn_flag_QA$geozone,ethn_flag_QA$ethn_group)),5]
+
+table(ethn_flag_QA$pass.or.fail)
+
+#create variable for sorting
+ethn_flag <- aggregate(pass.or.fail~geozone+geotype+ethn_group+geo_id,data = ethn_proportion,max)
+ethn_proportion$sort_flag <-  ethn_flag[match(paste(ethn_proportion$geotype,ethn_proportion$geozone,ethn_proportion$ethn_group),paste(ethn_flag$geotype,ethn_flag$geozone,ethn_flag$ethn_group)),5]
+#sort file
+ethn_proportion <- arrange(ethn_proportion, desc(sort_flag,ethn_group,geotype,geozone,yr_id))
+
+#select variables for final dataset
+ethn_proportion <- ethn_proportion %>% select(geotype,geozone,yr_id,ethn_group,pop,geozone_pop,change,proportion_of_pop,percent_change,pass.or.fail,pass.or.fail.QA,sort_flag)
+
+#create datasource id variable
+ethn_proportion$datasource_id <- datasource_id_current
+
+head(ethn_proportion)
+
+#check that each geozone has record for 9 years
+t <- ethn_proportion %>% group_by(geozone,ethn_group) %>% tally()
+if (nrow(subset(t,n!=9))!=0) {
+  print("ERROR: expecting 9 years per geography")
+  print(subset(t,n!=9)) } 
+
+
+
+####
+####
+####end proportion
+
 
 #lag for pop change
 dem_ethn$change <- dem_ethn$pop - lag(dem_ethn$pop)
 dem_ethn$percent_change<-(dem_ethn$pop-lag(dem_ethn$pop)) / lag(dem_ethn$pop)
 dem_ethn$percent_change<-round(dem_ethn$percent_change,digits=2)
 
-#testing
-head(dem_ethn[dem_ethn$geozone=="Clairemont Mesa"&dem_ethn$ethnicity=="Hispanic",],9)
+#testing - review case
+head(dem_ethn[dem_ethn$geozone=="Clairemont Mesa" & dem_ethn$ethn_group=="Hispanic",],9)
 
 head(dem_ethn)
-
-
-
 
 #recode values for 2016 change and NAN values
 dem_ethn$change[dem_ethn$yr_id == "2016"] <- NA
@@ -205,6 +265,13 @@ if (nrow(subset(t,n!=9))!=0) {
 #if (nrow(t)%%2!=0 ) {ids <- append(ids, c(1,1,1,1,1,1,1,1,1))}
 #dem_ethn$id <- ids
 
+colnames(dem_ethn)
+colnames(ethn_proportion)
+
+#merge raw number change and raw number percent change
+ethn_proportion <- merge(dem_ethn, ethn_proportion, by.x = c("ethn_group","geozone","yr_id"), by.y = c("ethn_group","geozone","yr_id"), all = TRUE)
+
+
 #create summary sheet
 ethn_summary <- aggregate(pass.or.fail~datasource_id+geotype+geozone+ethn_group, data=dem_ethn, max)
 ethn_summary$pass.or.fail[ethn_summary$pass.or.fail==0] <- "pass"
@@ -238,10 +305,10 @@ dem_ethn_reg <- subset(dem_ethn,dem_ethn$geotype=='region')
 
 #have sorted before assigning id
 #cpa is sorted
-#sort jur since not fails
+#sort jur since no fails
 table(dem_ethn_jur$`pass/fail`)
 dem_ethn_jur <- arrange(dem_ethn_jur, geotype,geozone,ethnicity,year)
-#sort jur since not fails
+#sort reg since no fails
 table(dem_ethn_reg$`pass/fail`)
 dem_ethn_reg <- arrange(dem_ethn_reg, geotype,geozone,ethnicity,year)
 
@@ -282,7 +349,7 @@ dem_ethn_reg$geo_id <-NULL
 head(dem_ethn_reg)
 
 #remove unneeded objects
-rm(dem,dem_ethn,ethn_flag,t,geography_id)
+rm(dem,dem_ethn,ethn_flag,t)
 
 ########################################################### 
 ###########################################################
@@ -455,6 +522,6 @@ setwd(file.path(maindir,outfolder))
 
 saveWorkbook(wb, "Ethnicity_counts.xlsx",overwrite=TRUE)
 
-
+write.csv(marine2lindbergh, "Comparison of Lindbergh Field and Marine Depot 2016 & 2018.csv", overwrite=TRUE)
 
 
