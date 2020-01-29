@@ -407,6 +407,32 @@ insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, he
 
 #add_worksheets_to_excel(wb,"Units","blue",8,fullname,acceptance_criteria)
 
+########### test plan document ##########################
+# add TestPlan as worksheet
+testingplan = addWorksheet(wb, "TestPlan")
+
+# read Test Plan from share drive
+TestPlanDirectory <- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\2_Testing Plan\\"
+TestPlanFile <- paste(TestPlanDirectory,"Test_Plan_DS31.docx",sep='')
+testplan <- readtext(TestPlanFile)
+
+# generate "dummy" plot with test plan as text box
+# a hack to get word document as excel sheet
+png("testplan.png", width=1024, height=768, units="px", res=144)  #output to png device
+p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
+  geom_text(aes(x = 1, y = 20), label = testplan$text) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank())
+print(p)
+dev.off()  
+insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, units="in")
+#insertPlot(wb, sheet=testingplan,xy = c(2, 2), width = 8, height = 8)
+
+### end test plan worksheet
+#################################################################################
+
 # add comments to sheets with cutoff
 # create dictionary hash of comments
 fullname <- hash()
