@@ -383,53 +383,10 @@ for (index in 1:nrow(wide_DF)) {
 }
 
 
-#   if ((row$units == 'fail') & (row$geotype == 'cpa')) {
-#     rnfail = max(which((units_cpa$cpa ==row$geozone) & (units_cpa['pass/fail'] =='fail'))) + 1
-#     writeFormula(wb, summary, startRow = index + 4,startCol = 5, 
-#                  x = makeHyperlinkString(sheet = 'UnitsByCpa', row = rnfail, col = 8,text = "fail"))
-#   }
-#   if ((row$hh == 'fail') & (row$geotype == 'cpa')) {
-#     rnfail = max(which((households_cpa$cpa ==row$geozone) & (households_cpa['pass/fail'] =='fail'))) + 1
-#     writeFormula(wb, summary, startRow = index + 4,startCol = 6, 
-#                  x = makeHyperlinkString(sheet = 'HHByCpa', row = rnfail, col = 8,text = "fail"))
-#   }
-#   if ((row$hhp == 'fail') & (row$geotype == 'cpa')) {
-#     rnfail = max(which((hhp_cpa$cpa ==row$geozone) & (hhp_cpa['pass/fail'] =='fail'))) + 1
-#     writeFormula(wb, summary, startRow = index + 4,startCol = 7, 
-#                  x = makeHyperlinkString(sheet = 'HHPopByCpa', row = rnfail, col = 8,text = "fail"))
-#   }
-#   if ((row$gqpop == 'fail') & (row$geotype == 'cpa')) {
-#     rnfail = max(which((gqpop_cpa$cpa ==row$geozone) & (gqpop_cpa['pass/fail'] =='fail'))) + 1
-#     writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
-#                  x = makeHyperlinkString(sheet = 'GQPopByCpa', row = rnfail, col = 8,text = "fail"))
-#   }
-#   if ((row$gqpop == 'fail') & (row$geotype == 'jurisdiction')) {
-#     rnfail = max(which((gqpop_jur$jurisdiction ==row$geozone) & (gqpop_jur['pass/fail'] =='fail'))) + 1
-#     writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
-#                  x = makeHyperlinkString(sheet = 'GQPopByJur', row = rnfail, col = 8,text = "fail"))
-#   }
-#   
-#   if ((row$jobs == 'fail') & (row$geotype == 'cpa')) {
-#     rnfail = max(which((jobs_cpa$cpa ==row$geozone) & (jobs_cpa['pass/fail'] =='fail'))) + 1
-#     writeFormula(wb, summary, startRow = index + 4,startCol = 9, 
-#                  x = makeHyperlinkString(sheet = 'JobsByCpa', row = rnfail, col = 8,text = "fail"))
-#   }
-# }
-
-
-
-
-
-
 headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
 addStyle(wb, summary, headerStyle1, rows = nrow(wide_DF)+6, cols = 1:3, gridExpand = TRUE,stack = TRUE)
-
-
 writeData(wb, summary, x = "EDAM review", startCol = (ncol(wide_DF) + 1), startRow = 4)
-# specify sheetname and tab colors
 
-
-#tableofcontents = addWorksheet(wb, "TableofContents")
 
 
 # read email message from Dave and attach to excel spreadsheet
