@@ -401,6 +401,27 @@ fullname <- hash()
 fullname['Jobs'] <- "Jobs"
 
 
+#j <-4 # starting sheet number for data
+jobsbyjur <- addWorksheet(wb, "JobsByJur",tabColour="purple")
+writeData(wb,jobsbyjur,jobs_jur)
+writeComment(wb,jobsbyjur,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['Jobs']]))
+
+jobsbycpa <- addWorksheet(wb, "JobsByCpa",tabColour="purple")
+writeData(wb, jobsbycpa,jobs_cpa)
+writeComment(wb,jobsbycpa,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['Jobs']]))
+
+jobsbyregion <- addWorksheet(wb, "JobsByRegion",tabColour="purple")
+writeData(wb, jobsbyregion,jobs_region)
+writeComment(wb,jobsbyregion,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['Jobs']]))
+  
+# sector share
+jobsbyjurshare <- addWorksheet(wb, "JobsSectorShareByJur",tabColour="yellow")
+writeData(wb,jobsbyjurshare,jobs_jur_sector_share)
+jobsbycpashare <- addWorksheet(wb, "JobsSectorShareByCpa",tabColour="yellow")
+writeData(wb, jobsbycpashare,jobs_cpa_sector_share)
+jobsbyregionshare <- addWorksheet(wb, "JobsSectorShareByRegion",tabColour="yellow")
+writeData(wb, jobsbyregionshare,jobs_region_sector_share)
+ 
 
 
 # formatting style
