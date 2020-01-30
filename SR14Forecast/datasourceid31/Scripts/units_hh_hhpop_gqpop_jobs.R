@@ -22,7 +22,7 @@ source("../Queries/readSQL.R")
 source("common_functions.R")
 source("functions_for_percent_change.R")
 
-packages <- c("RODBC","tidyverse","openxlsx","hash")
+packages <- c("RODBC","tidyverse","openxlsx","hash","readtext")
 pkgTest(packages)
 
 
@@ -201,6 +201,8 @@ writeData(wb, tableofcontents,x = "QA Emails with EDAM", startRow = 3, startCol 
 
 writeFormula(wb, tableofcontents, startRow = 5, 
              x = makeHyperlinkString(sheet = "Summary of Findings", row = 1, col = 1,text = "Summary of Findings"))
+writeFormula(wb, tableofcontents, startRow = 6, 
+             x = makeHyperlinkString(sheet = "TestPlan", row = 1, col = 1,text = "Test Plan"))
 writeData(wb, tableofcontents,x = "Geographies that failed for any variable:units,households,household pop,group quarter pop,jobs", startRow = 5, startCol = 2)
 
 ## Insert email as images
@@ -217,6 +219,34 @@ insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, hei
 insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
 insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
 insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
+
+
+########### test plan document ##########################
+# add TestPlan as worksheet
+testingplan = addWorksheet(wb, "TestPlan")
+
+# read Test Plan from share drive
+TestPlanDirectory <- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\2_Testing Plan\\"
+TestPlanFile <- paste(TestPlanDirectory,"Test_Plan_DS31.docx",sep='')
+testplan <- readtext(TestPlanFile)
+
+# generate "dummy" plot with test plan as text box
+# a hack to get word document as excel sheet
+png("testplan.png", width=1024, height=768, units="px", res=144)  #output to png device
+p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
+  geom_text(aes(x = 1, y = 20), label = testplan$text) +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank())
+print(p)
+dev.off()  
+insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, units="in")
+#insertPlot(wb, sheet=testingplan,xy = c(2, 2), width = 8, height = 8)
+
+### end test plan worksheet
+#################################################################################
+
 
 
 # add comments to sheets with cutoff
@@ -340,7 +370,7 @@ comments_to_add['gqpop'] <- "> 500 and > 20%"
 comments_to_add['jobs'] <- "> 5,000 and > 20%"
 
 
-i <-4 # starting sheet number (sheet 1 is email message, sheet 2 is table of contents, sheet 3 is summary)
+i <-5 # starting sheet number (sheet 1 is email message, sheet 2 is table of contents, sheet 3 is summary4 is test plan)
 for (demographic_var in c('units','households','hhp','gqpop','jobs')) {
   add_data_to_excel(wb,demographic_var,i)
   i <- i + 3 # 3 sheets for each variable: jur,cpa,region
@@ -370,7 +400,7 @@ pct = createStyle(numFmt="0%") # percent
 aligncenter = createStyle(halign = "center")
 
 
-for (curr_sheet in names(wb)[4:length(names(wb))]) {
+for (curr_sheet in names(wb)[5:length(names(wb))]) {
   addStyle(wb = wb,sheet = curr_sheet,style = insideBorders,rows = rangeRowscpa,cols = rangeCols,gridExpand = TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=pct, cols=c(7), rows=rangeRowscpa, gridExpand=TRUE,stack = TRUE)
   addStyle(wb, curr_sheet, style=aligncenter, cols=c(1:4,8), rows=rangeRows, gridExpand=TRUE,stack = TRUE)
