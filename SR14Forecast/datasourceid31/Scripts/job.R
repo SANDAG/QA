@@ -289,43 +289,6 @@ jobs_region['Change in Sector Share'] <- NULL
 ########################################################### 
 # create excel workbook
 
-# add sheets with data 
-add_worksheets_to_excel_jobs <- function(workbook,demographic_variable,colorfortab,rowtouse,namehash,ahash) {
-  tabname <- paste(demographic_variable,"ByJur",sep='')
-  addWorksheet(wb, tabname, tabColour = colorfortab)
-  ## Internal - Text to display
-  tabname <- paste(demographic_variable,"ByCpa",sep='')
-  addWorksheet(wb, tabname, tabColour = colorfortab)
-  tabname <- paste(demographic_variable,"ByRegion",sep='')
-  addWorksheet(wb, tabname, tabColour = colorfortab)
-  
-  tabname <- paste(demographic_variable,"SectorShareByJur",sep='')
-  addWorksheet(wb, tabname, tabColour = colorfortab)
-  ## Internal - Text to display
-  tabname <- paste(demographic_variable,"SectorShareByCpa",sep='')
-  addWorksheet(wb, tabname, tabColour = colorfortab)
-  tabname <- paste(demographic_variable,"SectorShareByRegion",sep='')
-  addWorksheet(wb, tabname, tabColour = colorfortab)
-}
-
-add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
-  dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
-  writeData(wb,j,dataframe_name)
-  writeComment(wb,j,col = "K",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
-  dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
-  writeData(wb, j+1,dataframe_name)
-  writeComment(wb,j+1,col = "K",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
-  dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
-  writeData(wb, j+2,dataframe_name)
-  writeComment(wb,j+2,col = "K",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
-  
-  dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur_sector_share',sep='')))
-  writeData(wb,j+3,dataframe_name)
-  dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa_sector_share',sep='')))
-  writeData(wb, j+4,dataframe_name)
-  dataframe_name <- eval(parse(text = paste(demographic_variable,'_region_sector_share',sep='')))
-  writeData(wb, j+5,dataframe_name)
-}  
 
 wb = createWorkbook()
 
@@ -405,7 +368,6 @@ insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, he
 insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
 insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
 
-#add_worksheets_to_excel(wb,"Units","blue",8,fullname,acceptance_criteria)
 
 ########### test plan document ##########################
 # add TestPlan as worksheet
@@ -439,21 +401,6 @@ fullname <- hash()
 fullname['Jobs'] <- "Jobs"
 
 
-
-# specify sheetname and tab colors
-add_worksheets_to_excel_jobs(wb,"Jobs","purple",8,fullname,acceptance_criteria)
-
-# add comments to sheets with cutoff
-# create dictionary hash of comments
-comments_to_add <- hash()
-comments_to_add['jobs'] <- "> 500 and > 20%"
-
-
-i <-3 # starting sheet number (sheet 1 is email message)
-for (demographic_var in c('jobs')) {
-  add_data_to_excel_jobs(wb,demographic_var,i)
-  i <- i + 6 # 3 sheets for each variable: jur,cpa,region
-}
 
 
 # formatting style
