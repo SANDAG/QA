@@ -22,7 +22,7 @@ source("../Queries/readSQL.R")
 source("common_functions.R")
 source("functions_for_percent_change.R")
 
-packages <- c("RODBC","tidyverse","openxlsx","hash","janitor")
+packages <- c("RODBC","tidyverse","openxlsx","hash","janitor","readtext")
 pkgTest(packages)
 
 # connect to database
@@ -476,7 +476,10 @@ rangeCols = 1:9
 pct = createStyle(numFmt="0%") # percent 
 aligncenter = createStyle(halign = "center")
 
-for (curr_sheet in names(wb)[3:5]) {
+# skip first 3 sheets
+# note: sheet 1:summary, sheet 2:email, sheet 3:test plan
+#for (curr_sheet in names(wb)[-1:-3]) {
+for (curr_sheet in names(wb)[4:6]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -503,7 +506,7 @@ for (curr_sheet in names(wb)[3:5]) {
 }
 
 rangeCols = 1:11
-for (curr_sheet in names(wb)[6:8]) {
+for (curr_sheet in names(wb)[7:9]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
