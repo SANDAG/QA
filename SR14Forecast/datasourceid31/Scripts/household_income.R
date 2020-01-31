@@ -28,7 +28,7 @@ pkgTest(packages)
 # connect to database
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
-# get job data
+# get household income cateogry data
 hhinc <- readDB("../Queries/household_income.sql",datasource_id_current)
 geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
 income_categories <- readDB("../Queries/income_group.sql",datasource_id_current)
@@ -119,8 +119,6 @@ hhinctotals <- hhinc %>%
 inc <- merge(x = hhinc, y = hhinctotals, by = c("geotype","geozone","yr_id"), all.x = TRUE)
 
 
-# subset(jobs,geozone=='Carlsbad' & full_name=='Manufacturing')
-
 inc$prop <- inc$hh/inc$hhinctotal
 
 #proportion change over increments
@@ -208,12 +206,10 @@ wide_DF <- wide_DF %>% arrange(desc(geotype))
 letters[which( colnames(wide_DF)=="id" )]
 
 inc['geo id'] <- NULL
-# jobs['income_group_id'] <- NULL
+
 
 inc2 <- inc %>% select("datasource id","geotype","geozone","increment","income_group_id","income_category","hhinctotal","hh","change","percent_change","prop","prop_change","pass/fail")
-# jobs2 <- jobs %>% select("datasource id","geotype","geozone","increment","income_group_id","sector","jobtotal","jobs","change","percent_change","pass/fail")
 
-#jobs2 <- jobs2 %>% rename('pass/fail (based on change in jobs by sector and percent change)'= 'pass/fail')
 
 
 add_id_for_excel_formatting_inc <- function(df) {
@@ -266,13 +262,12 @@ inc_region <- inc_region %>% rename('Percent Change in Households by Income Cate
 inc_region <- inc_region %>% rename('Households by Income Category as a Share of Total Households in Region'= prop)
 inc_region <- inc_region %>% rename('Change in Income Category Share'= prop_change)
 
-#### region_wide <- inc_region[ , c("datasource id", "sector","jobs")] %>%  spread(sector, jobs)
 
 
 # add comments to sheets with cutoff
 # create dictionary hash of comments
 acceptance_criteria <- hash()
-acceptance_criteria['Jobs'] <- "> 250 and > 20%"
+acceptance_criteria['hhincomecat'] <- "> 250 and > 20%"
 
 
 # sector_names <- merge(x=allvars,y=employment_name, by = 'income_group_id')
@@ -307,7 +302,7 @@ summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
 
 writeData(wb, summary, x = "Cities & CPAs that QC failed based on the following criteria:", 
           startCol = 1, startRow = 1)
-writeData(wb, summary, x = paste('      change by increment: ',acceptance_criteria[['Jobs']],sep=''), 
+writeData(wb, summary, x = paste('      change by increment: ',acceptance_criteria[['hhincomecat']],sep=''), 
           startCol = 1, startRow = 2)
 
 headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
@@ -337,7 +332,7 @@ tableStyle2 <- createStyle(fontSize = 10, halign = "left")
 
 writeData(wb, summary, x = "households by income category", startCol = 1, startRow = nrow(wide_DF)+7)
 #writeData(wb, summary, x = "households by income category", startCol = 2, startRow = nrow(wide_DF)+7)
-writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 3, startRow = nrow(wide_DF)+7)
+writeData(wb, summary, x = acceptance_criteria[['hhincomecat']], startCol = 3, startRow = nrow(wide_DF)+7)
 
 
 
@@ -349,13 +344,13 @@ for (index in 1:nrow(wide_DF)) {
       rnfail = max(which((inc_cpa$cpa ==row$geozone) & (inc_cpa['pass/fail'] =='fail') & 
                            (inc_cpa['income_category'] == sectorname))) + 1
       writeFormula(wb, summary, startRow = index + 4,startCol = grep((gsub("\\$", "", sectorname)), gsub("\\$", "", colnames(wide_DF))), 
-                      x = makeHyperlinkString(sheet = 'JobsByCpa', row = rnfail, col = 11,text = "fail"))
+                      x = makeHyperlinkString(sheet = 'IncomebyCPA', row = rnfail, col = 11,text = "fail"))
     }
     if ((row[[sectorname]] == 'fail') & (row$geotype == 'jurisdiction')) {
       rnfail = max(which((inc_jur$jurisdiction ==row$geozone) & (inc_jur['pass/fail'] =='fail') & 
                            (inc_jur['income_category'] == sectorname))) + 1
       writeFormula(wb, summary, startRow = index + 4,startCol = grep((gsub("\\$", "", sectorname)), gsub("\\$", "", colnames(wide_DF))), 
-                   x = makeHyperlinkString(sheet = 'JobsByJur', row = rnfail, col = 11,text = "fail"))
+                   x = makeHyperlinkString(sheet = 'IncomebyJur', row = rnfail, col = 11,text = "fail"))
     }
   }
 }
@@ -417,25 +412,25 @@ fullname['HH'] <- "Households"
 
 
 #j <-4 # starting sheet number for data
-jobsbyjur <- addWorksheet(wb, "JobsByJur",tabColour="purple")
-writeData(wb,jobsbyjur,inc_jur)
-writeComment(wb,jobsbyjur,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['Jobs']]))
+incomejur <- addWorksheet(wb, "IncomebyJur",tabColour="purple")
+writeData(wb,incomejur,inc_jur)
+writeComment(wb,incomejur,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['hhincomecat']]))
 
-jobsbycpa <- addWorksheet(wb, "JobsByCpa",tabColour="purple")
-writeData(wb, jobsbycpa,inc_cpa)
-writeComment(wb,jobsbycpa,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['Jobs']]))
+incomecpa <- addWorksheet(wb, "IncomebyCPA",tabColour="purple")
+writeData(wb, incomecpa,inc_cpa)
+writeComment(wb,incomecpa,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['hhincomecat']]))
 
-jobsbyregion <- addWorksheet(wb, "JobsByRegion",tabColour="purple")
-writeData(wb, jobsbyregion,inc_region)
-writeComment(wb,jobsbyregion,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['Jobs']]))
+incomeregion <- addWorksheet(wb, "IncomebyRegion",tabColour="purple")
+writeData(wb, incomeregion,inc_region)
+writeComment(wb,incomeregion,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['hhincomecat']]))
   
 # sector share
-jobsbyjurshare <- addWorksheet(wb, "JobsSectorShareByJur",tabColour="yellow")
-writeData(wb,jobsbyjurshare,inc_jur_sector_share)
-jobsbycpashare <- addWorksheet(wb, "JobsSectorShareByCpa",tabColour="yellow")
-writeData(wb, jobsbycpashare,inc_cpa_sector_share)
-jobsbyregionshare <- addWorksheet(wb, "JobsSectorShareByRegion",tabColour="yellow")
-writeData(wb, jobsbyregionshare,inc_region_sector_share)
+incomebyjurshare <- addWorksheet(wb, "IncomeShareByJur",tabColour="yellow")
+writeData(wb,incomebyjurshare,inc_jur_sector_share)
+incomebycpashare <- addWorksheet(wb, "IncomeShareByCpa",tabColour="yellow")
+writeData(wb, incomebycpashare,inc_cpa_sector_share)
+incomebyregionshare <- addWorksheet(wb, "IncomeShareByRegion",tabColour="yellow")
+writeData(wb, incomebyregionshare,inc_region_sector_share)
  
 
 
