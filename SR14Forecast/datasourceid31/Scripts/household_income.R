@@ -142,7 +142,7 @@ inc <- inc %>%
     mutate(sort_order = case_when(geozone_and_sector %in% df_fail  ~ 1,
                                   geozone %in% df_check ~ 2,
                                   TRUE ~ 3))
-inc <- inc[order(inc$sort_order,inc$geotype,inc$geo_id,inc$income_group_id,inc$yr_id),]
+inc <- inc[order(inc$geotype,inc$geo_id,inc$income_group_id,inc$yr_id),]
 inc$sort_order <- NULL
 inc$geozone_and_sector <- NULL
 
@@ -335,8 +335,8 @@ addStyle(wb, summary, headerStyle1, rows = nrow(wide_DF)+6, cols = 1:3, gridExpa
 tableStyle1 <- createStyle(fontSize = 10, halign = "center")
 tableStyle2 <- createStyle(fontSize = 10, halign = "left")
 
-writeData(wb, summary, x = "jobs", startCol = 1, startRow = nrow(wide_DF)+7)
-writeData(wb, summary, x = "jobs by sector", startCol = 2, startRow = nrow(wide_DF)+7)
+writeData(wb, summary, x = "households by income category", startCol = 1, startRow = nrow(wide_DF)+7)
+#writeData(wb, summary, x = "households by income category", startCol = 2, startRow = nrow(wide_DF)+7)
 writeData(wb, summary, x = acceptance_criteria[['Jobs']], startCol = 3, startRow = nrow(wide_DF)+7)
 
 
