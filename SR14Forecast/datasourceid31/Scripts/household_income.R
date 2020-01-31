@@ -31,6 +31,7 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
 # get job data
 hhinc <- readDB("../Queries/household_income.sql",datasource_id_current)
 geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
+income_categories <- readDB("../Queries/income_group.sql",datasource_id_current)
 
 odbcClose(channel)
 
@@ -59,7 +60,7 @@ countvars <- subset(countvars,geozone != 'Not in a CPA')
 countvars <- countvars[order(countvars$income_group_id,countvars$datasource_id,countvars$geotype,countvars$geozone,
                              countvars$yr_id),]
 
-
+income_categories <- income_categories[order(income_categories$income_group),]
 
 # check number of rows of data
 data_rows = nrow(countvars)
@@ -276,7 +277,7 @@ acceptance_criteria['Jobs'] <- "> 250 and > 20%"
 
 # sector_names <- merge(x=allvars,y=employment_name, by = 'income_group_id')
 
-full_names <- unique(allvars$sector)
+full_names <- unique(allvars$income_category)
 
 inc_jur['income_group_id'] <-NULL
 inc_jur['geotype'] <-NULL
@@ -312,11 +313,16 @@ writeData(wb, summary, x = paste('      change by increment: ',acceptance_criter
 headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
 addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
 
+sn <- colnames(wide_DF)[-(15)] # all but the last column (id)
+sectors <- sn[-(1:4)] # from column 5 to the end
+ini_cols <- colnames(wide_DF)[1:4]
+id_col <- colnames(wide_DF)[15]
+wide_DF <- wide_DF[,(c(ini_cols,income_categories$name,id_col))]
+
 
 writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
 
-sn <- colnames(wide_DF)[-(15)] # all but the last column (id)
-sectors <- sn[-(1:4)] # from column 5 to the end
+
 
 # add summary table of cutoffs
 writeData(wb, summary, x = "Variable", startCol = 1, startRow = nrow(wide_DF)+6)
@@ -526,7 +532,7 @@ addStyle(wb, summary, style=invisibleStyle, cols=c(ncol(wide_DF)), rows=4:(nrow(
 #conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=3:(nrow(wide_DF)+3), rule="$J1==1", style = darkgreyStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="fail", style = negStyle)
 conditionalFormatting(wb, summary, cols=1:(ncol(wide_DF)-1), rows=4:(nrow(wide_DF)+4), type="contains", rule="check", style = checkStyle)
-setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21), widths = c(16,22,15,30,18,18,18,18,22,20,25,20,20,20,20,20,20,20,20,2,40))
+setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21), widths = c(16,22,15,30,22,22,22,22,22,22,25,25,25,25,2,40))
 
 
 
