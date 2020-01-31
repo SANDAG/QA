@@ -119,7 +119,8 @@ hhinctotals <- hhinc %>%
 inc <- merge(x = hhinc, y = hhinctotals, by = c("geotype","geozone","yr_id"), all.x = TRUE)
 
 
-inc$prop <- inc$hh/inc$hhinctotal
+inc$prop <- ifelse(!inc$hh, 0, inc$hh/inc$hhinctotal)
+#inc$prop <- inc$hh/inc$hhinctotal
 
 #proportion change over increments
 inc <- inc %>% 
