@@ -232,7 +232,7 @@ testplan <- readtext(TestPlanFile)
 
 # generate "dummy" plot with test plan as text box
 # a hack to get word document as excel sheet
-png("testplan.png", width=1024, height=768, units="px", res=144)  #output to png device
+png("testplan.png", width=1156, height=900, units="px", res=144)  #output to png device
 p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
   geom_text(aes(x = 1, y = 20), label = testplan$text) +
   theme_minimal() +
@@ -240,9 +240,10 @@ p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
         axis.title = element_blank(),
         panel.grid = element_blank())
 print(p)
-dev.off()  
-insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, units="in")
-#insertPlot(wb, sheet=testingplan,xy = c(2, 2), width = 8, height = 8)
+dev.off()
+#insertImage(wb, sheet=testingplan, "testplan.png")
+insertImage(wb, sheet=testingplan, "testplan.png", width=12.5, height=9.2, units="in")
+
 
 ### end test plan worksheet
 #################################################################################
@@ -319,33 +320,33 @@ for (index in 1:nrow(allvars)) {
   if ((row$units == 'fail') & (row$geotype == 'cpa')) {
     rnfail = max(which((units_cpa$cpa ==row$geozone) & (units_cpa['pass/fail'] =='fail'))) + 1
     writeFormula(wb, summary, startRow = index + 4,startCol = 5, 
-                 x = makeHyperlinkString(sheet = 'UnitsByCpa', row = rnfail, col = 8,text = "fail"))
+                 x = makeHyperlinkString(sheet = 'UnitsByCpa', row = rnfail, col = 3,text = "fail"))
   }
   if ((row$hh == 'fail') & (row$geotype == 'cpa')) {
     rnfail = max(which((households_cpa$cpa ==row$geozone) & (households_cpa['pass/fail'] =='fail'))) + 1
     writeFormula(wb, summary, startRow = index + 4,startCol = 6, 
-                 x = makeHyperlinkString(sheet = 'HHByCpa', row = rnfail, col = 8,text = "fail"))
+                 x = makeHyperlinkString(sheet = 'HHByCpa', row = rnfail, col = 3,text = "fail"))
   }
   if ((row$hhp == 'fail') & (row$geotype == 'cpa')) {
     rnfail = max(which((hhp_cpa$cpa ==row$geozone) & (hhp_cpa['pass/fail'] =='fail'))) + 1
     writeFormula(wb, summary, startRow = index + 4,startCol = 7, 
-                 x = makeHyperlinkString(sheet = 'HHPopByCpa', row = rnfail, col = 8,text = "fail"))
+                 x = makeHyperlinkString(sheet = 'HHPopByCpa', row = rnfail, col = 3,text = "fail"))
   }
   if ((row$gqpop == 'fail') & (row$geotype == 'cpa')) {
     rnfail = max(which((gqpop_cpa$cpa ==row$geozone) & (gqpop_cpa['pass/fail'] =='fail'))) + 1
     writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
-                 x = makeHyperlinkString(sheet = 'GQPopByCpa', row = rnfail, col = 8,text = "fail"))
+                 x = makeHyperlinkString(sheet = 'GQPopByCpa', row = rnfail, col = 3,text = "fail"))
   }
   if ((row$gqpop == 'fail') & (row$geotype == 'jurisdiction')) {
     rnfail = max(which((gqpop_jur$jurisdiction ==row$geozone) & (gqpop_jur['pass/fail'] =='fail'))) + 1
     writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
-                 x = makeHyperlinkString(sheet = 'GQPopByJur', row = rnfail, col = 8,text = "fail"))
+                 x = makeHyperlinkString(sheet = 'GQPopByJur', row = rnfail, col = 3,text = "fail"))
   }
   
   if ((row$jobs == 'fail') & (row$geotype == 'cpa')) {
     rnfail = max(which((jobs_cpa$cpa ==row$geozone) & (jobs_cpa['pass/fail'] =='fail'))) + 1
     writeFormula(wb, summary, startRow = index + 4,startCol = 9, 
-                 x = makeHyperlinkString(sheet = 'JobsByCpa', row = rnfail, col = 8,text = "fail"))
+                 x = makeHyperlinkString(sheet = 'JobsByCpa', row = rnfail, col = 3,text = "fail"))
   }
 }
 
