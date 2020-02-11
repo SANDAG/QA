@@ -98,6 +98,13 @@ expected_rows = (nrow(geo_id1) + 1) * 9 * 10 # 9 increments and plus 1 for regio
 print(paste("data rows = ",data_rows))
 print(paste("expected rows = ",expected_rows))
 
+#sort file with added 2016 rows for Marine Corps Recruit Depot
+head(countvars[countvars$geozone=='Marine Corps Recruit Depot',],20)
+
+# order dataframe for doing lag calculation
+countvars <- countvars[order(countvars$income_group_id,countvars$datasource_id,countvars$geotype,countvars$geozone,
+                             countvars$yr_id),]
+
 #difference over increments
 hhinc <- countvars %>% 
     group_by(geozone,geotype,income_group_id,name) %>% 
@@ -111,6 +118,9 @@ hhinc <- hhinc %>%
 
 # round
 hhinc$percent_change <- round(hhinc$percent_change, digits = 3)
+
+head(hhinc[hhinc$geozone=='Marine Corps Recruit Depot',],20)
+head(hhinc[hhinc$geozone=='Alpine',],20)
 
 hhinctotals <- hhinc %>% 
   group_by(geotype,geozone,yr_id) %>% 
@@ -141,7 +151,7 @@ inc <- inc %>%
     mutate(sort_order = case_when(geozone_and_sector %in% df_fail  ~ 1,
                                   geozone %in% df_check ~ 2,
                                   TRUE ~ 3))
-inc <- inc[order(inc$geotype,inc$geo_id,inc$income_group_id,inc$yr_id),]
+inc <- inc[order(inc$geotype,inc$geozone,inc$income_group_id,inc$yr_id),]
 inc$sort_order <- NULL
 inc$geozone_and_sector <- NULL
 
@@ -345,13 +355,13 @@ for (index in 1:nrow(wide_DF)) {
       rnfail = max(which((inc_cpa$cpa ==row$geozone) & (inc_cpa['pass/fail'] =='fail') & 
                            (inc_cpa['income_category'] == sectorname))) + 1
       writeFormula(wb, summary, startRow = index + 4,startCol = grep((gsub("\\$", "", sectorname)), gsub("\\$", "", colnames(wide_DF))), 
-                      x = makeHyperlinkString(sheet = 'IncomebyCPA', row = rnfail, col = 11,text = "fail"))
+                      x = makeHyperlinkString(sheet = 'IncomebyCPA', row = rnfail, col = 2,text = "fail"))
     }
     if ((row[[sectorname]] == 'fail') & (row$geotype == 'jurisdiction')) {
       rnfail = max(which((inc_jur$jurisdiction ==row$geozone) & (inc_jur['pass/fail'] =='fail') & 
                            (inc_jur['income_category'] == sectorname))) + 1
       writeFormula(wb, summary, startRow = index + 4,startCol = grep((gsub("\\$", "", sectorname)), gsub("\\$", "", colnames(wide_DF))), 
-                   x = makeHyperlinkString(sheet = 'IncomebyJur', row = rnfail, col = 11,text = "fail"))
+                   x = makeHyperlinkString(sheet = 'IncomebyJur', row = rnfail, col = 2,text = "fail"))
     }
   }
 }
