@@ -103,6 +103,11 @@ expected_rows = (nrow(geo_id1) + 1) * 9 * 15 # 9 increments and plus 1 for regio
 print(paste("data rows = ",data_rows))
 print(paste("expected rows = ",expected_rows))
 
+
+# order dataframe for doing lag calculation
+countvars <- countvars[order(countvars$employment_type_id,countvars$datasource_id,countvars$geotype,countvars$geozone,
+                             countvars$yr_id),]
+
 #difference over increments
 jobs <- countvars %>% 
     group_by(geozone,geotype,employment_type_id,full_name) %>% 
@@ -147,7 +152,7 @@ jobs <- jobs %>%
     mutate(sort_order = case_when(geozone_and_sector %in% df_fail  ~ 1,
                                   geozone %in% df_check ~ 2,
                                   TRUE ~ 3))
-jobs <- jobs[order(jobs$sort_order,jobs$geotype,jobs$geo_id,jobs$employment_type_id,jobs$yr_id),]
+jobs <- jobs[order(jobs$sort_order,jobs$geotype,jobs$geozone,jobs$employment_type_id,jobs$yr_id),]
 jobs$sort_order <- NULL
 jobs$geozone_and_sector <- NULL
 
