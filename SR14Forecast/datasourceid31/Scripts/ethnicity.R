@@ -1,4 +1,5 @@
-
+#QA checks for ethnicity by region, jurisdiction, and cpa per EDAM defined test criteria.
+#output into Excel workbooks.
 
 datasource_id_current <- 31
 
@@ -126,36 +127,49 @@ head(countvars)
 countvars <- countvars[order(countvars$geozone,countvars$geo_id,countvars$ethn_id,countvars$yr_id,countvars$datasource_id),]
 head(countvars,20)
 
-#difference over increments
+#number difference over increments
 ethnicity <- countvars %>% 
   group_by(geozone,geotype,ethn_id,ethn_group) %>% 
   mutate(change = pop - lag(pop))
 
-#percent change over increments
-ethnicity <- ethnicity %>% 
-  group_by(geozone,geotype,ethn_id,ethn_group) %>%  
-  # avoid divide by zero with ifelse
-  mutate(percent_change = ifelse(lag(pop)==0, NA, (pop - lag(pop))/lag(pop)))
+options(show.error.locations=TRUE)
+path.expand("~")
+traceback()
+
+#percent change over increments and address divide by zero.
+ethnicity <- ethnicity %>%
+  group_by(geozone,geotype,ethn_id,ethn_group) %>% 
+  mutate(percent_change = case_when(lag(pop)==0 & (pop==0)  ~ 0,
+                                    lag(pop)==0   ~ 1 ,
+                                    TRUE ~ (pop - lag(pop))/lag(pop))) 
+
 
 # round
 ethnicity$percent_change <- round(ethnicity$percent_change, digits = 3)
 
+head(ethnicity)
+
+
+#create file with pop totals by geozone and year 
 ethnicity_totals <- ethnicity %>% 
   group_by(geotype,geozone,yr_id) %>% 
   summarise(ethntotal = sum(pop))
 
+#create file that includes proportion change and number change for output- merge in pop totals for proportion calculations
 ethn <- merge(x = ethnicity, y = ethnicity_totals, by = c("geotype","geozone","yr_id"), all.x = TRUE)
-
-
+#calculate proportion of pop for each ethnic group by year
 ethn$prop <- ifelse(!ethn$pop, 0, ethn$pop/ethn$ethntotal)
-#ethn$prop <- ethn$pop/ethn$ethnicity_totals
 head(ethn)
 
-#proportion change over increments
-ethn <- ethn %>% 
-  group_by(geozone,geotype,ethn_id,ethn_group) %>%  
-  # avoid divide by zero with ifelse
-  mutate(prop_change = prop - lag(prop))
+#proportion change over increments and address divide by zero.
+ethn <- ethn %>%
+  group_by(geozone,geotype,ethn_id,ethn_group) %>% 
+  mutate(prop_change = case_when(lag(prop)==0 & (prop==0)  ~ 0,
+                                    lag(prop)==0   ~ 1 ,
+                                    TRUE ~ (prop - lag(prop))/lag(prop)))
+#round
+ethn$prop_change <- round(ethn$prop_change, digits = 3)
+
 
 #identify fails by EDAM parameters
 ethn <- ethn %>%
@@ -181,9 +195,6 @@ ethn <- ethn %>% rename('datasource id'= datasource_id,'geo id'=geo_id,
                       'increment'= yr_id,'change' = change,
                       #'percent change' = percent_change,
                       'pass/fail' = pass.or.fail,"ethnicity_category" = ethn_group)
-
-
-
 
 get_fails <- function(df) {
   df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","ethn_id",
@@ -227,16 +238,10 @@ if (length(ids) < nrow(wide_DF)) {ids<-c(ids,1)}
 wide_DF$id <- ids
 wide_DF[is.na(wide_DF)] <- 'pass'
 
-#wide_DF <- wide_DF[order(wide_DF['geotype'],wide_DF['geozone']),]
-#allvars <- allvars[order(allvars['units'],allvars['hhp'],allvars['geotype'],allvars['geozone']),]
 #sort summary data by geotype
 wide_DF <- wide_DF %>% arrange(desc(geotype))
 
-#wide_DF <- wide_DF[,c("datasource id","geotype","geo id","geozone","Retail Trade","Leisure and Hospitality",
-##                      "Professional and Business Services","Construction","Education and Healthcare",
-#                      "Manufacturing","Military","Transporation, Warehousing, and Utilities","id")]
-
-#identifies excel column id will be in
+#identifies excel column id for shading will be in
 letters[which( colnames(wide_DF)=="id" )]
 
 #delete geo id column
@@ -324,7 +329,6 @@ ethn_region['Change in Ethnic Category Share'] <- NULL
 ########################################################### 
 # create excel workbook
 
-
 wb = createWorkbook()
 
 #add summary worksheet
@@ -332,11 +336,13 @@ summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
 
 writeData(wb, summary, x = "Cities & CPAs that QC failed based on the following criteria:", 
           startCol = 1, startRow = 1)
-writeData(wb, summary, x = paste('      change by increment: ',acceptance_criteria[['hhincomecat']],sep=''), 
+writeData(wb, summary, x = "Notes: For the purpose of these QA checks, percent change is shown as 100% where population increases from 0 to >0 from one increment to the next.", 
           startCol = 1, startRow = 2)
+writeData(wb, summary, x = "          Percent change is shown as 0% where population is zero for both increments. Test criteria are listed on this worksheet below table of results.", 
+          startCol = 1, startRow = 3)
 
 headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
-addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
+addStyle(wb, summary, style = headerStyleforsummary, rows = c(1), cols = 1, gridExpand = TRUE)
 
 sn <- colnames(wide_DF)[-(15)] # all but the last column (id)
 sectors <- sn[-(1:4)] # from column 5 to the end
@@ -347,14 +353,11 @@ id_col <- colnames(wide_DF)[15]
 
 writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
 
-
-
 # add summary table of cutoffs
 writeData(wb, summary, x = "Variable", startCol = 1, startRow = nrow(wide_DF)+6)
 writeData(wb, summary, x = "Test Criteria", startCol = 2, startRow = nrow(wide_DF)+6)
 headerStyle1 <- createStyle(fontSize = 12, halign = "center") #,textDecoration = "bold")
 addStyle(wb, summary, headerStyle1, rows = nrow(wide_DF)+6, cols = 1:2, gridExpand = TRUE,stack = TRUE)
-
 
 tableStyle1 <- createStyle(fontSize = 10, halign = "center")
 tableStyle2 <- createStyle(fontSize = 10, halign = "left")
@@ -453,21 +456,17 @@ insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, uni
 # add comments to sheets with cutoff
 # create dictionary hash of comments
 fullname <- hash()
-#fullname['HH'] <- "Households"
 
 
 #j <-4 # starting sheet number for data
 ethnjur <- addWorksheet(wb, "EthnicitybyJur",tabColour="purple")
 writeData(wb,ethnjur,ethn_jur)
-#writeComment(wb,ethnjur,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['hhincomecat']]))
 
 ethncpa <- addWorksheet(wb, "EthnicitybyCPA",tabColour="purple")
 writeData(wb, ethncpa,ethn_cpa)
-#writeComment(wb,ethncpa,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['hhincomecat']]))
 
 ethnregion <- addWorksheet(wb, "EthnicitybyRegion",tabColour="purple")
 writeData(wb, ethnregion,ethn_region)
-#writeComment(wb,ethnregion,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['hhincomecat']]))
 
 # sector share
 ethnbyjurshare <- addWorksheet(wb, "EthnicityShareByJur",tabColour="yellow")
@@ -572,13 +571,13 @@ setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,22,15
 
 addStyle(wb, summary, style=aligncenter,cols=c(1:9), rows=4:(nrow(wide_DF)+4), gridExpand=TRUE,stack = TRUE)
 
-# writeData(wb,summary,employment_name,startCol = 2, startRow = nrow(wide_DF)+9)
+#remove worksheet with email-not necessary after all
+removeWorksheet(wb, "Email")
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
-
 
 saveWorkbook(wb, outfile,overwrite=TRUE)
 saveWorkbook(wb, outfile2,overwrite=TRUE)
