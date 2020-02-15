@@ -1,5 +1,5 @@
 #forcast QA ID 31
-#seems like there should be some checks by age group
+
 #calculate % change when lag value is 0
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
@@ -44,14 +44,14 @@ dem$geozone[dem$geotype=='region'] <- 'San Diego Region'
 rm(geography_id)
 head(dem)
 
-#rename id variable
+#rename variable id to geo_id
 dem <- dem %>% rename(geo_id= id)
 # clean up cpa names removing asterick and dashes etc.
 dem <- rm_special_chr(dem)
 dem <- subset(dem,geozone != 'Not in a CPA')
 head(dem)
 
-#recode ethnicity and collapse Asian and Other categories
+#recode ethnicity 
 dem$ethn_group <- ifelse(dem$short_name=="Hispanic","Hispanic",
                          ifelse(dem$short_name=="White","White",
                                 ifelse(dem$short_name=="Black","Black",
@@ -74,7 +74,7 @@ dem_ethn  %>%  group_by(ethn_id) %>% tally(pop)
 
 
 
-####testing of marine and lindbergh field
+####testing of marine and lindbergh field to make sure marine + lindbergh ~ lindbergh
 
 marine <- subset(dem_ethn, geozone=="Marine Corps Recruit Depot" & (yr_id=="2018" | yr_id=="2016"))
 head(marine)
@@ -86,7 +86,7 @@ marine <- rename(marine, Marine_Corps_pop = pop)
 lindbergh <- rename(lindbergh, Lindbergh_pop = pop)
 marine <- select(marine, yr_id,ethn_group,ethn_id,Marine_Corps_pop)
 
-marine$Lindbergh_pop <- lindbergh[match(paste(marine$yr_id,marine$ethn_group), paste(lindbergh$yr_id,marine$ethn_group)),"Lindbergh_pop"]
+marine$Lindbergh_pop <- lindbergh[match(paste(marine$yr_id,marine$ethn_group), paste(lindbergh$yr_id,lindbergh$ethn_group)),"Lindbergh_pop"]
 marine
 
 marine$tot_pop <- marine$Marine_Corps_pop+marine$Lindbergh_pop
@@ -96,8 +96,7 @@ marine2lindbergh <- rename(marine2lindbergh, lindbergh_2016="2016")
 marine2lindbergh <- rename(marine2lindbergh, marine_plus_lindbergh_2018="2018")
 marine2lindbergh
 
-write.csv(marine2lindbergh,)
-rm(marine,lindbergh,marine_2016,marine2lindbergh)
+rm(marine,lindbergh,marine_2016)
 
 #####end testing
 
@@ -126,7 +125,7 @@ ethn_proportion$change[ethn_proportion$yr_id == "2016"] <- NA
 ethn_proportion$percent_change[ethn_proportion$yr_id == "2016"] <- NA
 #ethn_proportion$change[ethn_proportion$change == "NA"] <- 0
 ethn_proportion$percent_change[ethn_proportion$percent_change == "NaN"] <- 0
-ethn_proportion$percent_change[ethn_proportion$percent_change == "Inf"] <- 0
+#ethn_proportion$percent_change[ethn_proportion$percent_change == "Inf"] <- 0
 
 #check flower hill as example of NAN
 head(ethn_proportion[ethn_proportion$geozone=="Flower Hill",])
@@ -212,11 +211,13 @@ dem_ethn$change[dem_ethn$yr_id == "2016"] <- NA
 dem_ethn$percent_change[dem_ethn$yr_id == "2016"] <- NA
 #dem_ethn$change[dem_ethn$change == "NA"] <- 0
 dem_ethn$percent_change[dem_ethn$percent_change == "NaN"] <- 0
-dem_ethn$percent_change[dem_ethn$percent_change == "Inf"] <- 0
+#dem_ethn$percent_change[dem_ethn$percent_change == "Inf"] <- 0
 
-#check flower hill as example of NAN
+#check some examples of NAN
 head(dem_ethn[dem_ethn$geozone=="Flower Hill",])
 head(dem_ethn[dem_ethn$geozone=="Marine Corps Recruit Depot",])
+head(dem_ethn[dem_ethn$geozone=="East Elliott",],20)
+infinite_test <- dem_ethn[is.infinite(dem_ethn$percent_change),]
 
 #create absolute value to use in identifying fails
 dem_ethn$change_abs <- abs(dem_ethn$change)
@@ -270,7 +271,10 @@ colnames(ethn_proportion)
 
 #merge raw number change and raw number percent change
 ethn_proportion <- merge(dem_ethn, ethn_proportion, by.x = c("ethn_group","geozone","yr_id"), by.y = c("ethn_group","geozone","yr_id"), all = TRUE)
+ethn_proportion <- select(ethn_proportion,datasource_id,yr_id,geozone,ethn_group,pop.x,change.x,percent_change.x,proportion_of_pop,percent_change.y,
+                          pass.or.fail,sort_flag)
 
+head(ethn_proportion)
 
 #create summary sheet
 ethn_summary <- aggregate(pass.or.fail~datasource_id+geotype+geozone+ethn_group, data=dem_ethn, max)
@@ -294,6 +298,10 @@ dem_ethn$pass.or.fail[dem_ethn$pass.or.fail==1] <- "fail"
 #rename variables for output file
 dem_ethn <- dem_ethn %>% rename('year' = yr_id,'increment change'= change,'ethnicity' =ethn_group,'ethnicity id'=ethn_id,'Population by Ethnicity' = pop, 'Change in Population by Ethnicity' = change,
                                 'Percent Change by Ethnicity' = percent_change,'pass/fail'= pass.or.fail)
+ethn_proportion <- ethn_proportion %>% rename('Year' = yr_id,'Ethnicity' = ethn_group,'Population by Ethnicity' = pop, 'Change in Population by Ethnicity' = change.x,
+                                              'Percent Change by Ethnicity' = percent_change.x,'Proportion of Population' = proportion_of_pop,
+                                              'Proportion Change' = percent_change,'pass/fail'= pass.or.fail)
+
 
 #move datasource_id to first column position
 dem_ethn <- dem_ethn %>% select(datasource_id,everything())
@@ -522,6 +530,6 @@ setwd(file.path(maindir,outfolder))
 
 saveWorkbook(wb, "Ethnicity_counts.xlsx",overwrite=TRUE)
 
-write.csv(marine2lindbergh, "Comparison of Lindbergh Field and Marine Depot 2016 & 2018.csv", overwrite=TRUE)
+write.csv(marine2lindbergh, "Ethnicity of Lindbergh Field and Marine Depot 2016 & 2018.csv", row.names = FALSE)
 
 
