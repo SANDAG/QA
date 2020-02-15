@@ -47,11 +47,15 @@ school <- sqlQuery(channel, "SELECT [OBJECTID]
 head(school)
 
 table(school$docType)
+length(unique(school$docType))
 table(school$socType)
+length(unique(school$socType))
 table(school$Phantom)
+
+#a review of this table shows that openDate may not be the official school opening date - more than 365 schools have the opendata of 7-1-1980.
 table(school$openDate,school$socType)
 
-#create subset for district office records
+#create subset for district office records - these records are offices not schools
 district_office <- subset(school,school$socType=="District Office")
 
 head(district_office)
@@ -70,180 +74,79 @@ summary(school$schoolID)
 #confirm CDS Code values are valid
 length(unique(school$cdsCode))
 table(nchar(school$cdsCode))
+summary(school$cdsCode)
+#review record with short CDS code
 head(school[nchar(school$cdsCode)==10,])
 
 ##identify CDS code duplicates and review - some codes are used more than once for open schools and the comments variable provides justification in most cases
 school$dup <- duplicated(school$cdsCode)
-
-table(school$dup)
-head(school)
-
+#recode duplicates that are closed - not really duplicates
+school$dup[!is.na(school$ClosedDate)] <-FALSE
+#create object of  duplicates and order
 sch_dup <- subset(school,school$dup==TRUE)
 sch_dup <- sch_dup[order(sch_dup$cdsCode),]
-length(unique(sch_dup))
+#create a dataframe with all records with  matching CDScodes 
+school_dup <- data.frame(school[school$cdsCode %in% sch_dup$cdsCode,])
+#review of notes variable indicates that notes could be consistent for duplicates
 
-school$dup_all[school$cdsCode %in% sch_dup$cdsCode] <- 1
-table(school$dup_all)
-
-close_date <- subset(school, school$dup_all==1)
-close_date$no_date[is.na(close_date$ClosedDate)] <-1 
-table(close_date$no_date)
-length(unique(close_date$cdsCode[is.na(close_date$no_date)]))
-close_date <- close_date[order(close_date$cdsCode),]
 
 #district
 length(unique(school$district))
 table(school$district)
 
-#city
+#city - review of values shows data are not clean
 table(school$city)
 
+#open date
 table(school$openDate)
-
-school$open_rc <- as.Date(school$openDate, "YY-mm-dd")
-
-head(school, 12)
-
-head(school[!is.na(school$ClosedDate),], 12)
-
-class(school$ClosedDate)
-class(school$openDate)
-
-class(school$open_rc)
-
+#keep only date not minutes and seconds
 school$open_rc <- substr(school$openDate, start = 1, stop = 10)
-
+#recode to date type
 school$open_rc <- as.Date(school$open_rc, "%Y-%m-%d")
-
+#check date class
+class(school$open_rc)
+#sort file by date
 school <- school[order(school$open_rc),]
+table(school$open_rc)
 
-head(school, 12)
-tail(school[!is.na(school$open_rc),], 12)
+#closed date
+#keep only date - not minutes and seconds
+school$closed_rc <- substr(school$ClosedDate, start = 1, stop = 10)
+#recode closed date to date type
+school$closed_rc <- as.Date(school$ClosedDate,"%Y-%m-%d")
+class(school$closed_rc)
+school <- school[order(school$closed_rc),]
+#check closed date is reasonable
+table(school$closed_rc)
+#check that closed date is after open date
+closeB4open <- select(school, schoolID,openDate,ClosedDate) %>% filter(school$closed_rc<school$open_rc) 
+head(closeB4open)
 
-##############
-##############
+#charter school variable
+table(school$charter)
+tail(school[school$charter=="No Data",],7)
+head(school[school$district=="Pauma Elementary",],7)
 
+#gsoffered school variable - Grades offered
+table(school$gsOffered)
+tail(school[school$gsOffered==" ",],9)
+d1 <- subset(school[school$gsOffered=='N/A',])
 
-names(public)<-tolower(names(public))
-names(private)<-tolower(names(private))
-names(schoolpt)<-tolower(names(schoolpt))
-names(schoolpoly)<-tolower(names(schoolpoly))
+#private school variable
+table(school$priv)
+table(school$socType,school$priv)
 
-#change private names to match public
-names(private) <- gsub(".", "", names(private), fixed = TRUE)
-setnames (private, old='publicdistrict', new='district')
-#calc gsoffered for private
-private$gsoffered<-as.character(paste(private$lowgrade, private$highgrade, sep="-"))
+#region id variable
+table(school$regionID)
+tail(school)
 
-public$cdscode<-format(public$cdscode, scientific = FALSE)
-private$cdscode<-format(private$cdscode, scientific = FALSE)
-schoolpt$cdscode<-format(schoolpt$cdscode, scientific = FALSE)
+# out folder
+outfolder<-paste("..\\Output\\",sep='')
+ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
+setwd(file.path(maindir,outfolder))
 
-#format dates
-public$opendate<-as.Date(public$opendate, "%m/%d/%Y")
-public$closedate<-as.Date(public$closeddate, "%m/%d/%Y")
-schoolpt$opendate<-as.Date(schoolpt$opendate, "%m/%d/%Y")
-schoolpt$closeddate<-as.Date(schoolpt$closeddate, "%m/%d/%Y")
-
-
-#select columns of interest
-public<-select(public,statustype, street,cdscode,charter,city,closeddate,district,doctype,gsoffered,
-                  gsserved,school,opendate,county,soctype,zip)
-private<-select(private,street,cdscode,city,gsoffered,school,county,district,zip)
-
-#create columns needed before merge
-private$priv<-"Y"
-private$charter<-"N"
-private$soctype<-"Private"
-public$priv<-"N"
-
-public<-subset(public, county=='San Diego')
-private<-subset(private, county=='San Diego')
-
-
-#check that all public schools with gsoffered value of no data do not have data for gsserved
-#if there were data in gsserved it should override the no data value in gsoffered
-public_nogs<-subset(public, public$gsoffered=='No Data' & public$county=='San Diego')
-public_nogs<-if(all(public_nogs$gsoffered==public_nogs$gsserved)) print('match') else print ('no match') 
-
-#check for duplicates by cdscode in each source file 
-dups_private <-private[duplicated(private$cdscode)|duplicated(private$cdscode, fromLast=TRUE),]
-dups_private
-dups_public <-public[duplicated(public$cdscode)|duplicated(public$cdscode, fromLast=TRUE),]
-dups_public
-dups_schoolpt <-schoolpt[duplicated(schoolpt$cdscode)|duplicated(schoolpt$cdscode, fromLast=TRUE),]
-dups_schoolpt <-dups_schoolpt[order(dups_schoolpt),]
-write.csv(dups_schoolpt, "M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\Result data files\\dups_by_cds_schoolpt.csv")
-table(dups_schoolpt$cdscode) 
-
-#check for duplicates by schoolid
-dups_schoolpt_id <-schoolpt[duplicated(schoolpt$schoolid)|duplicated(schoolpt$schoolid, fromLast=TRUE),]
-dups_schoolpt_id
-dups_schoolpoly_id <-schoolpoly[duplicated(schoolpoly$schoolid)|duplicated(schoolpoly$schoolid, fromLast=TRUE),]
-dups_schoolpt_id
-
-#check that closed schools have a closed date
-public_1<-subset(public_1, County=='San Diego')
-public_1$close_flag[((is.na(public_1$ClosedDate)) & (public_1$StatusType='Closed'))|((!is.na(public_1$ClosedDate)) & (public_1$StatusType!='Closed'))]<-1
-public_1$close_flag[(public_1$ClosedDate=='No Data') & (public_1$StatusType=='Closed')]<-1
-public_1$close_flag2[(public_1$ClosedDate!='No Data') & (public_1$StatusType!='Closed')]<-1
-public_1$close_flag
-public_1$close_flag2
-
-table(public_1$close_flag)
-table(public_1$close_flag2)
-table(public_1$StatusType)
-
-
-table(public_1$ClosedDate)
-
-
-head(public_1$StatusType)
-#list schools with missing schoolid
-schoolpt[is.na(schoolpt$opendate), "schoolid"]
-
-doe<-rbind.fill(public, private)
-
-doe$in_doe<-1
-schoolpt$in_pt<-1
-
-doe2schpt<-merge(doe, schoolpt, by.x = 'cdscode', by.y = 'cdscode', all = TRUE)
-doe2schpt$in_doe[is.na(doe2schpt$in_doe)]<-9
-doe2schpt$in_pt[is.na(doe2schpt$in_pt)]<-9
-
-doe2schpt$matched<-ifelse(doe2schpt$in_doe==doe2schpt$in_pt,'1',
-                            ifelse(doe2schpt$in_doe!=doe2schpt$in_pt,'0', '9'))
-                          
-table(doe2schpt$matched)
-
-unmatched<-subset(doe2schpt, matched==0)
-write.csv(dups_schoolpt, "M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\Result data files\\doe2pt_unmatched_schools.csv")
-
-
-
-
-doe2schpt$unmatched_2<-ifelse(doe2schpt$in_doe==doe2schpt$in_pt,'0',
-                            ifelse(is.na(doe2schpt$in_doe)|
-                                   is.na(doe2schpt$in_pt),'1', '9'))
-
-
-GROUP_COMPAS$cbt_high <- ifelse(GROUP_COMPAS$CognitiveBehavior=='H'|
-                                  GROUP_COMPAS$CriminalOpportunity=='H'|
-                                  GROUP_COMPAS$CriminalAssociatesPeers=='H'|
-                                  GROUP_COMPAS$CriminalPersonality=='H'|
-                                  GROUP_COMPAS$FamilyCriminality=='H'|
-                                  GROUP_COMPAS$SocialAdjustment=='H','H',
-                                ifelse(is.na(GROUP_COMPAS$AssessmentDate), NA, 'L'))
-
-
-
-head(doe)
-head(schoolpt)
-class(public$cdscode)
-
-#merge with pt file
-
-#merge pt with poly
+write.csv(school_dup, "Schools with duplicate cdsCodes.csv", overwrite=TRUE)
+write.csv(school_dup, "Schools with open after close date.csv", overwrite=TRUE)
 
 
 
@@ -251,11 +154,9 @@ class(public$cdscode)
 
 
 
-
-
-
-
-
+##################
+#######################
+####################
 
 
 #####################
