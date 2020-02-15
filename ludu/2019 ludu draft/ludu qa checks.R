@@ -97,6 +97,7 @@ summary(ludu$du)
 #check values for genOwnID
 (unique(ludu$genOwnID))
 length(unique(ludu$genOwnID))
+table(ludu$genOwnID)
 
 #check mgra values
 length(unique(ludu$MGRA14))
@@ -105,9 +106,61 @@ unique(nchar(ludu$MGRA14))
 
 #check 2019 cases where du is >0 and was =0 in 2018. Did lu value change?
 
-##match 2019 to 2018 on subParcel?
+##merge 2019 to 2018 on subParcel?
+ludu$test <-NULL
+ludu$subParcel_test <- NULL
+ludu_merge <- merge(ludu, ludu_2018, by = "subParcel", suffixes = c("19","18"), all = TRUE)
 
-##subset matched file where du was 0 and is not >0
-ludu_2018_0 <- subset
+##subset matched file where du was 0 and is not >0 and lu did not change
+ludu_merge <- subset(ludu_merge, ludu_merge$du19>0 & ludu_merge$du18==0 & ludu_merge$lu19==ludu_merge$lu18)
+table(ludu_merge$lu19)
 
-##check that lu changed
+#save out file where land use was expected to change and did not
+write.csv(ludu_merge, 'M:\\Technical Services\\QA Documents\\Projects\\LUDU 2019\\results\\Test#9 lu to du checks 2018-2019.csv', row.names = FALSE)
+
+#check that no records exists for du on gq lu types
+no_gq <- sqlQuery(channel, 
+    "SELECT [OBJECTID]
+        ,[subParcel]
+        ,[parcelID]
+        ,[apn8]
+        ,[lu]
+        ,[du]
+        ,[genOwnID]
+        ,[MGRA14]
+        ,[regionID]
+    FROM [WS].[dbo].[LUDU2019DRAFT]
+    where DU > 0 AND LU IN (1401,1402,1403,1404,1409)"
+)
+
+#check that no records exists for du on hotel, motel, resort lu types
+no_hotel <- sqlQuery(channel, 
+    "SELECT [OBJECTID]
+        ,[subParcel]
+        ,[parcelID]
+        ,[apn8]
+        ,[lu]
+        ,[du]
+        ,[genOwnID]
+        ,[MGRA14]
+        ,[regionID]
+    FROM [WS].[dbo].[LUDU2019DRAFT]
+    where DU > 0 AND LU IN (1501,1502,1503)"
+)
+
+#check that no records exists for du on vacant lu types
+no_vacant <- sqlQuery(channel, 
+    "SELECT [OBJECTID]
+        ,[subParcel]
+        ,[parcelID]
+        ,[apn8]
+        ,[lu]
+        ,[du]
+        ,[genOwnID]
+        ,[MGRA14]
+        ,[regionID]
+    FROM [WS].[dbo].[LUDU2019DRAFT]
+    where DU > 0 AND LU IN (9101)"
+)
+
+
