@@ -3,7 +3,8 @@
 USE demographic_warehouse
 
 SELECT
-	age_sex_ethnicity.yr_id
+    age_sex_ethnicity.datasource_id
+	,age_sex_ethnicity.yr_id
 	,mgra.geotype
 	,mgra.geozone
 	,age_sex_ethnicity.age_group_id
@@ -24,7 +25,9 @@ FROM fact.age_sex_ethnicity
 				ON ethnicity.ethnicity_id = age_sex_ethnicity.ethnicity_id
 WHERE age_sex_ethnicity.datasource_id = ds_id
 AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
-GROUP BY age_sex_ethnicity.yr_id
+GROUP BY 
+	age_sex_ethnicity.datasource_id
+    ,age_sex_ethnicity.yr_id
 	,mgra.geotype
 	,mgra.geozone
 	,age_sex_ethnicity.age_group_id
