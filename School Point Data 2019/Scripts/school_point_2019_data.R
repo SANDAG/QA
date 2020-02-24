@@ -1,5 +1,7 @@
 #school point 2019 data checks
-#perform geospatial checks in ArcMap
+
+maindir = dirname(rstudioapi::getSourceEditorContext()$path)
+setwd(maindir)
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -8,11 +10,11 @@ pkgTest <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
   
 }
-packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2","lubridate", 
-              "stringr","gridExtra","grid","lattice", "gtable")
+packages <- c("data.table", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2","lubridate", 
+              "stringr","openxlsx")
 pkgTest(packages)
 
-options(scipen=999)
+options(scipen=999, digits = 15)
 options(stringsAsFactors = FALSE)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -87,6 +89,9 @@ sch_dup <- subset(school,school$dup==TRUE)
 sch_dup <- sch_dup[order(sch_dup$cdsCode),]
 #create a dataframe with all records with  matching CDScodes 
 school_dup <- data.frame(school[school$cdsCode %in% sch_dup$cdsCode,])
+school_dup$dup <- NULL 
+#sort file for review
+school_dup <- school_dup[order(school_dup$cdsCode),]
 #review of notes variable indicates that notes could be consistent for duplicates
 
 
@@ -119,7 +124,7 @@ school <- school[order(school$closed_rc),]
 #check closed date is reasonable
 table(school$closed_rc)
 #check that closed date is after open date
-closeB4open <- select(school, schoolID,openDate,ClosedDate) %>% filter(school$closed_rc<school$open_rc) 
+closeB4open <- select(school, schoolID,open_rc,closed_rc) %>% filter(school$closed_rc<school$open_rc) 
 head(closeB4open)
 
 #charter school variable
@@ -130,23 +135,48 @@ head(school[school$district=="Pauma Elementary",],7)
 #gsoffered school variable - Grades offered
 table(school$gsOffered)
 tail(school[school$gsOffered==" ",],9)
+#check that records with NA are district offices
 d1 <- subset(school[school$gsOffered=='N/A',])
 
 #private school variable
 table(school$priv)
-table(school$socType,school$priv)
+table(school$socType,school$priv, useNA = "always")
+school_private <- subset(school[(is.na(school$socType) & school$priv=="Y"),])
 
 #region id variable
 table(school$regionID)
 tail(school)
+city2region <- subset(school[school$regionID=="2" & school$city=="La Mesa",])
 
 # out folder
 outfolder<-paste("..\\Output\\",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 setwd(file.path(maindir,outfolder))
 
-write.csv(school_dup, "Schools with duplicate cdsCodes.csv", overwrite=TRUE)
-write.csv(school_dup, "Schools with open after close date.csv", overwrite=TRUE)
+head(school_dup$cdsCode)
+
+#turn off scientific notation
+school_dup$cdsCode <- format(school_dup$cdsCode, scientific = FALSE)
+school_private$cdsCode <- format(school_private$cdsCode, scientific = FALSE)
+closeB4open$cdsCode <- format(closeB4open$cdsCode, scientific = FALSE)
+city2region$cdsCode <- format(city2region$cdsCode, scientific = FALSE)
+
+#create Excel output
+wb = createWorkbook()
+
+school_dup_sht <- addWorksheet(wb, "SchoolDups",tabColour="purple")
+writeData(wb, school_dup_sht,school_dup)
+
+school_private_sht <- addWorksheet(wb, "SchoolPrivate",tabColour="purple")
+writeData(wb, school_private_sht,school_private)
+
+closeB4open_sht <- addWorksheet(wb, "closeB4open",tabColour="purple")
+writeData(wb, closeB4open_sht,closeB4open)
+
+city2region_sht <- addWorksheet(wb, "city2region",tabColour="purple")
+writeData(wb, city2region_sht,city2region)
+
+saveWorkbook(wb, "SchoolPoint2019QA.xlsx",overwrite=TRUE)
 
 
 
@@ -154,83 +184,3 @@ write.csv(school_dup, "Schools with open after close date.csv", overwrite=TRUE)
 
 
 
-##################
-#######################
-####################
-
-
-#####################
-
-
-
-
-
-head(private)
-priv_test<-subset(schoolpt, socType=='Private')
-head(priv_test)
-
-head(schoolpt)
-
-head(private)
-public_sd<-subset(public, County=='San Diego')
-unique(public_sd$County)
-unique(public_sd$GSoffered)
-unique(schoolpt$gsOffered)
-unique(private_sd$GSoffered)
-colnames(private_sd)
-
-#save out for coding public school grades offered to categories in school point data
-grades_pub<-data.frame(table(public$GSoffered))
-grades_schoolpt<-data.frame(table(schoolpt$gsOffered))
-grades_pub_served<-data.frame(table(public$GSserved))
-class(grades_pub$Var1)
-class(grades_schoolpt$Var1)
-class(grades_pub_served$Var1)
-
-head(grades_pub)
-head(grades_schoolpt)
-head(grades_pub_served)
-
-setnames(grades_schoolpt, old = "Freq", new = "pt_freq")
-setnames(grades_pub, old = "Freq", new = "pub_freq")         
-setnames(grades_pub_served, old = "Freq", new = "pubserved_freq")         
-
-grades_pub$Var1<-as.character(grades_pub$Var1)
-grades_pub$letter<-"'"
-grades_pub$range<-as.character(paste(grades_pub$letter, grades_pub$Var1, sep=" "))
-
-grades_schoolpt$Var1<-as.character(grades_schoolpt$Var1)
-grades_schoolpt$letter<-"'"
-grades_schoolpt$range<-as.character(paste(grades_schoolpt$letter, grades_schoolpt$Var1, sep=" "))
-
-grades_pub_served$Var1<-as.character(grades_pub_served$Var1)
-grades_pub_served$letter<-"'"
-grades_pub_served$range<-as.character(paste(grades_pub_served$letter, grades_pub_served$Var1, sep=" "))
-
-
-write.csv(grades_pub,"M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\public_grades.csv")
-write.csv(grades_schoolpt,"M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\schoolpt_grades.csv")
-write.csv(grades_pub_served,"M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\public_grades_served.csv")
-
-############################
-############################
-#crosstab
-#addmargins(xtabs( ~ public.StatusType + public.ClosedDate, data=closed_s))
-
-
-
-colnames(public)
-
-
-######this pulls out NAs
-openEQclose<-public[public$OpenDate==public$ClosedDate,]
-###################
-
-diegovalley<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\DS cleaning files\\DiegoValleyCharterSchools.csv')
-
-diegovalley<-read.delim2("K:\\box1\\gis\\Schools\\Schools2018\\DiegoValleyCharterSchools.csv.txt")
-
-file.exists('M:\\Technical Services\\QA Documents\\Projects\\School Spacecore\\Data files\\DS cleaning files\\DiegoValleyCharterSchools.txt')
-
-file.exists("K:\\box1\\gis\\Schools\\Schools2018\\DiegoValleyCharterSchools.csv")
-getwd()
