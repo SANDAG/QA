@@ -33,6 +33,9 @@ options(stringsAsFactors=FALSE)
 #order the data in the file
 dem<- dem[order(dem$geotype,dem$geozone,dem$yr_id),]
 
+#recode geozone for region of San Diego to say "San Diego Region" to differientate. 
+dem$geozone[dem$geozone=="San Diego" & dem$geotype=="region"]<- "San Diego Region"
+
 #deletes extra characters in geozone for matching later
 dem$geozone <- gsub("\\*","",dem$geozone)
 dem$geozone <- gsub("\\-","_",dem$geozone)
@@ -76,6 +79,8 @@ dem_ethn<-aggregate(pop~short_name+geotype+geozone+yr_id, data=dem, sum)
 
 #creates file with pop totals by geozone and year
 geozone_pop<-aggregate(pop~geotype+geozone+yr_id, data=dem, sum)
+#recode geozone for region of San Diego to say "San Diego Region" to differientate. 
+geozone_pop$geozone[geozone_pop$geozone=="San Diego" & geozone_pop$geotype=="region"]<- "San Diego Region"
 
 tail(geozone_pop)
 
@@ -87,7 +92,8 @@ dem_age$N_pct <- (dem_age$N_chg / lag(dem_age$pop))*100
 #rounds percent
 dem_age$N_pct<-round(dem_age$N_pct,digits=2)
 #match in population for each geozone
-dem_age$geozone_pop<-geozone_pop[match(paste(dem_age$yr_id, dem_age$geozone),paste(geozone_pop$yr_id, geozone_pop$geozone)),4]
+dem_age$geozone_pop<-geozone_pop[match(paste(dem_age$yr_id, dem_age$geozone),
+                                       paste(geozone_pop$yr_id, geozone_pop$geozone)),4]
 #calculate the proportion of pop in each age group and round
 dem_age$pct_of_total<-(dem_age$pop / dem_age$geozone_pop)*100
 dem_age$pct_of_total<-round(dem_age$pct_of_total,digits=2)
@@ -100,7 +106,8 @@ dem_gender <- dem_gender[order(dem_gender$sex,dem_gender$geotype,dem_gender$geoz
 dem_gender$N_chg <- dem_gender$pop - lag(dem_gender$pop)
 dem_gender$N_pct <- (dem_gender$N_chg / lag(dem_gender$pop))*100
 dem_gender$N_pct<-round(dem_gender$N_pct,digits=2)
-dem_gender$geozone_pop<-geozone_pop[match(paste(dem_gender$yr_id, dem_gender$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
+dem_gender$geozone_pop<-geozone_pop[match(paste(dem_gender$yr_id, dem_gender$geozone), 
+                                          paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 dem_gender$pct_of_total<-(dem_gender$pop / dem_gender$geozone_pop)*100
 dem_gender$pct_of_total<-round(dem_gender$pct_of_total,digits=2)
 setnames(dem_gender, old=c("sex", "yr_id", "pop"),new=c("Gender", "Year", "Population"))
@@ -113,7 +120,8 @@ dem_ethn <- dem_ethn[order(dem_ethn$short_name,dem_ethn$geotype,dem_ethn$geozone
 dem_ethn$N_chg <- dem_ethn$pop - lag(dem_ethn$pop)
 dem_ethn$N_pct <- (dem_ethn$N_chg / lag(dem_ethn$pop))*100
 dem_ethn$N_pct<-round(dem_ethn$N_pct,digits=2)
-dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
+dem_ethn$geozone_pop<-geozone_pop[match(paste(dem_ethn$yr_id, dem_ethn$geozone), 
+                                        paste(geozone_pop$yr_id, geozone_pop$geozone)), 4]
 dem_ethn$pct_of_total<-(dem_ethn$pop / dem_ethn$geozone_pop)*100
 dem_ethn$pct_of_total<-round(dem_ethn$pct_of_total,digits=2)
 setnames(dem_ethn, old=c("short_name", "yr_id", "pop"),new=c("Ethnicity", "Year", "Population"))
@@ -126,6 +134,7 @@ dem_age$N_pct[dem_age$Year == "2016"] <- 0
 dem_ag_test<-subset(dem_age, Year=="2016")
 
 head(dem_ag_test)
+rm(dem_ag_test)
 
 #recode NA values for 2016 change
 dem_age$N_pct[dem_age$N_chg == "NA"] <- 0
@@ -162,9 +171,49 @@ dem_age_cpa = subset(dem_age,geotype=='cpa')
 dem_gender_cpa = subset(dem_gender,geotype=='cpa')
 dem_ethn_cpa = subset(dem_ethn,geotype=='cpa')
 
+#subset cpa files to only include top 10 cpas with highest change
+#Per QA team discussionon 3/10/2020, if CPA qualifies as top 10, maintain all records
+#related to that CPA (all years, all categories) to provide context during review. 
+dem_age_cpa$N_pct_ab <- abs(dem_age_cpa$N_pct)
+dem_gender_cpa$N_pct_ab <- abs(dem_gender_cpa$N_pct)
+dem_ethn_cpa$N_pct_ab <- abs(dem_ethn_cpa$N_pct)
+
+#determine CPAs with qualifying top 10 percent change.
+#age
+#determine max percent change by cpa
+age_cpa10<- aggregate(N_pct_ab~ geozone, data=dem_age_cpa, max)
+age_cpa10$N_pct_ab[age_cpa10$N_pct_ab == "Inf"] <- 0
+#sort descending on max percent change
+age_cpa10<- age_cpa10[order(-age_cpa10$N_pct_ab),]
+#select only top 10 cpas
+age_cpa10<- age_cpa10 %>% 
+  top_n(10)
+dem_age_cpa<- subset(dem_age_cpa, geozone %in% age_cpa10$geozone)
+
+#gender
+#determine max percent change by cpa
+gender_cpa10<- aggregate(N_pct_ab~ geozone, data=dem_gender_cpa, max)
+gender_cpa10$N_pct_ab[gender_cpa10$N_pct_ab == "Inf"] <- 0
+#sort descending on max percent change
+gender_cpa10<- gender_cpa10[order(-gender_cpa10$N_pct_ab),]
+#select only top 10 cpas
+gender_cpa10<- gender_cpa10 %>% 
+  top_n(10)
+dem_gender_cpa<- subset(dem_gender_cpa, geozone %in% gender_cpa10$geozone)
+
+#ethnicity
+#determine max percent change by cpa
+ethnicity_cpa10<- aggregate(N_pct_ab~ geozone, data=dem_ethn_cpa, max)
+ethnicity_cpa10$N_pct_ab[ethnicity_cpa10$N_pct_ab == "Inf"] <- 0
+#sort descending on max percent change
+ethnicity_cpa10<- ethnicity_cpa10[order(-ethnicity_cpa10$N_pct_ab),]
+#select only top 10 cpas
+ethnicity_cpa10<- ethnicity_cpa10 %>% 
+  top_n(10)
+dem_ethn_cpa<- subset(dem_ethn_cpa, geozone %in% ethnicity_cpa10$geozone)
 
 
-
+#write files out for 
 write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age.csv" )
 write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender.csv" )
 write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn.csv" )
