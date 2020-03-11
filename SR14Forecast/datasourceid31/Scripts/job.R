@@ -113,11 +113,12 @@ jobs <- countvars %>%
     group_by(geozone,geotype,employment_type_id,full_name) %>% 
     mutate(change = jobs - lag(jobs))
 
-#percent change over increments
+#percent change over increments and address divide by zero
 jobs <- jobs %>% 
     group_by(geozone,geotype,employment_type_id,full_name) %>%  
-    # avoid divide by zero with ifelse
-    mutate(percent_change = ifelse(lag(jobs)==0, NA, (jobs - lag(jobs))/lag(jobs)))
+    mutate(percent_change = case_when(lag(jobs)==0 & (jobs==0) ~ 0,
+                                      lag(jobs)==0 ~ 1,
+                                      TRUE ~ (jobs - lag(jobs))/lag(jobs)))
 
 # round
 jobs$percent_change <- round(jobs$percent_change, digits = 3)
@@ -136,7 +137,6 @@ jobs$prop <- jobs$jobs/jobs$jobtotal
 #proportion change over increments
 jobs <- jobs %>% 
    group_by(geozone,geotype,employment_type_id,full_name) %>%  
-   # avoid divide by zero with ifelse
    mutate(prop_change = prop - lag(prop))
 
 
@@ -300,14 +300,17 @@ wb = createWorkbook()
 #add summary worksheet
 summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
 
-writeData(wb, summary, x = "Cities & CPAs that QC failed based on the following criteria:", 
+writeData(wb, summary, x = "Cities & CPAs that QC failed based on the test criteria", 
           startCol = 1, startRow = 1)
-writeData(wb, summary, x = paste('      change by increment: ',acceptance_criteria[['Jobs']],sep=''), 
+writeData(wb, summary, x = "Notes: For the purpose of these QA checks, percent change is shown as 100% where population increases from 0 to >0 from one increment to the next. 
+          Percent change is shown as 0% where population is zero for both increments. Test criteria are listed on this worksheet below table of results.", 
           startCol = 1, startRow = 2)
+#writeData(wb, summary, x = "              Percent change is shown as 0% where population is zero for both increments. Test criteria are listed on this worksheet below table of results.", 
+          #startCol = 1, startRow = 3)
 
 headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
-addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
-
+addStyle(wb, summary, style = headerStyleforsummary, rows = c(1), cols = 1, gridExpand = TRUE)
+addStyle(wb, summary, style = headerStyle, rows = c(2), cols = 1, gridExpand = TRUE)
 
 writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
 
@@ -530,7 +533,8 @@ addStyle(wb, summary, style=aligncenter,cols=c(1:12), rows=4:(nrow(wide_DF)+4), 
 
 # writeData(wb,summary,employment_name,startCol = 2, startRow = nrow(wide_DF)+9)
 
-
+#remove worksheet with email-not necessary after all
+removeWorksheet(wb, "Email")
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')

@@ -110,11 +110,13 @@ hhinc <- countvars %>%
     group_by(geozone,geotype,income_group_id,name) %>% 
     mutate(change = hh - lag(hh))
 
-#percent change over increments
+#percent change over increments and address divide by zero
 hhinc <- hhinc %>% 
     group_by(geozone,geotype,income_group_id,name) %>%  
-    # avoid divide by zero with ifelse
-    mutate(percent_change = ifelse(lag(hh)==0, NA, (hh - lag(hh))/lag(hh)))
+    mutate(percent_change = case_when(lag(hh)==0 & (hh==0) ~0,
+                                      lag(hh)==0 ~1,
+                                      TRUE ~ (hh - lag(hh))/lag(hh)))
+ 
 
 # round
 hhinc$percent_change <- round(hhinc$percent_change, digits = 3)
@@ -135,9 +137,7 @@ inc$prop <- ifelse(!inc$hh, 0, inc$hh/inc$hhinctotal)
 #proportion change over increments
 inc <- inc %>% 
    group_by(geozone,geotype,income_group_id,name) %>%  
-   # avoid divide by zero with ifelse
-   mutate(prop_change = prop - lag(prop))
-
+   mutate(prop_change = (prop - lag(prop)))
 
 
 inc <- inc %>%
@@ -313,11 +313,13 @@ summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
 
 writeData(wb, summary, x = "Cities & CPAs that QC failed based on the following criteria:", 
           startCol = 1, startRow = 1)
-writeData(wb, summary, x = paste('      change by increment: ',acceptance_criteria[['hhincomecat']],sep=''), 
+writeData(wb, summary, x = "Notes: For the purpose of these QA checks, percent change is shown as 100% where population increases from 0 to >0 from one increment to the next.", 
           startCol = 1, startRow = 2)
+writeData(wb, summary, x = "            Percent change is shown as 0% where population is zero for both increments. Test criteria are listed on this worksheet below table of results.", 
+          startCol = 1, startRow = 3)
 
 headerStyleforsummary <- createStyle(fontSize = 12 ,textDecoration = "bold")
-addStyle(wb, summary, style = headerStyleforsummary, rows = c(1,2), cols = 1, gridExpand = TRUE)
+addStyle(wb, summary, style = headerStyleforsummary, rows = c(1), cols = 1, gridExpand = TRUE)
 
 sn <- colnames(wide_DF)[-(15)] # all but the last column (id)
 sectors <- sn[-(1:4)] # from column 5 to the end
@@ -546,7 +548,8 @@ addStyle(wb, summary, style=aligncenter,cols=c(1:12), rows=4:(nrow(wide_DF)+4), 
 
 # writeData(wb,summary,employment_name,startCol = 2, startRow = nrow(wide_DF)+9)
 
-
+#remove worksheet with email-not necessary after all
+removeWorksheet(wb, "Email")
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
@@ -556,3 +559,4 @@ setwd(file.path(maindir,outfolder))
 
 saveWorkbook(wb, outfile,overwrite=TRUE)
 saveWorkbook(wb, outfile2,overwrite=TRUE)
+
