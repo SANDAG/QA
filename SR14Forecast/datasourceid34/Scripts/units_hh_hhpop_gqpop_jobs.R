@@ -72,6 +72,7 @@ expected_rows = (nrow(geo_id1) + 1) * 9 # 9 increments and plus 1 for region
 
 ## fixing geographies with less than 9 observations
 
+## not needed for ds_id 34
 geozone_to_fix = ''
 if (data_rows != expected_rows) {
   print("ERROR: data rows not equal to expected rows")
@@ -85,6 +86,8 @@ if (data_rows != expected_rows) {
     print(subset(t,n!=9)) 
     geozone_to_fix = subset(t,n!=9)$geozone} }
 
+
+## not needed for ds_id 34 
 # add 'Marine Corps Recruit Depot' for yr 2016 if missing
 if (geozone_to_fix == "Marine Corps Recruit Depot") {
   # add 'Marine Corps Recruit Depot' for yr 2016
@@ -135,7 +138,7 @@ jobs_failed$jobs <- 'fail'
 allvars <- Reduce(function(x, y) merge(x, y, all=TRUE), 
                   list(units_failed,households_failed,hhp_failed,gqpop_failed,jobs_failed))
 allvars <- allvars[order(allvars['units'],allvars['hhp'],allvars['geotype'],allvars['geozone']),]
-ids <- rep(1:2, times=nrow(allvars)/2)
+ids <- rep(1:2, times=nrow(allvars)/2)    ##1:2 represents shade coding for excel, used later
 if (length(ids) < nrow(allvars)) {ids<-c(ids,1)}
 allvars$id <- ids
 allvars[is.na(allvars)] <- 'pass'
