@@ -188,7 +188,7 @@ age_cpa10<- age_cpa10[order(-age_cpa10$N_pct_ab),]
 #select only top 10 cpas
 age_cpa10<- age_cpa10 %>% 
   top_n(10)
-dem_age_cpa<- subset(dem_age_cpa, geozone %in% age_cpa10$geozone)
+dem_age_cpa_10<- subset(dem_age_cpa, geozone %in% age_cpa10$geozone)
 
 #gender
 #determine max percent change by cpa
@@ -199,7 +199,7 @@ gender_cpa10<- gender_cpa10[order(-gender_cpa10$N_pct_ab),]
 #select only top 10 cpas
 gender_cpa10<- gender_cpa10 %>% 
   top_n(10)
-dem_gender_cpa<- subset(dem_gender_cpa, geozone %in% gender_cpa10$geozone)
+dem_gender_cpa_10<- subset(dem_gender_cpa, geozone %in% gender_cpa10$geozone)
 
 #ethnicity
 #determine max percent change by cpa
@@ -210,7 +210,7 @@ ethnicity_cpa10<- ethnicity_cpa10[order(-ethnicity_cpa10$N_pct_ab),]
 #select only top 10 cpas
 ethnicity_cpa10<- ethnicity_cpa10 %>% 
   top_n(10)
-dem_ethn_cpa<- subset(dem_ethn_cpa, geozone %in% ethnicity_cpa10$geozone)
+dem_ethn_cpa_10<- subset(dem_ethn_cpa, geozone %in% ethnicity_cpa10$geozone)
 
 
 #write files out for 
@@ -226,11 +226,14 @@ write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\
 write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_jurisdiction.csv" )
 write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_jurisdiction.csv" )
 
-write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age_cpa.csv" )
-write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_cpa.csv" )
-write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_cpa.csv" )
+write.csv(dem_age_cpa_10, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age_cpa.csv" )
+write.csv(dem_gender_cpa_10, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_cpa.csv" )
+write.csv(dem_ethn_cpa_10, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_cpa.csv" )
 
-
+#write out files for PowerBI that includes all CPAs 
+write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age_cpa_all.csv" )
+write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_cpa_all.csv" )
+write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_cpa_all.csv" )
 
 #################################################
 #################################################
