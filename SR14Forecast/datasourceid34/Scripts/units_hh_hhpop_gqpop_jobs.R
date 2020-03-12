@@ -1,5 +1,5 @@
 
-datasource_id_current <- 31
+datasource_id_current <- 34
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -29,6 +29,7 @@ pkgTest(packages)
 # connect to database
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
+
 # get hhpop data
 hhvars <- readDB("../Queries/hh_hhp_hhs_ds_id.sql",datasource_id_current)
 jobs <- readDB("../Queries/jobs.sql",datasource_id_current)
@@ -39,24 +40,25 @@ odbcClose(channel)
 merge1 <- merge(x = hhvars, y = jobs,by = c("datasource_id","yr_id","geotype","geozone"), all = TRUE)
 countvars <- merge(x = merge1, y = gq,by = c("datasource_id","yr_id","geotype","geozone"), all = TRUE)
 
-countvars <- subset(countvars, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
+##commenting out the code below as it is not needed for this source id
+##countvars <- subset(countvars, yr_id==2012 | yr_id==2016 | yr_id==2018 | yr_id==2020 | yr_id==2025 | yr_id==2030 | yr_id==2035 | yr_id==2040 | yr_id==2045 | yr_id==2050)
 
+
+# subset(countvars,geozone=='San Diego Region')
 countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
 
+#merging countvars with geo_id on geozone
+countvars <- merge(x = countvars, y =geo_id,by = "geozone", all.x = TRUE)
 
 rm(merge1,hhvars,jobs,gq)
 
 
-# subset(countvars,geozone=='San Diego Region')
-
-countvars <- merge(x = countvars, y =geo_id,by = "geozone", all.x = TRUE)
 # clean up cpa names removing asterick and dashes etc.
 countvars$id[countvars$geozone=="San Diego Region"] <- 9999
 countvars <- countvars %>% rename('geo_id'= id)
-
-# clean up cpa names removing asterick and dashes etc.
 countvars <- rm_special_chr(countvars)
 countvars <- subset(countvars,geozone != 'Not in a CPA')
+
 #head(countvars)
 
 # order dataframe for doing lag calculation
@@ -68,6 +70,8 @@ geo_id1 <- subset(geo_id,geozone != '*Not in a CPA*')
 #write.csv(geo_id1,paste(maindir,"/",outfolder,"geo_id.csv",sep=''))
 expected_rows = (nrow(geo_id1) + 1) * 9 # 9 increments and plus 1 for region
 
+## fixing geographies with less than 9 observations
+
 geozone_to_fix = ''
 if (data_rows != expected_rows) {
   print("ERROR: data rows not equal to expected rows")
@@ -76,7 +80,7 @@ if (data_rows != expected_rows) {
   print(paste("data geographies = ",length(unique(countvars$geozone))))
   print(paste("expected geographies = ",((nrow(geo_id1) + 1))))
   t <- countvars %>% group_by(geozone) %>% tally()
-  if (nrow(subset(t,n!=9))!=0) {
+  if (nrow(subset(t,n!=9))!=0) {       ## t is the n we are defining in the function which every geography should have
     print("ERROR: expecting 9 years per geography")
     print(subset(t,n!=9)) 
     geozone_to_fix = subset(t,n!=9)$geozone} }
@@ -181,6 +185,7 @@ gqpop_region <- subset_by_geotype(gqpop,c('region'))
 # create excel workbook
 
 wb = createWorkbook()
+
 
 #add summary worksheet
 summary = addWorksheet(wb, "Summary of Findings", tabColour = "red")
@@ -431,7 +436,8 @@ addStyle(wb, summary, style=aligncenter,cols=c(1:11), rows=4:(nrow(allvars)+4), 
 
 # out folder for excel
 
-#setwd(file.path(maindir,outfolder))
+setwd(file.path(maindir,outfolder))
 
-saveWorkbook(wb, outfile,overwrite=TRUE)
+#commenting out the oufile which is duplicate of outfile2 with _QA nomenclature
+#saveWorkbook(wb, outfile,overwrite=TRUE)
 saveWorkbook(wb, outfile2,overwrite=TRUE)
