@@ -2,6 +2,8 @@
 
 USE demographic_warehouse
 
+DECLARE @ds_id SMALLINT;
+SET @ds_id=34;
 SELECT
     age_sex_ethnicity.datasource_id
 	,age_sex_ethnicity.yr_id
@@ -23,7 +25,7 @@ FROM fact.age_sex_ethnicity
 			ON sex.sex_id = age_sex_ethnicity.sex_id
 				INNER JOIN dim.ethnicity
 				ON ethnicity.ethnicity_id = age_sex_ethnicity.ethnicity_id
-WHERE age_sex_ethnicity.datasource_id = ds_id
+WHERE age_sex_ethnicity.datasource_id = @ds_id
 AND mgra.geotype IN ('jurisdiction', 'cpa', 'region')
 GROUP BY 
 	age_sex_ethnicity.datasource_id
