@@ -1,7 +1,7 @@
 #QA checks for ethnicity by region, jurisdiction, and cpa per EDAM defined test criteria.
 #output into Excel workbooks.
 
-datasource_id_current <- 31
+datasource_id_current <- 34
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -24,13 +24,13 @@ source("../Queries/readSQL.R")
 source("common_functions.R")
 source("functions_for_percent_change.R")
 
-packages <- c("RODBC","tidyverse","openxlsx","hash","janitor","readtext")
+packages <- c("RODBC","tidyverse","openxlsx","hash","janitor","readtext", "data.table")
 pkgTest(packages)
 
 # connect to database
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
-# get household income cateogry data
+# get ethinicity data
 ethn <- readDB("../Queries/age_ethn_gender.sql",datasource_id_current)
 geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_current)
 
@@ -39,16 +39,16 @@ odbcClose(channel)
 countvars <- subset(ethn, yr_id %in% c(2016,2018,2020,2025,2030,2035,2040,2045,2050))
 rm(ethn)
 
+#renaming region to San Diego Region
 countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
 
 #subset(countvars,geozone=='San Diego Region')
 
-# add jur and cpa id
+# merging countvars and geo_id
 countvars <- merge(x = countvars, y =geo_id,by = "geozone", all.x = TRUE)
-# rm(geo_id)
 
 
-# add dummy cpa id to region
+# add dummy cpa id to region and rename id to geo_id
 countvars$id[countvars$geozone=="San Diego Region"] <- 9999
 countvars <- countvars %>% rename('geo_id'= id)
 
@@ -79,18 +79,18 @@ countvars  %>%  group_by(ethn_id) %>% tally(pop)
 
 head(countvars)
 
-# order dataframe for doing lag calculation
-countvars <- countvars[order(countvars$ethn_id,countvars$datasource_id,countvars$geotype,countvars$geozone,
-                             countvars$yr_id),]
-
-##DELETE##income_categories <- income_categories[order(income_categories$income_group),]
 
 # check number of rows of data
 data_rows = nrow(countvars)
 geo_id1 <- subset(geo_id,geozone != '*Not in a CPA*')
+
+rm(geo_id)
+
+
 #write.csv(geo_id1,paste(maindir,"/",outfolder,"geo_id.csv",sep=''))
 expected_rows = (nrow(geo_id1) + 1) * 9*5 # 9 increments, 5 ethnicity categories and plus 1 for region
 
+#fixing geozone with missing observations for 9 years 
 geozone_to_fix = ''
 if (data_rows != expected_rows) {
   print("ERROR: data rows not equal to expected rows")
@@ -118,20 +118,22 @@ if (geozone_to_fix == "Marine Corps Recruit Depot") {
 # check number of rows of data
 data_rows = nrow(countvars)
 expected_rows = (nrow(geo_id1) + 1) * 9 * 5 # 5 categories 9 increments and plus 1 for region
-print(paste("data rows = ",data_rows))
-print(paste("expected rows = ",expected_rows))
+print(paste("data rows = ",data_rows, "and ", "expected rows= ",expected_rows))
 head(countvars)
 
-#sort file with added 2016 rows for Marine Corps Recruit Depot
-#tail(countvars[countvars$geozone=='Marine Corps Recruit Depot',],20)
-countvars <- countvars[order(countvars$geozone,countvars$geo_id,countvars$ethn_id,countvars$yr_id,countvars$datasource_id),]
+# order dataframe for doing lag calculation
+countvars <- countvars[order(countvars$ethn_id,countvars$datasource_id,countvars$geotype,countvars$geozone,
+                             countvars$yr_id),]
+
 head(countvars,20)
+
 
 #number difference over increments
 ethnicity <- countvars %>% 
   group_by(geozone,geotype,ethn_id,ethn_group) %>% 
   mutate(change = pop - lag(pop))
 
+#tracing error
 options(show.error.locations=TRUE)
 path.expand("~")
 traceback()
@@ -145,10 +147,12 @@ ethnicity <- ethnicity %>%
 
 
 # round
-ethnicity$percent_change <- round(ethnicity$percent_change, digits = 3)
+ethnicity$percent_change <- round(ethnicity$percent_change, digits = 2)
 
 head(ethnicity)
 
+#removing countvars
+rm(countvars)
 
 #create file with pop totals by geozone and year 
 ethnicity_totals <- ethnicity %>% 
@@ -180,21 +184,22 @@ ethn <- ethn %>%
                                      (ethn_id==5 & abs(change) > 500 & abs(percent_change) > .20)) ~ "fail",
                                   TRUE ~ "pass"))
 
-ethn$geozone_and_sector <-paste(ethn$geozone,'_',ethn$ethn_id)
-df_fail <- unique(subset(ethn,pass.or.fail=="fail")$geozone_and_sector)
+ethn$geozone_ethnid <-paste(ethn$geozone,'_',ethn$ethn_id)
+df_fail <- unique(subset(ethn,pass.or.fail=="fail")$geozone_ethnid)
 df_check <- unique(subset(ethn,pass.or.fail=="check")$geozone)
 ethn <- ethn %>% 
-  mutate(sort_order = case_when(geozone_and_sector %in% df_fail  ~ 1,
+  mutate(sort_order = case_when(geozone_ethnid %in% df_fail  ~ 1,
                                 geozone %in% df_check ~ 2,
                                 TRUE ~ 3))
 ethn <- ethn[order(ethn$geotype,ethn$geo_id,ethn$ethn_group,ethn$yr_id),]
 ethn$sort_order <- NULL
-ethn$geozone_and_sector <- NULL
+ethn$geozone_ethnidr <- NULL
+
 
 ethn <- ethn %>% rename('datasource id'= datasource_id,'geo id'=geo_id,
                       'increment'= yr_id,'change' = change,
-                      #'percent change' = percent_change,
-                      'pass/fail' = pass.or.fail,"ethnicity_category" = ethn_group)
+                   #'percent change' = percent_change,
+                    'pass/fail' = pass.or.fail,"ethnicity_category" = ethn_group)
 
 get_fails <- function(df) {
   df1 <- df %>% select("datasource id","geotype","geo id","geozone","increment","ethn_id",
@@ -206,8 +211,9 @@ get_fails <- function(df) {
   return(df4) 
 }  
 
+
 ethn_failed <- get_fails(ethn)
-ethn_failed$ethn <- 'fail'
+ethn_failed$"test result" <- 'fail'
 allvars <- ethn_failed
 
 ethn_region <- subset(ethn,geotype=='region')
@@ -232,11 +238,15 @@ wide_DF[Missing] <- 'pass'
 
 head(wide_DF, 24)
 
+
+
 #add id for shading
 ids <- rep(1:2, times=nrow(wide_DF)/2)
 if (length(ids) < nrow(wide_DF)) {ids<-c(ids,1)}
 wide_DF$id <- ids
 wide_DF[is.na(wide_DF)] <- 'pass'
+
+wide_DF
 
 #sort summary data by geotype
 wide_DF <- wide_DF %>% arrange(desc(geotype))
@@ -250,6 +260,8 @@ ethn['geo id'] <- NULL
 #create new df with columns in order for output
 ethn2 <- ethn %>% select("datasource id","geotype","geozone","increment","ethn_id","ethnicity_category","ethntotal","pop","change","percent_change","prop","prop_change","pass/fail")
 
+ethn2
+#checking for 9 increments for each geozone
 add_id_for_excel_formatting_ethn <- function(df) {
   t <- df %>% group_by(geozone,ethnicity_category) %>% tally()
   if (nrow(subset(t,n!=9))!=0) {
@@ -348,8 +360,8 @@ sn <- colnames(wide_DF)[-(15)] # all but the last column (id)
 sectors <- sn[-(1:4)] # from column 5 to the end
 ini_cols <- colnames(wide_DF)[1:4]
 id_col <- colnames(wide_DF)[15]
-#wide_DF <- wide_DF[,(c(ini_cols,income_categories$name,id_col))]
 
+#wide_DF <- wide_DF[,(c(ini_cols,income_categories$name,id_col))]
 
 writeData(wb,summary,wide_DF,startCol = 1, startRow = 4)
 
@@ -395,8 +407,8 @@ for (index in 1:nrow(wide_DF)) {
                    x = makeHyperlinkString(sheet = 'EthnicitybyCPA', row = rnfail, col = 11,text = "fail"))
     }
     if ((row[[sectorname]] == 'fail') & (row$geotype == 'jurisdiction')) {
-      rnfail = max(which((inc_jur$jurisdiction ==row$geozone) & (inc_jur['pass/fail'] =='fail') & 
-                           (inc_jur['ethnicity_category'] == sectorname))) + 1
+      rnfail = max(which((ethn_jur$jurisdiction ==row$geozone) & (ethn_jur['pass/fail'] =='fail') & 
+                           (ethn_jur['ethnicity_category'] == sectorname))) + 1
       writeFormula(wb, summary, startRow = index + 4,startCol = grep((gsub("\\$", "", sectorname)), gsub("\\$", "", colnames(wide_DF))), 
                    x = makeHyperlinkString(sheet = 'EthnicitybyJur', row = rnfail, col = 11,text = "fail"))
     }
@@ -590,7 +602,7 @@ pop <- subset(ethnicity_totals, yr_id==2016 | yr_id==2050)
 head(pop)
 
 
-pop_wide <- dcast(pop,geotype+geozone~yr_id, value.var="ethntotal")
+pop_wide <- reshape2::dcast(pop,geotype+geozone~yr_id, value.var="ethntotal")
 head(pop_wide)
 pop_wide$num_chg <- pop_wide$`2050`-pop_wide$`2016`
 pop_wide$pct_chg <- ((pop_wide$`2050`-pop_wide$`2016`)/pop_wide$`2016`)*100
