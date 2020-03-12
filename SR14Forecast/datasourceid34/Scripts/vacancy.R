@@ -9,13 +9,13 @@ source("common_functions.R")
 packages <- c("RODBC","tidyverse","gridExtra","grid","gtable") #"ggsci"
 pkgTest(packages)
 
-datasource_id_current <- 31
+datasource_id_current <- 34
 
 
-datasource_ids <- c(17,31)
-datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 31)")
+datasource_ids <- c(17,34)
+datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 34)")
 datasource_name_short <- c("Series 14","Series 14")
-datasource_outfolder <- "vacancy_ds17_and_ds31"
+datasource_outfolder <- "vacancy_ds17_and_ds34"
 
 
 # get data from database
