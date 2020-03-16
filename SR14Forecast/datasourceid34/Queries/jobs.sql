@@ -1,4 +1,4 @@
-USE demographic_warehouse;
+USE demographic_warehouse ;
 
 SELECT
 	jobs.datasource_id
