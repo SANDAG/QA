@@ -163,8 +163,8 @@ for(i in 1:length(cpa_list)) {
   cpadat$geozone = gsub("\\*","",cpadat$geozone)
   cpadat$geozone = gsub("\\-","_",cpadat$geozone)
   cpadat$geozone = gsub("\\:","_",cpadat$geozone)
-  cpadat = cpadat[,c("geozone","yr_id","median_inc",
-                     "med_inc_reg1","Num_Households")]
+  #cpadat = cpadat[,c("geozone","yr_id","median_inc",
+  #                   "med_inc_reg1","Num_Households")]
   medianincomeplot(cpadat)
 }
 
