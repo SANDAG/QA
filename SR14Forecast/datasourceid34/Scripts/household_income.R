@@ -1,5 +1,5 @@
 
-datasource_id_current <- 31
+datasource_id_current <- 34
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -7,15 +7,15 @@ setwd(maindir)
 
 # excel workbook output file name and folder with timestamp
 now <- Sys.time()
-outputfile <- paste("HouseholdIncome","_ds",datasource_id_current,"_",format(now, "%Y%m%d"),".xlsx",sep='')
-outputfile2 <- paste("HouseholdIncome","_ds",datasource_id_current,"_QA",".xlsx",sep='')
+outputfile <- paste("HouseholdIncome","_ds",datasource_id_current,"_QA",".xlsx",sep='')
+#outputfile2 <- paste("HouseholdIncome","_ds",datasource_id_current,"_",format(now, "%Y%m%d"),".xlsx",sep='')
 print(paste("output filename: ",outputfile))
 
 outfolder<-paste("../Output/",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 
 outfile <- paste(maindir,"/",outfolder,outputfile,sep='')
-outfile2 <- paste(maindir,"/",outfolder,outputfile2,sep='')
+#outfile2 <- paste(maindir,"/",outfolder,outputfile2,sep='')
 print(paste("output filepath: ",outfile))
 
 source("../Queries/readSQL.R")
@@ -38,6 +38,7 @@ odbcClose(channel)
 countvars <- subset(hhinc, yr_id %in% c(2016,2018,2020,2025,2030,2035,2040,2045,2050))
 rm(hhinc)
 
+#renaming region to San Diego Region
 countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
 
 #subset(countvars,geozone=='San Diego Region')
@@ -68,6 +69,7 @@ geo_id1 <- subset(geo_id,geozone != '*Not in a CPA*')
 #write.csv(geo_id1,paste(maindir,"/",outfolder,"geo_id.csv",sep=''))
 expected_rows = (nrow(geo_id1) + 1) * 9*10 # 9 increments, 10 income categories and plus 1 for region
 
+# fixing geozones with less than 9 increments 
 geozone_to_fix = ''
 if (data_rows != expected_rows) {
   print("ERROR: data rows not equal to expected rows")
@@ -95,8 +97,7 @@ if (geozone_to_fix == "Marine Corps Recruit Depot") {
 # check number of rows of data
 data_rows = nrow(countvars)
 expected_rows = (nrow(geo_id1) + 1) * 9 * 10 # 9 increments and plus 1 for region
-print(paste("data rows = ",data_rows))
-print(paste("expected rows = ",expected_rows))
+print(paste("data rows = ",data_rows,"and ", "expected rows = ",expected_rows))
 
 #sort file with added 2016 rows for Marine Corps Recruit Depot
 head(countvars[countvars$geozone=='Marine Corps Recruit Depot',],20)
@@ -119,14 +120,31 @@ hhinc <- hhinc %>%
  
 
 # round
-hhinc$percent_change <- round(hhinc$percent_change, digits = 3)
+hhinc$percent_change <- round(hhinc$percent_change, digits = 2)
 
-head(hhinc[hhinc$geozone=='Marine Corps Recruit Depot',],20)
+#head(hhinc[hhinc$geozone=='Marine Corps Recruit Depot',],20)
 head(hhinc[hhinc$geozone=='Alpine',],20)
 
+#total by geozone
 hhinctotals <- hhinc %>% 
   group_by(geotype,geozone,yr_id) %>% 
   summarise(hhinctotal = sum(hh))
+
+#total by geotype
+hhinctotals1 <- hhinc %>% 
+  group_by(geotype, yr_id) %>% 
+  summarise(hhinctotal = sum(hh))
+
+#total by cpa
+hhcpa<- hhinctotals[hhinctotals$geotype=='cpa',]
+hhcpa_transpose<- hhcpa%>% spread( yr_id, 'hhinctotal')
+hhcpa_transpose
+
+#total by jurisdiction
+hh_jur<- hhinctotals[hhinctotals$geotype=='jurisdiction',]
+hh_jur<- hh_jur%>% spread( yr_id, 'hhinctotal')
+hh_jur
+
 
 inc <- merge(x = hhinc, y = hhinctotals, by = c("geotype","geozone","yr_id"), all.x = TRUE)
 
@@ -139,7 +157,9 @@ inc <- inc %>%
    group_by(geozone,geotype,income_group_id,name) %>%  
    mutate(prop_change = (prop - lag(prop)))
 
+#create plots for each cpa and jurisdiction
 
+#QA test
 inc <- inc %>%
     mutate(pass.or.fail = case_when(abs(change) >= 250 & abs(percent_change) >= .20 ~ "fail",
                                     TRUE ~ "pass"))
@@ -558,5 +578,5 @@ setwd(file.path(maindir,outfolder))
 
 
 saveWorkbook(wb, outfile,overwrite=TRUE)
-saveWorkbook(wb, outfile2,overwrite=TRUE)
+#saveWorkbook(wb, outfile2,overwrite=TRUE)
 
