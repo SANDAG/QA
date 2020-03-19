@@ -18,7 +18,7 @@ options('scipen'=10)
 
 # add series 14 median income
 
-datasource_id=19
+datasource_id=34
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
@@ -46,7 +46,7 @@ hh<-sqlQuery(channel,hh_sql,stringsAsFactors = FALSE)
 hh$datasource_id = datasource_id
 
 #cpa ids
-cpa_sql = getSQL("../Queries/cpa_id_lookup.sql")
+cpa_sql = getSQL("../Queries/get_cpa_and_jurisdiction_id.sql")
 cpa_id<-sqlQuery(channel,cpa_sql,stringsAsFactors = FALSE)
 
 odbcClose(channel)
@@ -106,12 +106,12 @@ medianincomeplot <- function(plotdat) {
     theme(plot.subtitle=element_text(size=14, hjust=0.5, face="italic", color="black"))
   
   output_table<-data.frame(plotdat$yr_id,plotdat$median_inc,
-                           plotdat$med_inc_reg1,plotdat$Num_Households)
+                           plotdat$med_inc_reg1,plotdat$households)
   sr14_colname1 = paste("Median Income ","\n",plotdat$geozone[1],sep=" ")
   sr14_colname_region1 = paste("Median Income ","\nRegion",sep=" ")
   setnames(output_table, 
            old=c("plotdat.yr_id","plotdat.median_inc",
-                 "plotdat.med_inc_reg1","plotdat.Num_Households"),
+                 "plotdat.med_inc_reg1","plotdat.households"),
            new=c("Year",sr14_colname1,sr14_colname_region1,"num_hh"))
   tt <- ttheme_default(colhead = 
                          # first unit is the wdith, and second the height
@@ -147,8 +147,8 @@ jur_name <-unique(mi_jur$geozone)
 for(i in 1:length(jur_name)) { 
 # for(i in 1:2) { 
   jurdat = subset(mi_jur_hh, mi_jur_hh$geozone==jur_name[i])
-  jurdat = jurdat[,c("geozone","yr_id","median_inc",
-                     "med_inc_reg1","Num_Households")]
+  #jurdat = jurdat[,c("geozone","yr_id","median_inc",
+   #                  "med_inc_reg1","Num_Households")]
   medianincomeplot(jurdat)
 }
 
@@ -163,8 +163,8 @@ for(i in 1:length(cpa_list)) {
   cpadat$geozone = gsub("\\*","",cpadat$geozone)
   cpadat$geozone = gsub("\\-","_",cpadat$geozone)
   cpadat$geozone = gsub("\\:","_",cpadat$geozone)
-  cpadat = cpadat[,c("geozone","yr_id","median_inc",
-                     "med_inc_reg1","Num_Households")]
+  #cpadat = cpadat[,c("geozone","yr_id","median_inc",
+  #                   "med_inc_reg1","Num_Households")]
   medianincomeplot(cpadat)
 }
 
