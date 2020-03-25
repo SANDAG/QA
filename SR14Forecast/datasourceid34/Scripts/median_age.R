@@ -1,6 +1,6 @@
 
 datasource_id=34
-
+ds_id=datasource_id
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -45,10 +45,11 @@ median_age_cpa<- median_age_cpa[order(median_age_cpa$geotype,median_age_cpa$geoz
 median_age_jur<- median_age_jur[order(median_age_jur$geotype,median_age_jur$geozone,median_age_jur$yr_id),]
 median_age_region<- median_age_region[order(median_age_region$geotype,median_age_region$geozone,median_age_region$yr_id),]
 
+
 head(median_age_cpa)
 
 #these revisions only apply to cpa names
-median_age_cpa$geozone[median_age_cpa$geotype =="region"]<- "Region"
+median_age_cpa$geozone[median_age_cpa$geotype =="region"]<- "1Region"
 median_age_cpa$geozone <- gsub("\\*","",median_age_cpa$geozone)
 median_age_cpa$geozone <- gsub("\\-","_",median_age_cpa$geozone)
 median_age_cpa$geozone <- gsub("\\:","_",median_age_cpa$geozone)
@@ -82,29 +83,31 @@ for(i in 1:length(jur_list)){
   plotdat = subset(median_age_jur, median_age_jur$jurisdiction_id==jur_list[i])
    plot<-ggplot(plotdat,aes(x=yr_id, y=median_age, colour=geozone)) +
      geom_line(size=1)+ 
-    geom_line(aes(x=yr_id, y = reg, colour = "Region")) +
+    geom_line(aes(x=yr_id, y = reg, colour = "1_Region")) +
     scale_y_continuous(label=comma,limits=c(30.0,47.0))+ 
     labs(title=paste("Median Age ", jur_list2[i],' and\n Region, 2016-2050',sep=''), 
          y=" median age", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 19
+         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 34
          \nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank(),
-          plot.caption = element_text(size = 7))
-  ggsave(plot, file= paste(results, 'median_age', jur_list2[i],'19', ".png", sep=''))#, scale=2)
+          plot.caption = element_text(size = 8))
+  ggsave(plot, file= paste(results, 'median_age', jur_list2[i],ds_id, ".png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$median_age,plotdat$reg)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.median_age","plotdat.reg"),new=c("Year","Jurisdiction Median Age","Region Median Age"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
   tbl <- tableGrob(output_table, rows=NULL, theme=tt)
   lay <- rbind(c(1,1,1,1,1),
                c(1,1,1,1,1),
+               c(1,1,1,1,1),
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results, 'median_age', jur_list2[i],datasource_id, ".png", sep=''))#, scale=2)
+  ggsave(output, file= paste(results, 'median_age', jur_list2[i],datasource_id, ".png", sep=''),
+         width=6, height=8, dpi=100)#, scale=2)
 }
 
 
@@ -130,18 +133,18 @@ for(i in 1:length(cpa_list)){
   plotdat = subset(median_age_cpa, median_age_cpa$geozone==cpa_list[i])
   plot<-ggplot(plotdat,aes(x=yr_id, y=median_age, colour=geozone)) +
     geom_line(size=1)+ 
-    geom_line(aes(x=yr_id, y = reg, colour = "Region")) +
+    geom_line(aes(x=yr_id, y = reg, colour = "1_Region")) +
     scale_y_continuous(label=comma,limits=c(25.0,48.0))+ 
     labs(title=paste("Median Age ", cpa_list[i],' and\n Region, 2016-2050',sep=''), 
          y=" median age", x="Year",
-         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 19\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
+         caption="Sources: demographic warehouse: dbo.compute_median_age_all_zones 34\nNote:Out of range data may not appear on the plot. Refer to the table below for those related data results.") +
     scale_colour_manual(values = c("blue", "red")) +
     theme_bw(base_size = 12) +  theme(plot.title = element_text(hjust = 0.5)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     theme(legend.position = "bottom",
           legend.title=element_blank(),
-          plot.caption = element_text(size = 7))
-  ggsave(plot, file= paste(results, 'median_age', cpa_list[i], '19', ".png", sep=''))#, scale=2)
+          plot.caption = element_text(size = 8))
+  ggsave(plot, file= paste(results, 'median_age', cpa_list[i], ds_id, ".png", sep=''))#, scale=2)
   output_table<-data.frame(plotdat$yr_id,plotdat$median_age,plotdat$reg)
   setnames(output_table, old=c("plotdat.yr_id","plotdat.median_age","plotdat.reg"),new=c("Year","CPA Median Age","Region Median Age"))
   tt <- ttheme_default(base_size=9,colhead=list(fg_params = list(parse=TRUE)))
@@ -151,8 +154,13 @@ for(i in 1:length(cpa_list)){
                c(2,2,2,2,2),
                c(2,2,2,2,2))
   output<-grid.arrange(plot,tbl,as.table=TRUE,layout_matrix=lay)
-  ggsave(output, file= paste(results, 'median_age', cpa_list[i],'19', ".png", sep=''))#, scale=2)
+  ggsave(output, file= paste(results, 'median_age', cpa_list[i],ds_id, ".png", sep=''),
+         width=6, height=8, dpi=100)#, scale=2)
 }
+
+
+
+
 
 
 
