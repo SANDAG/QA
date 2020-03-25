@@ -1,0 +1,265 @@
+#HH income estimate script
+#KT and PS - LH deleted sd script but there are still references toward the end of this script that need to be cleaned up
+#calculates differences within datasource_id and across two datasource_id
+#currently output files likely only includes 2018 data so fix to include years per test plan 
+
+pkgTest <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg))
+    install.packages(new.pkg, dep = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+  
+  
+}
+packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
+              "stringr")
+pkgTest(packages)
+
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+source("../Queries/readSQL.R")
+
+
+getwd()
+options(stringsAsFactors=FALSE)
+
+ds_id=24
+
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+hhinc_sql = getSQL("../Queries/hhinc.sql")
+hhinc_sql <- gsub("ds_id", ds_id,hhinc_sql)
+hhinc_24<-sqlQuery(channel,hhinc_sql)
+odbcClose(channel)
+
+ds_id=26
+
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
+hhinc_sql = getSQL("../Queries/hhinc.sql")
+hhinc_sql <- gsub("ds_id", ds_id,hhinc_sql)
+hhinc<-sqlQuery(channel,hhinc_sql)
+odbcClose(channel)
+
+head(hhinc)
+
+head(hhinc_24)
+
+table(hhinc$income_group_id)
+
+#sum households across income categories to check that tot hh equals tot at region level.
+hhinc_sums= hhinc
+hhinc_sums$geotype_num[hhinc_sums$geotype=="region"] <- 1
+hhinc_sums$geotype_num[hhinc_sums$geotype=="tract"] <- 2
+hhinc_sums <- subset(hhinc_sums,(!is.na(hhinc_sums$geotype_num)))
+
+tract_sum_hh <- hhinc_sums %>%
+  select(yr_id,geotype_num,hh) %>%
+  group_by(yr_id,geotype_num) %>%
+  summarise(hhsum = sum(hh,na.rm=TRUE))  
+
+hhinc_wide_sums <- dcast(tract_sum_hh, yr_id~geotype_num,value.var="hhsum")
+
+setnames(hhinc_wide_sums, old=c("1","2"), new=c("reg_hh_tot","tract_hh_tot"))
+
+hhinc_wide_sums$hh_diff <- hhinc_wide_sums$reg_hh_tot-hhinc_wide_sums$tract_hh_tot
+
+write.csv(hhinc_wide_sums,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\sums_check_hhinc_id26.csv",row.names = FALSE)
+
+#################
+#################
+
+hhinc_24$geozone[hhinc_24$geotype=="region"] <- "San Diego Region"
+hhinc$geozone[hhinc$geotype=="region"] <- "San Diego Region"
+
+#hhinc recode to fewer categories
+#hhinc ID24 data
+hhinc_24$income_id2 <-ifelse(hhinc_24$income_group_id>=11 & hhinc_24$income_group_id<=12, '1',
+                       ifelse(hhinc_24$income_group_id>=13 & hhinc_24$income_group_id<=14, '2',
+                              ifelse(hhinc_24$income_group_id>=15 & hhinc_24$income_group_id<=16, '3',
+                                     ifelse(hhinc_24$income_group_id>=17 & hhinc_24$income_group_id<=18, '4',
+                                            ifelse(hhinc_24$income_group_id>=19 & hhinc_24$income_group_id<=20, '5', NA)))))
+
+
+hhinc_24$name2[hhinc_24$income_id2=="1"]<- "Less than $30,000"
+hhinc_24$name2[hhinc_24$income_id2=="2"]<- "$30,000 to $59,999"
+hhinc_24$name2[hhinc_24$income_id2=="3"]<- "$60,000 to $99,999"
+hhinc_24$name2[hhinc_24$income_id2=="4"]<- "$100,000 to $149,999"
+hhinc_24$name2[hhinc_24$income_id2=="5"]<- "$150,000 or more"
+
+head(hhinc_24)
+
+hhinc_24 <- aggregate(hh~yr_id + geotype + geozone + name2 + income_id2, data=hhinc_24, sum)
+hhtot_24 <- aggregate(hh~yr_id + geotype + geozone, data=hhinc_24, sum)
+hhinc_24$hhtot_24 <- hhtot_24[match(paste(hhinc_24$yr_id,hhinc_24$geozone),paste(hhtot_24$yr_id,hhtot_24$geozone)),"hh"] 
+hhinc_24$hhinc_prop_24 <- (hhinc_24$hh/hhinc_24$hhtot_24)* 100
+hhinc_24$hhinc_prop_24 <- round(hhinc_24$hhinc_prop_24,digits = 2 )
+setnames(hhinc_24, old=c("hh"), new=c("hh_24"))
+
+#hhinc ID26 data
+#hhinc recode to fewer categories
+hhinc$income_id2 <-ifelse(hhinc$income_group_id>=11 & hhinc$income_group_id<=12, '1',
+                             ifelse(hhinc$income_group_id>=13 & hhinc$income_group_id<=14, '2',
+                                    ifelse(hhinc$income_group_id>=15 & hhinc$income_group_id<=16, '3',
+                                           ifelse(hhinc$income_group_id>=17 & hhinc$income_group_id<=18, '4',
+                                                  ifelse(hhinc$income_group_id>=19 & hhinc$income_group_id<=20, '5', NA)))))
+
+
+hhinc$name2[hhinc$income_id2=="1"]<- "Less than $30,000"
+hhinc$name2[hhinc$income_id2=="2"]<- "$30,000 to $59,999"
+hhinc$name2[hhinc$income_id2=="3"]<- "$60,000 to $99,999"
+hhinc$name2[hhinc$income_id2=="4"]<- "$100,000 to $149,999"
+hhinc$name2[hhinc$income_id2=="5"]<- "$150,000 or more"
+
+tail(hhinc)
+
+hhinc <- aggregate(hh~yr_id + geotype + geozone + name2 + income_id2, data=hhinc, sum)
+hhtot <- aggregate(hh~yr_id + geotype + geozone, data=hhinc, sum)
+hhinc$hhtot <- hhtot[match(paste(hhinc$yr_id,hhinc$geozone),paste(hhtot$yr_id,hhtot$geozone)),"hh"] 
+hhinc$hhinc_prop <- (hhinc$hh/hhinc$hhtot)* 100
+hhinc$hhinc_prop <- round(hhinc$hhinc_prop,digits = 2 )
+
+head(hhinc)
+
+
+#clean up geozone for merge
+hhinc$geozone <- gsub("\\*","",hhinc$geozone)
+hhinc$geozone <- gsub("\\-","_",hhinc$geozone)
+hhinc$geozone <- gsub("\\:","_",hhinc$geozone)
+hhinc$geozone <- gsub("^\\s+|\\s+$", "", hhinc$geozone)
+
+hhinc_24$geozone <- gsub("\\*","",hhinc_24$geozone)
+hhinc_24$geozone <- gsub("\\-","_",hhinc_24$geozone)
+hhinc_24$geozone <- gsub("\\:","_",hhinc_24$geozone)
+hhinc_24$geozone <- gsub("^\\s+|\\s+$", "", hhinc_24$geozone)
+
+
+head(hhinc)
+table(hhinc$income_id2)
+
+
+head(hhinc_24)
+table(hhinc_24$income_id2)
+
+#change integer to numeric type
+hhinc_24$hh_24 <- as.numeric(hhinc_24$hh_24)
+hhinc_24$hhtot_24 <- as.numeric(hhinc_24$hhtot_24)
+hhinc$hh <- as.numeric(hhinc$hh)
+hhinc$hhtot <- as.numeric(hhinc$hhtot)
+
+
+hhinc_24_26 <- merge(hhinc_24, hhinc, by.x = c("yr_id","geotype","geozone","income_id2","name2"), by.y = c("yr_id","geotype","geozone","income_id2","name2"), all=TRUE)
+
+head(hhinc_24_26,15)
+
+#review records that aren't 2010 to make sure pop looks good
+head(subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction" & hhinc_24_26$yr_id!=2010),15)
+
+#confirm expected records are in dataframe
+table(hhinc_24_26$yr_id)
+table(hhinc_24_26$geotype)
+
+#calculate number change
+hhinc_24_26$hhinc_diff <- hhinc_24_26$hhinc_prop-hhinc_24_26$hhinc_prop_24
+#hhinc_24_26$hhinc_diff[hhinc_24_26$yr_id==2010] <- NA
+
+hhinc_24_26 <- hhinc_24_26[order(hhinc_24_26$geozone,hhinc_24_26$yr_id, hhinc_24_26$income_id2),]
+setnames(hhinc_24_26, old=c("name2","hh","hhtot","hhinc_prop"), new=c("income_cat","hh_26","hhtot_26","hhinc_prop_26"))
+
+
+hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$yr_id<=2016)
+head(subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction"),15)
+
+hhinc_24_26$flag_5pct[hhinc_24_26$hhinc_diff>=5.00 | hhinc_24_26$hhinc_diff<=-5.00] <- 1
+#hhinc_24_26$flag_3pct[hhinc_24_26$hhinc_diff>=3.00 | hhinc_24_26$hhinc_diff<=-3.00] <- 1
+hhinc_24_26$flag_10pct[hhinc_24_26$hhinc_diff>=10.00 | hhinc_24_26$hhinc_diff<=-10.00] <- 1
+hhinc_24_26$flag_20pct[hhinc_24_26$hhinc_diff>=20.00 | hhinc_24_26$hhinc_diff<=-20.00] <- 1
+
+
+hhinc_24_26 = hhinc_24_26 %>% select(yr_id,geotype,geozone,income_id2,income_cat,hh_24,hh_26,hhinc_prop_24,hhinc_prop_26,hhinc_diff,flag_5pct,flag_10pct,flag_20pct)
+
+head(hhinc_24_26)
+
+hhinc_24_26_jur <- subset(hhinc_24_26, hhinc_24_26$geotype=="jurisdiction")
+hhinc_24_26_reg <- subset(hhinc_24_26, hhinc_24_26$geotype=="region")
+hhinc_24_26 <- subset(hhinc_24_26, hhinc_24_26$geotype=="tract")
+hhinc_24_26_2016 <- subset(hhinc_24_26, hhinc_24_26$geotype=="tract" & hhinc_24_26$yr_id=="2016")
+
+table(hhinc_24_26$flag_5pct)
+table(hhinc_24_26$flag_10pct)
+table(hhinc_24_26$flag_20pct)
+
+head(hhinc_24_26_jur,20)
+
+
+#write.csv(hhinc_24_26_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_jur v3.csv",row.names = FALSE )
+#write.csv(hhinc_24_26_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_reg v3.csv",row.names = FALSE )
+#write.csv(hhinc_24_26, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_tract v3.csv",row.names = FALSE )
+#write.csv(hhinc_24_26_2016, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_24_26_tract_2016 v3.csv",row.names = FALSE )
+
+##################
+##################
+#within vintage hhinc comparison
+##################
+##################
+
+head(hhinc,12)
+
+#calculate year over year change
+hhinc <- hhinc[order(hhinc$geozone, hhinc$income_id2 ,hhinc$yr_id),]
+hhinc$hhinc_nchg <- hhinc$hhinc_prop - lag(hhinc$hhinc_prop)
+
+#set 2010 number and pct change to NA - there is no previous year to calculate change
+hhinc$hhinc_nchg[hhinc$yr_id==2010] <- NA
+#hhinc$hhinc_npct[hhinc$yr_id==2010] <- NA 
+
+hhinc <- hhinc[order(hhinc$geozone,hhinc$yr_id, hhinc$income_id2),]
+setnames(hhinc, old="name2", new="income_cat")
+
+#subset hhinc file for jurisdiction and region
+hhinc_jur <- subset(hhinc, hhinc$geotype=="jurisdiction")
+hhinc_reg <- subset(hhinc, hhinc$geotype=="region")
+tail(hhinc[hhinc$geotype=="jurisdiction",],10)
+
+
+rm(hhinc_24_26, hhinc_24_26_jur,hhinc_24_26_reg,hhinc_sql,hhtot,hhtot_24)
+
+#KT PS revise flag to >5% threshold
+#include records for all years - not just 2018 
+#create flag variables to identify outliers
+hhinc$hhinc_flag[hhinc$hhinc_nchg>=hhinc$hhinc_3sd | hhinc$hhinc_nchg<=hhinc$hhinc_3sd_minus] <-1 
+table(hhinc$hhinc_flag)
+head(hhinc$hhinc_flag)
+
+
+hhinc_outliers <- subset(hhinc, hhinc$hhinc_flag==1)
+
+summary(hhinc$hhinc_nchg)
+
+unique(hhinc_outliers$geozone)
+table(hhinc_outliers$yr_id)
+
+head(hhinc)
+
+hhinc_outliers <- subset(hhinc_outliers, hhinc_outliers$yr_id==2018)
+
+#create a variable to indicate all years for tracts with outliers  
+
+sum(hhinc$gqpop, na.rm = TRUE)
+
+#add script to delete unoccupiable, available, means, 3sd, min max
+#rename flags specific record has issue, geozone has issue  
+
+head(hhinc_outliers)
+
+hhinc_wide_reg <- dcast(hhinc_reg, income_cat+income_id2+geozone~yr_id,value.var="hhinc_prop")
+
+hhinc_wide_jur <- dcast(hhinc_jur, income_cat+income_id2+geozone~yr_id,value.var="hhinc_prop")
+hhinc_wide_jur <- hhinc_wide_jur[order(hhinc_wide_jur$geozone, hhinc_wide_jur$income_id2),]
+
+
+head(hhinc_wide_reg,10)
+
+# write.csv(hhinc_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26 v2.csv",row.names = FALSE )
+# write.csv(hhinc_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26 v2.csv",row.names = FALSE )
+# write.csv(hhinc_outliers[,c("yr_id","geozone","income_cat","hh","hhtot","hhinc_prop","hhinc_nchg","hhinc_sd","range_nchg_2010_2017","hhinc_flag")],
+#           "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_outliers_tract_ID26 v2.csv",row.names = FALSE )
+# write.csv(hhinc_wide_jur, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_jur_ID26_wide v2.csv",row.names = FALSE )
+# write.csv(hhinc_wide_reg, "M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\hhinc\\hhinc_reg_ID26_wide v2.csv",row.names = FALSE )
