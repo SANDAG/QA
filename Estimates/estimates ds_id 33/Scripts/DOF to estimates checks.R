@@ -18,7 +18,7 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice")
+              "stringr","gridExtra","grid","lattice", "gdata", "readxl")
 pkgTest(packages)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -64,6 +64,7 @@ est <- merge(est, hh, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id",
 
 est <- subset(est, est$geotype!="cpa")
 est <- subset(est, est$geotype!="tract")
+
 #change integer to numeric type
 est$pop <- as.numeric(est$pop)
 est$gqpop <- as.numeric(est$gqpop)
@@ -77,33 +78,59 @@ est$geozone[est$geotype=='region'] <- 'San Diego Region'
 #dof to estimate checkS
 #################
 
-dof<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\DOF\\E-5_DOF_formatted.csv')
+##previous_dof<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\DOF\\E-5_DOF_formatted.csv')
+
+
+dof_data <- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Data Files\\DOF-E-5_2019_by_Geo_Internet.xlsx", sheet=2)
+
+# renaming the columns as row 3
+colnames(dof_data)= dof_data[3,]
+
+# removeing the first two rows
+dof<- dof_data[-(1:3),]
+
 
 #rename first column to get rid of strange character
-setnames(dof, 1, "Geography") 
+setnames(dof, 1, "Geography")
+
+#rename column 3 to avoic duplcation while renaming 
+setnames(dof, 3, "Total Population")
+
+#rename dof columns before merge
+setnames(dof, old= c("Date", "Total Population","Household","Group Quarters","Total","Single Detached","Single Attached","Five Plus", "Two to Four","Mobile Homes","Occupied","Vacancy Rate",
+                     "Persons per Household"), new= c("yr_id", "pop_dof","hhp_dof","gqpop_dof","hu_dof","sfd_dof","sfa_dof","fph_dof", "tfh_dof","mh_dof","occhh_dof",
+                                                             "vac_dof","pphhs_dof"), skip_absent = TRUE)
 
 dof$Geography <- gsub("\\:","_",dof$Geography)
 
 #strip commas and change type to numeric
-dof$Total <- as.numeric(gsub(",", "", dof$Total))
-dof$Household<-as.numeric(gsub(",", "", dof$Household))
-dof$Group.Quarters<-as.numeric(gsub(",", "", dof$Group.Quarters))
-dof$Total.1<-as.numeric(gsub(",", "", dof$Total.1))
-dof$Single.Detached<-as.numeric(gsub(",", "", dof$Single.Detached))
-dof$Single.Attached<-as.numeric(gsub(",", "", dof$Single.Attached))
-dof$Two.to.Four<-as.numeric(gsub(",", "", dof$Two.to.Four))
-dof$Five.Plus<-as.numeric(gsub(",", "", dof$Five.Plus))
-dof$Mobile.Homes <- as.numeric(gsub(",", "", dof$Mobile.Homes))
-dof$Occupied <- as.numeric(gsub(",", "", dof$Occupied))
-dof$Vacancy.Rate <- as.numeric(substr(dof$Vacancy.Rate,0,nchar(dof$Vacancy.Rate)-1))
+dof$pop_dof <- as.numeric(gsub(",", "", dof$pop_dof))
+dof$hhp_dof<-as.numeric(gsub(",", "", dof$hhp_dof))
+dof$gqpop_dof<-as.numeric(gsub(",", "", dof$gqpop_dof))
+dof$hu_dof<-as.numeric(gsub(",", "", dof$hu_dof))
+dof$sfd_dof<-as.numeric(gsub(",", "", dof$sfd_dof))
+dof$sfa_dof<-as.numeric(gsub(",", "", dof$sfa_dof))
+dof$tfh_dof<-as.numeric(gsub(",", "", dof$tfh_dof))
+dof$fph_dof<-as.numeric(gsub(",", "", dof$fph_dof))
+dof$mh_dof <- as.numeric(gsub(",", "", dof$mh_dof))
+dof$occhh_dof <- as.numeric(gsub(",", "", dof$occhh_dof))
+dof$vac_dof<- as.numeric(substr(dof$vac_dof,0,nchar(dof$vac_dof)-1))
+dof$pphhs_dof <- as.numeric(gsub(",", "", dof$pphhs_dof))
 
-any(is.na(dof$Total))
+#renaming the yr_id 
+dof$yr_id<- as.factor(dof$yr_id)
 
-#rename dof columns before merge
-setnames(dof, old=c("Total","Household","Group.Quarters","Total.1","Single.Detached","Single.Attached","Mobile.Homes","Occupied","Vacancy.Rate",
-                    "Persons.per.Household","year"), new=c("pop_dof","hhp_dof","gqpop_dof","hu_dof","sfd_dof","sfa_dof","mh_dof","households_dof",
-                    "vac_dof","hhs_dof","yr_id"))
-         
+levels(dof$yr_id)<- c("2010", "2011", "2012", "2013", "2014","2015", "2016", "2017", "2018", "2019")
+
+# dropping the NAs
+
+dof<-na.omit(dof) 
+
+#sorting by year 
+
+dof<- dof[order(dof$yr_id),]
+
+# rename estimates for merging         
 setnames(est, old=c("pop","gqpop","households","hhp","hhs"), new=c("pop_est","gqpop_est","households_est",
                                                                                          "hhp_est","hhs_est"))
 
@@ -112,19 +139,25 @@ dof$Geography <- gsub("^\\s+|\\s+$", "", dof$Geography)
 dof$Geography <- gsub('"', "", dof$Geography)
 
 #rename column values
-dof$Geography[dof$Geography=="Balance Of County"]<- "Unincorporated"
 dof$Geography[dof$Geography=="County Total"]<- "San Diego Region"
+dof$Geography[dof$Geography=="Balance of County"]<- "Unincorporated"
 dof<-dof[!dof$Geography=="Incorporated",]
+  
+  
+  
+#subsetting the estimates by geozone jurisdictions 
+  
+est_jur<- subset(est, est$geotype=='region'|est$geotype=='jurisdiction')  
 
 #merge dof and estimates for comparison
-dof2est <- merge(dof,est, by.x = c("yr_id","Geography"), by.y = c("yr_id", "geozone"), all=TRUE)
+dof2est <- merge(dof,est_jur, by.x = c("yr_id","Geography"), by.y = c("yr_id", "geozone"), all=TRUE)
 
 table(dof2est$yr_id)
 dof2est$tot_pop_diff <- dof2est$pop_dof-dof2est$pop_est
 dof2est$hhp_diff <- dof2est$hhp_dof-dof2est$hhp_est
 dof2est$gqpop_diff <- dof2est$gqpop_dof-dof2est$gqpop_est
-dof2est$hhs_diff <- dof2est$hhs_dof-dof2est$hhs_est
-dof2est$households_diff <- dof2est$households_dof-dof2est$households_est
+dof2est$hhs_diff <- dof2est$pphhs_dof-dof2est$hhs_est
+dof2est$hu_diff <- dof2est$hu_dof-dof2est$units
 
 head(dof2est,8)
 #dof2est_2018 <- dof2est[dof2est$yr_id==2018,]
@@ -132,19 +165,28 @@ head(dof2est,8)
 
 dof2est <- dof2est[order(dof2est$Geography, dof2est$yr_id),]
 
-write.csv(dof2est,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\DOF differences jur & reg.csv")
+#Removing 2010 from the comparison 
+
+dof2est <- subset(dof2est, dof2est$yr_id !='2010')
+
+
+write.csv(dof2est, "C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\DOF_Estimate_Check_QA.csv")
+
+
+# summing total population difference by geography
 
 reg_jur_pop <- subset(dof2est, dof2est$geotype=='region'|dof2est$geotype=='jurisdiction')
+
 by(reg_jur_pop$tot_pop_diff,reg_jur_pop$Geography, sum )
 
 colnames(reg_jur_pop)
 
-reg_jur_pop$DOF2estflag[reg_jur_pop$tot_pop_diff!=0 | reg_jur_pop$hhp_diff!=0 | reg_jur_pop$gqpop_diff!=0 | reg_jur_pop$hhs_diff!=0 | reg_jur_pop$households_diff!=0] <-1 
+reg_jur_pop$DOF2estflag[reg_jur_pop$tot_pop_diff!=0 | reg_jur_pop$hhp_diff!=0 | reg_jur_pop$gqpop_diff!=0 | reg_jur_pop$hhs_diff!=0 | reg_jur_pop$hu_diff!=0] <-1 
 reg_jur_pop$popflag[reg_jur_pop$tot_pop_diff!=0 ] <-1 
 reg_jur_pop$hhpflag[reg_jur_pop$hhp_diff!=0] <-1 
 reg_jur_pop$gqpopflag[reg_jur_pop$gqpop_diff!=0 ] <-1 
 reg_jur_pop$hhsflag[reg_jur_pop$hhs_diff!=0] <-1
-reg_jur_pop$hhflag[reg_jur_pop$households_diff!=0] <-1
+reg_jur_pop$hhflag[reg_jur_pop$hu_diff!=0] <-1
 table(reg_jur_pop$DOF2estflag)
 table(reg_jur_pop$popflag)
 table(reg_jur_pop$hhpflag)
