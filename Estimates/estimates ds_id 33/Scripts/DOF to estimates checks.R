@@ -197,6 +197,7 @@ table(reg_jur_pop$hhflag)
 reg_jur_pop_diff <-subset(reg_jur_pop, reg_jur_pop$DOF2estflag==1) 
 
 
+
 #output file with flagged differences
 write.csv(reg_jur_pop_diff[,c("yr_id","Geography","popflag","hhpflag","gqpopflag","hhsflag","hhflag","pop_dof","pop_est","tot_pop_diff","gqpop_dof","gqpop_est","gqpop_diff",
                               "hhp_dof","hhp_est","hhp_diff","hhs_dof","hhs_est","hhs_diff","households_dof","households_est","households_diff")],
