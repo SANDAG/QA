@@ -84,7 +84,11 @@ GROUP BY population.yr_id, mgra_denormalize.region, hh.hh, hh.unoccupied, hh.du)
 UNION
 (SELECT
 	population.yr_id
+<<<<<<< HEAD
 	,'zip' as geotype
+=======
+	,'tract' as geotype
+>>>>>>> fe7b7b848ecfbe165c642eaeff0f2014172960d2
 	,mgra_denormalize.tract as geozone
 	,hh.hh AS households
 	,hh.unoccupied as unoccupiable
@@ -96,7 +100,11 @@ FROM fact.population
          ON mgra_denormalize.mgra_id = population.mgra_id	
 		INNER JOIN
 		(
+<<<<<<< HEAD
 			SELECT yr_id, 'zip' as geotype,mgra_denormalize.tract as geozone, SUM(occupied) as hh,
+=======
+			SELECT yr_id, 'tract' as geotype,mgra_denormalize.tract as geozone, SUM(occupied) as hh,
+>>>>>>> fe7b7b848ecfbe165c642eaeff0f2014172960d2
 					SUM(units) as du, SUM(housing.unoccupiable) as unoccupied
 			FROM fact.housing
 					 INNER JOIN dim.mgra_denormalize
