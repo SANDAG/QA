@@ -24,87 +24,92 @@ source("../Queries/readSQL.R")
 getwd()
 options(stringsAsFactors=FALSE)
 
-ds_id=24
+
+ds_id=33
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
 hh_sql <- gsub("ds_id", ds_id,hh_sql)
-hh_24<-sqlQuery(channel,hh_sql)
+hh_33<-sqlQuery(channel,hh_sql)
 gq_sql = getSQL("../Queries/group_quarter.sql")
 gq_sql <- gsub("ds_id", ds_id,gq_sql)
-gq_24<-sqlQuery(channel,gq_sql)
+gq_33<-sqlQuery(channel,gq_sql)
 totpop_sql = getSQL("../Queries/total_population.sql")
 totpop_sql <- gsub("ds_id", ds_id,totpop_sql)
-totpop_24<-sqlQuery(channel,totpop_sql)
+totpop_33 <-sqlQuery(channel,totpop_sql)
 odbcClose(channel)
+
 
 ds_id=27
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
 hh_sql <- gsub("ds_id", ds_id,hh_sql)
-hh<-sqlQuery(channel,hh_sql)
+hh_27<-sqlQuery(channel,hh_sql)
 gq_sql = getSQL("../Queries/group_quarter.sql")
 gq_sql <- gsub("ds_id", ds_id,gq_sql)
-gq<-sqlQuery(channel,gq_sql)
+gq_27<-sqlQuery(channel,gq_sql)
 totpop_sql = getSQL("../Queries/total_population.sql")
 totpop_sql <- gsub("ds_id", ds_id,totpop_sql)
-totpop <-sqlQuery(channel,totpop_sql)
+totpop_27<-sqlQuery(channel,totpop_sql)
 odbcClose(channel)
 
 
-#aggregate gq pop only - exclude hh pop
-gq <-aggregate(pop~yr_id + geozone + geotype, subset(gq, housing_type_id!=1), sum,na.rm = TRUE)
-setnames(gq, old="pop", new="gqpop")
 
-gq_24 <-aggregate(pop~yr_id + geozone + geotype, subset(gq_24, housing_type_id!=1), sum,na.rm = TRUE)
-setnames(gq_24, old="pop", new="gqpop_24")
+#aggregate gq pop only - exclude hh pop
+gq_27 <-aggregate(pop~yr_id + geozone + geotype, subset(gq_27
+                                                        , housing_type_id!=1), sum,na.rm = TRUE)
+setnames(gq_27, old="pop", new="gqpop_27")
+
+gq_33 <-aggregate(pop~yr_id + geozone + geotype, subset(gq_33, housing_type_id!=1), sum,na.rm = TRUE)
+setnames(gq_33, old="pop", new="gqpop_33")
 
 #clean up geozone for merge
-totpop$geozone <- gsub("\\*","",totpop$geozone)
-totpop$geozone <- gsub("\\-","_",totpop$geozone)
-totpop$geozone <- gsub("\\:","_",totpop$geozone)
-gq$geozone <- gsub("\\*","",gq$geozone)
-gq$geozone <- gsub("\\-","_",gq$geozone)
-gq$geozone <- gsub("\\:","_",gq$geozone)
-hh$geozone <- gsub("\\*","",hh$geozone)
-hh$geozone <- gsub("\\-","_",hh$geozone)
-hh$geozone <- gsub("\\:","_",hh$geozone)
+totpop_33$geozone <- gsub("\\*","",totpop_33$geozone)
+totpop_33$geozone <- gsub("\\-","_",totpop_33$geozone)
+totpop_33$geozone <- gsub("\\:","_",totpop_33$geozone)
+gq_33$geozone <- gsub("\\*","",gq_33$geozone)
+gq_33$geozone <- gsub("\\-","_",gq_33$geozone)
+gq_33$geozone <- gsub("\\:","_",gq_33$geozone)
+hh_33$geozone <- gsub("\\*","",hh_33$geozone)
+hh_33$geozone <- gsub("\\-","_",hh_33$geozone)
+hh_33$geozone <- gsub("\\:","_",hh_33$geozone)
 
 
-totpop_24$geozone <- gsub("\\*","",totpop_24$geozone)
-totpop_24$geozone <- gsub("\\-","_",totpop_24$geozone)
-totpop_24$geozone <- gsub("\\:","_",totpop_24$geozone)
-gq_24$geozone <- gsub("\\*","",gq_24$geozone)
-gq_24$geozone <- gsub("\\-","_",gq_24$geozone)
-gq_24$geozone <- gsub("\\:","_",gq_24$geozone)
-hh_24$geozone <- gsub("\\*","",hh_24$geozone)
-hh_24$geozone <- gsub("\\-","_",hh_24$geozone)
-hh_24$geozone <- gsub("\\:","_",hh_24$geozone)
+totpop_27$geozone <- gsub("\\*","",totpop_27$geozone)
+totpop_27$geozone <- gsub("\\-","_",totpop_27$geozone)
+totpop_27$geozone <- gsub("\\:","_",totpop_27$geozone)
+gq_27$geozone <- gsub("\\*","",gq_27$geozone)
+gq_27$geozone <- gsub("\\-","_",gq_27$geozone)
+gq_27$geozone <- gsub("\\:","_",gq_27$geozone)
+hh_27$geozone <- gsub("\\*","",hh_27$geozone)
+hh_27$geozone <- gsub("\\-","_",hh_27$geozone)
+hh_27$geozone <- gsub("\\:","_",hh_27$geozone)
 
 #merge data and calculate the vacancy rate
-est <- merge(totpop, gq, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
-est <- merge(est, hh, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
-setnames(est, old="units",new="hu")
+est_33 <- merge(totpop_33, gq_33, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
+est_33 <- merge(est_33, hh_33, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
+setnames(est_33, old="units",new="hu")
 #calculate vac rate
-est$vac <- ((est$hu-est$households)/est$hu)*100
-est$vac <- round(est$vac,digits = 2)
+est_33$vac <- ((est_33$hu-est_33$households)/est_33$hu)*100
+est_33$vac <- round(est$vac,digits = 2)
 
-head(est)
+head(est_33)
 
-est_24 <- merge(totpop_24, gq_24, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
-est_24 <- merge(est_24, hh_24, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
-setnames(est_24, old="units",new="hu")
+est_27 <- merge(totpop_27, gq_27, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
+est_27 <- merge(est_27, hh_27, by.x = c("yr_id", "geotype", "geozone"), by.y = c("yr_id", "geotype", "geozone"), all=TRUE)
+setnames(est_27, old="units",new="hu")
 #calculate vac rate
-est_24$vac <- ((est_24$hu-est_24$households)/est_24$hu)*100
-est_24$vac <- round(est_24$vac,digits = 2)
+est_27$vac <- ((est_27$hu-est_27$households)/est_27$hu)*100
+est_27$vac <- round(est_27$vac,digits = 2)
+est_27$vac <- round(est_27$vac,digits = 2)
 
-head(est_24)
+head(est_27)
 
 
 #change integer to numeric type
-est$pop <- as.numeric(est$pop)
-est$gqpop <- as.numeric(est$gqpop)
+est_33$pop <- as.numeric(est$pop)
+est_33$gqpop_33 <- as.numeric(est_33$gqpop_33)
 est$households <- as.numeric(est$households)
 est$hhp <- as.numeric(est$hhp)
 est$hu <- as.numeric(est$hu)
