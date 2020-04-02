@@ -19,7 +19,7 @@ GROUP BY
 UNION
 (SELECT
 	population.yr_id
-	,'region' as geotype 
+	,'region' as geotype
 	,mgra_denormalize.region as geozone
     ,population.housing_type_id
 	,housing_type.short_name
@@ -57,8 +57,8 @@ GROUP BY
 UNION
 (SELECT
 	population.yr_id
-	,'zip' as geotype   
-	,mgra_denormalize.tract as geozone
+	,'zip' as geotype
+	,mgra_denormalize.zip as geozone
     ,population.housing_type_id
 	,housing_type.short_name
 	,SUM(population) as pop
@@ -70,7 +70,7 @@ FROM fact.population
 WHERE population.datasource_id = ds_id
 GROUP BY 
 	population.yr_id
-	,mgra_denormalize.tract
+	,mgra_denormalize.zip
 	,population.housing_type_id
 	,housing_type.short_name)
 ORDER BY 

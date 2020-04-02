@@ -84,12 +84,8 @@ GROUP BY population.yr_id, mgra_denormalize.region, hh.hh, hh.unoccupied, hh.du)
 UNION
 (SELECT
 	population.yr_id
-<<<<<<< HEAD
 	,'zip' as geotype
-=======
-	,'tract' as geotype
->>>>>>> fe7b7b848ecfbe165c642eaeff0f2014172960d2
-	,mgra_denormalize.tract as geozone
+	,mgra_denormalize.zip as geozone
 	,hh.hh AS households
 	,hh.unoccupied as unoccupiable
 	,hh.du as units
@@ -100,20 +96,16 @@ FROM fact.population
          ON mgra_denormalize.mgra_id = population.mgra_id	
 		INNER JOIN
 		(
-<<<<<<< HEAD
-			SELECT yr_id, 'zip' as geotype,mgra_denormalize.tract as geozone, SUM(occupied) as hh,
-=======
-			SELECT yr_id, 'tract' as geotype,mgra_denormalize.tract as geozone, SUM(occupied) as hh,
->>>>>>> fe7b7b848ecfbe165c642eaeff0f2014172960d2
+			SELECT yr_id, 'zip' as geotype,mgra_denormalize.zip as geozone, SUM(occupied) as hh,
 					SUM(units) as du, SUM(housing.unoccupiable) as unoccupied
 			FROM fact.housing
 					 INNER JOIN dim.mgra_denormalize
 					ON mgra_denormalize.mgra_id = housing.mgra_id
 			WHERE housing.datasource_id = ds_id
-			GROUP BY yr_id, mgra_denormalize.tract
+			GROUP BY yr_id, mgra_denormalize.zip
 		) hh
-		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.tract
+		ON hh.yr_id = population.yr_id and hh.geozone = mgra_denormalize.zip
 WHERE datasource_id = ds_id
 AND population.housing_type_id = 1
-GROUP BY population.yr_id, mgra_denormalize.tract, hh.hh, hh.unoccupied, hh.du)
+GROUP BY population.yr_id, mgra_denormalize.zip, hh.hh, hh.unoccupied, hh.du)
 ORDER BY population.yr_id, geotype, geozone, hh.hh

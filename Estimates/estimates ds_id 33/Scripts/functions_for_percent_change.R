@@ -1,16 +1,51 @@
 
-
-calculate_pct_chg <- function(df, edam_var) {
+calculate_num_chg <- function(df, edam_var) {
   edam_var <- enquo(edam_var)
-  df1 <- df %>% select("datasource_id","geotype","geo_id","geozone","yr_id",!!edam_var)
+  df1 <- df %>% select("geotype","geozone","yr_id",!!edam_var)
   #change over increments 
   df1 <- df1 %>% 
     group_by(geozone,geotype) %>% 
-    mutate(change = !!edam_var - lag(!!edam_var))
+    dplyr:: mutate(change = !!edam_var - lag(!!edam_var))
+  #percent change over increments
+  #df1 <- df1 %>%
+   # group_by(geozone,geotype) %>% 
+    #dplyr::mutate(percent_change = case_when(lag(!!edam_var)==0 & (!!edam_var==0)  ~ 0,
+     #                                        lag(!!edam_var)==0   ~ 1 ,
+      #                                       TRUE ~ (!!edam_var - lag(!!edam_var))/lag(!!edam_var))) 
+  
+  # df1 <- df1 %>%
+  #  group_by(geozone,geotype) %>%  # avoid divide by zero with ifelse
+  #mutate(percent_change = ifelse(lag(!!edam_var)==0, NA, (!!edam_var - lag(!!edam_var))/lag(!!edam_var)))
+  
+  df1$change <- round(df1$change, digits = 2)
+  # #average annual change
+  # df1 <- df1 %>% 
+  #   group_by(geozone,geotype) %>% 
+  #   mutate(average_annual_change = (!!edam_var - lag(!!edam_var))/(yr_id - lag(yr_id)) )
+  # df1$average_annual_change  <- round(df1$average_annual_change, digits = 0)
+  # #average annual percent change
+  # df1 <- df1 %>%
+  #   group_by(geozone,geotype) %>%  # avoid divide by zero with ifelse
+  #   mutate(avg_ann_pct_chg = ifelse(lag(!!edam_var)==0, NA, 
+  #                                   (!!edam_var - lag(!!edam_var))/lag(!!edam_var)/(yr_id - lag(yr_id))))
+  # df1$avg_ann_pct_chg <- round(df1$avg_ann_pct_chg, digits = 2)
+  return(df1)
+}
+
+
+
+
+calculate_pct_chg <- function(df, edam_var) {
+  edam_var <- enquo(edam_var)
+  df1 <- df %>% select("geotype","geozone","yr_id",!!edam_var)
+  #change over increments 
+  df1 <- df1 %>% 
+    group_by(geozone,geotype) %>% 
+    dplyr:: mutate(change = !!edam_var - lag(!!edam_var))
   #percent change over increments
   df1 <- df1 %>%
     group_by(geozone,geotype) %>% 
-    mutate(percent_change = case_when(lag(!!edam_var)==0 & (!!edam_var==0)  ~ 0,
+    dplyr::mutate(percent_change = case_when(lag(!!edam_var)==0 & (!!edam_var==0)  ~ 0,
                                       lag(!!edam_var)==0   ~ 1 ,
                                       TRUE ~ (!!edam_var - lag(!!edam_var))/lag(!!edam_var))) 
  
@@ -35,7 +70,6 @@ calculate_pct_chg <- function(df, edam_var) {
 
 
 
-
 calculate_pass_fail <- function(df, cutoff1,cutoff2) {
   df <- df %>%
     mutate(pass.or.fail = case_when(abs(change) > cutoff1 & abs(percent_change) > cutoff2 ~ "fail",
@@ -46,6 +80,33 @@ calculate_pass_fail <- function(df, cutoff1,cutoff2) {
                                     TRUE ~ "pass"))
   return(df)
 }
+
+
+calculate_pass_fail <- function(df, cutoff) {
+  df <- df %>%
+    mutate(pass.or.fail = case_when(abs(percent_change) > cutoff ~ "fail",
+                                    #average_annual_change >= cutoff1 & avg_ann_pct_chg >= cutoff2 ~ "fail",
+                                    #change >= cutoff1 & percent_change  >= cutoff2 ~ "check",
+                                    #change >= cutoff1 & percent_change < cutoff2 & geotype == 'cpa' ~ "check",
+                                    #change < cutoff1 & percent_change >= cutoff2 ~ "check",
+                                    TRUE ~ "pass"))
+  return(df)
+}
+
+
+calculate_pass_fail2 <- function(df, cutoff) {
+  df <- df %>%
+    mutate(pass.or.fail = case_when(abs(change) > cutoff ~ "fail",
+                                    #average_annual_change >= cutoff1 & avg_ann_pct_chg >= cutoff2 ~ "fail",
+                                    #change >= cutoff1 & percent_change  >= cutoff2 ~ "check",
+                                    #change >= cutoff1 & percent_change < cutoff2 & geotype == 'cpa' ~ "check",
+                                    #change < cutoff1 & percent_change >= cutoff2 ~ "check",
+                                    TRUE ~ "pass"))
+  return(df)
+}
+
+
+
 
 # df <- units
 # df <- units
@@ -131,14 +192,14 @@ subset_by_geotype_jobs <- function(df,the_geotype) {
 
 # add sheets with data 
 add_worksheets_to_excel <- function(workbook,demographic_variable,colorfortab,rowtouse,namehash,ahash) {
-  tabname <- paste(demographic_variable,"ByJur",sep='')
+  tabname <- paste(demographic_variable,"_jur",sep='')
   addWorksheet(wb, tabname, tabColour = colorfortab)
   ## Internal - Text to display
   writeFormula(wb, tableofcontents, startRow = rowtouse, 
                x = makeHyperlinkString(sheet = tabname, row = 1, col = 1,text = tabname))
   writeData(wb, tableofcontents, x = paste(namehash[[demographic_variable]]," by Jurisdiction",sep=''), startCol = 2, startRow = rowtouse)
   writeData(wb, tableofcontents, x = ahash[[demographic_variable]], startCol = 3, startRow = rowtouse) 
-  tabname <- paste(demographic_variable,"ByCpa",sep='')
+  tabname <- paste(demographic_variable,"_cpa",sep='')
   addWorksheet(wb, tabname, tabColour = colorfortab)
   writeFormula(wb, tableofcontents, startRow = rowtouse + 1, 
                x = makeHyperlinkString(sheet = tabname, row = 1, col = 1,text = tabname))
@@ -146,11 +207,11 @@ add_worksheets_to_excel <- function(workbook,demographic_variable,colorfortab,ro
             startCol = 2, startRow = rowtouse+1)
   
   writeData(wb, tableofcontents, x = ahash[[demographic_variable]], startCol = 3, startRow = rowtouse+1)
-  tabname <- paste(demographic_variable,"ByRegion",sep='')
+  tabname <- paste(demographic_variable,"_zip",sep='')
   addWorksheet(wb, tabname, tabColour = colorfortab)
   writeFormula(wb, tableofcontents, startRow = rowtouse + 2, 
                x = makeHyperlinkString(sheet = tabname, row = 1, col = 1,text = tabname))
-  writeData(wb, tableofcontents, x = paste(namehash[[demographic_variable]]," by Region",sep=''), 
+  writeData(wb, tableofcontents, x = paste(namehash[[demographic_variable]]," by ZIP",sep=''), 
             startCol = 2, startRow = rowtouse +2)
   writeData(wb, tableofcontents, x = ahash[[demographic_variable]], startCol = 3, startRow = rowtouse+2)
   freezePane(wb, tabname, firstRow = TRUE)
@@ -163,10 +224,21 @@ add_data_to_excel <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
   writeData(wb, j+1,dataframe_name)
   writeComment(wb,j+1,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
-  dataframe_name <- eval(parse(text = paste(demographic_variable,'_region',sep='')))
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_zip',sep='')))
   writeData(wb, j+2,dataframe_name)
   writeComment(wb,j+2,col = "H",row = 1,comment = createComment(comment = comments_to_add[[demographic_variable]]))
 }  
+
+
+add_data_to_excel2 <- function(workbook,demographic_variable,j,m) {
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
+  writeData(wb,j,dataframe_name)
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_cpa',sep='')))
+  writeData(wb, j+1,dataframe_name)
+  dataframe_name <- eval(parse(text = paste(demographic_variable,'_zip',sep='')))
+  writeData(wb, j+2,dataframe_name)
+}  
+
 add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
   dataframe_name <- eval(parse(text = paste(demographic_variable,'_jur',sep='')))
   writeData(wb,j,dataframe_name)
@@ -184,10 +256,10 @@ add_data_to_excel_jobs <- function(workbook,demographic_variable,j,m) {
 df <- units
 
 get_fails <- function(df) {
-  df <- df %>% select("datasource_id","geotype","geo_id","geozone","yr_id","pass.or.fail")
+  df <- df %>% select("geotype","geozone","yr_id","pass.or.fail")
   df <- spread(df,yr_id,'pass.or.fail')
   df <-df %>% filter_all(any_vars(. %in% c('fail')))
-  drops <- c("2016","2018","2020","2025","2030","2035","2040","2045","2050")
+  drops <- c("2010","2011","2012","2013","2014","2015","2016","2017","2018","2019")
   df <- df[ , !(names(df) %in% drops)]
   return(df) 
 }  
