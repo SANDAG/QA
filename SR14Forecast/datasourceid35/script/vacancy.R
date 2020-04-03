@@ -9,11 +9,11 @@ source("common_functions.R")
 packages <- c("RODBC","tidyverse","gridExtra","grid","gtable") #"ggsci"
 pkgTest(packages)
 
-datasource_id_current <- 34
+datasource_id_current <- 35
 
 
-datasource_ids <- c(17,34)
-datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 34)")
+datasource_ids <- c(17,35)
+datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 35)")
 datasource_name_short <- c("Series 14","Series 14")
 datasource_outfolder <- "vacancy_ds17_and_ds34"
 
@@ -300,4 +300,73 @@ for(i in geos) {
            width=8, height=8, dpi=100)
   }
 dev.off()
+
+
+
+#############################################################
+# Calculations for top 10 changes
+
+# get just the current datasource id
+countvars<- subset(vacancy,datasource_id==datasource_id_current )
+
+################################################################
+# change from 2016 to 2050
+
+vr2050 <- subset(countvars,yr_id %in% c(2016,2050))
+
+vr2050chg <- vr2050 %>% 
+  group_by(geozone) %>% 
+  mutate(change = vacancy_rate - lag(vacancy_rate))
+
+# replace year 2016 with 
+ind <- which(is.na(vr2050chg$change))
+vr2050chg$change[ind] <- sapply(ind, function(i) with(vr2050chg,change[i+1]))
+
+vr2050chg$abschg <- abs(vr2050chg$change)
+
+
+change2016to2050_grthan_5percent <- unique(subset(vr2050chg,abschg > .05)$geozone)
+cat(paste(shQuote(change2016to2050_grthan_5percent, type="cmd"), collapse=", "))
+
+write.csv(vr2050chg,"vacancy_rates_chg_2016to2050.csv")
+
+### end change 2016 to 2050
+##########################################################
+
+
+countvars <- countvars[,c("datasource_id","id",'geozone',"yr_id","units","hh","vacant_units","vacancy_rate")]
+
+
+# order dataframe for doing lag calculation
+countvars <- countvars[order(countvars$datasource_id,countvars$geozone,countvars$yr_id),]
+
+#difference over increments
+vr <- countvars %>% 
+  group_by(geozone) %>% 
+  mutate(change = vacancy_rate - lag(vacancy_rate))
+
+
+vr$change[is.na(vr$change)]<-0
+
+write.csv(vr,"vacancy_rates2.csv")
+
+
+unitchg <- countvars %>% 
+  group_by(geozone) %>% 
+  mutate(change = units - lag(units))
+
+
+uc<- unitchg %>% group_by(geozone) %>% mutate(count = sum(change == 0,na.rm = TRUE))
+
+uc['x'] <- 'no'
+ind <- which(uc$units != dplyr::lag(uc$units))
+uc$x[ind] <-'yes'
+
+inc3 <- subset(uc,count > 1 & yr_id == 2016)
+write.csv(inc3,"inc4.csv")
+
+# remove cities or cpas where there are no units e.g. 32nd St, Balboa Park, Flower Hill
+uc2 <- uc[uc$geozone %in% uc$geozone[uc$units!=0], ]
+uc2$counter <- sequence(rle(as.character(uc2$units))$lengths)
+results <- unique(subset(uc2,counter > 2)$geozone)
 
