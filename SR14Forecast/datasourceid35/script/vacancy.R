@@ -12,10 +12,10 @@ pkgTest(packages)
 datasource_id_current <- 35
 
 
-datasource_ids <- c(17,35)
-datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 35)")
+datasource_ids <- c(34,35)
+datasource_names <- c("Series 14 (ds 34)","Series 14 (ds 35)")
 datasource_name_short <- c("Series 14","Series 14")
-datasource_outfolder <- "vacancy_ds17_and_ds34"
+datasource_outfolder <- "vacancy_ds34_and_ds35"
 
 
 # get data from database
