@@ -3,7 +3,7 @@
 USE demographic_warehouse
 
 DECLARE @ds_id SMALLINT;
-SET @ds_id=34;
+SET @ds_id=35;
 SELECT
     age_sex_ethnicity.datasource_id
 	,age_sex_ethnicity.yr_id

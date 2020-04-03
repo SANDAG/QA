@@ -214,26 +214,26 @@ dem_ethn_cpa_10<- subset(dem_ethn_cpa, geozone %in% ethnicity_cpa10$geozone)
 
 
 #write files out for 
-write.csv(dem_age, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age.csv" )
-write.csv(dem_gender, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender.csv" )
-write.csv(dem_ethn, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn.csv" )
+write.csv(dem_age, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_age.csv" )
+write.csv(dem_gender, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_gender.csv" )
+write.csv(dem_ethn, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_ethn.csv" )
 
-write.csv(dem_age_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age_region.csv" )
-write.csv(dem_gender_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_region.csv" )
-write.csv(dem_ethn_region, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_region.csv" )
+write.csv(dem_age_region, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_age_region.csv" )
+write.csv(dem_gender_region, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_gender_region.csv" )
+write.csv(dem_ethn_region, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_ethn_region.csv" )
 
-write.csv(dem_age_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age_jurisdiction.csv" )
-write.csv(dem_gender_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_jurisdiction.csv" )
-write.csv(dem_ethn_jurisdiction, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_jurisdiction.csv" )
+write.csv(dem_age_jurisdiction, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_age_jurisdiction.csv" )
+write.csv(dem_gender_jurisdiction, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_gender_jurisdiction.csv" )
+write.csv(dem_ethn_jurisdiction, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_ethn_jurisdiction.csv" )
 
-write.csv(dem_age_cpa_10, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age_cpa.csv" )
-write.csv(dem_gender_cpa_10, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_cpa.csv" )
-write.csv(dem_ethn_cpa_10, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_cpa.csv" )
+write.csv(dem_age_cpa_10, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_age_cpa.csv" )
+write.csv(dem_gender_cpa_10, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_gender_cpa.csv" )
+write.csv(dem_ethn_cpa_10, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_ethn_cpa.csv" )
 
 #write out files for PowerBI that includes all CPAs 
-write.csv(dem_age_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_age_cpa_all.csv" )
-write.csv(dem_gender_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_gender_cpa_all.csv" )
-write.csv(dem_ethn_cpa, "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\4_Data Files\\datasource_id 34\\dem_ethn_cpa_all.csv" )
+write.csv(dem_age_cpa, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_age_cpa_all.csv" )
+write.csv(dem_gender_cpa, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_gender_cpa_all.csv" )
+write.csv(dem_ethn_cpa, "C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID 35\\Test 31, 32 demographics\\dem_ethn_cpa_all.csv" )
 
 #################################################
 #################################################
