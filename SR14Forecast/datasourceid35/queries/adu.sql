@@ -1,6 +1,6 @@
 USE urbansim;
 
-DECLARE @run_id smallint = 468; -- corresponds to datasource id 34
+DECLARE @run_id smallint = 474; -- corresponds to datasource id 34
 
 
 -- ADUs in forecast
@@ -9,7 +9,7 @@ FROM [urbansim].[urbansim].[urbansim_lite_output] o
 WHERE run_id = @run_id and capacity_type = 'adu';
 
 -- total possible ADUs
-SELECT CAST(round(count(p.parcel_id) *.05,0) as integer) 		
+SELECT CAST(round(count(p.parcel_id) *.05,0) as integer) as total_possible_ADUs		
 FROM [urbansim].[urbansim].[parcel] p			
 WHERE 43560 * parcel_acres >= 5000 and du_2018 = 1 and development_type_id_2018=19;
 
@@ -71,4 +71,22 @@ join urbansim.parcel p on p.parcel_id=o.parcel_id
 join ref.jurisdiction r on r.jurisdiction_id = p.jurisdiction_id
 where  run_id = @run_id and capacity_type = 'adu' and year_simulation <= 2035
 GROUP by p.jurisdiction_id,r.name
-ORDER BY p.jurisdiction_id
+ORDER BY p.jurisdiction_id;
+
+USE demographic_warehouse;						
+
+DECLARE @ds_id int
+SET @ds_id = 35;					
+						
+SELECT geotype, [yr_id]  						
+	  ,sum([unoccupiable]) as unoccupiable					
+      ,sum([units]) as units						
+      ,sum([occupied]) as occupied_hh						
+      ,sum([vacancy]) as vacant_units						
+	  ,ROUND((1 - (CAST(sum(occupied) AS FLOAT)/( (CAST(sum(units) AS FLOAT) -CAST(sum(unoccupiable) AS FLOAT) )))),4)  as percent_vacancy					
+  FROM [demographic_warehouse].[fact].[housing]						
+  INNER JOIN [demographic_warehouse].[dim].[mgra]						
+  ON mgra.mgra_id = housing.mgra_id						
+  where datasource_id = @ds_id and mgra.geotype IN ( 'region')						
+  group by yr_id,geotype						
+  order by yr_id	
