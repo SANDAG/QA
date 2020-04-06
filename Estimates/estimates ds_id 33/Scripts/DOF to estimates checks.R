@@ -156,6 +156,7 @@ table(dof2est$yr_id)
 dof2est$tot_pop_diff <- dof2est$pop_dof-dof2est$pop_est
 dof2est$hhp_diff <- dof2est$hhp_dof-dof2est$hhp_est
 dof2est$gqpop_diff <- dof2est$gqpop_dof-dof2est$gqpop_est
+dof2est$hh_diff<- dof2est$occhh_dof- dof2est$households_est
 dof2est$hhs_diff <- dof2est$pphhs_dof-dof2est$hhs_est
 dof2est$hu_diff <- dof2est$hu_dof-dof2est$units
 
@@ -167,10 +168,11 @@ dof2est <- dof2est[order(dof2est$Geography, dof2est$yr_id),]
 
 #Removing 2010 from the comparison 
 
-dof2est <- subset(dof2est, dof2est$yr_id !='2010')
+#dof2est <- subset(dof2est, dof2est$yr_id !='2010')
 
 
-write.csv(dof2est, "C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\DOF_Estimate_Check_QA.csv")
+
+write.csv(dof2est, "C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\DOF_Estimate_Check_updated_QA.csv")
 
 
 # summing total population difference by geography
