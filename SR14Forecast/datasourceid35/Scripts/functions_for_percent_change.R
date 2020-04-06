@@ -75,7 +75,7 @@ sort_dataframe_geos <- function(df,failures) {
 
 
 rename_dataframe <- function(df) {
-  df <- df %>% dplyr::rename('datasource id'= datasource_id,
+  df <- df %>% dplyr::rename('datasource id'= datasource_id,'geo id'=geo_id,
                       'increment' = yr_id,'change per increment' = change,
                       #'average annual change' = average_annual_change,
                       #'average annual percent change' = avg_ann_pct_chg,

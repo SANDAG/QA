@@ -1,5 +1,5 @@
 
-datasource_id_current <- 34
+datasource_id_current <- 35
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -8,14 +8,14 @@ setwd(maindir)
 # excel workbook output file name and folder with timestamp
 now <- Sys.time()
 ##outputfile <- paste("JobsBySector","_ds",datasource_id_current,"_",format(now, "%Y%m%d"),".xlsx",sep='')
-outputfile2 <- paste("JobsBySector_Forecast","_ds",datasource_id_current,"_QA",".xlsx",sep='')
+outputfile <- paste("JobsBySector_Forecast","_ds",datasource_id_current,"_QA",".xlsx",sep='')
 print(paste("output filename: ",outputfile))
 
 outfolder<-paste("../Output/",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 
 #outfile <- paste(maindir,"/",outfolder,outputfile,sep='')
-outfile2 <- paste(maindir,"/",outfolder,outputfile2,sep='')
+outfile <- paste(maindir,"/",outfolder,outputfile2,sep='')
 print(paste("output filepath: ",outfile))
 
 source("../Queries/readSQL.R")
