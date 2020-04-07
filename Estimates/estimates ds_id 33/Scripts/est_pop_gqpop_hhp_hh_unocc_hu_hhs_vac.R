@@ -3,7 +3,7 @@
 #KT PS - I don't know if we need to check unoccupied. PS there isn't this number in DOF estimates is there? 
 #############
 #############
-#updated to datasource_id 27 on 4/8/19
+#updated to datasource_id 33
 
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -236,13 +236,14 @@ head(est_33_27[est_33_27$geotype=="region",],10)
 #calculating pass fail
 
 cutoff<- 5
+cutoffvac<- 1
 est_33_27$totpop_pass.or.fail <- case_when(abs(est_33_27$tot_pop_pctchg)> cutoff~ "fail", TRUE~ "pass")  
 est_33_27$hh_pass.or.fail <- case_when(abs(est_33_27$hh_pctchg)> cutoff~ "fail", TRUE~ "pass")  
 est_33_27$hhp_pass.or.fail <- case_when(abs(est_33_27$hhp_pctchg)> cutoff~ "fail", TRUE~ "pass")
 est_33_27$hhs_pass.or.fail <- case_when(abs(est_33_27$hhs_pctchg)> cutoff~ "fail", TRUE~ "pass")
 est_33_27$hu_pass.or.fail <- case_when(abs(est_33_27$hu_pctchg)> cutoff~ "fail", TRUE~ "pass")
 est_33_27$gq_pass.or.fail <- case_when(abs(est_33_27$gqpop_pctchg)> cutoff~ "fail", TRUE~ "pass")
-est_33_27$vac_pass.or.fail <- case_when(abs(est_33_27$vac_numchg)> cutoff~ "fail", TRUE~ "pass")
+est_33_27$vac_pass.or.fail <- case_when(abs(est_33_27$vac_numchg)> cutoffvac~ "fail", TRUE~ "pass")
 
 head(est_33_27[est_33_27$geotype=="region",],10)
 
@@ -310,6 +311,8 @@ setColWidths(wb1,region, cols = 2, widths = 26)
 # out folder for wb1
 setwd(file.path(outfolder))
 
+
+
 #commenting out the oufile which is duplicate of outfile2 with _QA nomenclature
 #saveWorkbook(wb, outfile,overwrite=TRUE)
 saveWorkbook(wb1, outfile2,overwrite=TRUE)
@@ -332,6 +335,7 @@ est <- est[order(est$geotype,est$geozone,est$yr_id),]
 
 #pass fail calculation 
 cutoff<- .05
+cutoff1<- 1
 pop<- calculate_pct_chg(est,pop)
 pop$pass.or.fail<- case_when(abs(pop$percent_change)> cutoff~ "fail", TRUE~ "pass")  
 
@@ -351,7 +355,7 @@ gq <- calculate_pct_chg(est, gqpop_33)
 gq$pass.or.fail<- case_when(abs(gq$percent_change)> cutoff~ "fail", TRUE~ "pass") 
 
 vac<- calculate_num_chg(est, vac)
-vac$pass.or.fail<- case_when(abs(vac$change)> cutoff~ "fail", TRUE~ "pass") 
+vac$pass.or.fail<- case_when(abs(vac$change)> cutoff1~ "fail", TRUE~ "pass") 
 
 #hhp <- calculate_pct_chg(est, hhp)
 #hhp <- calculate_pass_fail2(hhp,.05)
@@ -503,7 +507,7 @@ acceptance_criteria['hh'] <- ">5%"
 acceptance_criteria['hhp'] <- ">5%"
 acceptance_criteria['hhs'] <- ">5%"
 acceptance_criteria['gq'] <- ">5%"
-acceptance_criteria['Vac'] <- ">5%"
+acceptance_criteria['Vac'] <- ">1%"
 
 
 
@@ -560,105 +564,6 @@ addStyle(wb, summary, tableStyle2, rows = (nrow(allvars)+7):(nrow(allvars)+13), 
 
 #writing data to summary sheet
 writeData(wb,summary,allvars,startCol = 1, startRow = 4, headerStyle = headerStyleforsummary)
-
-
-
-for (index in 1:nrow(allvars)) { 
-  row = allvars[index, ]
-  if ((row$hh == 'fail') & (row$geotype == 'cpa')) {
-  rnfail = max(which((hh_cpa$geozone ==row$geozone) & (hh_cpa['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 3, 
-                 x = makeHyperlinkString(sheet = 'hh_cpa', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$hh == 'fail') & (row$geotype == 'jurisdiction')) {
-    rnfail = max(which((hh_jur$geozone ==row$geozone) & (hh_jur['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 3, 
-                 x = makeHyperlinkString(sheet = 'hh_jur', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$hh == 'fail') & (row$geotype == 'zip')) {
-    rnfail = max(which((hhh_zip$geozone ==row$geozone) & (hh_zip['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 3, 
-                 x = makeHyperlinkString(sheet = 'hh_zip', row = rnfail, col = 3,text = "fail"))
-  }
-  
-  if ((row$hhp == 'fail') & (row$geotype == 'cpa')) {
-    rnfail = max(which((hhp_cpa$geozone ==row$geozone) & (hhp_cpa['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 4, 
-                 x = makeHyperlinkString(sheet = 'hhp_cpa', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$hhp == 'fail') & (row$geotype == 'jurisdiction')) {
-    rnfail = max(which((hhp_jur$geozone ==row$geozone) & (hhp_jur['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 4, 
-                 x = makeHyperlinkString(sheet = 'hhp_jur', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$hhp == 'fail') & (row$geotype == 'zip')) {
-    rnfail = max(which((hhp_zip$geozone ==row$geozone) & (hhp_zip['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 4, 
-                 x = makeHyperlinkString(sheet = 'hhp_zip', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$hhs == 'fail') & (row$geotype == 'cpa')) {
-    rnfail = max(which((hhs_cpa$geozone ==row$geozone) & (hhs_cpa['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 5, 
-                 x = makeHyperlinkString(sheet = 'hhs_cpa', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$hhs == 'fail') & (row$geotype == 'jurisdiction')) {
-    rnfail = max(which((hhs_jur$geozone ==row$geozone) & (hhs_jur['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 5, 
-                 x = makeHyperlinkString(sheet = 'hhs_jur', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$hhs == 'fail') & (row$geotype == 'zip')) {
-    rnfail = max(which((hhs_zip$geozone ==row$geozone) & (hhs_zip['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 5, 
-                 x = makeHyperlinkString(sheet = 'hhs_zip', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$units == 'fail') & (row$geotype == 'cpa')) {
-    rnfail = max(which((hu_cpa$geozone ==row$geozone) & (hu_cpa['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 6, 
-                 x = makeHyperlinkString(sheet = 'hu_cpa', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$units == 'fail') & (row$geotype == 'jurisdiction')) {
-    rnfail = max(which((hu_jur$geozone ==row$geozone) & (hu_jur['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 6, 
-                 x = makeHyperlinkString(sheet = 'hu_jur', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$units == 'fail') & (row$geotype == 'zip')) {
-    rnfail = max(which((hu_zip$geozone ==row$geozone) & (hu_zip['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 6, 
-                 x = makeHyperlinkString(sheet = 'hu_zip', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$gqpop == 'fail') & (row$geotype == 'cpa')) {
-    rnfail = max(which((gq_cpa$geozone ==row$geozone) & (gq_cpa['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 7, 
-                 x = makeHyperlinkString(sheet = 'gq_cpa', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$gqpop == 'fail') & (row$geotype == 'jurisdiction')) {
-    rnfail = max(which((gq_jur$geozone ==row$geozone) & (gq_jur['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 7, 
-                 x = makeHyperlinkString(sheet = 'gq_jur', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$gqpop == 'fail') & (row$geotype == 'zip')) {
-    rnfail = max(which((gq_zip$geozone ==row$geozone) & (gq_zip['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 7, 
-                 x = makeHyperlinkString(sheet = 'gq_zip', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$vac == 'fail') & (row$geotype == 'cpa')) {
-    rnfail = max(which((vac_cpa$geozone ==row$geozone) & (vac_cpa['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
-                 x = makeHyperlinkString(sheet = 'vac_cpa', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$vac == 'fail') & (row$geotype == 'jurisdiction')) {
-    rnfail = max(which((vac_jur$geozone ==row$geozone) & (vac_jur['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
-                 x = makeHyperlinkString(sheet = 'vac_jur', row = rnfail, col = 3,text = "fail"))
-  }
-  if ((row$vac == 'fail') & (row$geotype == 'zip')) {
-    rnfail = max(which((vac_zip$geozone ==row$geozone) & (vac_zip['pass.or.fail'] =='fail'))) + 1
-    writeFormula(wb, summary, startRow = index + 4,startCol = 8, 
-                 x = makeHyperlinkString(sheet = 'vac_zip', row = rnfail, col = 3,text = "fail"))
-  }
-  
-}
-
 
 writeData(wb, summary, x = "EDAM review", startCol = (ncol(allvars) + 1), startRow = 4)
 
