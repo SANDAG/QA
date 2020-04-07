@@ -1,7 +1,7 @@
 USE demographic_warehouse;
 
 DECLARE @ds_id int
-SET @ds_id = 34;
+SET @ds_id = 35;
 
 WITH units_2016  AS (
 SELECT mgra.geotype,mgra.geozone,sum(units) as units
@@ -16,7 +16,7 @@ SELECT mgra.geotype,mgra.geozone,sum(units) as units
 FROM fact.housing
 INNER JOIN dim.mgra
 ON mgra.mgra_id = housing.mgra_id AND mgra.geotype IN ('jurisdiction')
-WHERE housing.datasource_id = 34 and yr_id = 2035
+WHERE housing.datasource_id = @ds_id and yr_id = 2035
 GROUP BY yr_id, mgra.geotype, mgra.geozone
 ),
 units_2050  AS
@@ -24,7 +24,7 @@ units_2050  AS
 FROM fact.housing
 INNER JOIN dim.mgra
 ON mgra.mgra_id = housing.mgra_id AND mgra.geotype IN ('jurisdiction')
-WHERE housing.datasource_id = 34 and yr_id = 2050
+WHERE housing.datasource_id = @ds_id and yr_id = 2050
 GROUP BY yr_id, mgra.geotype, mgra.geozone
 )
 SELECT u16.geozone,u16.geotype,u16.units as units_2016,
