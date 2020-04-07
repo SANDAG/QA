@@ -1,5 +1,5 @@
 
-datasource_id_current <- 34
+datasource_id_current <- 35
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -397,42 +397,40 @@ writeData(wb, summary, x = "EDAM review", startCol = (ncol(wide_DF) + 1), startR
 
 # read email message from Dave and attach to excel spreadsheet
 ## Insert email as images
-imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
-img1a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 1.png",sep='')
-img2a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 2.png",sep='')
-img3a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 3.png",sep='')
-img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.png",sep='')
+imgfilepath<- "C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\supporting_documents\\dsid35_Email\\"
+img1a <- paste(imgfilepath,"DTedrowEmail1_dsid35.png",sep='')
+img2a <- paste(imgfilepath,"NOzanichEmail_dsid35.png",sep='')
 
 # add sheet with email info
 shtemail = addWorksheet(wb, "Email")
 
 insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, height = 4.77,units = "in") # divide by 96
 insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
-insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
-insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
+#insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
+#insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
 
 
 ########### test plan document ##########################
 # add TestPlan as worksheet
-testingplan = addWorksheet(wb, "TestPlan")
+#testingplan = addWorksheet(wb, "TestPlan")
 
 # read Test Plan from share drive
-TestPlanDirectory <- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\2_Testing Plan\\"
-TestPlanFile <- paste(TestPlanDirectory,"Test_Plan_DS31.docx",sep='')
-testplan <- readtext(TestPlanFile)
+#TestPlanDirectory <- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\2_Testing Plan\\"
+#TestPlanFile <- paste(TestPlanDirectory,"Test_Plan_DS31.docx",sep='')
+#testplan <- readtext(TestPlanFile)
 
 # generate "dummy" plot with test plan as text box
 # a hack to get word document as excel sheet
-png("testplan.png", width=1024, height=768, units="px", res=144)  #output to png device
-p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
-  geom_text(aes(x = 1, y = 20), label = testplan$text) +
-  theme_minimal() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        panel.grid = element_blank())
-print(p)
-dev.off()  
-insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, units="in")
+#png("testplan.png", width=1024, height=768, units="px", res=144)  #output to png device
+#p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
+ # geom_text(aes(x = 1, y = 20), label = testplan$text) +
+#  theme_minimal() +
+ # theme(axis.text = element_blank(),
+  #      axis.title = element_blank(),
+   #     panel.grid = element_blank())
+#print(p)
+#dev.off()  
+#insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, units="in")
 #insertPlot(wb, sheet=testingplan,xy = c(2, 2), width = 8, height = 8)
 
 ### end test plan worksheet
@@ -444,7 +442,7 @@ fullname <- hash()
 fullname['HH'] <- "Households"
 
 
-#j <-4 # starting sheet number for data
+#j <-3 # starting sheet number for data
 incomejur <- addWorksheet(wb, "IncomebyJur",tabColour="purple")
 writeData(wb,incomejur,inc_jur)
 writeComment(wb,incomejur,col = "I",row = 1,comment = createComment(comment = acceptance_criteria[['hhincomecat']]))
@@ -490,7 +488,7 @@ aligncenter = createStyle(halign = "center")
 # skip first 3 sheets
 # note: sheet 1:summary, sheet 2:email, sheet 3:test plan
 #for (curr_sheet in names(wb)[-1:-3]) {
-for (curr_sheet in names(wb)[4:6]) {
+for (curr_sheet in names(wb)[3:5]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -517,7 +515,7 @@ for (curr_sheet in names(wb)[4:6]) {
 }
 
 rangeCols = 1:11
-for (curr_sheet in names(wb)[7:9]) {
+for (curr_sheet in names(wb)[6:8]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -579,4 +577,7 @@ setwd(file.path(maindir,outfolder))
 
 saveWorkbook(wb, outfile,overwrite=TRUE)
 #saveWorkbook(wb, outfile2,overwrite=TRUE)
+
+
+########################################################
 
