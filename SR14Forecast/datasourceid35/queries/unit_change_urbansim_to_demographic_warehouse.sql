@@ -22,6 +22,7 @@ ON mgra.mgra_id = housing.mgra_id AND mgra.geotype IN ('jurisdiction', 'region')
 WHERE housing.datasource_id = @ds_id and yr_id = 2050
 GROUP BY yr_id, mgra.geotype, mgra.geozone
 ),
+
 urbansim_units_chg AS 
 (SELECT  name as geozone,sum([unit_change]) as unit_change_urbansim,'jurisdiction' as geotype
 FROM [urbansim].[urbansim].[urbansim_lite_output] o

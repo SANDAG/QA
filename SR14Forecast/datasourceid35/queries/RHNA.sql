@@ -2,7 +2,7 @@
 For informational purposes only.
 Methodology:	Since  RHNA Cycle is April 2021 to April 2029 and demographic warehouse only has increments, 
 use urbansim database (note: urbansim may not be exactly the same as forecast in demographic warehouse).				
-use urbansim run 444 for ds id 30 and run 468 for ds id 34
+use urbansim run 444 for ds id 30 and run 474 for ds id 35
 RHNA cycle is April 2021 to April 2029: use 75% of year 2021 (April - Dec) and 25% of year 2029 (Jan-Mar) for percent 
 of units to include for that year in urbansim run
 (assumes uniform distribution over the year)					
@@ -10,7 +10,7 @@ of units to include for that year in urbansim run
 
 
 DECLARE @run_id int
-SET @run_id = 468;
+SET @run_id = 474;
 				
 DROP TABLE IF EXISTS #Forecast_2021_to_2029;				
 				
@@ -45,7 +45,7 @@ ORDER BY name;
 USE demographic_warehouse;				
 	
 DECLARE @ds_id int
-SET @ds_id = 34;	
+SET @ds_id = 35;	
 	
 				
 WITH units_2016  AS (				

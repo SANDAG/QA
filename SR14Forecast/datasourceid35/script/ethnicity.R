@@ -1,7 +1,8 @@
 #QA checks for ethnicity by region, jurisdiction, and cpa per EDAM defined test criteria.
 #output into Excel workbooks.
 
-datasource_id_current <- 34
+
+datasource_id_current <- 35
 
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
@@ -9,15 +10,15 @@ setwd(maindir)
 
 # excel workbook output file name and folder with timestamp
 now <- Sys.time()
-outputfile <- paste("Ethnicity","_ds",datasource_id_current,"_",format(now, "%Y%m%d"),".xlsx",sep='')
-outputfile2 <- paste("Ethnicity","_ds",datasource_id_current,"_QA",".xlsx",sep='')
+#outputfile2 <- paste("Ethnicity","_ds",datasource_id_current,"_",format(now, "%Y%m%d"),".xlsx",sep='')
+outputfile <- paste("Ethnicity","_ds",datasource_id_current,"_QA",".xlsx",sep='')
 print(paste("output filename: ",outputfile))
 
 outfolder<-paste("../Output/",sep='')
 ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,outfolder), showWarnings = TRUE, recursive=TRUE),0)
 
 outfile <- paste(maindir,"/",outfolder,outputfile,sep='')
-outfile2 <- paste(maindir,"/",outfolder,outputfile2,sep='')
+#outfile2 <- paste(maindir,"/",outfolder,outputfile2,sep='')
 print(paste("output filepath: ",outfile))
 
 source("../Queries/readSQL.R")
@@ -37,7 +38,7 @@ geo_id <- readDB("../Queries/get_cpa_and_jurisdiction_id.sql",datasource_id_curr
 odbcClose(channel)
 
 countvars <- subset(ethn, yr_id %in% c(2016,2018,2020,2025,2030,2035,2040,2045,2050))
-rm(ethn)
+#rm(ethn)
 
 #renaming region to San Diego Region
 countvars$geozone[countvars$geotype=='region'] <- 'San Diego Region'
@@ -229,7 +230,7 @@ region2['2050minus2016'] <- region2['2050'] - region2['2016']
 
 region3 <- region2 %>% adorn_totals("row")
 
-wide_DF <- allvars[ , c("datasource id","geotype","geo id","geozone", "ethnicity_category","ethn")] %>%  spread(ethnicity_category, ethn)
+wide_DF <- allvars[ , c("datasource id","geotype","geo id","geozone", "ethnicity_category","test result")] %>%  spread(ethnicity_category, 'test result')
 
 # include all the ethnicity categories whether they pass or fail
 all_ethn_cats <- unique(ethn$ethnicity_category)
