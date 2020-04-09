@@ -159,8 +159,6 @@ for(i in 1:length(cpa_list)){
 
 #list of cpas with no median age data
 
-all_cpa <- unique(jur_cpa_list$geozone[jur_cpa_list$id>19])
-
 cpa_no_median_age <- c(setdiff(cpa_list, all_cpa), setdiff(all_cpa, cpa_list))
 
 cpa_no_median_age[order(cpa_no_median_age)]
