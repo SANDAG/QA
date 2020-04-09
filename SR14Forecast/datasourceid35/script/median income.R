@@ -1,3 +1,9 @@
+
+# add series 14 median income
+
+datasource_id=35
+
+
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -16,9 +22,6 @@ source("../Queries/readSQL.R")
 
 options('scipen'=10)
 
-# add series 14 median income
-
-datasource_id=34
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
@@ -168,3 +171,16 @@ for(i in 1:length(cpa_list)) {
   medianincomeplot(cpadat)
 }
 
+
+#list of cpas with no median income data
+all_cpa <- unique(cpa_id$geozone[cpa_id$id>19])
+
+
+cpa_no_mi <- c(setdiff(cpa_list, all_cpa), setdiff(all_cpa, cpa_list))
+
+cpa_no_mi[order(cpa_no_mi)]
+
+mi_cpa_hh <- subset(hh,mi_cpa_hh$geozone %in% cpa_no_mi)
+
+test <- hh[hh$geozone=='Balboa Park' | hh$geozone=='Harbor',]
+test1 <- mi_hh
