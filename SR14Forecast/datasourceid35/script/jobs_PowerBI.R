@@ -41,12 +41,15 @@ odbcClose(channel)
 
 #save out files
 
-https://sandag.sharepoint.com/:f:/r/qaqc/Shared%20Documents/Forecast/Results/ID%2035?csf=1&web=1&e=Irmd0Z
+write.csv(jobs_cpa, paste("C:\\Users\\lho\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID ",datasource_id,"\\jobs_cpa.csv",sep=""))
 
-write.csv(jobs_cpa, paste("C:\\Users\\lho\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID ",datasource_id,"\\Results\\jobs_cpa.csv",sep=""))
+write.csv(jobs_jur, paste("C:\\Users\\lho\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID ",datasource_id,"\\jobs_jur.csv",sep=""))
 
-write.csv(jobs_jur, paste("C:\\Users\\lho\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID ",datasource_id,"\\Results\\jobs_jur.csv",sep=""))
+write.csv(jobs_reg, paste("C:\\Users\\lho\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID ",datasource_id,"\\jobs_region.csv",sep=""))
 
-write.csv(jobs_reg, paste("C:\\Users\\lho\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Forecast\\Results\\ID ",datasource_id,"\\Results\\jobs_region.csv",sep=""))
-
-"C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\file_name.csv"
+#confirm all expected records are in the tables 
+unique(jobs_cpa$geozone)
+table(jobs_cpa$geozone, jobs_cpa$yr_id)
+unique(jobs_jur$geozone)
+table(jobs_jur$geozone, jobs_jur$yr_id)
+table(jobs_reg$geozone, jobs_reg$yr_id)
