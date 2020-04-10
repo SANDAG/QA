@@ -182,7 +182,9 @@ ethn <- ethn %>%
                                      (ethn_id==2 & abs(change) > 2500 & abs(percent_change) > .20)|
                                      (ethn_id==3 & abs(change) > 250 & abs(percent_change) > .20)|
                                      (ethn_id==4 & abs(change) > 1000 & abs(percent_change) > .20)|
-                                     (ethn_id==5 & abs(change) > 500 & abs(percent_change) > .20)) ~ "fail",
+                                     (ethn_id==4 & abs(change) > 1000 & abs(percent_change) > .20)|
+                                     (geotype == 'region' & pop == 0)|
+                                     (geotype == 'jurisdiction' & pop== 0)) ~ "fail",
                                   TRUE ~ "pass"))
 
 ethn$geozone_ethnid <-paste(ethn$geozone,'_',ethn$ethn_id)
@@ -425,42 +427,42 @@ writeData(wb, summary, x = "EDAM review", startCol = (ncol(wide_DF) + 1), startR
 
 # read email message from Dave and attach to excel spreadsheet
 ## Insert email as images
-imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
-img1a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 1.png",sep='')
-img2a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 2.png",sep='')
-img3a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 3.png",sep='')
-img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.png",sep='')
+#imgfilepath<- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\6_Notes\\"
+#img1a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 1.png",sep='')
+#img2a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 2.png",sep='')
+#img3a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 3.png",sep='')
+#img4a <- paste(imgfilepath,"DaveTedrowEmail_ds30\\DaveTedrowEmail_2019-08-26 4.png",sep='')
 
 # add sheet with email info
-shtemail = addWorksheet(wb, "Email")
+#shtemail = addWorksheet(wb, "Email")
 
-insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, height = 4.77,units = "in") # divide by 96
-insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
-insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
-insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
+#insertImage(wb, shtemail, img1a, startRow = 3,  startCol = 2, width = 19.74, height = 4.77,units = "in") # divide by 96
+#insertImage(wb, shtemail, img2a, startRow = 26,  startCol = 2, width = 19.80, height = 6.93,units = "in")
+#insertImage(wb, shtemail, img3a, startRow = 61,  startCol = 2, width = 19.76, height = 7.09,units = "in")
+#insertImage(wb, shtemail, img4a, startRow = 98,  startCol = 2, width = 19.71, height = 8.97,units = "in")
 
 
 ########### test plan document ##########################
 # add TestPlan as worksheet
-testingplan = addWorksheet(wb, "TestPlan")
+#testingplan = addWorksheet(wb, "TestPlan")
 
 # read Test Plan from share drive
-TestPlanDirectory <- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\2_Testing Plan\\"
-TestPlanFile <- paste(TestPlanDirectory,"Test_Plan_DS31.docx",sep='')
-testplan <- readtext(TestPlanFile)
+#TestPlanDirectory <- "M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\2_Testing Plan\\"
+#TestPlanFile <- paste(TestPlanDirectory,"Test_Plan_DS31.docx",sep='')
+#testplan <- readtext(TestPlanFile)
 
 # generate "dummy" plot with test plan as text box
 # a hack to get word document as excel sheet
-png("testplan.png", width=1024, height=768, units="px", res=144)  #output to png device
-p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
-  geom_text(aes(x = 1, y = 20), label = testplan$text) +
-  theme_minimal() +
-  theme(axis.text = element_blank(),
-        axis.title = element_blank(),
-        panel.grid = element_blank())
-print(p)
-dev.off()  
-insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, units="in")
+#png("testplan.png", width=1024, height=768, units="px", res=144)  #output to png device
+#p <- ggplot(data = NULL, aes(x = 1:10, y = 1:10)) +
+ # geom_text(aes(x = 1, y = 20), label = testplan$text) +
+  #theme_minimal() +
+  #theme(axis.text = element_blank(),
+   #     axis.title = element_blank(),
+    #    panel.grid = element_blank())
+#print(p)
+#dev.off()  
+#insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, units="in")
 #insertPlot(wb, sheet=testingplan,xy = c(2, 2), width = 8, height = 8)
 
 ### end test plan worksheet
@@ -471,7 +473,7 @@ insertImage(wb, sheet=testingplan, "testplan.png", width=11.18, height=7.82, uni
 fullname <- hash()
 
 
-#j <-4 # starting sheet number for data
+#j <-2 # starting sheet number for data
 ethnjur <- addWorksheet(wb, "EthnicitybyJur",tabColour="purple")
 writeData(wb,ethnjur,ethn_jur)
 
@@ -512,7 +514,7 @@ aligncenter = createStyle(halign = "center")
 # skip first 3 sheets
 # note: sheet 1:summary, sheet 2:email, sheet 3:test plan
 #for (curr_sheet in names(wb)[-1:-3]) {
-for (curr_sheet in names(wb)[4:6]) {
+for (curr_sheet in names(wb)[2:4]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -539,7 +541,7 @@ for (curr_sheet in names(wb)[4:6]) {
 }
 
 rangeCols = 1:11
-for (curr_sheet in names(wb)[7:9]) {
+for (curr_sheet in names(wb)[5:7]) {
   addStyle(
     wb = wb,
     sheet = curr_sheet,
@@ -585,7 +587,7 @@ setColWidths(wb, summary, cols = c(1,2,3,4,5,6,7,8,9,10,11), widths = c(16,22,15
 addStyle(wb, summary, style=aligncenter,cols=c(1:9), rows=4:(nrow(wide_DF)+4), gridExpand=TRUE,stack = TRUE)
 
 #remove worksheet with email-not necessary after all
-removeWorksheet(wb, "Email")
+#removeWorksheet(wb, "Email")
 
 # out folder for excel
 outfolder<-paste("..\\Output\\",sep='')
@@ -593,7 +595,7 @@ ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,o
 setwd(file.path(maindir,outfolder))
 
 saveWorkbook(wb, outfile,overwrite=TRUE)
-saveWorkbook(wb, outfile2,overwrite=TRUE)
+#saveWorkbook(wb, outfile2,overwrite=TRUE)
 
 #####
 #examine total pop differences from 2016-2050

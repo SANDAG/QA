@@ -162,6 +162,8 @@ inc <- inc %>%
 #QA test
 inc <- inc %>%
     mutate(pass.or.fail = case_when(abs(change) >= 250 & abs(percent_change) >= .20 ~ "fail",
+                                    geotype== 'region' & hh== 0 ~ "fail",
+                                    geotype== 'jurisdiction' & hh== 0 ~ "fail",
                                     TRUE ~ "pass"))
 
 inc$geozone_and_sector <-paste(inc$geozone,'_',inc$income_group_id)
@@ -378,6 +380,12 @@ for (index in 1:nrow(wide_DF)) {
                            (inc_cpa['income_category'] == sectorname))) + 1
       writeFormula(wb, summary, startRow = index + 4,startCol = grep((gsub("\\$", "", sectorname)), gsub("\\$", "", colnames(wide_DF))), 
                       x = makeHyperlinkString(sheet = 'IncomebyCPA', row = rnfail, col = 2,text = "fail"))
+    }
+    if ((row[[sectorname]] == 'fail') & (row$geotype == 'region')) {
+      rnfail = max(which((inc_region$region ==row$geozone) & (inc_region['pass/fail'] =='fail') & 
+                           (inc_region['income_category'] == sectorname))) + 1
+      writeFormula(wb, summary, startRow = index + 4,startCol = grep((gsub("\\$", "", sectorname)), gsub("\\$", "", colnames(wide_DF))), 
+                   x = makeHyperlinkString(sheet = 'IncomebyRegion', row = rnfail, col = 2,text = "fail"))
     }
     if ((row[[sectorname]] == 'fail') & (row$geotype == 'jurisdiction')) {
       rnfail = max(which((inc_jur$jurisdiction ==row$geozone) & (inc_jur['pass/fail'] =='fail') & 

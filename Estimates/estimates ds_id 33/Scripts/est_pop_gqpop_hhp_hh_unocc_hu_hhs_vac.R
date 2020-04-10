@@ -507,7 +507,7 @@ acceptance_criteria['hh'] <- ">5%"
 acceptance_criteria['hhp'] <- ">5%"
 acceptance_criteria['hhs'] <- ">5%"
 acceptance_criteria['gq'] <- ">5%"
-acceptance_criteria['Vac'] <- ">1%"
+acceptance_criteria['Vac'] <-">1%"
 
 
 

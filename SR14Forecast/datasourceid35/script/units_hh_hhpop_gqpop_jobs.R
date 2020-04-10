@@ -56,7 +56,7 @@ rm(merge1,hhvars,jobs,gq)
 
 # clean up cpa names removing asterick and dashes etc.
 countvars$id[countvars$geozone=="San Diego Region"] <- 9999
-#countvars <- countvars %>% rename('geo_id'= id)
+countvars <- countvars %>% rename('geo_id'= id)
 countvars <- rm_special_chr(countvars)
 countvars <- subset(countvars,geozone != 'Not in a CPA')
 
@@ -124,6 +124,12 @@ units <- calculate_pct_chg(countvars, units)
 units <- calculate_pass_fail(units,2500,.20)
 gqpop <- calculate_pct_chg(countvars, gqpop)
 gqpop <- calculate_pass_fail(gqpop,500,.20)
+
+# adding this additional test that jobs, households and household population cannot be zero for any year
+jobs$pass.or.fail<- case_when(jobs$jobs== 0~ "fail", TRUE~ "pass")
+households$pass.or.fail<- case_when(households$households== 0~ "fail", TRUE~ "pass")
+hhp$pass.or.fail<- case_when(hhp$hhp== 0~ "fail", TRUE~ "pass")
+
 
 # create dataframe of failed geos for summary tab
 units_failed <- get_fails(units)
