@@ -14,32 +14,34 @@ packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC",
               "stringr","gridExtra","grid","lattice","gtable")
 pkgTest(packages)
 
+#change all factors to character for ease of coding
+options(stringsAsFactors=FALSE)
+
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../Queries/readSQL.R")
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 median_age_cpa_sql = getSQL("../Queries/median_age_cpa.sql")
+median_age_cpa_sql <- gsub("ds_id", datasource_id, median_age_cpa_sql)
 median_age_cpa<-sqlQuery(channel,median_age_cpa_sql)
 
 median_age_jur_sql = getSQL("../Queries/median_age_jur.sql")
+median_age_jur_sql <- gsub("ds_id", datasource_id, median_age_jur_sql)
 median_age_jur<-sqlQuery(channel,median_age_jur_sql)
 tail(median_age_jur)
 
 median_age_region_sql = getSQL("../Queries/median_age_region.sql")
+median_age_region_sql <- gsub("ds_id", datasource_id, median_age_region_sql)
 median_age_region<-sqlQuery(channel,median_age_region_sql)
 
 jur_cpa_list_sql = getSQL("../Queries/get_cpa_and_jurisdiction_id.sql")
 jur_cpa_list<-sqlQuery(channel,jur_cpa_list_sql)
 
-
-
 odbcClose(channel)
 
 tail(median_age_region)
 
-#change all factors to character for ease of coding
-options(stringsAsFactors=FALSE)
 
 median_age_cpa$geotype<-"cpa"
 median_age_jur$geotype<-"jurisdiction"
@@ -65,7 +67,7 @@ ifelse(!dir.exists(file.path(maindir,results)), dir.create(file.path(maindir,res
 
 
 
-#this creates the list for "i" which is what the loop relies on - like x in a do repeat
+#this creates the list for "i" for the loop
 jur_list<- c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19)
 jur_list2<- c("Carlsbad","Chula Vista","Coronado","Del Mar","El Cajon","Encinitas","Escondido","Imperial Beach","La Mesa","Lemon Grove",
               "National City","Oceanside","Poway","San Diego","San Marcos","Santee","Solana Beach","Vista","Unincorporated")
@@ -76,13 +78,12 @@ median_age_jur$jurisdiction_id<-citynames[match(median_age_jur$geozone, cityname
 median_age_jur$reg<-median_age_region[match(median_age_jur$yr_id, median_age_region$yr_id),3]
 
 
-
-#this is the loop with the subset, the ggplot and the ggsave commands
+#prepare ggplot
 
 for(i in 1:length(jur_list)){
   plotdat = subset(median_age_jur, median_age_jur$jurisdiction_id==jur_list[i])
-   plot<-ggplot(plotdat,aes(x=yr_id, y=median_age, colour=geozone)) +
-     geom_line(size=1)+ 
+  plot<-ggplot(plotdat,aes(x=yr_id, y=median_age, colour=geozone)) +
+    geom_line(size=1)+ 
     geom_line(aes(x=yr_id, y = reg, colour = "1_Region")) +
     scale_y_continuous(label=comma,limits=c(30.0,47.0))+ 
     labs(title=paste("Median Age ds_id= ", datasource_id, '\n', jur_list2[i],' and Region, 2016-2050',sep=''), 
@@ -159,7 +160,9 @@ for(i in 1:length(cpa_list)){
 
 #list of cpas with no median age data
 
-cpa_no_median_age <- c(setdiff(cpa_list, all_cpa), setdiff(all_cpa, cpa_list))
+all_cpa <- subset(jur_cpa_list[jur_cpa_list$id>19,])
+
+cpa_no_median_age <- c(setdiff(cpa_list, all_cpa$geozone), setdiff(all_cpa$geozone, cpa_list))
 
 cpa_no_median_age[order(cpa_no_median_age)]
 
