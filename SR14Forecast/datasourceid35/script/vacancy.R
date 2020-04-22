@@ -12,10 +12,10 @@ pkgTest(packages)
 datasource_id_current <- 35
 
 
-datasource_ids <- c(34,35)
-datasource_names <- c("Series 14 (ds 34)","Series 14 (ds 35)")
+datasource_ids <- c(17,35)
+datasource_names <- c("Series 14 (ds 17)","Series 14 (ds 35)")
 datasource_name_short <- c("Series 14","Series 14")
-datasource_outfolder <- "vacancy_ds34_and_ds35"
+datasource_outfolder <- "vacancy_ds17_and_ds35"
 
 
 # get data from database
@@ -326,6 +326,7 @@ vr2050chg$abschg <- abs(vr2050chg$change)
 
 
 change2016to2050_grthan_5percent <- unique(subset(vr2050chg,abschg > .05)$geozone)
+print("\n greater than 5% vacancy 2016 to 2050: \n")
 cat(paste(shQuote(change2016to2050_grthan_5percent, type="cmd"), collapse=", "))
 
 write.csv(vr2050chg,"vacancy_rates_chg_2016to2050.csv")
@@ -345,11 +346,17 @@ vr <- countvars %>%
   group_by(geozone) %>% 
   mutate(change = vacancy_rate - lag(vacancy_rate))
 
+vr$abschg <- abs(vr$change)
 
 vr$change[is.na(vr$change)]<-0
 
-write.csv(vr,"vacancy_rates2.csv")
+changebyincrement_grthan_3percent <- unique(subset(vr,abschg > .03)$geozone)
+print("\n greater than 3% vacancy by increment: \n")
+cat(paste(shQuote(changebyincrement_grthan_3percent, type="cmd"), collapse=", "))
 
+write.csv(vr,"vacancy_rates_chg_by_increment.csv")
+ 
+###########
 
 unitchg <- countvars %>% 
   group_by(geozone) %>% 
@@ -370,3 +377,4 @@ uc2 <- uc[uc$geozone %in% uc$geozone[uc$units!=0], ]
 uc2$counter <- sequence(rle(as.character(uc2$units))$lengths)
 results <- unique(subset(uc2,counter > 2)$geozone)
 
+##########
