@@ -91,7 +91,7 @@ GROUP BY age_sex_ethnicity.yr_id
 UNION
 (SELECT
 	age_sex_ethnicity.yr_id
-	,'tract' as geotype
+	,'zip' as geotype
 	,mgra_denormalize.zip as geozone
 	,age_sex_ethnicity.age_group_id
 	,age_group.name as age_group_name
@@ -124,4 +124,5 @@ ORDER BY age_sex_ethnicity.yr_id
 	,age_sex_ethnicity.age_group_id
 	,age_sex_ethnicity.sex_id
 	,age_sex_ethnicity.ethnicity_id
+	
 
