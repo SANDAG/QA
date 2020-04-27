@@ -23,77 +23,42 @@ options(stringsAsFactors=FALSE)
 #format numbers
 options('scipen'=10)
 
-#read in data for id24
-datasource_id=24
+#read in data for id33
+datasource_id=33
+ds_id=33
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-#region median income for ID24
+#region median income for ID33
 median_income_reg_sql = getSQL("../Queries/median_income_region_ds_id.sql")
 median_income_reg_sql <- gsub("ds_id", datasource_id, median_income_reg_sql)
 mi_reg<-sqlQuery(channel,median_income_reg_sql,stringsAsFactors = FALSE)
-#jurisdiction median income for ID24
+#jurisdiction median income for ID33
 median_income_jur_sql = getSQL("../Queries/median_income_jur_ds_id.sql")
 median_income_jur_sql <- gsub("ds_id", datasource_id, median_income_jur_sql)
 mi_jur<-sqlQuery(channel,median_income_jur_sql,stringsAsFactors = FALSE)
-#cpa median income for ID24
+#cpa median income for ID33
 median_income_cpa_sql = getSQL("../Queries/median_income_cpa_ds_id.sql")
 median_income_cpa_sql <- gsub("ds_id", datasource_id, median_income_cpa_sql)
 mi_cpa<-sqlQuery(channel,median_income_cpa_sql,stringsAsFactors = FALSE)
-#census tract median income for ID24
-median_income_tract_sql = getSQL("../Queries/median_income_tract_ds_id.sql")
-median_income_tract_sql <- gsub("ds_id", datasource_id, median_income_tract_sql)
-mi_tract<-sqlQuery(channel,median_income_tract_sql,stringsAsFactors = FALSE)
-#households for ID24 - include for context
+#census tract median income for ID33
+median_income_zip_sql = getSQL("../Queries/median_income_zip_ds_id.sql")
+median_income_zip_sql <- gsub("ds_id", datasource_id, median_income_zip_sql)
+mi_zip<-sqlQuery(channel,median_income_zip_sql,stringsAsFactors = FALSE)
+#households for ID33 - include for context
 hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
 hh_sql <- gsub("ds_id", datasource_id,hh_sql)
 hh<-sqlQuery(channel,hh_sql,stringsAsFactors = FALSE)
-hh$datasource_id = datasource_id
 
-############
-##############
-#why this?
-#cpa ids
-#cpa_sql = getSQL("../Queries/cpa_id_lookup.sql")
-#cpa_id<-sqlQuery(channel,cpa_sql,stringsAsFactors = FALSE)
-odbcClose(channel)
+hhinc_sql = getSQL("../Queries/hhinc.sql")
+hhinc_sql <- gsub("ds_id", datasource_id,hhinc_sql)
+hh_inc<-sqlQuery(channel,hhinc_sql,stringsAsFactors = FALSE)
 
-#add geotype variable to differentiate in future analyses
-mi_reg$geotype <- "region"
-mi_jur$geotype <- "jurisdiction"
-mi_cpa$geotype <- "cpa"
-mi_tract$geotype <- "tract"
-
-#bind all records
-mi_all_24<-rbind(mi_reg,mi_jur,mi_cpa,mi_tract)
-mi_24 <- merge(mi_all_24,select(hh,yr_id,geotype,geozone,households),by.x=c("yr_id","geozone","geotype"), by.y=c("yr_id","geozone","geotype"))
-#change column names
-setnames(mi_24,old=c("median_inc","households"),new=c("median_inc_24","households_24"))
-#remove unnecessary objects
-rm(mi_reg,mi_jur,mi_cpa,mi_tract,mi_all_24)
-
-#bring in data for id=26
-datasource_id=26
-channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
-#region median income for ID26
-median_income_reg_sql = getSQL("../Queries/median_income_region_ds_id.sql")
-median_income_reg_sql <- gsub("ds_id", datasource_id, median_income_reg_sql)
-mi_reg<-sqlQuery(channel,median_income_reg_sql,stringsAsFactors = FALSE)
-#jurisdiction median income for ID26
-median_income_jur_sql = getSQL("../Queries/median_income_jur_ds_id.sql")
-median_income_jur_sql <- gsub("ds_id", datasource_id, median_income_jur_sql)
-mi_jur<-sqlQuery(channel,median_income_jur_sql,stringsAsFactors = FALSE)
-#cpa median income for ID26
-median_income_cpa_sql = getSQL("../Queries/median_income_cpa_ds_id.sql")
-median_income_cpa_sql <- gsub("ds_id", datasource_id, median_income_cpa_sql)
-mi_cpa<-sqlQuery(channel,median_income_cpa_sql,stringsAsFactors = FALSE)
-#census tract median income for ID26
-median_income_tract_sql = getSQL("../Queries/median_income_tract_ds_id.sql")
-median_income_tract_sql <- gsub("ds_id", datasource_id, median_income_tract_sql)
-mi_tract<-sqlQuery(channel,median_income_tract_sql,stringsAsFactors = FALSE)
-#households for ID26 - include for context
-hh_sql = getSQL("../Queries/hh_hhp_hhs_ds_id.sql")
-hh_sql <- gsub("ds_id", datasource_id,hh_sql)
-hh<-sqlQuery(channel,hh_sql,stringsAsFactors = FALSE)
-hh$datasource_id = datasource_id
+#check to ensure all years came through
+table(hh_inc$yr_id)
+table(mi_reg$yr_id)
+table(mi_reg$yr_id)
+table(mi_jur$yr_id)
+table(mi_cpa$yr_id)
+table(mi_zip$yr_id)
 
 ############
 ##############
@@ -108,87 +73,79 @@ odbcClose(channel)
 mi_reg$geotype <- "region"
 mi_jur$geotype <- "jurisdiction"
 mi_cpa$geotype <- "cpa"
-mi_tract$geotype <- "tract"
+mi_zip$geotype <- "zip"
 
-#bind all records
-mi_all_26<-rbind(mi_reg,mi_jur,mi_cpa,mi_tract)
-mi_26 <- merge(mi_all_26,select(hh,yr_id,geotype,geozone,households),by.x=c("yr_id","geozone","geotype"), by.y=c("yr_id","geozone","geotype"))
-#change column names
-setnames(mi_26,old=c("median_inc","households"),new=c("median_inc_26","households_26"))
-#remove unnecessary objects
-rm(mi_reg,mi_jur,mi_cpa,mi_tract,mi_all_26)
+#recode San Diego Region geotype for clarity
+mi_reg$geozone <- "San Diego Region"
+hh_inc$geozone[hh_inc$geotype=="region"]<-"San Diego Region"
 
-#merge two vintages together and review
-mi_24_26 <- merge(mi_24,mi_26,by.x=c("yr_id","geozone","geotype"),by.y=c("yr_id","geozone","geotype"),all = TRUE)
-head(mi_24_26)
-
-#calculate number and percent difference in median income. 
-mi_24_26$median_inc_diff <- mi_24_26$median_inc_26-mi_24_26$median_inc_24
-mi_24_26$median_inc_pct_diff <- (mi_24_26$median_inc_diff/mi_24_26$median_inc_24)*100
-mi_24_26$median_inc_pct_diff <- round(mi_24_26$median_inc_pct_diff,digits = 2)
-
-#delete out 2017 and 2018 data
-mi_24_26 <- subset(mi_24_26, mi_24_26$yr_id<=2016) 
-#reorder columns
-
-#add flag variables for change at 5, 10, and 20 percent
-mi_24_26$flag5pct[mi_24_26$median_inc_pct_diff>=5.00 | mi_24_26$median_inc_pct_diff<=-5.00] <- 1 
-mi_24_26$flag10pct[mi_24_26$median_inc_pct_diff>=10.00 | mi_24_26$median_inc_pct_diff<=-10.00] <- 1 
-mi_24_26$flag20pct[mi_24_26$median_inc_pct_diff>=20.00 | mi_24_26$median_inc_pct_diff<=-20.00] <- 1 
-
-head(mi_24_26[mi_24_26$median_inc_pct_diff>=5.00,],10)
-
-mi_24_26 <- select(mi_24_26,yr_id,geotype,geozone,median_inc_24,median_inc_26,median_inc_diff,median_inc_pct_diff,
-                   households_24,households_26,flag5pct,flag10pct,flag20pct)
-mi_24_26 <- mi_24_26[order(mi_24_26$geozone,mi_24_26$geotype,mi_24_26$yr_id),]
-
-head(mi_24_26)
-
-mi_24_26_reg <- subset(mi_24_26, mi_24_26$geotype=="region")
-mi_24_26_jur <- subset(mi_24_26, mi_24_26$geotype=="jurisdiction")
-mi_24_26_tract <- subset(mi_24_26, mi_24_26$geotype=="tract")
-
-head(mi_24_26_tract[mi_24_26_tract$median_inc_pct_diff>=5.00,],10)
-
-table(mi_24_26_reg$flag5pct)
-table(mi_24_26_jur$flag5pct)
-table(mi_24_26_tract$flag5pct)
-
-unique(mi_24_26_jur$geozone[mi_24_26_jur$flag10pct==1])
-unique(mi_24_26_tract$geozone[mi_24_26_tract$flag10pct==1])
-
-table(mi_24_26_jur$flag5pct)
-table(mi_24_26_tract$flag5pc)
-
-write.csv(mi_24_26_reg,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\median income\\median income ID24 to ID26 reg .csv", row.names = FALSE)
-write.csv(mi_24_26_jur,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\median income\\median income ID24 to ID26 jur.csv", row.names = FALSE)
-write.csv(mi_24_26_tract,"M:\\Technical Services\\QA Documents\\Projects\\Estimates\\4_Data Files\\median income\\median income ID24 to ID26 tract.csv", row.names = FALSE)
-
-rm(mi_24_26,mi_24_26_reg,mi_24_26_jur,mi_24_26_tract,mi_24)
-##################
-##################
-#within vintage median income comparison
-##################
-##################
-
-head(mi_26,12)
-
-#calculate year over year change
-hhinc <- hhinc[order(hhinc$geozone, hhinc$income_id2 ,hhinc$yr_id),]
-hhinc$hhinc_nchg <- hhinc$hhinc_prop - lag(hhinc$hhinc_prop)
-
-#set 2010 number and pct change to NA - there is no previous year to calculate change
-hhinc$hhinc_nchg[hhinc$yr_id==2010] <- NA
-#hhinc$hhinc_npct[hhinc$yr_id==2010] <- NA 
-
-hhinc <- hhinc[order(hhinc$geozone,hhinc$yr_id, hhinc$income_id2),]
-setnames(hhinc, old="name2", new="income_cat")
-
-#subset hhinc file for jurisdiction and region
-hhinc_jur <- subset(hhinc, hhinc$geotype=="jurisdiction")
-hhinc_reg <- subset(hhinc, hhinc$geotype=="region")
-tail(hhinc[hhinc$geotype=="jurisdiction",],10)
+#calculate percent change between years. 
+#zip
+mi_zip <- mi_zip[order(mi_zip$geozone,mi_zip$yr_id),]
+mi_zip$N_chg <- mi_zip$median_inc - lag(mi_zip$median_inc)
+mi_zip$N_pct <- (mi_zip$N_chg / lag(mi_zip$median_inc))*100
+mi_zip$N_pct<-round(mi_zip$N_pct,digits=2)
+#cpa
+mi_cpa <- mi_cpa[order(mi_cpa$geozone,mi_cpa$yr_id),]
+mi_cpa$N_chg <- mi_cpa$median_inc - lag(mi_cpa$median_inc)
+mi_cpa$N_pct <- (mi_cpa$N_chg / lag(mi_cpa$median_inc))*100
+mi_cpa$N_pct<-round(mi_cpa$N_pct,digits=2)
+#jurisdiction
+mi_jur <- mi_jur[order(mi_jur$geozone,mi_jur$yr_id),]
+mi_jur$N_chg <- mi_jur$median_inc - lag(mi_jur$median_inc)
+mi_jur$N_pct <- (mi_jur$N_chg / lag(mi_jur$median_inc))*100
+mi_jur$N_pct<-round(mi_jur$N_pct,digits=2)
+#region
+mi_reg <- mi_reg[order(mi_reg$geozone,mi_reg$yr_id),]
+mi_reg$N_chg <- mi_reg$median_inc - lag(mi_reg$median_inc)
+mi_reg$N_pct <- (mi_reg$N_chg / lag(mi_reg$median_inc))*100
+mi_reg$N_pct<-round(mi_reg$N_pct,digits=2)
+#hh by categories, all
+hh_inc <- hh_inc[order(hh_inc$geozone,hh_inc$income_group_id,hh_inc$yr_id),]
+hh_inc$N_chg <- hh_inc$hh - lag(hh_inc$hh)
+hh_inc$N_pct <- (hh_inc$N_chg / lag(hh_inc$hh))*100
+hh_inc$N_pct<-round(hh_inc$N_pct,digits=2)
 
 
-rm(hhinc_24_26, hhinc_24_26_jur,hhinc_24_26_reg,hhinc_sql,hhtot,hhtot_24)
+#recode 2010 percent changes to "0"
+mi_zip$N_chg[mi_zip$yr_id == "2010"] <- NA
+mi_zip$N_pct[mi_zip$yr_id == "2010"] <- NA
+
+mi_cpa$N_chg[mi_cpa$yr_id == "2010"] <- NA
+mi_cpa$N_pct[mi_cpa$yr_id == "2010"] <- NA
+
+mi_jur$N_chg[mi_jur$yr_id == "2010"] <- NA
+mi_jur$N_pct[mi_jur$yr_id == "2010"] <- NA
+
+mi_reg$N_chg[mi_reg$yr_id == "2010"] <- NA
+mi_reg$N_pct[mi_reg$yr_id == "2010"] <- NA
+
+hh_inc$N_chg[hh_inc$yr_id == "2010"] <- NA
+hh_inc$N_pct[hh_inc$yr_id == "2010"] <- NA
+
+#add flag variables for change at 5 percent
+mi_zip$flag[mi_zip$N_pct>=5.00 | mi_zip$N_pct<=-5.00] <- 1 
+mi_cpa$flag[mi_cpa$N_pct>=5.00 | mi_cpa$N_pct<=-5.00] <- 1 
+mi_jur$flag[mi_jur$N_pct>=5.00 | mi_jur$N_pct<=-5.00] <- 1 
+mi_reg$flag[mi_reg$N_pct>=5.00 | mi_reg$N_pct<=-5.00] <- 1 
+hh_inc$flag[hh_inc$N_pct>=5.00 | hh_inc$N_pct<=-5.00] <- 1 
+
+#remove tract from hh_inc dataset
+hh_inc<-subset(hh_inc, geotype!="tract")
+
+#saveout files for csv
+write.csv(mi_zip,"C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\Median Income\\median_income_zip.csv", row.names = FALSE)
+write.csv(mi_cpa,"C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\Median Income\\median_income_cpa.csv", row.names = FALSE)
+write.csv(mi_jur,"C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\Median Income\\median_income_jur.csv", row.names = FALSE)
+write.csv(mi_reg,"C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\Median Income\\median_income_reg.csv", row.names = FALSE)
+write.csv(hh_inc,"C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Estimates\\ds_id=33\\Results\\Median Income\\median_income_category_hh.csv", row.names = FALSE)
+
+
+#summary for test plan
+table(hh_inc$flag,hh_inc$geozone)
+table(mi_zip$flag,mi_zip$geozone)
+table(mi_cpa$flag,mi_cpa$geozone)
+table(mi_jur$flag,mi_jur$geozone)
+table(mi_reg$flag,mi_reg$geozone)
+
 
