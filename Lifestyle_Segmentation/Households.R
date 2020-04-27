@@ -77,7 +77,7 @@ input2<- crosswalk(input)
 data.frame(colnames(input2))
 
 #Input Output & Cross-walk check
-
+output_check<- subset(output, select= c(1:5))
 output_check<- crosswalk_test(output_check, input2, output)
 output_check$ID_check<- input$ID== output$ID
 output_check$tract_check<- input$TRACT== output$TRACT
