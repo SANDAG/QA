@@ -1,12 +1,14 @@
 #Purpose: Script to be used on a re-occuring basis to QA/QC unemployment data weekly. 
-#Test 1: Confirm  ZIP codes in datafile match master list (109 total) 
+#Test 1: Confirm  ZIP codes in output datafile match master list (109 total) 
 #Test 2: Confirm LBF column equals total as provided by Stephanie (defined as "x" in script)
 #Test 3: Confirm percentages in most recent date column (last column in dataset) are calculated correctly based on preceeding column
+#Test 4: Confirm that rows in modified file equal values in original file
 # containing whole number divided by LBF value in same row. 
 #Authors: Kelsie Telson and Purva Singh
 
 #total for LBF (manually update as needed based on Stephanie)
 x<- 1734783
+y<- 1700821
 
 #load packages
 pkgTest <- function(pkg){
@@ -18,18 +20,18 @@ pkgTest <- function(pkg){
   
 }
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
-              "stringr","gridExtra","grid","lattice","gtable","readxl", "openxlsx", "tidyverse")
+              "stringr","gridExtra","grid","lattice","gtable","readxl", "openxlsx", "tidyverse", "compareDF")
 pkgTest(packages)
 
 #set working directory to access files and save to
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-#open connection to retreive data from database
+#open connection to retreive input data from database
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 raw_dt<-data.table::as.data.table(
   RODBC::sqlQuery(channel,
                   paste0("SELECT *
-                          FROM [ws].[dbo].[ags_4_27_2020_sd_zips]"),
+                          FROM [socioec_data].[ags].[vi_ags_ZI_latest_release]"),
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
@@ -47,6 +49,14 @@ rename <- function(x, y, z) {
 raw_dt<- raw_dt %>% rename(., y = 2, z = c("number", "percent"))
 
 
+#retrieve output file from database
+SDraw_dt<-data.table::as.data.table(
+  RODBC::sqlQuery(channel,
+                  paste0("SELECT *
+                          FROM [socioec_data].[ags].[vi_ags_San_Diego_ZIP_latest_release]"),
+                  stringsAsFactors = FALSE),
+  stringsAsFactors = FALSE)
+
 #retrieve master zip code list from Sharepoint site
 zip<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
                    sheet = "Sheet1",
@@ -54,23 +64,31 @@ zip<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG Q
 
 ##Test 1
 #sort both files by Zip code
-raw_dt<-raw_dt[order(raw_dt$ZI),]
+SDraw_dt<-SDraw_dt[order(SDraw_dt$ZI),]
 zip<-zip[order(zip$ZI),]
 #create object with Zip code and flag for TRUE/FALSE
-test1<- as.data.table(list(raw_dt$ZI, raw_dt$ZI==zip$ZI))
+test1<- as.data.table(list(SDraw_dt$ZI, SDraw_dt$ZI==zip$ZI))
 
 ##Test 2
-test2<-as.data.table(sum(raw_dt$LBF)==x)
+test2<-as.data.table(sum(SDraw_dt$LBF)==x)
 
 ##Test 3
 #recreate percentage for QA comparison
-raw_dt$qa_perc <- raw_dt$number/raw_dt$LBF
-raw_dt$qa_perc<- (raw_dt$qa_perc*100)
+#raw_dt$qa_perc <- raw_dt$number/raw_dt$LBF
+SDraw_dt$qa_perc<- SDraw_dt$UE25APR/SDraw_dt$LBF
+SDraw_dt$qa_perc<- (SDraw_dt$qa_perc*100)
 #create column with flag for TRUE/FALSE
-raw_dt$test3<- as.data.table(round(raw_dt$percent, digits=2)==round(raw_dt$qa_perc, digits=2))
+#SDraw_dt$test3<- as.data.table(round(SDraw_dt$percent, digits=2)==round(SDraw_dt$qa_perc, digits=2))
+SDraw_dt$test3<- as.data.table(round(SDraw_dt$PU25APR, digits=2)==round(SDraw_dt$qa_perc, digits=2))
 #create object with variables of interest
-test3<- subset(raw_dt, 
-               select=c("ZI","LBF", "number", "percent", "qa_perc", "test3"))
+#test3<- subset(raw_dt, 
+               #select=c("ZI","LBF", "number", "percent", "qa_perc", "test3"))
+test3<- subset(SDraw_dt, 
+               select=c("ZI","LBF", "UE25APR", "PU25APR", "qa_perc", "test3"))
+##Test 4
+#crosscheck output rows with input rows
+
+SDraw_dt$test4<- if(SDraw_dt$ZI==raw_dt$ZI) {SDraw_dt$UE25APR==raw_dt$UE25APR}
 
 
 #############################################################
