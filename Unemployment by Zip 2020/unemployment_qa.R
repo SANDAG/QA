@@ -1,16 +1,17 @@
 #Purpose: Script to be used on a re-occuring basis to QA/QC unemployment data weekly. 
 #Test 1: Confirm  ZIP codes in output datafile match master list (109 total) 
-#Test 2: Confirm LBF column equals total as provided by Stephanie (defined as "x" in script)
+#Test 2: Confirm LBF totals match previous LBF total
 #Test 3: Confirm percentages in most recent date column (last column in dataset) are calculated correctly based on preceeding column
 #Test 4: Confirm that rows in modified file equal values in original file
 # containing whole number divided by LBF value in same row. 
 #Authors: Kelsie Telson and Purva Singh
 
-#total for LBF (manually update as needed based on Stephanie)
-x<- 1734783
-y<- 1700821
+#set working directory to access files and save to
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-#load packages
+
+
+#Package test and loading necessary packages
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -23,10 +24,9 @@ packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC",
               "stringr","gridExtra","grid","lattice","gtable","readxl", "openxlsx", "tidyverse", "compareDF")
 pkgTest(packages)
 
-#set working directory to access files and save to
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-#open connection to retreive input data from database
+
+#open connection to retreive entire raw data (all geographies) from database
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 raw_dt<-data.table::as.data.table(
   RODBC::sqlQuery(channel,
@@ -34,22 +34,9 @@ raw_dt<-data.table::as.data.table(
                           FROM [socioec_data].[ags].[vi_ags_ZI_latest_release]"),
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
+RODBC::odbcClose(channel)
 
-#rename columns of interest into friendly names (always last two columns in data pull because those are the most recent)
-rename <- function(x, y, z) {
-  x %>% 
-    rename_at(
-      vars(
-        names(.) %>%
-          tail(y)),
-      funs(paste(z))
-    )
-}
-
-raw_dt<- raw_dt %>% rename(., y = 2, z = c("number", "percent"))
-
-
-#retrieve output file from database
+#retrieve San Diego county only data from database
 SDraw_dt<-data.table::as.data.table(
   RODBC::sqlQuery(channel,
                   paste0("SELECT *
@@ -57,36 +44,77 @@ SDraw_dt<-data.table::as.data.table(
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
-#retrieve master zip code list from Sharepoint site
-zip<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
+#retrieve master SD zip code list and map window ZIP codes from Sharepoint site
+sd_zip<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
                    sheet = "Sheet1",
                    range= "A1:A110")
+mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 4\\AGS_SD_ZIPcodes_names_April25_QA.xlsx",
+                        sheet= "MapWindow_ZIPcodes")
 
-##Test 1
-#sort both files by Zip code
+#removing last two lines from mapwin_zip sharepoint dataset
+n<-dim(mapwin_zip_base)[1]
+mapwin_zip<-mapwin_zip_base[1:(n-2),]
+
+## Comparing that SD_zip is a correct subset of raw_dt
+sd_zip_check<- raw_dt%>%
+  filter(ZI %in% sd_zip$ZI)
+
+sd_zip_check<- sd_zip_check[order(sd_zip_check$ZI),]
 SDraw_dt<-SDraw_dt[order(SDraw_dt$ZI),]
-zip<-zip[order(zip$ZI),]
-#create object with Zip code and flag for TRUE/FALSE
-test1<- as.data.table(list(SDraw_dt$ZI, SDraw_dt$ZI==zip$ZI))
 
-##Test 2
-test2<-as.data.table(sum(SDraw_dt$LBF)==x)
+identical(sd_zip_check$ZI, SDraw_dt$ZI)
+identical(sd_zip_check$PU02MAY, SDraw_dt$PU02MAY)
+identical(sd_zip_check$UE02MAY, SDraw_dt$UE02MAY)
 
-##Test 3
-#recreate percentage for QA comparison
-#raw_dt$qa_perc <- raw_dt$number/raw_dt$LBF
-SDraw_dt$qa_perc<- SDraw_dt$UE25APR/SDraw_dt$LBF
-SDraw_dt$qa_perc<- (SDraw_dt$qa_perc*100)
-#create column with flag for TRUE/FALSE
-#SDraw_dt$test3<- as.data.table(round(SDraw_dt$percent, digits=2)==round(SDraw_dt$qa_perc, digits=2))
-SDraw_dt$test3<- as.data.table(round(SDraw_dt$PU25APR, digits=2)==round(SDraw_dt$qa_perc, digits=2))
-#create object with variables of interest
-#test3<- subset(raw_dt, 
-               #select=c("ZI","LBF", "number", "percent", "qa_perc", "test3"))
+## Subsetting the latest dataset to mapwindow ZIP codes using base file  
+mapwin_zip<- SDraw_dt%>%
+  filter(ZI %in% mapwin_zip_base$ZI)
+
+
+mapwin<- function(df){
+  df1<- df%>%
+    summarise(sum(LBF))
+  colnames_df <- t(t(colnames(df)))
+  n<- (length(colnames(df)))-1
+  value<-substring((colnames(df[n])),3,7)
+  df2<- read_csv("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\LBF_Total.csv")
+  df2<- df2%>%
+    rbind(list(value,df1[1,1]))
+  df2<-df2[!duplicated(df2[('Date')]),]
+write.csv(df2,"C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\LBF_Total.csv", row.names = FALSE, append = TRUE ) 
+return(df2)
+}
+
+lbf<- mapwin(mapwin_zip)
+
+
+##Test 1: Comparing total LBF number from the previous file with the current number 
+
+lbf$QA_check <- ifelse(lbf$LBF == lag(lbf$LBF),TRUE,FALSE)
+test1<- lbf
+
+## Test 2: Validate AGS calculated percentage column for most current week 
+
+test2<- mapwin_zip%>%
+  mutate(PU_QA_calc= ((mapwin_zip$UE02MAY/mapwin_zip$LBF)*100))%>%
+  mutate_if(is.numeric,round, 2)%>%
+  mutate(PU_Check= PU_calc==PU02MAY)
+  
+        
+## Test 3: Confirm zip code values for counts, percentages, and names in [MapWindow_ZIPcodes] match [vi_ags_ZI_latest_release]  
+
 test3<- subset(SDraw_dt, 
                select=c("ZI","LBF", "UE25APR", "PU25APR", "qa_perc", "test3"))
-##Test 4
-#crosscheck output rows with input rows
+sd_zip_check<- raw_dt%>%
+  filter(ZI %in% sd_zip$ZI)
+
+sd_zip_check<- sd_zip_check[order(sd_zip_check$ZI),]
+SDraw_dt<-SDraw_dt[order(SDraw_dt$ZI),]
+
+identical(sd_zip_check$ZI, SDraw_dt$ZI)
+identical(sd_zip_check$PU02MAY, SDraw_dt$PU02MAY)
+identical(sd_zip_check$UE02MAY, SDraw_dt$UE02MAY)
+
 
 SDraw_dt$test4<- if(SDraw_dt$ZI==raw_dt$ZI) {SDraw_dt$UE25APR==raw_dt$UE25APR}
 
