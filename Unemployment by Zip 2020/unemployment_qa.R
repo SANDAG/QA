@@ -1,9 +1,12 @@
 #Purpose: Script to be used on a re-occuring basis to QA/QC unemployment data weekly. 
-#Test 1: Confirm  ZIP codes in output datafile match master list (109 total) 
-#Test 2: Confirm LBF totals match previous LBF total
-#Test 3: Confirm percentages in most recent date column (last column in dataset) are calculated correctly based on preceeding column
-#Test 4: Confirm that rows in modified file equal values in original file
-# containing whole number divided by LBF value in same row. 
+#Step 1: Comparing entire raw dataset with the San Diego only raw dataset to ensure correct subsetting
+#Step 2: Load the latest AGS dataset, previous week's AGS dataset and perform the following QA checks: 
+  #Test 1: Match ZIP codes, UE and PU of the latest AGS dataset with San Diego dataset to ensure correct subsetting 
+  #Test 2: Match LBF, AGS names, ZIP codes of latest AGs dataset with previous week's dataset to ensure that ZIP level LBF are unchanged 
+           #and 91 ZIP codes are same in both 
+  #Test 3: Validate AGS calculated percentage column for most current week 
+  #Test 4: Compare region's LBF total,UE, and PU for latest week with previous week to ensure they remain unchanged 
+#Step3: Perform additional calculations for cross checking DAS calculations
 #Authors: Kelsie Telson and Purva Singh
 
 #set working directory to access files and save to
@@ -34,7 +37,6 @@ raw_dt<-data.table::as.data.table(
                           FROM [socioec_data].[ags].[vi_ags_ZI_latest_release]"),
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
-RODBC::odbcClose(channel)
 
 #retrieve San Diego county only data from database
 SDraw_dt<-data.table::as.data.table(
@@ -44,79 +46,137 @@ SDraw_dt<-data.table::as.data.table(
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
-#retrieve master SD zip code list and map window ZIP codes from Sharepoint site
+RODBC::odbcClose(channel)
+
+#retrieve master SD zip code list from Sharepoint site
 sd_zip<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
                    sheet = "Sheet1",
                    range= "A1:A110")
-mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 4\\AGS_SD_ZIPcodes_names_April25_QA.xlsx",
-                        sheet= "MapWindow_ZIPcodes")
 
-#removing last two lines from mapwin_zip sharepoint dataset
-n<-dim(mapwin_zip_base)[1]
-mapwin_zip<-mapwin_zip_base[1:(n-2),]
+## Step 1: Comparing that SD_zip is a correct subset of raw_dt from the data wareshouse 
 
-## Comparing that SD_zip is a correct subset of raw_dt
+#Subsetting raw data for San Diego for cross-check 
 sd_zip_check<- raw_dt%>%
   filter(ZI %in% sd_zip$ZI)
 
-sd_zip_check<- sd_zip_check[order(sd_zip_check$ZI),]
-SDraw_dt<-SDraw_dt[order(SDraw_dt$ZI),]
-
-identical(sd_zip_check$ZI, SDraw_dt$ZI)
-identical(sd_zip_check$PU02MAY, SDraw_dt$PU02MAY)
-identical(sd_zip_check$UE02MAY, SDraw_dt$UE02MAY)
-
-## Subsetting the latest dataset to mapwindow ZIP codes using base file  
-mapwin_zip<- SDraw_dt%>%
-  filter(ZI %in% mapwin_zip_base$ZI)
+#Creating function to that cross checks raw_dt and SDraw_dt for ZIP, UE, and PU for latest week
 
 
-mapwin<- function(df){
-  df1<- df%>%
-    summarise(sum(LBF))
-  colnames_df <- t(t(colnames(df)))
-  n<- (length(colnames(df)))-1
-  value<-substring((colnames(df[n])),3,7)
-  df2<- read_csv("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\LBF_Total.csv")
-  df2<- df2%>%
-    rbind(list(value,df1[1,1]))
-  df2<-df2[!duplicated(df2[('Date')]),]
-write.csv(df2,"C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\LBF_Total.csv", row.names = FALSE, append = TRUE ) 
+identical_check<- function(df,df2){
+df<- df[order(df$ZI),]
+df2<- df2[order(df2$ZI),]
+df2$ZI_check<- df$ZI  == df2$ZI
+n<- length(colnames(df))
+var_name<-colnames(df)[n-1]
+var_name<- substring(var_name,3,
+)
+var1<- paste("PU",var_name,sep = "")
+var2<- paste("UE",var_name,sep = "")
+df2$PU_check<- df[[var1]]==df2[[var1]]
+df2$UE_check<- df[[var2]]==df2[[var2]]
 return(df2)
+  
 }
 
-lbf<- mapwin(mapwin_zip)
+SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 
-##Test 1: Comparing total LBF number from the previous file with the current number 
+#Loading the new AGS dataset
 
-lbf$QA_check <- ifelse(lbf$LBF == lag(lbf$LBF),TRUE,FALSE)
-test1<- lbf
+mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 11\\AGS_SD_ZIPcodes_names_May2.xlsx",
+                            sheet= "MapWindow_ZIPcodes")
 
-## Test 2: Validate AGS calculated percentage column for most current week 
+mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
 
-test2<- mapwin_zip%>%
-  mutate(PU_QA_calc= ((mapwin_zip$UE02MAY/mapwin_zip$LBF)*100))%>%
-  mutate_if(is.numeric,round, 2)%>%
-  mutate(PU_Check= PU_calc==PU02MAY)
+
+# Step 2: Loading the latest AGS datasets and conducting the 4 QA tests
+
+##selecting the latest weekly data  [depending on whether the UE/PE data is in the last column or not, we might have to change n]
+
+n<- length(colnames(mapwin_zip_new))
+var_name<-colnames(mapwin_zip_new)[n]
+var_name<- substring(var_name,3,
+)
+var1<- paste("PU",var_name,sep = "")
+var2<- paste("UE",var_name,sep = "")
+
+## Test 1: Comparing AGS data with SD raw data from database 
+
+## Subsetting the SD raw data to mapwindow ZIP codes 
+test1_crosscheck<- SDraw_dt%>%
+  filter(ZI %in% mapwin_zip_new$ZI)
+
+
+test1<- mapwin_zip_new%>%
+  mutate(ZIP_check= test1_crosscheck$ZI== mapwin_zip_new$ZI, 
+         AGS_name_check= test1_crosscheck$ags_name== mapwin_zip_new$ags_name, 
+         LBF_check= test1_crosscheck$LBF== mapwin_zip_new$LBF,
+         UE_check= test1_crosscheck[[var2]]== mapwin_zip_new[[var2]],
+         PU_check= test1_crosscheck[[var1]]== mapwin_zip_new[[var1]])
+
+# Test 2: Comparing with previous week's file 
+
+##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
+
+mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 11\\AGS_SD_ZIPcodes_names_May2.xlsx",
+                     sheet= "MapWindow_ZIPcodes")
+
+test2<- mapwin_zip_new%>%
+mutate(ZIP_check_base= mapwin_zip_base$ZI== mapwin_zip_new$ZI, 
+AGS_name_check_base= mapwin_zip_base$ags_name== mapwin_zip_new$ags_name, 
+LBF_check_base= mapwin_zip_base$LBF== mapwin_zip_new$LBF)
+
+## Test 3: Validate AGS calculated percentage column for most current week 
   
-        
-## Test 3: Confirm zip code values for counts, percentages, and names in [MapWindow_ZIPcodes] match [vi_ags_ZI_latest_release]  
-
-test3<- subset(SDraw_dt, 
-               select=c("ZI","LBF", "UE25APR", "PU25APR", "qa_perc", "test3"))
-sd_zip_check<- raw_dt%>%
-  filter(ZI %in% sd_zip$ZI)
-
-sd_zip_check<- sd_zip_check[order(sd_zip_check$ZI),]
-SDraw_dt<-SDraw_dt[order(SDraw_dt$ZI),]
-
-identical(sd_zip_check$ZI, SDraw_dt$ZI)
-identical(sd_zip_check$PU02MAY, SDraw_dt$PU02MAY)
-identical(sd_zip_check$UE02MAY, SDraw_dt$UE02MAY)
+test3<- mapwin_zip_new%>%
+  mutate(PU_QA_calc= ((mapwin_zip_new[[var2]]/mapwin_zip_new$LBF)*100))%>%
+  mutate_if(is.numeric,round, 2)%>%
+  mutate(PU_calc_check= PU_QA_calc==mapwin_zip_new[[var1]])
 
 
-SDraw_dt$test4<- if(SDraw_dt$ZI==raw_dt$ZI) {SDraw_dt$UE25APR==raw_dt$UE25APR}
+##incase the code above does not work, use the manual code below
+
+#test3<- mapwin_zip_new%>%
+  #mutate(PU_QA_calc= ((mapwin_zip_new$UE02MAY/mapwin_zip_new$LBF)*100))%>%
+  #mutate_if(is.numeric,round, 2)%>%
+  #mutate(PU_calc_check= PU_QA_calc==PU02MAY)
+
+## Test 4: Comparing LBF Totals 
+
+test4<- mapwin_zip_base%>%
+  summarise(sum(LBF))== mapwin_zip_new%>% summarise(sum(LBF))
+
+##Step 3: Perform additional calculations for  cross checking DAS numbers
+
+#ZIP level
+zip_calc<- mapwin_zip_new%>%
+  mutate(change= (mapwin_zip_new[[n]]-mapwin_zip_new[[n-1]]))%>%
+  mutate(percent_change= ((mapwin_zip_new[[n]]/mapwin_zip_new[[n-1]])-1)*100)%>%
+  mutate_if(is.numeric,round, 1)
+
+#Regional Aggregates- writing a function for this to store historical data for each week
+
+zip_calc2<- mapwin_zip_new[,-c(1:5)]
+zip_calc2<- zip_calc2%>%
+  summarise_if(is.numeric, mean)%>%
+  round(.,2)
+
+zip_calc2$Region<- "San Diego Region"
+
+#regional Aggregates 2
+
+headers<-c("Region", "Week","Total LBF","Average UE","Average PU", "Change", "Percent_Change")
+regional_calc <- as.data.frame(matrix(ncol=7,nrow=0))
+names(regional_calc)<-headers
+
+
+regional_calc[1,1]<- "San Diego Region"
+regional_calc[1,2]<- var_name
+regional_calc[1,3]<- sum(mapwin_zip_new$LBF)
+regional_calc[1,4]<- mean(mapwin_zip_new[[var2]])
+regional_calc[1,5]<- mean(mapwin_zip_new[[var1]])
+
+
 
 
 #############################################################
@@ -132,11 +192,23 @@ writeData(wb,test_2, test2)
 test_3 <- addWorksheet(wb, "Test 3",tabColour="green")
 writeData(wb,test_3, test3)
 
+test_4 <- addWorksheet(wb, "Test 4",tabColour="yellow")
+writeData(wb,test_4, test4)
+
+ZIP_calc <- addWorksheet(wb, "ZIP_Calc ",tabColour="blue")
+writeData(wb,ZIP_calc, zip_calc)
+
+Regional_calc<- addWorksheet(wb, "Regional Agg1",tabColour="purple")
+writeData(wb,Regional_calc, zip_calc2)
+
+Regional_calc2<- addWorksheet(wb, "Regional_Agg2 ",tabColour="purple")
+writeData(wb,Regional_calc2, regional_calc)
+
 
 #saving excel in output folder of the working directory
-maindir<-setwd("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
+maindir<-setwd("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
 
-# excel workbook output file name and folder with timestamp
+# excel workbook output file name and folder with timestamp - this part didnt work for me last time so I just formatted and renamed the CSV
 now <- format(Sys.time(), "%Y%m%d")
 outputfile <- paste("Weekly_","Unemployment","_QA_",now,".xlsx",sep='')
 print(paste("output filename: ",outputfile))
@@ -149,4 +221,7 @@ outfile <- paste(maindir,"/",outfolder,outputfile,sep='')
 print(paste("output filepath: ",outfile))
 
 saveWorkbook(wb, outfile,overwrite=TRUE)
+
+saveWorkbook(wb,outfile, overwrite = TRUE)
+outfile
 
