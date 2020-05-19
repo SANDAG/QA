@@ -49,7 +49,7 @@ SDraw_dt<-data.table::as.data.table(
 RODBC::odbcClose(channel)
 
 #retrieve master SD zip code list from Sharepoint site
-sd_zip<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
+sd_zip<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
                    sheet = "Sheet1",
                    range= "A1:A110")
 
@@ -83,7 +83,7 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
-mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 11\\AGS_SD_ZIPcodes_names_May2.xlsx",
+mapwin_zip_new<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 18\\AGS_SD_ZIPcodes_names_May9.xlsx",
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -118,7 +118,7 @@ test1<- mapwin_zip_new%>%
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
-mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 11\\AGS_SD_ZIPcodes_names_May2.xlsx",
+mapwin_zip_base<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 11\\AGS_SD_ZIPcodes_names_May2.xlsx",
                      sheet= "MapWindow_ZIPcodes")
 
 test2<- mapwin_zip_new%>%
@@ -206,7 +206,7 @@ writeData(wb,Regional_calc2, regional_calc)
 
 
 #saving excel in output folder of the working directory
-maindir<-setwd("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
+maindir<-setwd("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
 
 # excel workbook output file name and folder with timestamp - this part didnt work for me last time so I just formatted and renamed the CSV
 now <- format(Sys.time(), "%Y%m%d")
