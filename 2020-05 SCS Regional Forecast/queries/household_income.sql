@@ -3,7 +3,7 @@ USE demographic_warehouse;
 SELECT 
     household_income.datasource_id
 	,household_income.yr_id
-	,mgra.mgra
+	,mgra.mgra_id
 	,mgra.geotype
 	,mgra.geozone
 	,household_income.income_group_id
@@ -20,7 +20,6 @@ GROUP BY
      household_income.datasource_id
 	,household_income.yr_id
 	,mgra.mgra_id
-	,mgra.mgra
 	,mgra.geotype
 	,mgra.geozone
 	,household_income.income_group_id

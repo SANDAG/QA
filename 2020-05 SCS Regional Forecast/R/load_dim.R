@@ -19,9 +19,15 @@ d_mgra <- data.table::as.data.table(
   RODBC::sqlQuery(channel,
                   paste0("SELECT [mgra_id]
                   ,[mgra]
+                  ,[zip]
+                  ,[cpa]
+                  ,[jurisdiction]
                   FROM [demographic_warehouse].[dim].[mgra_denormalize]
                   GROUP BY [mgra_id]
-                         ,[mgra]"),
+                         ,[mgra]
+                         ,[zip]
+                         ,[cpa]
+                         ,[jurisdiction]"),
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
