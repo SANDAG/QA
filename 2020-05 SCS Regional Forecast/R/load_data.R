@@ -26,11 +26,15 @@ hh_1 <- readDB("../queries/hh_hhp_hhs.sql",datasource_id_1)
 jobs_1 <- readDB("../queries/jobs.sql",datasource_id_1)
 income_1<- readDB("../queries/household_income.sql",datasource_id_1)
 pop_1<- readDB("../queries/pop.sql",datasource_id_1)
+age_1<- readDB("../queries/age.sql",datasource_id_1)
+ethn_1<- readDB("../queries/ethnicity.sql",datasource_id_1)
 # ds_id2
 hh_2 <- readDB("../queries/hh_hhp_hhs.sql",datasource_id_2)
 jobs_2 <- readDB("../queries/jobs.sql",datasource_id_2)
 income_2<- readDB("../queries/household_income.sql",datasource_id_2)
 pop_2<- readDB("../queries/pop.sql",datasource_id_2)
+age_2<- readDB("../queries/age.sql",datasource_id_2)
+ethn_2<- readDB("../queries/ethnicity.sql",datasource_id_2)
 
 odbcClose(channel)
 
@@ -47,7 +51,11 @@ jobs<- rbind(jobs_1,
 pop<- rbind(pop_1,
            pop_2)
 
+age<- rbind(age_1,
+            age_2)
 
+ethnicity<- rbind(ethn_1,
+                  ethn_2)
 
 #saveout data for PowerBI
 write.csv(hh,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/hh.csv")
@@ -58,4 +66,6 @@ write.csv(income,"C:/Users/kte/OneDrive - San Diego Association of Governments/Q
 
 write.csv(pop,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/pop.csv")
 
+write.csv(age,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/age.csv")
 
+write.csv(ethnicity,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/ethnicity.csv")
