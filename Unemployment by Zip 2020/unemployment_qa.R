@@ -49,7 +49,7 @@ SDraw_dt<-data.table::as.data.table(
 RODBC::odbcClose(channel)
 
 #retrieve master SD zip code list from Sharepoint site
-sd_zip<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
+sd_zip<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
                    sheet = "Sheet1",
                    range= "A1:A110")
 
@@ -83,7 +83,7 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
-mapwin_zip_new<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 18\\AGS_SD_ZIPcodes_names_May9.xlsx",
+mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 26\\AGS_SD_ZIPcodes_names_May16.xlsx",
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -94,7 +94,7 @@ mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
 ##selecting the latest weekly data  [depending on whether the UE/PE data is in the last column or not, we might have to change n]
 
 n<- length(colnames(mapwin_zip_new))
-var_name<-colnames(mapwin_zip_new)[n]
+var_name<-colnames(mapwin_zip_new)[n-2]
 var_name<- substring(var_name,3,
 )
 var1<- paste("PU",var_name,sep = "")
@@ -107,7 +107,7 @@ test1_crosscheck<- SDraw_dt%>%
   filter(ZI %in% mapwin_zip_new$ZI)
 
 
-test1<- mapwin_zip_new%>%
+test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code line 97 if n-2 is correct
   mutate(ZIP_check= test1_crosscheck$ZI== mapwin_zip_new$ZI, 
          AGS_name_check= test1_crosscheck$ags_name== mapwin_zip_new$ags_name, 
          LBF_check= test1_crosscheck$LBF== mapwin_zip_new$LBF,
@@ -118,7 +118,7 @@ test1<- mapwin_zip_new%>%
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
-mapwin_zip_base<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 11\\AGS_SD_ZIPcodes_names_May2.xlsx",
+mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 18\\AGS_SD_ZIPcodes_names_May9.xlsx",
                      sheet= "MapWindow_ZIPcodes")
 
 test2<- mapwin_zip_new%>%
@@ -146,37 +146,54 @@ test3<- mapwin_zip_new%>%
 test4<- mapwin_zip_base%>%
   summarise(sum(LBF))== mapwin_zip_new%>% summarise(sum(LBF))
 
+
+# Test 5: Comparing LBF and UE values between previous week and this week's data
+
+r<- p<- grep("UE", colnames(mapwin_zip_base))
+
+
+test5<- data.frame(mapwin_zip_new[r]== mapwin_zip_base[r])
+
+test5<- mapwin_zip_new%>%
+  mutate(UE_check= mapwin_zip_base$UE09MA== mapwin_zip_new$UE09MAY)
+
+test5$LBF<- mapwin_zip_base$LBF== mapwin_zip_new$LBF
+
+# Test 6: Checking dates are correct and consistent 
+
+#manual
+
 ##Step 3: Perform additional calculations for  cross checking DAS numbers
 
 #ZIP level
+
+i<- grep(var1, colnames(mapwin_zip_new))
+j<- grep(var2, colnames(mapwin_zip_new))
+
+
 zip_calc<- mapwin_zip_new%>%
-  mutate(change= (mapwin_zip_new[[n]]-mapwin_zip_new[[n-1]]))%>%
-  mutate(percent_change= ((mapwin_zip_new[[n]]/mapwin_zip_new[[n-1]])-1)*100)%>%
+  mutate(change= (mapwin_zip_new[[i]]-mapwin_zip_new[[i-1]]))%>%
+  mutate(percent_change= ((mapwin_zip_new[[j]]/mapwin_zip_new[[j-1]])-1)*100)%>%
   mutate_if(is.numeric,round, 1)
+
+
 
 #Regional Aggregates- writing a function for this to store historical data for each week
 
-zip_calc2<- mapwin_zip_new[,-c(1:5)]
+p<- grep("UE", colnames(mapwin_zip_new))
+
+zip_calc2<- mapwin_zip_new[p]
+zip_calc2$LBF<- mapwin_zip_new$LBF
+
 zip_calc2<- zip_calc2%>%
-  summarise_if(is.numeric, mean)%>%
-  round(.,2)
+  summarise_if(is.numeric, sum)
+zip_calc2<- (zip_calc2[,1:12]/zip_calc2$LBF)
+zip_calc2<- zip_calc2*100
 
-zip_calc2$Region<- "San Diego Region"
-
-#regional Aggregates 2
-
-headers<-c("Region", "Week","Total LBF","Average UE","Average PU", "Change", "Percent_Change")
-regional_calc <- as.data.frame(matrix(ncol=7,nrow=0))
-names(regional_calc)<-headers
+zip_calc2$avgPU_16May<- mean(mapwin_zip_new[[var1]])
 
 
-regional_calc[1,1]<- "San Diego Region"
-regional_calc[1,2]<- var_name
-regional_calc[1,3]<- sum(mapwin_zip_new$LBF)
-regional_calc[1,4]<- mean(mapwin_zip_new[[var2]])
-regional_calc[1,5]<- mean(mapwin_zip_new[[var1]])
-
-
+zip_calc2<- round(zip_calc2, 2)
 
 
 #############################################################
@@ -195,18 +212,19 @@ writeData(wb,test_3, test3)
 test_4 <- addWorksheet(wb, "Test 4",tabColour="yellow")
 writeData(wb,test_4, test4)
 
+test_5 <- addWorksheet(wb, "Test 5",tabColour="red")
+writeData(wb,test_5, test5)
+
 ZIP_calc <- addWorksheet(wb, "ZIP_Calc ",tabColour="blue")
 writeData(wb,ZIP_calc, zip_calc)
 
-Regional_calc<- addWorksheet(wb, "Regional Agg1",tabColour="purple")
+Regional_calc<- addWorksheet(wb, "Regional Agg",tabColour="purple")
 writeData(wb,Regional_calc, zip_calc2)
 
-Regional_calc2<- addWorksheet(wb, "Regional_Agg2 ",tabColour="purple")
-writeData(wb,Regional_calc2, regional_calc)
 
 
 #saving excel in output folder of the working directory
-maindir<-setwd("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
+maindir<-setwd("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
 
 # excel workbook output file name and folder with timestamp - this part didnt work for me last time so I just formatted and renamed the CSV
 now <- format(Sys.time(), "%Y%m%d")
