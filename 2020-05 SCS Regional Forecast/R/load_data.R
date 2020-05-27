@@ -36,6 +36,16 @@ pop_2<- readDB("../queries/pop.sql",datasource_id_2)
 age_2<- readDB("../queries/age.sql",datasource_id_2)
 ethn_2<- readDB("../queries/ethnicity.sql",datasource_id_2)
 
+mohubs<- data.table::as.data.table(
+  RODBC::sqlQuery(channel,
+                  paste0("SELECT [mgra]
+                  ,[mohub]
+                  ,[score]
+                  ,[tier]
+                         FROM [urbansim].[ref].[scs_mgra_xref]"),
+                  stringsAsFactors = FALSE),
+  stringsAsFactors = FALSE)
+
 odbcClose(channel)
 
 #merge data for each ds_id into one dataset
@@ -69,3 +79,5 @@ write.csv(pop,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA t
 write.csv(age,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/age.csv")
 
 write.csv(ethnicity,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/ethnicity.csv")
+
+write.csv(mohubs, "C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/mohubs_tiers.csv")
