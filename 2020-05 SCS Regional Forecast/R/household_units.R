@@ -15,13 +15,7 @@ maindir = dirname(rstudioapi::getSourceEditorContext()$path)
 setwd(maindir)
 
 #load required packages
-require(knitr)
-require(compareGroups)
-require(psych)
-require(summarytools)
-require(broom)
-require(kableextra)
-library(data.table)
+require(data.table)
 source("readSQL.R")
 source("common_functions.R")
 
@@ -42,19 +36,21 @@ d_mgra <- data.table::as.data.table(
                   ,[zip]
                   ,[cpa]
                   ,[jurisdiction]
+                  ,[jurisdiction_id]
                   FROM [demographic_warehouse].[dim].[mgra_denormalize]
                   GROUP BY [mgra_id]
                          ,[mgra]
                          ,[series]
                          ,[zip]
                          ,[cpa]
-                         ,[jurisdiction]"),
+                         ,[jurisdiction]
+                         ,[jurisdiction_id]"),
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 #select only series 14
 d_mgra<- subset(d_mgra,d_mgra$series==14)
 #aggregate to mgra level (not mgra_id)
-d_mgra<- d_mgra %>% distinct(mgra, .keep_all = TRUE)
+#d_mgra<- d_mgra %>% distinct(mgra, .keep_all = TRUE)
 
 #load reference table used by Nick to apply changes to household units
 input_hhunits<- data.table::as.data.table(
@@ -66,6 +62,7 @@ input_hhunits<- data.table::as.data.table(
       ,[score]
       ,[subtier]
       ,[cap_scs]
+      ,[cap_jurisdiction_id]
       ,[scs_site_id]
       ,[startdate]
       ,[compdate]
@@ -80,7 +77,7 @@ datasource_id<- 36
 hh <- readDB("../queries/households.sql",datasource_id)
 
 #select only years of interest from SCS forecast dataset
-hh<-subset(hh, hh$yr_id==2016 | hh$yr_id==2050 )
+hh<-subset(hh, hh$yr_id==2016 | hh$yr_id==2050)
 
 #convert to data table
 hh<-as.data.table(hh)
@@ -91,7 +88,7 @@ sum(hh_50$units)
 
 #merge in [mgra] variable to allow for crosswalk to input data
 hh<-merge(hh,
-          d_mgra[ , c("mgra_id", "mgra", "jurisdiction")],
+          d_mgra[ , c("mgra_id", "mgra", "jurisdiction", "jurisdiction_id")],
           by= "mgra_id")
 
 
@@ -102,20 +99,32 @@ hh_agg<-hh[ , list(
   datasource_id,
   yr_id,
   units,
-  jurisdiction),
-  by=mgra]
+  jurisdiction,
+  jurisdiction_id),
+  by="mgra"]
 
 #check subtotals
+hh_agg_16<-subset(hh_agg, hh_agg$yr_id==2016)
 hh_agg_50<-subset(hh_agg, hh_agg$yr_id==2050)
 sum(hh_agg_50$units)
 
 #create aggregate table by mgra for 2016 and 2050
+hh_agg<-as.data.table(hh_agg)
 hh_reshape<- hh_agg[, list(
-  jurisdiction= unique(jurisdiction),
   units_2016=units[yr_id==2016],
-  units_2050=units[yr_id==2050]
-),
-by=mgra]
+  units_2050=units[yr_id==2050]),
+  by="mgra"]
+
+hh_reshape2<- aggregate(hh_reshape,
+                        by=list(hh_reshape$mgra),
+                        FUN=sum)
+#check subtotals
+sum(hh_reshape2$units_2050)
+
+#merge in jurisdiction
+# hh_reshape3<- merge(hh_reshape2,
+#                    d_mgra[ , c("mgra","jurisdiction")],
+#                    by="mgra")
 
 #check subtotals
 sum(hh_reshape$units_2050)
@@ -124,10 +133,13 @@ sum(hh_reshape$units_2050)
 hh_inputs_agg<-aggregate(scenario_cap ~mgra+tier, data=input_hhunits, sum)
 
 #merge scs forecast data to inputs data
-hh_merged<-merge(hh_reshape,
+hh_merged<-merge(hh_reshape2,
                  hh_inputs_agg,
                  by= "mgra",
                  all.x=TRUE)
+
+#check subtotals
+sum(hh_merged$units_2050)
 
 #calculate difference between 2050 and 2016 units
 hh_merged$N_diff<- hh_merged$units_2050-hh_merged$units_2016
@@ -138,8 +150,40 @@ hh_merged$change[hh_merged$N_diff<hh_merged$scenario_cap]<- "Less than capacity"
 hh_merged$change[hh_merged$N_diff>hh_merged$scenario_cap]<- "Greater than capacity"
 hh_merged$change[hh_merged$N_diff==0]<- "No Change"
 
-#clean up
-rm(list="hh", "d_mgra", "hh_agg", "hh_inputs_agg", "hh_reshape", "input_hhunits")
 
 #save out data file
-write.csv(hh_merged, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//housing_units.csv")
+write.csv(hh_merged, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//housing_units_mgra.csv")
+
+########################################################################################################
+
+#Generate output aggregated at the jurisdiction level
+hh_agg_jur<- aggregate(units~jurisdiction_id+yr_id, data=hh,sum)
+input_agg_jur<-aggregate(scenario_cap ~cap_jurisdiction_id, data=input_hhunits, sum)
+
+hh_jur<- dcast(hh_agg_jur, jurisdiction_id~yr_id, value.var="units")
+
+#check totals
+sum(hh_jur$`2050`)
+
+#merge in scs capacity
+hh_jur<- merge(hh_jur,
+               input_agg_jur,
+               by.x="jurisdiction_id",
+               by.y="cap_jurisdiction_id")
+
+#calculate difference between 2050 and 2016 units
+hh_jur$N_diff<- hh_jur$`2050`-hh_jur$`2016`
+
+#apply flag to indicate relationship between expected change and actual change in units
+hh_jur$change[hh_jur$N_diff==hh_jur$scenario_cap]<- "Exact capacity change"
+hh_jur$change[hh_jur$N_diff<hh_jur$scenario_cap]<- "Less than capacity"
+hh_jur$change[hh_jur$N_diff>hh_jur$scenario_cap]<- "Greater than capacity"
+hh_jur$change[hh_jur$N_diff==0]<- "No Change"
+
+#save out data file
+write.csv(hh_jur, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//housing_units_jur.csv")
+
+
+
+#clean up
+rm(list="hh", "d_mgra", "hh_agg", "hh_inputs_agg", "hh_reshape", "input_hhunits")
