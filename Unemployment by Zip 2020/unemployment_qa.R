@@ -9,6 +9,7 @@
 #Step3: Perform additional calculations for cross checking DAS calculations
 #Authors: Kelsie Telson and Purva Singh
 
+
 #set working directory to access files and save to
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
@@ -83,7 +84,7 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
-mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 26\\AGS_SD_ZIPcodes_names_May16.xlsx",
+mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 8\\AGS_SD_ZIPcodes_names_May30.xlsx",
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -118,7 +119,7 @@ test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
-mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\May 18\\AGS_SD_ZIPcodes_names_May9.xlsx",
+mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 2\\AGS_SD_ZIPcodes_names_May23.xlsx",
                      sheet= "MapWindow_ZIPcodes")
 
 test2<- mapwin_zip_new%>%
@@ -149,15 +150,13 @@ test4<- mapwin_zip_base%>%
 
 # Test 5: Comparing LBF and UE values between previous week and this week's data
 
-r<- p<- grep("UE", colnames(mapwin_zip_base))
+r<- grep("UE", colnames(mapwin_zip_base))
 
 
 test5<- data.frame(mapwin_zip_new[r]== mapwin_zip_base[r])
 
-test5<- mapwin_zip_new%>%
-  mutate(UE_check= mapwin_zip_base$UE09MA== mapwin_zip_new$UE09MAY)
-
 test5$LBF<- mapwin_zip_base$LBF== mapwin_zip_new$LBF
+
 
 # Test 6: Checking dates are correct and consistent 
 
@@ -187,13 +186,13 @@ zip_calc2$LBF<- mapwin_zip_new$LBF
 
 zip_calc2<- zip_calc2%>%
   summarise_if(is.numeric, sum)
-zip_calc2<- (zip_calc2[,1:12]/zip_calc2$LBF)
+zip_calc2<- (zip_calc2[,1:(ncol(zip_calc2)-1)]/zip_calc2$LBF)
 zip_calc2<- zip_calc2*100
 
-zip_calc2$avgPU_16May<- mean(mapwin_zip_new[[var1]])
+zip_calc2$avgPU_30May<- mean(mapwin_zip_new[[var1]])
 
 
-zip_calc2<- round(zip_calc2, 2)
+zip_calc2<- round(zip_calc2, 3)
 
 
 #############################################################
