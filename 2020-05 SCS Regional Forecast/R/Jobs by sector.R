@@ -1,5 +1,5 @@
 # This script was developed for test 7 of the SCS forecast QA [DS 36]. 
-##Test 7 has three parts: 
+## Test 7 has three parts: 
 ## a) Region level comparison of jobs by sector between DS 35 and 36
 ## b) Jurisdiction level comparison of jobs by sector between DS 35 and 36
 ## c) Mobility hub (within and outside mohub) compairson of jobs by sector at jurisdiction level between DS 35 and 36 
@@ -15,7 +15,6 @@ pkgTest <- function(pkg){
     install.packages(new.pkg, dep = TRUE)
   sapply(pkg, require, character.only = TRUE)
 }
-
 
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
               "stringr","gridExtra","grid","lattice", "openxlsx", "rlang", "hash", "RCurl")
@@ -193,6 +192,10 @@ jobs_region_Share<- jobs_region_Share%>%
          prop_36= jobs_36/total_jobs_36)
 
 
+jobs_region_Share<- jobs_region_Share%>%
+  group_by(employment_type, employment_type_id)%>%
+  mutate(inc_change_36= jobs_36- lag(jobs_36), 
+         inc_change_35= jobs_35- lag(jobs_35))
 
 
 ## Test 7b.Jurisdiction level comparison of absolute and % share of jobs by sector between DS 35 and DS 36
@@ -219,6 +222,13 @@ jobs_jur_share<- jobs_jur_share%>%
          prop_total_36= jobs_36/total_jobs_36,
          prop_jur_35= jobs_35/total_jur_jobs_35,
          prop_jur_36= jobs_36/total_jur_jobs_36)
+
+
+jobs_jur_share<- jobs_jur_share%>%
+  group_by(employment_type, employment_type_id, jurisdiction_id, jurisdiction)%>%
+  mutate(inc_change_36= jobs_36- lag(jobs_36), 
+         inc_change_35= jobs_35- lag(jobs_35))
+
 
 
 ## Test 7c.Mobility Hub comparison of absolute and % share of jobs by sector between DS 35 and DS 36 (at jurisdiction level)
@@ -274,6 +284,14 @@ jobs_mohub<- jobs_mohub%>%
          prop_jur_35_out= jobs_35_out/total_jur_jobs_35,
          prop_jur_36_in= jobs_36_in/total_jur_jobs_36,
          prop_jur_36_out= jobs_36_out/total_jur_jobs_36)
+
+
+jobs_mohub<- jobs_mohub%>%
+  group_by(employment_type, employment_type_id, jurisdiction_id, jurisdiction)%>%
+  mutate(inc_change_36_in= jobs_36_in- lag(jobs_36_in), 
+         inc_change_35_in= jobs_35_in- lag(jobs_35_in),
+         inc_change_36_out= jobs_36_out- lag(jobs_36_out), 
+         inc_change_35_out= jobs_35_out- lag(jobs_35_out))
          
 #################################################
 
@@ -296,6 +314,8 @@ writeData(wb1, "Jobs_Mohub", jobs_mohub)
 addStyle(wb1,mohub, style = headerStyle, rows = 1, cols = 1: ncol(jobs_mohub), gridExpand = TRUE)
 
 saveWorkbook(wb1, outfile,overwrite=TRUE)
+
+
 
 
 
