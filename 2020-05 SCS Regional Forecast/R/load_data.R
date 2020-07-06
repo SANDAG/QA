@@ -1,9 +1,17 @@
-#This script is to prep necessary files for the 2020 SCS QA process.
-#TODO expand description.
+# 
+# This report summarizes select QA findings of the 2020 SCS Forecast review (2020-05).
+# 
+# Tests included in this report are:
+#   
+# Test #3: Household Units (Performance Analysis)
+# 
+# Thorough descriptions of these tests may be found here: 
+# https://sandag.sharepoint.com/qaqc/_layouts/15/Doc.aspx?sourcedoc={17b5d132-f152-49f3-8c62-0b2791a26dd4}&action=edit&wd=target%28Test%20Plan.one%7Cdb0a3336-7736-46dc-afd0-8707889af1a0%2FOverview%7C5e8c7ac7-61e5-40fa-8d9c-6ae544b57ed1%2F%29
+
 
 #assign ds_ids to compare 
 datasource_id_1 <- 35
-datasource_id_2 <- 34
+datasource_id_2 <- 36
 
 #set up
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
@@ -22,14 +30,14 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
 
 ## retrieve data from database 
 # ds_id1
-hh_1 <- readDB("../queries/hh_hhp_hhs.sql",datasource_id_1)
+hh_1 <- readDB("../queries/households.sql",datasource_id_1)
 jobs_1 <- readDB("../queries/jobs.sql",datasource_id_1)
 income_1<- readDB("../queries/household_income.sql",datasource_id_1)
 pop_1<- readDB("../queries/pop.sql",datasource_id_1)
 age_1<- readDB("../queries/age.sql",datasource_id_1)
 ethn_1<- readDB("../queries/ethnicity.sql",datasource_id_1)
 # ds_id2
-hh_2 <- readDB("../queries/hh_hhp_hhs.sql",datasource_id_2)
+hh_2 <- readDB("../queries/households.sql",datasource_id_2)
 jobs_2 <- readDB("../queries/jobs.sql",datasource_id_2)
 income_2<- readDB("../queries/household_income.sql",datasource_id_2)
 pop_2<- readDB("../queries/pop.sql",datasource_id_2)
