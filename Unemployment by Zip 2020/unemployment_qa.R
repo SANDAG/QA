@@ -13,7 +13,7 @@
 #set working directory to access files and save to
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-
+getwd()
 
 #Package test and loading necessary packages
 pkgTest <- function(pkg){
@@ -84,7 +84,7 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
-mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 8\\AGS_SD_ZIPcodes_names_May30.xlsx",
+mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\July 6\\AGS_SD_ZIPcodes_names_June27.xlsx",
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -119,7 +119,7 @@ test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
-mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 2\\AGS_SD_ZIPcodes_names_May23.xlsx",
+mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 29\\AGS_SD_ZIPcodes_names_June20.xlsx",
                      sheet= "MapWindow_ZIPcodes")
 
 test2<- mapwin_zip_new%>%
@@ -189,10 +189,29 @@ zip_calc2<- zip_calc2%>%
 zip_calc2<- (zip_calc2[,1:(ncol(zip_calc2)-1)]/zip_calc2$LBF)
 zip_calc2<- zip_calc2*100
 
-zip_calc2$avgPU_30May<- mean(mapwin_zip_new[[var1]])
+zip_calc2$avgPU_June27<- mean(mapwin_zip_new[[var1]])
 
 
 zip_calc2<- round(zip_calc2, 3)
+
+
+## ggplot for comparing data change
+zip_base<- mapwin_zip_base[p-1]
+zip_base$LBF<- mapwin_zip_base$LBF
+zip_base<- zip_base%>%
+  summarise_if(is.numeric, sum)
+zip_base<- (zip_base[,1:(ncol(zip_base))]/zip_base$LBF)
+zip_base<- zip_base*100
+zip_base<- zip_base[,2:ncol(zip_base)]
+zip_base$UE27JUN<- "NA"
+
+zip_base[3,]<- zip_calc2[,1:ncol((zip_calc2)-1)]
+
+zip_base<- zip_base[-2,]
+
+
+
+
 
 
 #############################################################
@@ -214,11 +233,12 @@ writeData(wb,test_4, test4)
 test_5 <- addWorksheet(wb, "Test 5",tabColour="red")
 writeData(wb,test_5, test5)
 
-ZIP_calc <- addWorksheet(wb, "ZIP_Calc ",tabColour="blue")
-writeData(wb,ZIP_calc, zip_calc)
-
-Regional_calc<- addWorksheet(wb, "Regional Agg",tabColour="purple")
+Regional_calc<- addWorksheet(wb, "Regional Agg",tabColour="cyan")
 writeData(wb,Regional_calc, zip_calc2)
+
+comparison<- addWorksheet(wb, "Regional Agg Comparison",tabColour="blue")
+writeData(wb,comparison, zip_base)
+
 
 
 
