@@ -30,6 +30,7 @@ pkgTest(packages)
 
 
 
+
 #open connection to retreive entire raw data (all geographies) from database
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 raw_dt<-data.table::as.data.table(
@@ -84,7 +85,7 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
-mapwin_zip_new<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 16\\AGS_SD_ZIPcodes_names_June6.xlsx",
+mapwin_zip_new<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 29\\AGS_SD_ZIPcodes_names_June20.xlsx",
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -119,7 +120,7 @@ test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
-mapwin_zip_base<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 8\\AGS_SD_ZIPcodes_names_May30.xlsx",
+mapwin_zip_base<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 22\\AGS_SD_ZIPcodes_names_June13.xlsx",
                      sheet= "MapWindow_ZIPcodes")
 
 test2<- mapwin_zip_new%>%
@@ -152,6 +153,7 @@ test4<- mapwin_zip_base%>%
 
 r<- grep("UE", colnames(mapwin_zip_base))
 
+r2<- grep("PU", colnames(mapwin_zip_base))
 
 test5<- data.frame(mapwin_zip_new[r]== mapwin_zip_base[r])
 
