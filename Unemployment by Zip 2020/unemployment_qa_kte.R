@@ -13,7 +13,7 @@
 #set working directory to access files and save to
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-getwd()
+
 
 #Package test and loading necessary packages
 pkgTest <- function(pkg){
@@ -27,6 +27,7 @@ pkgTest <- function(pkg){
 packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "plyr", "dplyr", "reshape2", 
               "stringr","gridExtra","grid","lattice","gtable","readxl", "openxlsx", "tidyverse", "compareDF")
 pkgTest(packages)
+
 
 
 
@@ -50,7 +51,7 @@ SDraw_dt<-data.table::as.data.table(
 RODBC::odbcClose(channel)
 
 #retrieve master SD zip code list from Sharepoint site
-sd_zip<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
+sd_zip<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
                    sheet = "Sheet1",
                    range= "A1:A110")
 
@@ -84,7 +85,7 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
-mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\July 6\\AGS_SD_ZIPcodes_names_June27.xlsx",
+mapwin_zip_new<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\July 13\\AGS_SD_ZIPcodes_names_July4.xlsx",
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -119,7 +120,7 @@ test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
-mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\June 29\\AGS_SD_ZIPcodes_names_June20.xlsx",
+mapwin_zip_base<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report\\Data\\July 6\\AGS_SD_ZIPcodes_names_June27.xlsx",
                      sheet= "MapWindow_ZIPcodes")
 
 test2<- mapwin_zip_new%>%
@@ -152,6 +153,7 @@ test4<- mapwin_zip_base%>%
 
 r<- grep("UE", colnames(mapwin_zip_base))
 
+r2<- grep("PU", colnames(mapwin_zip_base))
 
 test5<- data.frame(mapwin_zip_new[r]== mapwin_zip_base[r])
 
@@ -189,29 +191,10 @@ zip_calc2<- zip_calc2%>%
 zip_calc2<- (zip_calc2[,1:(ncol(zip_calc2)-1)]/zip_calc2$LBF)
 zip_calc2<- zip_calc2*100
 
-zip_calc2$avgPU_June27<- mean(mapwin_zip_new[[var1]])
+zip_calc2$avgPU_6June<- mean(mapwin_zip_new[[var1]])
 
 
 zip_calc2<- round(zip_calc2, 3)
-
-
-## ggplot for comparing data change
-zip_base<- mapwin_zip_base[p-1]
-zip_base$LBF<- mapwin_zip_base$LBF
-zip_base<- zip_base%>%
-  summarise_if(is.numeric, sum)
-zip_base<- (zip_base[,1:(ncol(zip_base))]/zip_base$LBF)
-zip_base<- zip_base*100
-zip_base<- zip_base[,2:ncol(zip_base)]
-zip_base$UE27JUN<- "NA"
-
-zip_base[3,]<- zip_calc2[,1:ncol((zip_calc2)-1)]
-
-zip_base<- zip_base[-2,]
-
-
-
-
 
 
 #############################################################
@@ -233,17 +216,16 @@ writeData(wb,test_4, test4)
 test_5 <- addWorksheet(wb, "Test 5",tabColour="red")
 writeData(wb,test_5, test5)
 
-Regional_calc<- addWorksheet(wb, "Regional Agg",tabColour="cyan")
+ZIP_calc <- addWorksheet(wb, "ZIP_Calc ",tabColour="blue")
+writeData(wb,ZIP_calc, zip_calc)
+
+Regional_calc<- addWorksheet(wb, "Regional Agg",tabColour="purple")
 writeData(wb,Regional_calc, zip_calc2)
-
-comparison<- addWorksheet(wb, "Regional Agg Comparison",tabColour="blue")
-writeData(wb,comparison, zip_base)
-
 
 
 
 #saving excel in output folder of the working directory
-maindir<-setwd("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
+maindir<-setwd("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Weekly Employment Report")
 
 # excel workbook output file name and folder with timestamp - this part didnt work for me last time so I just formatted and renamed the CSV
 now <- format(Sys.time(), "%Y%m%d")
