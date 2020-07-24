@@ -1,7 +1,11 @@
-#Purpose: 2018 Employment Inventory
-#Author: Kelsie Telson
+---
+title: "2020-07 Employment Inventory 2018"
+author: "Purva Singh & Kelsie Telson"
+date: "7/24/2020"
+output: html_document
+---
 
-#load useful functions
+```{r setup, include=FALSE}
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
@@ -23,7 +27,7 @@ connect_datawarehouse <- function() {
 
 
 
-packages <- c("RODBC","tidyverse","openxlsx","hash","readtext","data.table","dplyr")
+packages <- c("RODBC","tidyverse","openxlsx","hash","readtext","data.table","dplyr", "knitr")
 pkgTest(packages)
 
 
@@ -81,9 +85,13 @@ raw_dt_hqd <- data.table::as.data.table(
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
+```
 
+## Test 2
 
-#Test 2c/2d
+**ADD NOTES FROM TEST PLAN
+
+```{r test2}
 summary(raw_dt)
 
 test2c_na<-as.data.table(raw_dt %>%
@@ -99,16 +107,17 @@ test2c_zeros<- as.data.table(cbind(variable=c("zip", "emp1", "emp2", "emp3", "pa
                                    test2c_zeros))
 setnames(test2c_zeros, old = c('FALSE','TRUE'), new = c('Not Zero','Zero'))
 
-#Test 9
-raw_dt$emp_1_2_diff<-raw_dt$emp2-raw_dt$emp1
-raw_dt$emp_2_3_diff<-raw_dt$emp3-raw_dt$emp2
-raw_dt$emp_net_diff<-raw_dt$emp3-raw_dt$emp1
+kable(test2c_na)
 
-summary(raw_dt)
+kable(test2c_zeros)
 
-ggplot(data=subset(raw_dt, !is.na(emp_1_2_diff)), aes(emp_1_2_diff))+
-  geom_histogram()
+```
 
+## Test 7
+
+**ADD NOTES FROM TEST PLAN
+
+```{r test7}
 #Test 7
 test7<- as.data.table(cbind(variable=c("emp1","emp2", "emp3", "payroll"),
               rbind(sum(raw_dt$emp1, na.rm=TRUE),
@@ -120,5 +129,9 @@ test7<- as.data.table(cbind(variable=c("emp1","emp2", "emp3", "payroll"),
 test7$V2<- as.numeric(test7$V2)
 test7$bls<- as.numeric(test7$bls)
 test7$diff<- test7$V2-test7$bls
+
+kable(test7)
+
+```
 
 
