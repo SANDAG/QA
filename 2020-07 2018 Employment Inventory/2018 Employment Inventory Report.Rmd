@@ -122,15 +122,27 @@ kable(test1c_zeros, caption="Test 1d: Records with 0")
 
 ```
 
+## Test 4
+
+4c. 'own' should be discretely distributed, no trend
+Nearly all records have assignment of "5"
+
+4d. 'meei' should be discretely distributed, no trend
+Most records assigned "1", followed by "3", approximately even distribution of "4", "5", and "6". There are no records with "2".
+
+The PowerBI file containing the visuals associated with this analysis may be found at
+"R:\DPOE\Employment\CAEDD\QCEW Microdata\RESTRICTED\2019\OutputData\2018 Employment Inventory QA.pbix"
 
 
 ## Test 7
 
 7a. Check totals against BLS Quarter 3 2018 (establishments, employees)
- Totals in the SANDAG dataset are slightly lower (~23,000-24,000) for emp1, emp2, and emp3 as compared to BLS. Payroll is approximately $449 million less than BLS. 
+Totals in the SANDAG dataset are slightly lower (~23,000-24,000) for emp1, emp2, and emp3 as compared to BLS. Payroll is approximately $449 million less than BLS. 
 
 7b. Check totals against published annual totals from EDD Organization
 "R:\DPOE\Employment\CAEDD\QCEW Microdata\RESTRICTED\2018\SourceData"
+Analysis in PowerBI and R revealed discrepancies between txt files and final data from the SQL server for [emp1], [emp2], [emp3], and [payroll] variables. Overall, the final data files show less records than the raw txt files. 
+**This finding requires additional investigation from the requesting team.**
 
 
 
@@ -151,4 +163,22 @@ kable(test7a, caption="Test 7a: BLS Comparison")
 
 ```
 
+## Test 9
+
+9a. Employment by month per company should be consistent and shouldn't show any major changes, barring a change in operation state of the company
+
+A visual review was done for differences between Month 1 and Month 2, Month 2 and Month 3, and Month 1 and Month 3 (net difference over quarter). Overall, employee change over time was relatively stable for most employers. 
+
+There were several notable exceptions where differences appeared dramatic during a visual review.
+
+The PowerBI file containing the visuals associated with this analysis may be found at
+"R:\DPOE\Employment\CAEDD\QCEW Microdata\RESTRICTED\2019\OutputData\2018 Employment Inventory QA.pbix"
+
+##Other Findings
+
+a. Input in variables [end_] and [react] for several records appears invalid. See Test Plan for details. The PowerBI file containing the visuals associated with this analysis may be found at
+"R:\DPOE\Employment\CAEDD\QCEW Microdata\RESTRICTED\2019\OutputData\2018 Employment Inventory QA.pbix"
+
+b. There was a strong positive relationship between the number of [emp1]/[emp2]/[emp3, and the [payroll] for most employers. One employer was an outlier, having a higher payroll and lower employee count than most other employers. Additionally, one employer had a much higher payroll and employee count than most of the other employers in the region, however the payroll-employee relationship for this employer is still aligned with the overall trend. The PowerBI file containing the visuals associated with this analysis may be found at
+"R:\DPOE\Employment\CAEDD\QCEW Microdata\RESTRICTED\2019\OutputData\2018 Employment Inventory QA.pbix"
 
