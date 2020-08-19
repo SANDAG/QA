@@ -5,13 +5,13 @@
 ## c) CPA level comparison of jobs by sector between DS 35 and 38
 ## d) Priority Area Analysis (Mobility Hub+ Smart Growth) of Jobs and Jobs by sector
 
-
 ##########
 
 ## Setting up the R environment 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../queries/readSQL.R")
 source("mohub_smartgrowth.R")
+source("dim_mohub_sg.R")
 
 
 ##loading necessary packages
@@ -250,6 +250,10 @@ jobs_cpa_share<- jobs_cpa%>%
   group_by(cpa, yr_id, jurisdiction, jurisdiction_id, employment_type, employment_type_id)%>%
   summarize_at(vars(jobs_35, jobs_38), funs(sum))
 
+## Test 7d. Priority Area Analysis 
+
+## CPA
+
 jobs_pri_cpa<- merge(jobs_cpa, dim_mohub_sg, by= c("mgra", "mgra_id", "jurisdiction"), all= TRUE)
 
 jobs_pri_cpa[is.na(jobs_pri_cpa)]<- 0
@@ -275,8 +279,8 @@ jobs_pri_cpa_total<- jobs_pri_cpa_share%>%
   group_by(yr_id, cpa, jurisdiction)%>%
   summarise_at(vars(jobs_35_in, jobs_35_out, jobs_38_in, jobs_38_out), funs(sum))
 
+## Jurisdiction and Region
 
-## Test 7d. Priority Area Analysis 
 
 ## Step 1. Combining jobs_35 and jobs_38
 
