@@ -26,7 +26,7 @@ d_mgra <- data.table::as.data.table(
                   ,[mgra_id]
                   ,[jurisdiction]
                   FROM [demographic_warehouse].[dim].[mgra_denormalize]
-                  WHERE [series]=13
+                  WHERE [series]=14
                   GROUP BY [mgra]
                           ,[mgra_id]
                          ,[jurisdiction]"),

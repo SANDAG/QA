@@ -23,6 +23,7 @@ d_mgra <- data.table::as.data.table(
                   ,[cpa]
                   ,[jurisdiction]
                   FROM [demographic_warehouse].[dim].[mgra_denormalize]
+                  WHERE [series]=14
                   GROUP BY [mgra_id]
                          ,[mgra]
                          ,[zip]
@@ -75,4 +76,6 @@ ifelse(!dir.exists(file.path(maindir,outfolder)), dir.create(file.path(maindir,o
 outfile <- "../output"
 print(paste("output filepath: ",outfile))
 
-saveWorkbook(wb, outfile,overwrite=TRUE)
+saveWorkbook(wb, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//dimension.xlsx",overwrite=TRUE)
+print(outfile)
+

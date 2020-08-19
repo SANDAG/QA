@@ -40,9 +40,25 @@ ws_mohubs<- data.table::as.data.table(
 mgra_list<-merge(xref,
                  ws_mohubs,
                  by.x="mgra",
+                 by.y="MGRA",
+                 all.x=TRUE)
+
+wrong<-merge(xref,
+                 ws_mohubs,
+                 by.x="mgra",
                  by.y="MGRA")
+
+mgra_list<- subset(mgra_list, !is.na(mohub)|special_cap==1)
+
+x<-subset(mgra_list, !(mgra %in% wrong$mgra))
+x$flag<-1
+y<-merge(d_mgra,
+                    x,
+                    by="mgra",
+                    all.x=TRUE)
+
 
 #clean up
 odbcClose(channel)
-rm(xref,ws_mohubs,maindir,packages,channel)
+rm(xref,ws_mohubs,maindir,packages,channel, wrong)
 
