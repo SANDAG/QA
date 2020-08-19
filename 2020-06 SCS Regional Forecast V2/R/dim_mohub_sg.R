@@ -42,5 +42,3 @@ dim_mohub_sg<-merge(d_mgra,
                     by="mgra",
                     all.x=TRUE)
 
-#saveout table
-write.csv(dim_mohub_sg, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//dim_mohub_sg.csv")

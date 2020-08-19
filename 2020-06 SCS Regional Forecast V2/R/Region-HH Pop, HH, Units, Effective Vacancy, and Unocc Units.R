@@ -10,6 +10,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("../queries/readSQL.R")
 source("mohub_smartgrowth.R")
 source("common_functions.R")
+source("dim_mohub_sg.R")
 source("Data_HH_GQ_Vac_Unocc.R")
 
 # Loading the packages
@@ -304,22 +305,15 @@ pri_jur = addWorksheet(wb1, "PriorityArea_Jur", tabColour = "green")
 writeData(wb1, "PriorityArea_Jur", mgra_pri_jur_final)
 addStyle(wb1,pri_jur, style = headerStyle, rows = 1, cols = 1: ncol(mgra_pri_jur_final), gridExpand = TRUE)
 
+cpa1 = addWorksheet(wb1, "CPA", tabColour = "blue")
+writeData(wb1, "CPA", cpa)
+addStyle(wb1,cpa1, style = headerStyle, rows = 1, cols = 1: ncol(cpa), gridExpand = TRUE)
+
+cpa2 = addWorksheet(wb1, "PriorityArea_CPA", tabColour = "blue")
+writeData(wb1, "PriorityArea_CPA", cpa_pri)
+addStyle(wb1,cpa2, style = headerStyle, rows = 1, cols = 1: ncol(cpa_pri), gridExpand = TRUE)
+
 saveWorkbook(wb1, outfile,overwrite=TRUE)
-
-## saving CPA results in separate folder
-
-wb2 = createWorkbook()
-headerStyle<- createStyle(fontSize = 12 ,textDecoration = "bold")
-
-cpa1 = addWorksheet(wb2, "CPA", tabColour = "blue")
-writeData(wb2, "CPA", cpa)
-addStyle(wb2,cpa1, style = headerStyle, rows = 1, cols = 1: ncol(cpa), gridExpand = TRUE)
-
-cpa2 = addWorksheet(wb2, "PriorityArea_CPA", tabColour = "blue")
-writeData(wb2, "PriorityArea_CPA", cpa_pri)
-addStyle(wb2,cpa2, style = headerStyle, rows = 1, cols = 1: ncol(cpa_pri), gridExpand = TRUE)
-
-saveWorkbook(wb2, outfolder,overwrite=TRUE)
 
 
 
