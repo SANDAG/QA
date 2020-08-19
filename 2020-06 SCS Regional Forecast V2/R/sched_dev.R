@@ -5,7 +5,7 @@
 #   
 # Test #5: Scheduled Development (Information Item)
 # 
-# Thorough descriptions of these tests may be found here: 
+ 
 
 
 #set up
@@ -32,7 +32,7 @@ urban_sim<- data.table::as.data.table(
     ,year_simulation
     ,sum(unit_change) as unit_change
 FROM [urbansim].[urbansim].[urbansim_lite_output]
-where run_id = 477
+where run_id = 491
 group by parcel_id, year_simulation
 order by parcel_id, year_simulation"),
                   stringsAsFactors = FALSE),
@@ -40,72 +40,64 @@ order by parcel_id, year_simulation"),
 
 scs_parcel<- data.table::as.data.table(
   RODBC::sqlQuery(channel,
-                  paste0("SELECT [parcel_id]
-      ,[mgra]
-      ,[mohub]
-      ,[tier]
-      ,[score]
-      ,[subtier]
-      ,[cap_scs]
-      ,[cap_jurisdiction_id]
+                  paste0("SELECT [site_id]
+      ,[parcel_id]
       ,[capacity_3]
-      ,[scs_site_id]
+      ,[siteid]
+      ,[sitename]
       ,[startdate]
       ,[compdate]
-      ,[scenario_cap]
-      ,[cap_priority]
-  FROM [urbansim].[urbansim].[scs_parcel]"),
+      ,[scenario_id]
+  FROM [urbansim].[urbansim].[scs_scheduled_development]
+  WHERE [scenario_id]=2"),
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
 #Test 5a confirm that NAVWAR is included in SCS output data
-test5a<- non_res_sched_dev[siteid==19020 | siteid==19021]
-test5a<- scs_parcel[scs_site_id==19020 | scs_site_id==19021]
+test5a<- scs_parcel[site_id==19020 | site_id==19021]
 
 #Test 5b confirm input capacity (scs_parcel) to output (urban_sim)
 #aggregate and merge input and output files by parcel_id
-sum(scs_parcel$scenario_cap)
-sum(scs_parcel$capacity_3)
-scs_agg1<- aggregate(scenario_cap~parcel_id,data=scs_parcel,sum)
-scs_agg2<- aggregate(capacity_3~parcel_id,data=scs_parcel,sum)
-sum(scs_agg1$scenario_cap)
-sum(scs_agg2$capacity_3)
-scs_agg<- merge(scs_agg1, scs_agg2, by="parcel_id", all=TRUE)
+sum(scs_parcel$capacity_3, na.rm=TRUE)
+length(unique(scs_parcel$parcel_id))
 
-sum(urban_sim$unit_change)
+#create year of completion variable
+scs_parcel$comp_year<-substring(scs_parcel$compdate,1,4)
+
+scs_parcel$comp_year[scs_parcel$comp_year==" "]<-"2050"
+
+#sum(scs_parcel$capacity_3, na.rm=TRUE)
+scs_agg1<- aggregate(capacity_3~parcel_id,data=scs_parcel,sum)
+#scs_agg2<- aggregate(capacity_3~parcel_id,data=scs_parcel,sum)
+sum(scs_agg1$capacity_3, na.rm=TRUE)
+#sum(scs_agg2$capacity_3)
+#scs_agg<- merge(scs_agg1, scs_agg2, by="parcel_id", all=TRUE)
+
+sum(urban_sim$unit_change, na.rm=TRUE)
 urb_agg<- aggregate(unit_change~parcel_id, data=urban_sim,sum)
-sum(urb_agg$unit_change)
+sum(urb_agg$unit_change, na.rm=TRUE)
 
-merged<- merge(scs_agg, urb_agg,by="parcel_id", all=TRUE)
-sum(merged$scenario_cap)
-sum(merged$unit_change)
+merged<- merge(scs_agg1, urb_agg,by="parcel_id", all=TRUE)
+sum(merged$capacity_3, na.rm=TRUE)
+sum(merged$unit_change, na.rm=TRUE)
 #create flag for inconsistencies
-merged$flag[merged$scenario_cap!=merged$unit_change]<-"Not equal"
-merged$flag[merged$scenario_cap==merged$unit_change]<-"Equal"
+merged$flag[merged$capacity_3!=merged$unit_change]<-"Not equal"
+merged$flag[merged$capacity_3==merged$unit_change]<-"Equal"
 merged$flag[is.na(merged$unit_change)]<-"No change in output"
+merged$flag[is.na(merged$capacity_3)&!is.na(merged$unit_chage)]<-"Change without input"
 table(merged$flag)
 
-merged$flag2[is.na(merged$capacity_3)& is.na(merged$unit_change)]<-"No cap3, no unit change"
-merged$flag2[is.na(merged$capacity_3)& !is.na(merged$unit_change)]<-"Unit change, no cap3"
-merged$flag2[merged$capacity_3==merged$unit_change]<-"Cap3 and Unit Change Equal"
+years<-aggregate(comp_year~parcel_id, data=scs_parcel, max)
 
 final<- merge(merged,
-              scs_parcel[, c("parcel_id","mgra","cap_jurisdiction_id","tier")],
-              by="parcel_id")
-sum(final$scenario_cap)
-sum(final$unit_change)
-table(final$flag,final$tier)
+              years,
+              by="parcel_id",
+              all.x=TRUE)
+sum(final$capacity_3, na.rm=TRUE)
+sum(final$unit_change, na.rm=TRUE)
 
 #save out data file
 write.csv(final, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//scheduled_development.csv")
 
-write.csv(urban_sim, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//urban_sim.csv")
-write.csv(scs_parcel, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//scs_parcel.csv")
-
-scs_dates<- aggregate(scenario_cap~parcel_id+compdate2,data=scs_parcel,sum)
-date_check<-merge(urb_dates,
-                  scs_dates,
-                  by.x=c("parcel_id","year_simulation"),
-                  by.y=c("parcel_id","compdate2"))
-
-write.csv(date_check, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//date_check.csv")
+#write.csv(urban_sim, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//urban_sim.csv")
+#write.csv(scs_parcel, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//scs_parcel.csv")

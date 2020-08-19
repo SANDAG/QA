@@ -43,15 +43,17 @@ pop_2<- readDB("../queries/pop.sql",datasource_id_2)
 age_2<- readDB("../queries/age.sql",datasource_id_2)
 ethn_2<- readDB("../queries/ethnicity.sql",datasource_id_2)
 
-mohubs<- data.table::as.data.table(
-  RODBC::sqlQuery(channel,
-                  paste0("SELECT [mgra]
-                  ,[mohub]
-                  ,[score]
-                  ,[tier]
-                         FROM [urbansim].[ref].[scs_mgra_xref]"),
-                  stringsAsFactors = FALSE),
-  stringsAsFactors = FALSE)
+#mohubs<- data.table::as.data.table(
+#  RODBC::sqlQuery(channel,
+#                  paste0("SELECT [mgra]
+#                  ,[mohub]
+#                  ,[score]
+#                  ,[tier]
+#                  ,[special_cap]
+#                         FROM [urbansim].[ref].[scs_mgra_xref]
+#                         WHERE [mohub_version_id] = 2"),
+#                  stringsAsFactors = FALSE),
+#  stringsAsFactors = FALSE)
 
 odbcClose(channel)
 
@@ -87,4 +89,4 @@ write.csv(age,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA t
 
 write.csv(ethnicity,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/ethnicity.csv")
 
-write.csv(mohubs, "C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/mohubs_tiers.csv")
+#write.csv(mohubs, "C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/mohubs_tiers.csv")
