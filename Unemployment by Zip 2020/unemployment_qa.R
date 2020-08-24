@@ -51,7 +51,7 @@ SDraw_dt<-data.table::as.data.table(
 RODBC::odbcClose(channel)
 
 #retrieve master SD zip code list from Sharepoint site
-sd_zip<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
+sd_zip<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\ags ZIP codes.xlsx", 
                    sheet = "Sheet1",
                    range= "A1:A110")
 
@@ -85,7 +85,11 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
+<<<<<<< HEAD
+mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\August 14\\AGS_SD_ZIPcodes_names_August8.xlsx",
+=======
 mapwin_zip_new<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\August 10\\AGS_SD_ZIPcodes_names_August1.xlsx",
+>>>>>>> ceace437240bc337d9c3f84127c52a055ca2736f
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -120,7 +124,11 @@ test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
+<<<<<<< HEAD
+mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\August 10\\AGS_SD_ZIPcodes_names_August1.xlsx",
+=======
 mapwin_zip_base<- read_excel("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\August 3\\AGS_SD_ZIPcodes_names_July25.xlsx",
+>>>>>>> ceace437240bc337d9c3f84127c52a055ca2736f
                              sheet= "MapWindow_ZIPcodes")
 
 
@@ -191,7 +199,7 @@ zip_calc2<- zip_calc2%>%
 zip_calc2<- (zip_calc2[,1:(ncol(zip_calc2)-1)]/zip_calc2$LBF)
 zip_calc2<- zip_calc2*100
 
-zip_calc2$avgPU_July18<- mean(mapwin_zip_new[[var1]])
+zip_calc2$avgPU_Aug08<- mean(mapwin_zip_new[[var1]])
 
 
 zip_calc2<- round(zip_calc2, 3)
@@ -244,7 +252,7 @@ writeData(wb,comparison, zip_base)
 
 
 #saving excel in output folder of the working directory
-setwd("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Results")
+setwd("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Results")
 
 
 # excel workbook output file name and folder with timestamp - this part didnt work for me last time so I just formatted and renamed the CSV
@@ -252,7 +260,7 @@ now <- format(Sys.time(), "%Y%m%d")
 outputfile <- paste("Weekly_","Unemployment","_QA_",now,".xlsx",sep='')
 print(paste("output filename: ",outputfile))
 
-outfolder<- ("C:\\Users\\kte\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Results")
+outfolder<- ("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Results")
 
 
 outfile <- paste(outfolder,outputfile,sep='\\')
