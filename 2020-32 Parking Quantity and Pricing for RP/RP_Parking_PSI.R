@@ -23,7 +23,7 @@ readDB <- function(sql_query,datasource_id_to_use){
 ### Part 2: Loading the data
 
 
-## 1. dim.mgra table: MGRA dimension table with attributs for reference  
+## 1. dim.mgra table: MGRA dimension table with attributes for reference  
 
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=demographic_warehouse; trusted_connection=true')
 
@@ -109,8 +109,47 @@ check3<- priced%>%
 # merging priced + check 2 and then compare with noz
 
 
+# retrieve unique mgra list (all)
+mgra_list<- as.data.table(unique(dim_mgra$mgra))
+mgra_list<-rename(mgra_list, mgra= V1)
 
+#retrieve mobility hub mgra list and append a flag
+mohub_list<- as.data.table(mohub_np)
+mohub_list$mohub_flag<-1
+
+# append mohub magra data to master mgra list
+mgra_mohub<-merge(mgra_list,
+                  mohub_list,
+                  by= "mgra",
+                  all=TRUE)
+
+#retrieve priced mgra list and append a flag
+priced_list<-as.data.table(priced)
+priced_list$priced_flag<-1
+
+# append mohub magra data to master mgra list
+merged_test<- merge(mgra_mohub,
+                    priced_list,
+                    by= "mgra",
+                    all=TRUE)
+
+# confirm expected mgras flagged for each subgroup
+sum(merged_test$mohub_flag, na.rm=TRUE) #8812
+sum(merged_test$priced_flag, na.rm=TRUE) #6725
+
+
+#PURVA: This is where I really stopped. at this point we have "recreated" Nick's file in
+# our own method, so we just need to find the best comparison tool. Also, keep in mind that
+# some of the variable names are different between the tables- we might need to rename those first.
+# May the odds be ever in your favor. 
+library(arsenal)
+
+check4<- summary(comparedf(merged_test,np_out, by="mgra"))
+summary(comparedf(merged_test,np_out, by="mgra"))
+
+check4<-janitor::compare_df_cols(merged_test,np_out)
+
+#scratch area
 #dup_priced<- as.data.table(duplicated(priced$mgra))
 #park_t<- merge(mohub_np, priced, by.x= c("mgra", "MoHubName"), by.y = c("mgra", "mobility_hub_name"), all= TRUE)
-
 
