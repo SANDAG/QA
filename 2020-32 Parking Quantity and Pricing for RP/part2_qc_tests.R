@@ -49,17 +49,57 @@ test1(input1=parking2016,input2=parking2050) #pass
 
 ##Test 2: Confirm no stalls are lost from negative employment growth 
 
-#Step 0: determine instances of job loss for each file
+#Step 0: append parking stall difference for each stall type
+#2025
+parking2025$hstallsoth_dif<- parking2025$hstallsoth-parking2016$hstallsoth
+parking2025$hstallssam_dif<- parking2025$hstallssam-parking2016$hstallssam
+parking2025$dstallsoth_dif<- parking2025$dstallsoth-parking2016$dstallsoth
+parking2025$dstallssam_dif<- parking2025$dstallssam-parking2016$dstallssam
+parking2025$mstallsoth_dif<- parking2025$mstallsoth-parking2016$mstallsoth
+parking2025$mstallssam_dif<- parking2025$mstallssam-parking2016$mstallssam
+
+#2035
+parking2035$hstallsoth_dif<- parking2035$hstallsoth-parking2016$hstallsoth
+parking2035$hstallssam_dif<- parking2035$hstallssam-parking2016$hstallssam
+parking2035$dstallsoth_dif<- parking2035$dstallsoth-parking2016$dstallsoth
+parking2035$dstallssam_dif<- parking2035$dstallssam-parking2016$dstallssam
+parking2035$mstallsoth_dif<- parking2035$mstallsoth-parking2016$mstallsoth
+parking2035$mstallssam_dif<- parking2035$mstallssam-parking2016$mstallssam
+
+#Step 1: determine instances of job loss for each file
 #2025
 test2_2025<- parking2025 %>%
-  filter(emp_ag>parking2016$emp_ag)
+  filter(emp_total<parking2016$emp_total)
 #2035
 test2_2035<- parking2035 %>%
-  filter(emp_ag>parking2016$emp_ag)
+  filter(emp_total<parking2016$emp_total)
 #2050
 test2_2050<- parking2050 %>%
-  filter(emp_ag>parking2016$emp_ag)
+  filter(emp_total<parking2016$emp_total)
 
-#Step 1: for mgras where a decrease in employment is observed, confirm there were no stall decreases
+#TODO Step 2: define function to compare stall change 
+test2<- function(data) {
+  
+  column_names<-c("hstallsoth_dif","hstallssam_dif", "dstallsoth_dif",
+                  "dstallssam_dif", "mstallsoth_dif", "mstallssam_dif")
+  
+  for (i in column_names) {
+    print(table(ifelse(data$column_names<0,TRUE,FALSE)))
+  }
+  
+}
+
+test2(data=test2_2025)
+
+#TODO Step 2: for mgras where a decrease in employment is observed, confirm there were no stall decreases
+test2(output=test2_2025$hstallsoth, base=parking2016$hstallsoth)
+test2(output=test2_2035$hstallsoth, base=test2_2025$hstallsoth)
+test2(output=test2_2035$hstallsoth, base=test2_2025$hstallsoth)
+
+
+
+
+
+
 
 
