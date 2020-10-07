@@ -1,5 +1,5 @@
 ### Author: Kelsie Telson and Purva Singh
-### Project: 2020- 32 Regional Plan Parking
+### Project: 2020- 32 Regional Plan Parking (Part 1)
 
 ### Part 1: Setting up the R environment and loading required packages
 
@@ -9,9 +9,11 @@ source("common_functions.R")
 
 
 # Loading the packages
-packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
+packages <- c("arsenal", "data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
               "stringr","gridExtra","grid","lattice", "openxlsx", "rlang", "hash", "RCurl","readxl", "tidyverse")
 pkgTest(packages)
+
+library(arsenal)
 
 readDB <- function(sql_query,datasource_id_to_use){
   ds_sql = getSQL(sql_query)
@@ -92,64 +94,57 @@ odbcClose(channel)
 
 ## Part 1: Internal Consistency check- merging priced and non-priced and comparing with the np_out
 
-# check 1: to check which mgras from priced are in mohub_np: 6725
+# check 1: to check which mgras from mohub are NON-PRICED  
 check1<- mohub_np%>%
-  filter(mgra %in% priced$mgra)
-
-# Check 2: to check which mgras from priced are NOT IN mohub_np
-
-check2<- mohub_np%>%
   filter(!mgra %in% priced$mgra)
 
-# Check 3: to check which mgras from priced are not in mobility hub: 
+## adding a flag to priced and check1 (mohub non-priced)
 
-check3<- priced%>%
-  filter(!mgra %in% check1$mgra)
+priced$p.flag<- 1
+check1$nonpricedmohub.flag<- 0
 
-# merging priced + check 2 and then compare with noz
-
-
-# retrieve unique mgra list (all)
-mgra_list<- as.data.table(unique(dim_mgra$mgra))
-mgra_list<-rename(mgra_list, mgra= V1)
-
-#retrieve mobility hub mgra list and append a flag
-mohub_list<- as.data.table(mohub_np)
-mohub_list$mohub_flag<-1
-
-# append mohub magra data to master mgra list
-mgra_mohub<-merge(mgra_list,
-                  mohub_list,
-                  by= "mgra",
-                  all=TRUE)
-
-#retrieve priced mgra list and append a flag
-priced_list<-as.data.table(priced)
-priced_list$priced_flag<-1
-
-# append mohub magra data to master mgra list
-merged_test<- merge(mgra_mohub,
-                    priced_list,
-                    by= "mgra",
-                    all=TRUE)
-
-# confirm expected mgras flagged for each subgroup
-sum(merged_test$mohub_flag, na.rm=TRUE) #8812
-sum(merged_test$priced_flag, na.rm=TRUE) #6725
+# merging priced + check 1 to create an exhaustive list and then compare with noz
+all_mgra<- merge (priced, check1, by = 'mgra', all= TRUE )
 
 
-#PURVA: This is where I really stopped. at this point we have "recreated" Nick's file in
-# our own method, so we just need to find the best comparison tool. Also, keep in mind that
-# some of the variable names are different between the tables- we might need to rename those first.
-# May the odds be ever in your favor. 
-library(arsenal)
+# adding flags to np_out to compare
+np_out<- np_out%>%
+  mutate(flag= case_when((is.na(mohubname) & is.na(PriceLoc2025)) ~3, 
+                         (!is.na(mohubname) & is.na (PriceLoc2025)) ~ 0, 
+                         TRUE ~ 1))
+# comparing priced mgras with mgras flagged as 1 in np_out
 
-check4<- summary(comparedf(merged_test,np_out, by="mgra"))
-summary(comparedf(merged_test,np_out, by="mgra"))
+np_out_priced<- np_out%>%
+  filter(flag== 1)%>%
+  arrange(mgra)
 
-check4<-janitor::compare_df_cols(merged_test,np_out)
+priced<- priced%>%
+  arrange(mgra)
 
-#scratch area
-#dup_priced<- as.data.table(duplicated(priced$mgra))
-#park_t<- merge(mohub_np, priced, by.x= c("mgra", "MoHubName"), by.y = c("mgra", "mobility_hub_name"), all= TRUE)
+identical(np_out_priced$mgra, priced$mgra)   ## TRUE
+
+# comparing mobility hub non-priced mgras with check 1 mgras 
+
+np_out_mohub_np<- np_out%>%
+  filter(flag== 0)%>%
+  arrange(mgra)
+
+check1<- check1%>%
+  arrange(mgra)
+
+identical(np_out_mohub_np$mgra, check1$mgra) ## TRUE
+
+# comparing non-mohub non-priced mgra (flagged as 3) with [dim-mgra- all_mgra]
+
+np_out_nonmohub_np<- np_out%>%
+  filter(flag== 3)%>%
+  arrange(mgra)
+
+non_mohub_np<- mgra_list%>%
+  filter(!mgra %in% all_mgra$mgra)%>%
+  arrange(mgra)
+
+identical(np_out_nonmohub_np$mgra, non_mohub_np$mgra) ## TRUE
+
+
 
