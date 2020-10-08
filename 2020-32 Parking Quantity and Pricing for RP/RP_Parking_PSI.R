@@ -13,8 +13,6 @@ packages <- c("arsenal", "data.table", "ggplot2", "scales", "sqldf", "rstudioapi
               "stringr","gridExtra","grid","lattice", "openxlsx", "rlang", "hash", "RCurl","readxl", "tidyverse")
 pkgTest(packages)
 
-library(arsenal)
-
 readDB <- function(sql_query,datasource_id_to_use){
   ds_sql = getSQL(sql_query)
   ds_sql <- gsub("ds_id",datasource_id_to_use,ds_sql)
@@ -38,6 +36,9 @@ dim_mgra<- data.table::as.data.table(
   stringsAsFactors = FALSE)
 
 odbcClose(channel)
+
+mgra_list<- as.data.table(unique(dim_mgra$mgra))
+mgra_list<-rename(mgra_list, mgra= V1)
 
 ## 2. priced: MGRAs with [pricing_requirements_scenario_id] = 1 and [mgra_scenario_id] = 1
 
@@ -145,6 +146,7 @@ non_mohub_np<- mgra_list%>%
   arrange(mgra)
 
 identical(np_out_nonmohub_np$mgra, non_mohub_np$mgra) ## TRUE
+
 
 
 
