@@ -116,8 +116,8 @@ test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code
          PU_check= test1_crosscheck[[var1]]== mapwin_zip_new[[var1]])
 
 #backup- in case Test1 fails, determine which zip codes are in new file but not old file
-test1.1<- mapwin_zip_new %>%
-  filter(!ZIP %in% mapwin_zip_base$ZIP)
+#test1.1<- mapwin_zip_new %>%
+ # filter(!ZIP %in% mapwin_zip_base$ZIP)
 
 
 # Test 2: Comparing with previous week's file 
