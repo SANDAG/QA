@@ -85,7 +85,7 @@ SDraw_dt<- identical_check(sd_zip_check,SDraw_dt)
 
 #Loading the new AGS dataset
 
-mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\August 31\\AGS_SD_ZIPcodes_names_August22.xlsx",
+mapwin_zip_new<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\Sept 28\\AGS_SD_ZIPcodes_names_September19.xlsx",
                             sheet= "MapWindow_ZIPcodes")
 
 mapwin_zip_new<-mapwin_zip_new[order(mapwin_zip_new$ZI),]
@@ -120,8 +120,8 @@ test1<- mapwin_zip_new%>%     ## if you get error in this code chunk, check code
 
 ##loading the previous week's file for comparison and naming it base file (make change to the file path, folder name, file name)
 
-mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\August 24\\AGS_SD_ZIPcodes_names_August15.xlsx",
-                            sheet= "MapWindow_ZIPcodes")
+mapwin_zip_base<- read_excel("C:\\Users\\psi\\San Diego Association of Governments\\SANDAG QA QC - Documents\\Projects\\2020\\2020-04 Weekly Employment Report\\Data\\Sept 21\\AGS_SD_ZIPcodes_names_September12.xlsx",
+                             sheet= "MapWindow_ZIPcodes")
 
 test2<- mapwin_zip_new%>%
 mutate(ZIP_check_base= mapwin_zip_base$ZI== mapwin_zip_new$ZI, 
