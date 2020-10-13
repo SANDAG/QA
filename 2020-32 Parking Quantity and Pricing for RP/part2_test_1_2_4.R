@@ -110,6 +110,47 @@ test2(data=test2_2035, col=test2_2035$mstallssam_dif) #pass
 
 ##Test 4
 
+#Step 0: Set up working data table/
+#Assess employment total change between two year increments
+parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_02_np.csv")
+parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_02_np.csv")
+
+parking2035<-as.data.table(parking2035)
+parking2050<-as.data.table(parking2050)
+
+parking2050<-as.data.table(parking2050[,list("mgra"=mgra,"emp_2050"=emp_total,"h_oth_50"=hstallsoth,"h_sam_50"=hstallssam,"d_oth_50"=dstallsoth,
+                            "d_sam_50"=dstallssam, "m_oth_50"=mstallsoth, "m_sam_50"=mstallssam)])
+parking2035<-as.data.table(parking2035[,list("mgra"=mgra,"emp_2035"=emp_total,"h_oth_35"=hstallsoth,"h_sam_35"=hstallssam,"d_oth_35"=dstallsoth,
+                                             "d_sam_35"=dstallssam, "m_oth_35"=mstallsoth, "m_sam_35"=mstallssam)])
+
+test4<-merge(parking2050,
+             parking2035,
+             by="mgra"
+             )
+
+test4<- merge(test4,
+              np_out[,c("mgra","baseline_req_pricing","annual_chg_2036_2050")],
+              by="mgra")
+
+#Step 1: test to determine if each stall type in 2050 is less than or equal to 2035
+test4_a<- test4 %>%
+  filter(h_oth_50>h_oth_35) #62 failures
+test4_b<- test4 %>%
+  filter(h_sam_50>h_sam_35) #62 failures
+test4_c<- test4 %>%
+  filter(d_oth_50>d_oth_35) #62 failures
+test4_d<- test4 %>%
+  filter(d_sam_50>d_sam_35) #62 failures
+test4_e<- test4 %>%
+  filter(m_oth_50>m_oth_35) #62 failures
+test4_f<- test4 %>%
+  filter(d_sam_50>d_sam_35) #62 failures
+
+#Step 2: save output
+write.csv(test4_a, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Results//test4.csv")
+
+##Test 5
+
 #Step 0: load pricing table
 channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8; database=RTP2021; trusted_connection=true')
 np_out<- data.table::as.data.table(
@@ -122,33 +163,36 @@ np_out<- data.table::as.data.table(
 odbcClose(channel)
 
 #Step 1: Set up working data table/
-#Assess employment total change between two year increments
+parking2025<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2025_02_np.csv")
+parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_02_np.csv")
+parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_02_np.csv")
+
+parking2025<-as.data.table(parking2025)
+parking2035<-as.data.table(parking2035)
 parking2050<-as.data.table(parking2050)
 
-test4<- parking2050[ ,list(
-  mgra=parking2050$mgra,
-  emp_2050=parking2050$emp_total,
-  emp_2035=parking2035$emp_total,
-  emp_2025=parking2025$emp_total,
-  parkarea_2035=parking2035$parkarea,
-  parkarea_2050=parking2050$parkarea,
-  emp_dif=parking2050$emp_total-parking2035$emp_total,
-  h_oth_35=parking2035$hstallsot,
-  h_sam_35=parking2035$hstallssam,
-  d_oth_35=parking2035$dstallsoth,
-  d_sam_35=parking2035$dstallssam,
-  m_oth_35=parking2035$mstallsoth,
-  m_sam_35=parking2035$mstallssam,
-  h_oth_50=parking2050$hstallsot,
-  h_sam_50=parking2050$hstallssam,
-  d_oth_50=parking2050$dstallsoth,
-  d_sam_50=parking2050$dstallssam,
-  m_oth_50=parking2050$mstallsoth,
-  m_sam_50=parking2050$mstallssam)]
+parking2050<-as.data.table(parking2050[,list("mgra"=mgra,"emp_2050"=emp_total,"h_oth_50"=hstallsoth,"h_sam_50"=hstallssam,"d_oth_50"=dstallsoth,
+                                             "d_sam_50"=dstallssam, "m_oth_50"=mstallsoth, "m_sam_50"=mstallssam)])
+parking2035<-as.data.table(parking2035[,list("mgra"=mgra,"emp_2035"=emp_total,"h_oth_35"=hstallsoth,"h_sam_35"=hstallssam,"d_oth_35"=dstallsoth,
+                                             "d_sam_35"=dstallssam, "m_oth_35"=mstallsoth, "m_sam_35"=mstallssam)])
 
-test4<- merge(test4,
+parking2025<-as.data.table(parking2025[,list("mgra"=mgra,"emp_2025"=emp_total)])
+
+test5<-merge(parking2050,
+             parking2035,
+             by="mgra"
+)
+
+test5<-merge(test5,
+             parking2025,
+             by="mgra"
+)
+
+test5<- merge(test5,
               np_out[,c("mgra","baseline_req_pricing","annual_chg_2036_2050")],
               by="mgra")
+
+
 
 #Step 2: Define function that considers employment change and then applies appropriate decay formula
 
@@ -176,108 +220,145 @@ decay_emp_dec<- function(base_stalls,
 
 
 #Step 3: split data by cases that observed employment increases vs decreases/no change
-test4_emp_inc<- test4 %>%
-  filter(emp_2050>emp_2035)
-test4_emp_dec<- test4 %>%
-  filter(emp_2050<=emp_2035)
+test5_emp_inc<- test5 %>%
+  filter(emp_2050>=emp_2035)
+test5_emp_dec<- test5 %>%
+  filter(emp_2050<emp_2035)
 
 
 #Step 4: Apply decay functions to working data tables
 
 #increased employment
-test4_inc<- test4_emp_inc[, list(
+test5_inc<- test5_emp_inc[, list(
   mgra=mgra,
-  h_oth=decay(base_stalls = test4_emp_inc$h_oth_35, annual_change = test4_emp_inc$annual_chg_2036_2050,
+  h_oth=decay(base_stalls = test5_emp_inc$h_oth_35, annual_change = test5_emp_inc$annual_chg_2036_2050,
                      current_year=2050, comp_year=2035),
-  h_sam=decay(base_stalls = test4_emp_inc$h_sam_35, annual_change = test4_emp_inc$annual_chg_2036_2050,
+  h_sam=decay(base_stalls = test5_emp_inc$h_sam_35, annual_change = test5_emp_inc$annual_chg_2036_2050,
                        current_year=2050, comp_year=2035),
-  d_oth=decay(base_stalls = test4_emp_inc$d_oth_35, annual_change = test4_emp_inc$annual_chg_2036_2050,
+  d_oth=decay(base_stalls = test5_emp_inc$d_oth_35, annual_change = test5_emp_inc$annual_chg_2036_2050,
                        current_year=2050, comp_year=2035),
-  d_sam=decay(base_stalls = test4_emp_inc$d_sam_35, annual_change = test4_emp_inc$annual_chg_2036_2050,
+  d_sam=decay(base_stalls = test5_emp_inc$d_sam_35, annual_change = test5_emp_inc$annual_chg_2036_2050,
                       current_year=2050, comp_year=2035),
-  m_oth=decay(base_stalls = test4_emp_inc$m_oth_35, annual_change = test4_emp_inc$annual_chg_2036_2050,
+  m_oth=decay(base_stalls = test5_emp_inc$m_oth_35, annual_change = test5_emp_inc$annual_chg_2036_2050,
                       current_year=2050, comp_year=2035),
-  m_sam=decay(base_stalls = test4_emp_inc$m_sam_35, annual_change = test4_emp_inc$annual_chg_2036_2050,
+  m_sam=decay(base_stalls = test5_emp_inc$m_sam_35, annual_change = test5_emp_inc$annual_chg_2036_2050,
                       current_year=2050, comp_year=2035)
   )]
 
 
 #decreased/constant employment
-test4_dec<- test4_emp_dec[, list(
-  mgra=mgra,
-  h_oth=decay(base_stalls = decay_emp_dec(base_stalls = test4_emp_dec$h_oth_35, 
-                                          current_emp= test4_emp_dec$emp_2035,
-                                          base_emp = test4_emp_dec$emp_2025,
-                                          baseline_req_mgra=test4_emp_dec$baseline_req_pricing),
-              annual_change = test4_emp_dec$annual_chg_2036_2050,
+test5_dec<- 
+  test5_emp_dec[, list(
+    mgra=mgra,
+    h_oth=decay(base_stalls = decay_emp_dec(base_stalls = test5_emp_dec$h_oth_35, 
+                                          current_emp= test5_emp_dec$emp_2050,
+                                          base_emp = test5_emp_dec$emp_2035,
+                                          baseline_req_mgra=test5_emp_dec$baseline_req_pricing),
+              annual_change = test5_emp_dec$annual_chg_2036_2050,
               current_year=2050, 
               comp_year=2035),
-  h_sam=decay(base_stalls = decay_emp_dec(base_stalls = test4_emp_dec$h_sam_35, 
-                                          current_emp= test4_emp_dec$emp_2035,
-                                          base_emp = test4_emp_dec$emp_2025,
-                                          baseline_req_mgra=test4_emp_dec$baseline_req_pricing),
-              annual_change = test4_emp_dec$annual_chg_2036_2050,
+    h_sam=decay(base_stalls = decay_emp_dec(base_stalls = test5_emp_dec$h_sam_35, 
+                                          current_emp= test5_emp_dec$emp_2050,
+                                          base_emp = test5_emp_dec$emp_2035,
+                                          baseline_req_mgra=test5_emp_dec$baseline_req_pricing),
+              annual_change = test5_emp_dec$annual_chg_2036_2050,
               current_year=2050, 
               comp_year=2035),
-  d_oth=decay(base_stalls = decay_emp_dec(base_stalls = test4_emp_dec$d_oth_35, 
-                                          current_emp= test4_emp_dec$emp_2035,
-                                          base_emp = test4_emp_dec$emp_2025,
-                                          baseline_req_mgra=test4_emp_dec$baseline_req_pricing),
-              annual_change = test4_emp_dec$annual_chg_2036_2050,
+    d_oth=decay(base_stalls = decay_emp_dec(base_stalls = test5_emp_dec$d_oth_35, 
+                                          current_emp= test5_emp_dec$emp_2050,
+                                          base_emp = test5_emp_dec$emp_2035,
+                                          baseline_req_mgra=test5_emp_dec$baseline_req_pricing),
+              annual_change = test5_emp_dec$annual_chg_2036_2050,
               current_year=2050, 
               comp_year=2035),
-  d_sam=decay(base_stalls = decay_emp_dec(base_stalls = test4_emp_dec$d_sam_35, 
-                                          current_emp= test4_emp_dec$emp_2035,
-                                          base_emp = test4_emp_dec$emp_2025,
-                                          baseline_req_mgra=test4_emp_dec$baseline_req_pricing),
-              annual_change = test4_emp_dec$annual_chg_2036_2050,
+    d_sam=decay(base_stalls = decay_emp_dec(base_stalls = test5_emp_dec$d_sam_35, 
+                                          current_emp= test5_emp_dec$emp_2050,
+                                          base_emp = test5_emp_dec$emp_2035,
+                                          baseline_req_mgra=test5_emp_dec$baseline_req_pricing),
+              annual_change = test5_emp_dec$annual_chg_2036_2050,
               current_year=2050, 
               comp_year=2035),
-  m_oth=decay(base_stalls = decay_emp_dec(base_stalls = test4_emp_dec$m_oth_35, 
-                                          current_emp= test4_emp_dec$emp_2035,
-                                          base_emp = test4_emp_dec$emp_2025,
-                                          baseline_req_mgra=test4_emp_dec$baseline_req_pricing),
-              annual_change = test4_emp_dec$annual_chg_2036_2050,
+    m_oth=decay(base_stalls = decay_emp_dec(base_stalls = test5_emp_dec$m_oth_35, 
+                                          current_emp= test5_emp_dec$emp_2050,
+                                          base_emp = test5_emp_dec$emp_2035,
+                                          baseline_req_mgra=test5_emp_dec$baseline_req_pricing),
+              annual_change = test5_emp_dec$annual_chg_2036_2050,
               current_year=2050, 
               comp_year=2035),
-  m_sam=decay(base_stalls = decay_emp_dec(base_stalls = test4_emp_dec$m_sam_35, 
-                                          current_emp= test4_emp_dec$emp_2035,
-                                          base_emp = test4_emp_dec$emp_2025,
-                                          baseline_req_mgra=test4_emp_dec$baseline_req_pricing),
-              annual_change = test4_emp_dec$annual_chg_2036_2050,
+    m_sam=decay(base_stalls = decay_emp_dec(base_stalls = test5_emp_dec$m_sam_35, 
+                                          current_emp= test5_emp_dec$emp_2050,
+                                          base_emp = test5_emp_dec$emp_2035,
+                                          baseline_req_mgra=test5_emp_dec$baseline_req_pricing),
+              annual_change = test5_emp_dec$annual_chg_2036_2050,
               current_year=2050, 
               comp_year=2035)
 )]
 
 
-#Step 5: build table to merge and compare data into output table
-test4_merged<-as.data.table(rbind(test4_inc,
-                    test4_dec))
-
+#Step 5: build table to merge and compare data into output table and sort by mgra
+test5_merged<-as.data.table(rbind(test5_inc,
+                    test5_dec))
+test5_merged<- test5_merged[order(mgra),]
 
 
 #Step 6: compare calculated values to output table
-test4_final<- test4_merged[, list(
-  mgra=test4_merged$mgra,
-  h_oth_tst=test4_merged$h_oth==parking2050$hstallsoth,
-  h_sam_tst=test4_merged$h_sam==parking2050$hstallssam,
-  d_oth_tst=test4_merged$d_oth==parking2050$dstallsoth,
-  d_sam_tst=test4_merged$d_sam==parking2050$dstallssam,
-  m_oth_tst=test4_merged$m_oth==parking2050$mstallsoth,
-  m_sam_tst=test4_merged$m_sam==parking2050$mstallssam)
-  ]
+test5_final<- merge(test5_merged,
+                    parking2050,
+                    by="mgra")
 
-#Step 7: generate test results
-table(test4_final$h_oth_tst)
-table(test4_final$h_sam_tst)
-table(test4_final$h_oth_tst)
-table(test4_final$d_oth_tst)
-table(test4_final$d_sam_tst)
-table(test4_final$m_oth_tst)
-table(test4_final$m_sam_tst)
+#Step 7: round calculated values to nearest whole number
+test5_final<- ceiling(test5_final)
+
+#Step 8: correct values for baseline_req_mgra 
+#8a: pull in original series data
+s1_parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_01.csv")
+
+#8b: merge in conditional variable
+test5_final<- merge(test5_final,
+                    np_out[,c("mgra","baseline_req_pricing")],
+                    by="mgra")
+
+#8c: merge in series 1 stall values
+test5_final<-merge(test5_final,
+                   s1_parking2050[,c("mgra","hstallsoth", "hstallssam",
+                                     "dstallsoth","dstallssam","mstallsoth",
+                                     "mstallssam")],
+                   by="mgra")
+
+
+#8c: for mgras with baseline_req_pricing=0 or null, replace values with those in 01 series file
+test5_final[baseline_req_pricing=="0", h_oth := hstallsoth]
+test5_final[baseline_req_pricing=="0", h_sam := hstallssam]
+test5_final[baseline_req_pricing=="0", d_oth := dstallsoth]
+test5_final[baseline_req_pricing=="0", d_sam := dstallssam]
+test5_final[baseline_req_pricing=="0", m_oth := mstallsoth]
+test5_final[baseline_req_pricing=="0", m_sam := mstallssam]
+test5_final[is.na(baseline_req_pricing), h_oth := hstallsoth]
+test5_final[is.na(baseline_req_pricing), h_sam := hstallssam]
+test5_final[is.na(baseline_req_pricing), d_oth := dstallsoth]
+test5_final[is.na(baseline_req_pricing), d_sam := dstallssam]
+test5_final[is.na(baseline_req_pricing), m_oth := mstallsoth]
+test5_final[is.na(baseline_req_pricing), m_sam := mstallssam]
+
+#Step 9: generate test results
+table(test5_final$h_oth==test5_final$h_oth_50)
+table(test5_final$h_sam==test5_final$h_sam_50)
+table(test5_final$d_oth==test5_final$d_oth_50)
+table(test5_final$d_sam==test5_final$d_sam_50)
+table(test5_final$m_oth==test5_final$m_oth_50)
+table(test5_final$m_sam==test5_final$m_sam_50)
 
 
 #Step 8: generate list of MGRAs failing test in any stall category 
-test4_failures<-test4_final %>%
-  filter(h_oth_tst==FALSE|h_sam_tst==FALSE|d_oth_tst==FALSE|d_sam_tst==FALSE|m_oth_tst==FALSE|m_sam_tst==FALSE)
-
+test5_a<- test5_final %>%
+  filter(test5_final$h_oth!=test5_final$h_oth_50)
+test5_b<- test5_final %>%
+  filter(test5_final$h_sam!=test5_final$h_sam_50)
+test5_c<- test5_final %>%
+  filter(test5_final$d_oth!=test5_final$h_oth_50)
+test5_d<- test5_final %>%
+  filter(test5_final$d_sam!=test5_final$d_sam_50)
+test5_e<- test5_final %>%
+  filter(test5_final$h_oth!=test5_final$h_oth_50)
+test5_f<- test5_final %>%
+  filter(test5_final$m_sam!=test5_final$m_sam_50)
