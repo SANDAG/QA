@@ -25,17 +25,17 @@ channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=de
 
 #load data table from database
 datasource_id1<-35
-datasource_id2<- 38
+datasource_id2<- 39
 jur_med_inc_35 <- readDB("../queries/median_income_jur_ds_id.sql",datasource_id1)
 jur_med_inc_38 <- readDB("../queries/median_income_jur_ds_id.sql",datasource_id2)
 
 #set datasource_id variable for each data table
 jur_med_inc_35$datasource_id<-35
-jur_med_inc_38$datasource_id<-38
+jur_med_inc_38$datasource_id<-39
 
 #combine datatables into one table for export
 jur_med_inc<- rbind(jur_med_inc_35,
                     jur_med_inc_38)
 
 #export into csv for PowerBI
-write.csv(jur_med_inc,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/med_income.csv")
+write.csv(jur_med_inc,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/med_income.csv")

@@ -11,7 +11,7 @@
 
 #assign ds_ids to compare 
 datasource_id_1 <- 35
-datasource_id_2 <- 36
+datasource_id_2 <- 39
 
 #set up
 maindir = dirname(rstudioapi::getSourceEditorContext()$path)
@@ -76,16 +76,16 @@ ethnicity<- rbind(ethn_1,
                   ethn_2)
 
 #saveout data for PowerBI
-write.csv(hh,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/hh.csv")
+write.csv(hh,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/hh.csv")
 
-write.csv(jobs,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/jobs.csv")
+write.csv(jobs,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/jobs.csv")
 
-write.csv(income,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/income.csv")
+write.csv(income,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/income.csv")
 
-write.csv(pop,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/pop.csv")
+write.csv(pop,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/pop.csv")
 
-write.csv(age,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/age.csv")
+write.csv(age,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/age.csv")
 
-write.csv(ethnicity,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/ethnicity.csv")
+write.csv(ethnicity,"C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/ethnicity.csv")
 
-write.csv(mohubs, "C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/SCS/R/output/mohubs_tiers.csv")
+write.csv(mohubs, "C:/Users/kte/OneDrive - San Diego Association of Governments/QA temp/Revised Baseline/R/mohubs_tiers.csv")
