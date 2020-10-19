@@ -110,8 +110,7 @@ test2(data=test2_2035, col=test2_2035$mstallssam_dif) #pass
 
 ##Test 4
 
-#Step 0: Set up working data table/
-#Assess employment total change between two year increments
+#Step 0: Set up working data table
 parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_02_np.csv")
 parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_02_np.csv")
 
@@ -128,11 +127,49 @@ test4<-merge(parking2050,
              by="mgra"
              )
 
-test4<- merge(test4,
-              np_out[,c("mgra","baseline_req_pricing","annual_chg_2036_2050")],
-              by="mgra")
 
-#Step 1: test to determine if each stall type in 2050 is less than or equal to 2035
+#Step 1: correct values for baseline_req_mgra 
+#1a: pull in pricing table and original series data
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8; database=RTP2021; trusted_connection=true')
+np_out<- data.table::as.data.table(
+  RODBC::sqlQuery(channel, 
+                  paste0("SELECT *
+                           FROM [sql2014a8].[ws].[dbo].[noz_parking_mgra_info]" ),
+                  stringsAsFactors= FALSE),
+  stringsAsFactors= FALSE)
+
+odbcClose(channel)
+
+s1_parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_01.csv")
+
+#1b: merge in conditional variable
+test4<- merge(test4,
+                    np_out[,c("mgra","baseline_req_pricing")],
+                    by="mgra")
+
+#1c: merge in series 1 stall values
+test4<-merge(test4,
+                   s1_parking2050[,c("mgra","hstallsoth", "hstallssam",
+                                     "dstallsoth","dstallssam","mstallsoth",
+                                     "mstallssam")],
+                   by="mgra")
+
+
+#1d: for mgras with baseline_req_pricing=0 or null, replace values with those in 01 series file
+test4[baseline_req_pricing=="0", h_oth := hstallsoth]
+test4[baseline_req_pricing=="0", h_sam := hstallssam]
+test4[baseline_req_pricing=="0", d_oth := dstallsoth]
+test4[baseline_req_pricing=="0", d_sam := dstallssam]
+test4[baseline_req_pricing=="0", m_oth := mstallsoth]
+test4[baseline_req_pricing=="0", m_sam := mstallssam]
+test4[is.na(baseline_req_pricing), h_oth := hstallsoth]
+test4[is.na(baseline_req_pricing), h_sam := hstallssam]
+test4[is.na(baseline_req_pricing), d_oth := dstallsoth]
+test4[is.na(baseline_req_pricing), d_sam := dstallssam]
+test4[is.na(baseline_req_pricing), m_oth := mstallsoth]
+test4[is.na(baseline_req_pricing), m_sam := mstallssam]
+
+#Step 2: test to determine if each stall type in 2050 is less than or equal to 2035
 test4_a<- test4 %>%
   filter(h_oth_50>h_oth_35) #62 failures
 test4_b<- test4 %>%
@@ -146,7 +183,7 @@ test4_e<- test4 %>%
 test4_f<- test4 %>%
   filter(d_sam_50>d_sam_35) #62 failures
 
-#Step 2: save output
+#Step 3: save output
 write.csv(test4_a, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Results//test4.csv")
 
 ##Test 5
@@ -194,7 +231,7 @@ test5<- merge(test5,
 
 
 
-#Step 2: Define function that considers employment change and then applies appropriate decay formula
+#Step 2: Define functions for decay formula and stall change formula
 
 #function for cases with increased employment
 decay<- function(base_stalls,
@@ -221,14 +258,14 @@ decay_emp_dec<- function(base_stalls,
 
 #Step 3: split data by cases that observed employment increases vs decreases/no change
 test5_emp_inc<- test5 %>%
-  filter(emp_2050>=emp_2035)
+  filter(emp_2050>emp_2035)
 test5_emp_dec<- test5 %>%
-  filter(emp_2050<emp_2035)
+  filter(emp_2050<=emp_2035)
 
 
 #Step 4: Apply decay functions to working data tables
 
-#increased employment
+#increased employment/constant employment
 test5_inc<- test5_emp_inc[, list(
   mgra=mgra,
   h_oth=decay(base_stalls = test5_emp_inc$h_oth_35, annual_change = test5_emp_inc$annual_chg_2036_2050,
@@ -246,7 +283,7 @@ test5_inc<- test5_emp_inc[, list(
   )]
 
 
-#decreased/constant employment
+#decreased employment
 test5_dec<- 
   test5_emp_dec[, list(
     mgra=mgra,
@@ -326,7 +363,7 @@ test5_final<-merge(test5_final,
                    by="mgra")
 
 
-#8c: for mgras with baseline_req_pricing=0 or null, replace values with those in 01 series file
+#8d: for mgras with baseline_req_pricing=0 or null, replace values with those in 01 series file
 test5_final[baseline_req_pricing=="0", h_oth := hstallsoth]
 test5_final[baseline_req_pricing=="0", h_sam := hstallssam]
 test5_final[baseline_req_pricing=="0", d_oth := dstallsoth]
@@ -349,16 +386,41 @@ table(test5_final$m_oth==test5_final$m_oth_50)
 table(test5_final$m_sam==test5_final$m_sam_50)
 
 
-#Step 8: generate list of MGRAs failing test in any stall category 
+#Step 10: generate list of MGRAs failing test in any stall category 
 test5_a<- test5_final %>%
   filter(test5_final$h_oth!=test5_final$h_oth_50)
 test5_b<- test5_final %>%
   filter(test5_final$h_sam!=test5_final$h_sam_50)
 test5_c<- test5_final %>%
-  filter(test5_final$d_oth!=test5_final$h_oth_50)
+  filter(test5_final$d_oth!=test5_final$d_oth_50)
 test5_d<- test5_final %>%
   filter(test5_final$d_sam!=test5_final$d_sam_50)
 test5_e<- test5_final %>%
   filter(test5_final$h_oth!=test5_final$h_oth_50)
 test5_f<- test5_final %>%
   filter(test5_final$m_sam!=test5_final$m_sam_50)
+
+#Step 11: save out failures for each stall type 
+wb= createWorkbook()
+
+test5a <- addWorksheet(wb, "h_oth",tabColour="purple")
+writeData(wb,test5a, test5_a)
+
+test5b <- addWorksheet(wb, "h_sam",tabColour="red")
+writeData(wb,test5b, test5_b)
+
+test5c <- addWorksheet(wb, "d_oth",tabColour="green")
+writeData(wb,test5c, test5_c)
+
+test5d <- addWorksheet(wb, "d_sam",tabColour="yellow")
+writeData(wb,test5d, test5_d)
+
+test5e <- addWorksheet(wb, "m_oth",tabColour="orange")
+writeData(wb,test5e, test5_e)
+
+test5f<- addWorksheet(wb, "m_sam",tabColour="cyan")
+writeData(wb,test5f, test5_f)
+
+saveWorkbook(wb, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Results//test5.xlsx",overwrite=TRUE)
+
+             
