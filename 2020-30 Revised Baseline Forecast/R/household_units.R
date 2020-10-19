@@ -1,11 +1,12 @@
 # 
-# This report summarizes select QA findings of the 2020 SCS Forecast V2 review (2020-06).
+# This report summarizes select QA findings of the 2020 Revised Baseline Forecast (2020-30).
 # 
 # Tests included in this report are:
 #   
 # Test #3: Household Units (Performance Analysis)
 # 
 # Thorough descriptions of these tests may be found here: 
+# https://sandag.sharepoint.com/qaqc/_layouts/15/Doc.aspx?sourcedoc={7ac53c05-1e9c-464c-b316-9b679615bd91}&action=edit&wd=target%28Test%20Plan.one%7C40ba6e56-16f1-4da3-a23e-ac683c60f891%2FOverview%7C39181d19-c080-4a9e-ad76-e2a94c751c42%2F%29
 
 
 #set up
@@ -53,25 +54,44 @@ d_mgra<- subset(d_mgra,d_mgra$series==14)
 #load reference table used by Nick to apply changes to household units
 input_hhunits<- data.table::as.data.table(
   RODBC::sqlQuery(channel,
-                  paste0("SELECT [parcel_id]
+                  paste0("SELECT [eir_scenario_id]
+      ,[parcel_id]
+      ,[lu_2018]
       ,[mgra]
-      ,[mohub]
-      ,[tier]
-      ,[score]
-      ,[subtier]
-      ,[cap_scs]
       ,[cap_jurisdiction_id]
-      ,[scs_site_id]
+      ,[capacity_2]
+      ,[dm_cap]
+      ,[eir_cap]
+      ,[site_id]
+      ,[site_id2]
+      ,[capacity_3]
+      ,[scenario_cap]
+      ,[baseline_cap]
+      ,[cap_priority]
       ,[startdate]
       ,[compdate]
-      ,[scenario_cap]
-      ,[cap_priority]
-  FROM [urbansim].[urbansim].[scs_parcel]"),
+  FROM [urbansim].[urbansim].[eir_parcel]
+  WHERE [eir_scenario_id]=1"),
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
-#load SCS forecast household data
-datasource_id<- 38
+#load adu data
+input_adu<- data.table::as.data.table(
+  RODBC::sqlQuery(channel,
+                  paste0("SELECT [version_id]
+      ,[jur_id]
+      ,[parcel_id]
+      ,[type]
+      ,[name]
+      ,[du]
+      ,[ID]
+  FROM [urbansim].[urbansim].[additional_capacity]
+  WHERE [version_id]=111 and [type]='adu'"),
+                  stringsAsFactors = FALSE),
+  stringsAsFactors = FALSE)
+
+#load r_baseline forecast household data
+datasource_id<- 39
 hh <- readDB("../queries/households.sql",datasource_id)
 
 #select only years of interest from SCS forecast dataset
@@ -104,6 +124,7 @@ hh_agg<-hh[ , list(
 #check subtotals
 hh_agg_18<-subset(hh_agg, hh_agg$yr_id==2018)
 hh_agg_50<-subset(hh_agg, hh_agg$yr_id==2050)
+sum(hh_agg_18$units)
 sum(hh_agg_50$units)
 
 #create aggregate table by mgra for 2016 and 2050
@@ -111,31 +132,38 @@ hh_agg<-as.data.table(hh_agg)
 hh_reshape<- hh_agg[, list(
   units_2018=units[yr_id==2018],
   units_2050=units[yr_id==2050]),
-  by="mgra"]
+  by="jurisdiction_id"]
 
 hh_reshape2<- aggregate(hh_reshape,
-                        by=list(hh_reshape$mgra),
+                        by=list(hh_reshape$jurisdiction_id),
                         FUN=sum)
 #check subtotals
 sum(hh_reshape2$units_2050)
 
-#merge in jurisdiction
-# hh_reshape3<- merge(hh_reshape2,
-#                    d_mgra[ , c("mgra","jurisdiction")],
-#                    by="mgra")
-
-#check subtotals
-sum(hh_reshape$units_2050)
-
 #wrangle hh_inputs to have one record per mgra for merging
-hh_inputs_agg<-aggregate(scenario_cap ~mgra+tier, data=input_hhunits, sum)
+#TODO wrangle input data into one table "hh_inputs_data"
+input<-merge(input_hhunits,
+             input_adu,
+             by="parcel_id",
+             all=TRUE)
+
+input[is.na(cap_jurisdiction_id),
+       cap_jurisdiction_id := jur_id]
+
+
+input_agg<-input[,list(
+  capacity_2=sum(capacity_2, na.rm=TRUE),
+  capacity_3=sum(capacity_3, na.rm=TRUE),
+  du=sum(du, na.rm=TRUE)),
+  by="cap_jurisdiction_id"]
+
 
 #merge scs forecast data to inputs data
 hh_merged<-merge(hh_reshape2,
-                 hh_inputs_agg,
+                 input_agg,
                  by.x= "Group.1",
-                 by.y= "mgra",
-                 all.x=TRUE)
+                 by.y= "cap_jurisdiction_id",
+                 all=TRUE)
 
 #check subtotals
 sum(hh_merged$units_2050)
@@ -143,46 +171,27 @@ sum(hh_merged$units_2050)
 #calculate difference between 2050 and 2016 units
 hh_merged$N_diff<- hh_merged$units_2050-hh_merged$units_2018
 
+#add input units types together
+hh_merged$input_total<- hh_merged$capacity_3+hh_merged$du+hh_merged$capacity_2
+
 #apply flag to indicate relationship between expected change and actual change in units
-hh_merged$change[hh_merged$N_diff==hh_merged$scenario_cap]<- "Exact capacity change"
-hh_merged$change[hh_merged$N_diff<hh_merged$scenario_cap]<- "Less than capacity"
-hh_merged$change[hh_merged$N_diff>hh_merged$scenario_cap]<- "Greater than capacity"
+hh_merged$change[hh_merged$N_diff==hh_merged$input_total]<- "Exact capacity change"
+hh_merged$change[hh_merged$N_diff<hh_merged$input_total]<- "Less than capacity"
+hh_merged$change[hh_merged$N_diff>hh_merged$input_total]<- "Greater than capacity"
 hh_merged$change[hh_merged$N_diff==0]<- "No Change"
 
+#merge in jurisdiction names
+jur_list<-d_mgra[,c("jurisdiction", "jurisdiction_id")]
+jur_list<-unique(jur_list)
+
+hh_final<-merge(hh_merged,
+                jur_list,
+                by.x="Group.1",
+                by.y="jurisdiction_id",
+                all.y=FALSE)
+
 
 #save out data file
-write.csv(hh_merged, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//housing_units_mgra_2018base.csv")
+write.csv(hh_final, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//Revised Baseline//housing_units_2018base.csv")
 
 ########################################################################################################
-
-#Generate output aggregated at the jurisdiction level
-hh_agg_jur<- aggregate(units~jurisdiction_id+yr_id, data=hh,sum)
-input_agg_jur<-aggregate(scenario_cap ~cap_jurisdiction_id, data=input_hhunits, sum)
-
-hh_jur<- dcast(hh_agg_jur, jurisdiction_id~yr_id, value.var="units")
-
-#check totals
-sum(hh_jur$`2050`)
-
-#merge in scs capacity
-hh_jur<- merge(hh_jur,
-               input_agg_jur,
-               by.x="jurisdiction_id",
-               by.y="cap_jurisdiction_id")
-
-#calculate difference between 2050 and 2016 units
-hh_jur$N_diff<- hh_jur$`2050`-hh_jur$`2018`
-
-#apply flag to indicate relationship between expected change and actual change in units
-hh_jur$change[hh_jur$N_diff==hh_jur$scenario_cap]<- "Exact capacity change"
-hh_jur$change[hh_jur$N_diff<hh_jur$scenario_cap]<- "Less than capacity"
-hh_jur$change[hh_jur$N_diff>hh_jur$scenario_cap]<- "Greater than capacity"
-hh_jur$change[hh_jur$N_diff==0]<- "No Change"
-
-#save out data file
-write.csv(hh_jur, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//SCS//housing_units_jur_2018base.csv")
-
-
-
-#clean up
-rm(list="hh", "d_mgra", "hh_agg", "hh_inputs_agg", "hh_reshape", "input_hhunits")
