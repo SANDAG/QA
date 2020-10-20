@@ -110,7 +110,7 @@ hh<-merge(hh,
           by= "mgra_id")
 
 
-#aggregate SCS forecast data to the [mgra] (not [mgra_id]) level for analysis
+#aggregate forecast data to the [mgra] (not [mgra_id]) level for analysis
 hh_agg<-hh[ , list(
   mgra_id,
   mgra,
@@ -140,17 +140,17 @@ hh_reshape2<- aggregate(hh_reshape,
 #check subtotals
 sum(hh_reshape2$units_2050)
 
-#wrangle hh_inputs to have one record per mgra for merging
-#TODO wrangle input data into one table "hh_inputs_data"
+#merge input housing units and adu
 input<-merge(input_hhunits,
              input_adu,
              by="parcel_id",
              all=TRUE)
 
+#collapse jurisdiction_id into one variable
 input[is.na(cap_jurisdiction_id),
        cap_jurisdiction_id := jur_id]
 
-
+#create input table aggregated to jurisdiction level
 input_agg<-input[,list(
   capacity_2=sum(capacity_2, na.rm=TRUE),
   capacity_3=sum(capacity_3, na.rm=TRUE),
@@ -158,7 +158,7 @@ input_agg<-input[,list(
   by="cap_jurisdiction_id"]
 
 
-#merge scs forecast data to inputs data
+#merge forecast output data to inputs data
 hh_merged<-merge(hh_reshape2,
                  input_agg,
                  by.x= "Group.1",
