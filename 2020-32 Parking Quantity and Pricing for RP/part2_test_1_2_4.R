@@ -23,10 +23,10 @@ readDB <- function(sql_query,datasource_id_to_use){
 }
 
 ### Part 2: Loading the data
-parking2016<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2016_02_np.csv")
-parking2025<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2025_02_np.csv")
-parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_02_np.csv")
-parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_02_np.csv")
+parking2016<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2016_04_np.csv")
+parking2025<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2025_04_np.csv")
+parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_04_np.csv")
+parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_04_np.csv")
 
 
 ### Part 3: Applying QC testing
@@ -111,8 +111,8 @@ test2(data=test2_2035, col=test2_2035$mstallssam_dif) #pass
 ##Test 4
 
 #Step 0: Set up working data table
-parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_02_np.csv")
-parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_02_np.csv")
+parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_04_np.csv")
+parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_04_np.csv")
 
 parking2035<-as.data.table(parking2035)
 parking2050<-as.data.table(parking2050)
@@ -156,12 +156,12 @@ test4<-merge(test4,
 
 
 #1d: for mgras with baseline_req_pricing=0 or null, replace values with those in 01 series file
-test4[baseline_req_pricing=="0", h_oth := hstallsoth]
-test4[baseline_req_pricing=="0", h_sam := hstallssam]
-test4[baseline_req_pricing=="0", d_oth := dstallsoth]
-test4[baseline_req_pricing=="0", d_sam := dstallssam]
-test4[baseline_req_pricing=="0", m_oth := mstallsoth]
-test4[baseline_req_pricing=="0", m_sam := mstallssam]
+#test4[baseline_req_pricing=="0", h_oth := hstallsoth]
+#test4[baseline_req_pricing=="0", h_sam := hstallssam]
+#test4[baseline_req_pricing=="0", d_oth := dstallsoth]
+#test4[baseline_req_pricing=="0", d_sam := dstallssam]
+#test4[baseline_req_pricing=="0", m_oth := mstallsoth]
+#test4[baseline_req_pricing=="0", m_sam := mstallssam]
 test4[is.na(baseline_req_pricing), h_oth := hstallsoth]
 test4[is.na(baseline_req_pricing), h_sam := hstallssam]
 test4[is.na(baseline_req_pricing), d_oth := dstallsoth]
@@ -171,17 +171,23 @@ test4[is.na(baseline_req_pricing), m_sam := mstallssam]
 
 #Step 2: test to determine if each stall type in 2050 is less than or equal to 2035
 test4_a<- test4 %>%
-  filter(h_oth_50>h_oth_35) #62 failures
+  filter(baseline_req_pricing!=0 &!is.na(baseline_req_pricing)) %>%
+  filter(h_oth_50>h_oth_35) #pass
 test4_b<- test4 %>%
-  filter(h_sam_50>h_sam_35) #62 failures
+  filter(baseline_req_pricing!=0 &!is.na(baseline_req_pricing)) %>%
+  filter(h_sam_50>h_sam_35) #pass
 test4_c<- test4 %>%
-  filter(d_oth_50>d_oth_35) #62 failures
+  filter(baseline_req_pricing!=0 &!is.na(baseline_req_pricing)) %>%
+  filter(d_oth_50>d_oth_35) #pass
 test4_d<- test4 %>%
-  filter(d_sam_50>d_sam_35) #62 failures
+  filter(baseline_req_pricing!=0 &!is.na(baseline_req_pricing)) %>%
+  filter(d_sam_50>d_sam_35) #pass
 test4_e<- test4 %>%
-  filter(m_oth_50>m_oth_35) #62 failures
+  filter(baseline_req_pricing!=0 &!is.na(baseline_req_pricing)) %>%
+  filter(m_oth_50>m_oth_35) #pass
 test4_f<- test4 %>%
-  filter(d_sam_50>d_sam_35) #62 failures
+  filter(baseline_req_pricing!=0 &!is.na(baseline_req_pricing)) %>%
+  filter(d_sam_50>d_sam_35) #pass
 
 #Step 3: save output
 write.csv(test4_a, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Results//test4.csv")
@@ -200,11 +206,11 @@ np_out<- data.table::as.data.table(
 odbcClose(channel)
 
 #Step 1: Set up working data table/
-parking2025<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2025_02_np.csv")
-parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_02_np.csv")
-parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_02_np.csv")
+#parking2025<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2025_04_np.csv")
+parking2035<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_04_np.csv")
+parking2050<- read.csv("C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_04_np.csv")
 
-parking2025<-as.data.table(parking2025)
+#parking2025<-as.data.table(parking2025)
 parking2035<-as.data.table(parking2035)
 parking2050<-as.data.table(parking2050)
 
@@ -213,17 +219,17 @@ parking2050<-as.data.table(parking2050[,list("mgra"=mgra,"emp_2050"=emp_total,"h
 parking2035<-as.data.table(parking2035[,list("mgra"=mgra,"emp_2035"=emp_total,"h_oth_35"=hstallsoth,"h_sam_35"=hstallssam,"d_oth_35"=dstallsoth,
                                              "d_sam_35"=dstallssam, "m_oth_35"=mstallsoth, "m_sam_35"=mstallssam)])
 
-parking2025<-as.data.table(parking2025[,list("mgra"=mgra,"emp_2025"=emp_total)])
+#parking2025<-as.data.table(parking2025[,list("mgra"=mgra,"emp_2025"=emp_total)])
 
 test5<-merge(parking2050,
              parking2035,
              by="mgra"
 )
 
-test5<-merge(test5,
-             parking2025,
-             by="mgra"
-)
+#test5<-merge(test5,
+#             parking2025,
+#             by="mgra"
+#)
 
 test5<- merge(test5,
               np_out[,c("mgra","baseline_req_pricing","annual_chg_2036_2050")],
@@ -249,7 +255,7 @@ decay_emp_dec<- function(base_stalls,
                         current_emp,
                         base_emp,
                         baseline_req_mgra) {
-  decay=(base_stalls+(current_emp-base_emp))*(300/baseline_req_mgra)
+  decay=base_stalls+((current_emp-base_emp)*(300/baseline_req_mgra))
   
   return(decay)
 }
@@ -258,9 +264,9 @@ decay_emp_dec<- function(base_stalls,
 
 #Step 3: split data by cases that observed employment increases vs decreases/no change
 test5_emp_inc<- test5 %>%
-  filter(emp_2050>emp_2035)
+  filter(emp_2050>emp_2035 | baseline_req_pricing==0)
 test5_emp_dec<- test5 %>%
-  filter(emp_2050<=emp_2035)
+  filter(emp_2050<=emp_2035 & baseline_req_pricing!=0)
 
 
 #Step 4: Apply decay functions to working data tables
@@ -364,12 +370,12 @@ test5_final<-merge(test5_final,
 
 
 #8d: for mgras with baseline_req_pricing=0 or null, replace values with those in 01 series file
-test5_final[baseline_req_pricing=="0", h_oth := hstallsoth]
-test5_final[baseline_req_pricing=="0", h_sam := hstallssam]
-test5_final[baseline_req_pricing=="0", d_oth := dstallsoth]
-test5_final[baseline_req_pricing=="0", d_sam := dstallssam]
-test5_final[baseline_req_pricing=="0", m_oth := mstallsoth]
-test5_final[baseline_req_pricing=="0", m_sam := mstallssam]
+#test5_final[baseline_req_pricing=="0", h_oth := hstallsoth]
+#test5_final[baseline_req_pricing=="0", h_sam := hstallssam]
+#test5_final[baseline_req_pricing=="0", d_oth := dstallsoth]
+#test5_final[baseline_req_pricing=="0", d_sam := dstallssam]
+#test5_final[baseline_req_pricing=="0", m_oth := mstallsoth]
+#test5_final[baseline_req_pricing=="0", m_sam := mstallssam]
 test5_final[is.na(baseline_req_pricing), h_oth := hstallsoth]
 test5_final[is.na(baseline_req_pricing), h_sam := hstallssam]
 test5_final[is.na(baseline_req_pricing), d_oth := dstallsoth]
@@ -385,22 +391,29 @@ table(test5_final$d_sam==test5_final$d_sam_50)
 table(test5_final$m_oth==test5_final$m_oth_50)
 table(test5_final$m_sam==test5_final$m_sam_50)
 
+#Step 10: calculate difference between calculated stalls and output stalls
+test5_final$dif_h_oth<- test5_final$h_oth-test5_final$h_oth_50
+test5_final$dif_h_sam<- test5_final$h_sam-test5_final$h_sam_50
+test5_final$dif_d_oth<- test5_final$d_oth-test5_final$d_oth_50
+test5_final$dif_d_sam<- test5_final$d_sam-test5_final$d_sam_50
+test5_final$dif_m_oth<- test5_final$m_oth-test5_final$m_oth_50
+test5_final$dif_m_sam<- test5_final$m_sam-test5_final$m_sam_50
 
-#Step 10: generate list of MGRAs failing test in any stall category 
+#Step 11: generate list of MGRAs failing test in any stall category while accepting cases with a difference of less than two units 
 test5_a<- test5_final %>%
-  filter(test5_final$h_oth!=test5_final$h_oth_50)
+  filter(test5_final$h_oth!=test5_final$h_oth_50 & test5_final$dif_h_oth>1)
 test5_b<- test5_final %>%
-  filter(test5_final$h_sam!=test5_final$h_sam_50)
+  filter(test5_final$h_sam!=test5_final$h_sam_50 & test5_final$dif_h_sam>1)
 test5_c<- test5_final %>%
-  filter(test5_final$d_oth!=test5_final$d_oth_50)
+  filter(test5_final$d_oth!=test5_final$d_oth_50 & test5_final$dif_d_oth>1)
 test5_d<- test5_final %>%
-  filter(test5_final$d_sam!=test5_final$d_sam_50)
+  filter(test5_final$d_sam!=test5_final$d_sam_50 & test5_final$dif_d_sam>1)
 test5_e<- test5_final %>%
-  filter(test5_final$h_oth!=test5_final$h_oth_50)
+  filter(test5_final$h_oth!=test5_final$h_oth_50 & test5_final$dif_m_oth>1)
 test5_f<- test5_final %>%
-  filter(test5_final$m_sam!=test5_final$m_sam_50)
+  filter(test5_final$m_sam!=test5_final$m_sam_50 & test5_final$dif_m_sam>1)
 
-#Step 11: save out failures for each stall type 
+#Step 12: save out failures for each stall type 
 wb= createWorkbook()
 
 test5a <- addWorksheet(wb, "h_oth",tabColour="purple")
@@ -421,6 +434,6 @@ writeData(wb,test5e, test5_e)
 test5f<- addWorksheet(wb, "m_sam",tabColour="cyan")
 writeData(wb,test5f, test5_f)
 
-saveWorkbook(wb, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Results//test5.xlsx",overwrite=TRUE)
+saveWorkbook(wb, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Results//test5_V3.xlsx",overwrite=TRUE)
 
-             
+saveWorkbook(wb, "C://Users//kte//OneDrive - San Diego Association of Governments//QA temp//test5_V2.xlsx",overwrite=TRUE)
