@@ -3,6 +3,7 @@
 
 ### Part 1: Setting up the R environment and loading required packages
 
+
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source("readSQL.R")
 source("common_functions.R")
@@ -35,14 +36,12 @@ dim_mgra<- data.table::as.data.table(
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
-odbcClose(channel)
 
 mgra_list<- as.data.table(unique(dim_mgra$mgra))
 mgra_list<-rename(mgra_list, mgra= V1)
 
 ## 2. priced: MGRAs with [pricing_requirements_scenario_id] = 1 and [mgra_scenario_id] = 1
 
-channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8; database=RTP2021; trusted_connection=true')
 
 priced<- data.table::as.data.table(
   RODBC::sqlQuery(channel,

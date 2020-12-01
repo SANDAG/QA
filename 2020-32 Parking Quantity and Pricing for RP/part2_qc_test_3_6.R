@@ -27,10 +27,10 @@ readDB <- function(sql_query,datasource_id_to_use){
 #1. Loading the priced mgra data 
 
 
-parking2016<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2016_02_np.csv")
-parking2025<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2025_02_np.csv")
-parking2035<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_02_np.csv")
-parking2050<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_02_np.csv")
+parking2016<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2016_04_np.csv")
+parking2025<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2025_04_np.csv")
+parking2035<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2035_04_np.csv")
+parking2050<- read.csv("C://Users//psi//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-32 Regional Plan Parking//Data//mgra13_based_input2050_04_np.csv")
 
 
 ### Part 3: Applying QC testing
@@ -50,6 +50,7 @@ test1(input1=parking2016,input2=parking2025) #pass
 test1(input1=parking2016,input2=parking2035) #pass
 test1(input1=parking2016,input2=parking2050) #pass
 
+apply(parking2035,2,function(x) sum(x < 0))
 
 ##Test 2: Confirm no stalls are lost from negative employment growth 
 
@@ -80,26 +81,6 @@ test2_2035<- parking2035 %>%
 #2050
 test2_2050<- parking2050 %>%
   filter(emp_total<parking2016$emp_total)
-
-#TODO Step 2: define function to compare stall change 
-test2<- function(data) {
-  
-  column_names<-c("hstallsoth_dif","hstallssam_dif", "dstallsoth_dif",
-                  "dstallssam_dif", "mstallsoth_dif", "mstallssam_dif")
-  
-  for (i in column_names) {
-    print(table(ifelse(data$column_names<0,TRUE,FALSE)))
-  }
-  
-}
-
-test2(data=test2_2025)
-
-#TODO Step 2: for mgras where a decrease in employment is observed, confirm there were no stall decreases
-test2(output=test2_2025$hstallsoth, base=parking2016$hstallsoth)
-test2(output=test2_2035$hstallsoth, base=test2_2025$hstallsoth)
-test2(output=test2_2035$hstallsoth, base=test2_2025$hstallsoth)
-
 
 ## Test 3: New stalls are calculated from the number of positive jobs added (in emp_total column) over the base year multiplied by (300/[baseline_req_mgra]). 
 ##  IMPORTANT NOTE: For the 6,725 MGRAs in that table, [baseline_req_priced_mgra] and [annual_chg_2036_to_2050_priced_mgra] are applied.
@@ -133,27 +114,47 @@ stalls<- merge(stalls, emp_change2035, by.x= "mgra2016", by.y = "mgra2035", all=
 stalls<- stalls%>%
   rename(mgra= mgra2016)
 
-priced_stalls<- stalls%>%
-  filter(mgra %in% priced$mgra)
+# merging stalls with baseline_price_req from noz
+brp<- np_out%>%
+  select(mgra, baseline_req_pricing)
 
-priced_baseline_req<- priced%>%
-  select(mgra, baseline_req_priced_mgra, baseline_req_non_priced_mgra)
+stalls<- merge(stalls, brp, by = "mgra", all= TRUE)
 
 
-priced_stalls<- merge(priced_stalls, priced_baseline_req, by = "mgra", all= TRUE)
+##priced_stalls<- stalls%>%
+  ##filter(mgra %in% priced$mgra)
 
-priced_stalls_1<- priced_stalls%>%
-filter(baseline_req_priced_mgra!= 0)%>% 
+##priced_baseline_req<- priced%>%
+  ##select(mgra, baseline_req_priced_mgra, baseline_req_non_priced_mgra)
+
+##priced_stalls<- merge(priced_stalls, priced_baseline_req, by = "mgra", all= TRUE)
+
+## Case 1: When baseline_req_price =0, apply the same stall values as 2016
+
+stalls_1<- stalls%>%
+  filter(baseline_req_pricing== 0)
+
+identical(stalls_1$hstallsoth2016, stalls_1$hstallsoth2025, stalls_1$hstallsoth2035)
+identical(stalls_1$dstallsoth2016, stalls_1$dstallsoth2025, stalls_1$dstallsoth2035)
+identical(stalls_1$mstallsoth2016, stalls_1$mstallsoth2025, stalls_1$mstallsoth2035)
+identical(stalls_1$mstallssam2016, stalls_1$mstallssam2025, stalls_1$mstallssam2035)
+identical(stalls_1$dstallssam2016, stalls_1$dstallssam2025, stalls_1$dstallssam2035)
+identical(stalls_1$hstallssam2016, stalls_1$hstallssam2025, stalls_1$hstallssam2035)
+
+## Case 2: When baseline_req_price!= 0 and employment increases, apply the stall calc formulae
+
+stalls_2_2025<- stalls%>%
+filter(baseline_req_pricing!= 0)%>% 
 mutate (emp_diff_2025= emp_total2025- emp_total2016, 
 emp_diff_2035= emp_total2035- emp_total2025)%>%
 filter( emp_diff_2025>0 )%>%
 mutate(
-h_other_25= (hstallsoth2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_priced_mgra)),
-h_all_25= (hstallssam2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_priced_mgra)), 
-m_other_25= (mstallsoth2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_priced_mgra)), 
-m_all_25= (mstallssam2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_priced_mgra)),
-d_other_25= (dstallsoth2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_priced_mgra)), 
-d_all_25= (dstallssam2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_priced_mgra)))%>%
+h_other_25= (hstallsoth2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_pricing)),
+h_all_25= (hstallssam2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_pricing)), 
+m_other_25= (mstallsoth2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_pricing)), 
+m_all_25= (mstallssam2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_pricing)),
+d_other_25= (dstallsoth2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_pricing)), 
+d_all_25= (dstallssam2016 + (emp_total2025 - emp_total2016)*(300/ baseline_req_pricing)))%>%
 mutate_if(is.numeric,round,0)%>%
   mutate(check_hstallsoth2025= (h_other_25== hstallsoth2025),
          check_hstallssam2025=  (h_all_25== hstallssam2025),
@@ -162,13 +163,69 @@ mutate_if(is.numeric,round,0)%>%
          check_dstallsoth2025=(d_other_25== dstallsoth2025),
          check_dstallssam2025=(d_all_25== dstallssam2025))
 
-priced_stalls_2<- priced_stalls%>%
-  filter(baseline_req_priced_mgra== 0)%>%
-  mutate(check= hstallsoth2025== hstallsoth2016)
-         
-           
-write.csv(priced_stalls_1, "C://Users//psi//OneDrive - San Diego Association of Governments//QA//QA//QA//2020-32 Parking Quantity and Pricing for RP//test.csv")
-write.csv(priced_stalls_2, "C://Users//psi//OneDrive - San Diego Association of Governments//QA//QA//QA//2020-32 Parking Quantity and Pricing for RP//test2.csv")
+stalls_2_2025_false<- stalls_2_2025%>%
+  filter(check_hstallsoth2025 == 'FALSE' )
+
+stalls_2_2035<- stalls%>%
+  filter(baseline_req_pricing!= 0)%>% 
+  mutate (emp_diff_2025= emp_total2025- emp_total2016, 
+          emp_diff_2035= emp_total2035- emp_total2025)%>%
+  filter( emp_diff_2035>0 )%>%
+  mutate(
+    h_other_35= (hstallsoth2025 + (emp_total2035 - emp_total2025)*(300/ baseline_req_pricing)),
+    h_all_35= (hstallssam2025 + (emp_total2035 - emp_total2025)*(300/ baseline_req_pricing)), 
+    m_other_35= (mstallsoth2025 + (emp_total2035 - emp_total2025)*(300/ baseline_req_pricing)), 
+    m_all_35= (mstallssam2025 + (emp_total2035 - emp_total2025)*(300/ baseline_req_pricing)),
+    d_other_35= (dstallsoth2025 + (emp_total2035 - emp_total2025)*(300/ baseline_req_pricing)), 
+    d_all_35= (dstallssam2025 + (emp_total2035 - emp_total2025)*(300/ baseline_req_pricing)))%>%
+  mutate_if(is.numeric,round,0)%>%
+  mutate(check_hstallsoth2035= (h_other_35== hstallsoth2035),
+         check_hstallssam2035=  (h_all_35== hstallssam2035),
+         check_mstallsoth2035=(m_other_35== mstallsoth2035), 
+         check_mstallssam2035= (m_all_35== mstallssam2035),
+         check_dstallsoth2035=(d_other_35== dstallsoth2035),
+         check_dstallssam2035=(d_all_35== dstallssam2035))
+
+stalls_2_2035_false<- stalls_2_2035%>%
+  filter(check_hstallsoth2035 == 'FALSE' )
+
+#### Case 3: When baseline_req_price!= 0 and employment decreases, apply the stall calc formulae
+
+stalls_3_2025<- stalls%>%
+  filter(baseline_req_pricing!= 0)%>% 
+  mutate (emp_diff_2025= emp_total2025- emp_total2016, 
+          emp_diff_2035= emp_total2035- emp_total2025)%>%
+  filter( emp_diff_2025<=0 )%>%
+  mutate(h_other_25= hstallsoth2016== hstallsoth2025,
+          h_all_25= hstallssam2016== hstallssam2025, 
+          m_other_25= mstallsoth2016== mstallsoth2025, 
+          m_all_25= mstallssam2016== mstallssam2025,
+          d_other_25= dstallsoth2016== dstallsoth2025, 
+          d_all_25= dstallssam2016== dstallssam2025)
+
+stalls_3_2025_false<- stalls_3_2025%>%
+  filter(h_other_25 == 'FALSE' )
+
+stalls_3_2035<- stalls%>%
+  filter(baseline_req_pricing!= 0)%>% 
+  mutate (emp_diff_2035= emp_total2035- emp_total2025)%>%
+  filter( emp_diff_2035<=0 )%>%
+  mutate( h_other_35= hstallsoth2025== hstallsoth2035,
+          h_all_35= hstallssam2025== hstallssam2035, 
+          m_other_35= mstallsoth2025== mstallsoth2035, 
+          m_all_35= mstallssam2025== mstallssam2035,
+          d_other_35= dstallsoth2025== dstallsoth2035, 
+          d_all_35= dstallssam2025== dstallssam2035)
+
+stalls_3_2035_false<- stalls_3_2035%>%
+  filter(h_other_35 == 'FALSE' )
+
+## writing out results for test 3
+
+write.xlsx(stalls_2_2025_false, "C://Users//psi//OneDrive - San Diego Association of Governments//QA//QA//QA//2020-32 Parking Quantity and Pricing for RP//test3_V3_EMPINC_2025.xlsx")
+write.xlsx(stalls_2_2035_false, "C://Users//psi//OneDrive - San Diego Association of Governments//QA//QA//QA//2020-32 Parking Quantity and Pricing for RP//test3_V3_EMPINC_2035.xlsx")
+write.xlsx(stalls_3_2025_false, "C://Users//psi//OneDrive - San Diego Association of Governments//QA//QA//QA//2020-32 Parking Quantity and Pricing for RP//test3_V3_EMPDEC_2025.xlsx")
+write.xlsx(stalls_3_2035_false, "C://Users//psi//OneDrive - San Diego Association of Governments//QA//QA//QA//2020-32 Parking Quantity and Pricing for RP//test3_V3_EMPDEC_2035.xlsx")
 
 
 ## Test 6: Trend of parking rates: 
