@@ -1,32 +1,48 @@
-#LUDU QA
-##see row 70 - is it ok that there are 8100 records with no assessor id
+### Project: 2020- 41 LUDU DRAFT 2020 QC
+### Author: Purva Singh
+h
+### This script is for test 1 through 8 and 15 of the test plan. 
+### The test plan can be found here: https://sandag.sharepoint.com/qaqc/_layouts/15/Doc.aspx?sourcedoc=%7BDBBBF7A2-5535-48D4-BE08-B36C3F188109%7D&file=2020-41%20Land%20Use%20Inventory%20QC%20Test%20Plan&action=edit&mobileredirect=true&wdorigin=Sharepoint&CT=1606843411646&OR=ItemsView 
 
+### Part 1: Setting up the R environment and loading packages
 
-#function to load packages
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+# load packages
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
     install.packages(new.pkg, dep = TRUE)
-  sapply(pkg, require, character.only = TRUE)
-  
-}
+  sapply(pkg, require, character.only = TRUE)}
 
-#identify packages to be loaded
-packages <- c("sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
-              "stringr","tidyverse", "readxl", "frequency", "ggplot2", "lubridate")
-#confirm packages are read in
+
+packages <- c("data.table", "ggplot2", "scales", "sqldf", "rstudioapi", "RODBC", "dplyr", "reshape2", 
+              "stringr","gridExtra","grid","lattice", "openxlsx", "rlang", "hash", "RCurl","readxl", "tidyverse")
 pkgTest(packages)
 
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+readDB <- function(sql_query,datasource_id_to_use){
+  ds_sql = getSQL(sql_query)
+  ds_sql <- gsub("ds_id",datasource_id_to_use,ds_sql)
+  df<-sqlQuery(channel,ds_sql,stringsAsFactors = FALSE)
+  return(df)
+}
 
-options(stringsAsFactors=FALSE)
+# Creating path for saving results
+outputfile <- paste("LUDU_2020_QC_PSI",".xlsx",sep='')
+print(paste("output filename: ",outputfile))
+outfolder<-paste("C:\\Users\\psi\\OneDrive - San Diego Association of Governments\\QA\\QA\\QA\\2020-41 LUDU Update\\Results\\",sep='')
+outfile <- paste(outfolder,outputfile,sep='')
+print(paste("output filepath: ",outfile))
 
-#open channel to database
-channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8; database=ws; trusted_connection=true')
 
-#read in ludu 2019 data - exclude shape variable for efficiency
+### Part 2: Loading the dataset
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8; database=RM; trusted_connection=true')
+
+
+# LUDU 2020 
 ludu <- sqlQuery(channel, 
                  "SELECT [OBJECTID]
+      ,[LCKey]
       ,[subParcel]
       ,[parcelID]
       ,[apn8]
@@ -34,12 +50,16 @@ ludu <- sqlQuery(channel,
       ,[du]
       ,[genOwnID]
       ,[MGRA14]
-      ,[regionID] 
-FROM  [WS].[dbo].[LUDU2019DRAFT]"
+      ,[regionID]
+FROM  [RM].[dbo].[DRAFT_LUDU2020POINTS]"
 )
+odbcClose(channel) 
 
-#read in ludu 2018 data - exclude shape variable for efficiency
-ludu_2018 <- sqlQuery(channel, 
+
+#LUDU 2019
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8; database=GeoDepot; trusted_connection=true')
+
+ludu_2019 <- sqlQuery(channel, 
                       "SELECT [OBJECTID]
       ,[subParcel]
       ,[parcelID]
@@ -48,119 +68,160 @@ ludu_2018 <- sqlQuery(channel,
       ,[du]
       ,[genOwnID]
       ,[MGRA14]
-      ,[regionID] 
-FROM  [lis].[gis].[LUDU2018]"
+      ,[regionID]
+     FROM [GeoDepot].[gis].[LUDU2019]"
 )
+odbcClose(channel) 
 
-head(ludu)
 
-#check for objectid duplicates - none
+### Part 3: Running the tests
+
+## Test 1: ObjectID- check values are unique  
 dups_obj <- ludu %>%
   filter(duplicated(OBJECTID) | duplicated(OBJECTID, fromLast = TRUE))
 
-#check subparcel values are 9 digits
-class(ludu$subParcel)
-summary(ludu$subParcel)
-unique(ludu$subParcel)
+length(unique(ludu$OBJECTID))== length(ludu$OBJECTID)
 
-#check parcelID values are 7 digits
-class(ludu$parcelID)
-summary(ludu$parcelID)
 
-#compare subparcel to parcelid
-##delete last two digits of subparcel to compare to parcel
-ludu$subParcel_test <- str_sub(ludu$subParcel, end=-3)
 
-head(ludu)
-unique(nchar(ludu$subParcel))
-unique(nchar(ludu$parcelID))
-unique(nchar(ludu$subParcel_test))
+# Test 2: check subparcel values are 9 digits-- this test was not included in this test plan as 
+# subparcels were dropped
+#class(ludu$subParcel)
+#summary(ludu$subParcel)
+#unique(ludu$subParcel)
 
-ludu$test  <- as.integer(ludu$test)
-class(ludu$parcelID)
-class(ludu$subParcel_test)
-identical(ludu$parcelID,ludu$test)
+## Test 3: check parcelID values are 7 digits
 
-#check values for apn8
+class(ludu$parcelID)  # integer class
+range(ludu$parcelID)  # range for the parcelID shows negative values
+
+ludu%>%
+  filter(parcelID== 'NA')   # null values in parcel IDs
+
+parcel_negative<- ludu%>%
+  filter(parcelID<0)
+
+parcel_dup<- ludu%>%
+  filter(duplicated(ludu$parcelID))
+
+parcel_dup_all<-ludu%>%
+  filter(parcelID %in% parcel_dup$parcelID)
+
+length(unique(parcel_dup_all$parcelID))
+
+
+## Test 4: check if apn8 values are valid
+length(unique(ludu$apn8))
+apn_na<- ludu%>%
+  filter(is.na(apn8))
+
 unique(nchar(ludu$apn8))
-apn8_na <- subset(ludu, is.na(ludu$apn8))
-length(unique(apn8_na$lu))
-length(unique(apn8_na$genOwnID))
 
-#check values for lu
+apn<-ludu%>%
+  filter(!is.na(apn8))%>%
+  filter(lu== 4112 | lu== 4117 | lu== 4118 | lu== 1401 | lu==1403| lu== 2301 | lu== 4104| lu== 4120 | lu== 6101| lu== 6702| lu== 6703 | lu== 6701)
+  
+unique(apn$lu)
+
+## Test 5: Check if lu values are valid and match the ones in the database
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014a8; database=data_cafe; trusted_connection=true')
+
+ludu_codes <- sqlQuery(channel, "SELECT 
+ [lu_code]
+,[lu_description]
+FROM [data_cafe].[ref].[sandag_lu_codes]")
+
+length(unique(ludu$lu))
+length(unique(ludu_codes$lu_code))
+range(ludu$lu)
 unique(nchar(ludu$lu))
-unique(ludu$lu)
 
-#check values for du
-summary(ludu$du)
 
-#check values for genOwnID
+not_lucodes<- ludu%>%
+  filter(!lu %in% ludu_codes$lu_code)  # 1090 LU code doesnt exist in the LUDU codes table in the DB
+
+
+### Need to do some additional checks on Test 5 LU in ArcGIS
+
+## Test 6: Confirm if DU values are valid
+
+range(ludu$du)
+
+ludu_table<- ludu%>%
+  group_by(lu)%>%
+  summarise_at(vars(du), sum)
+
+ludu_table<- merge(ludu_table, ludu_codes, by.x =  "lu", by.y = "lu_code", all= 'TRUE')
+
+ludu_table2019<- ludu_2019%>%
+  group_by(lu)%>%
+  summarise_at(vars(du), sum)
+
+setnames(ludu_table2019, old= "du", new= "du_2019")
+
+ludu_table<- merge(ludu_table, ludu_table2019, by =  "lu", all= 'TRUE')
+
+write.csv(ludu_table, "C:\\Users\\psi\\OneDrive - San Diego Association of Governments\\QA\\QA\\QA\\2020-41 LUDU Update\\Test#6 LUDU.csv", row.names = FALSE)
+
+
+## Test 7: Confirm that genOwnIDs are valid
 (unique(ludu$genOwnID))
 length(unique(ludu$genOwnID))
-table(ludu$genOwnID)
+genown<- as.data.table(table(ludu$genOwnID))
 
-#check mgra values
-length(unique(ludu$MGRA14))
-unique(nchar(ludu$MGRA14))
+write.csv(genown, "C:\\Users\\psi\\OneDrive - San Diego Association of Governments\\QA\\QA\\QA\\2020-41 LUDU Update\\Test#7 genownID.csv", row.names = FALSE)
 
 
-#check 2019 cases where du is >0 and was =0 in 2018. Did lu value change?
 
-##merge 2019 to 2018 on subParcel?
-ludu$test <-NULL
-ludu$subParcel_test <- NULL
-ludu_merge <- merge(ludu, ludu_2018, by = "subParcel", suffixes = c("19","18"), all = TRUE)
+## Test 8: MGRA14
 
-##subset matched file where du was 0 and is not >0 and lu did not change
-ludu_merge <- subset(ludu_merge, ludu_merge$du19>0 & ludu_merge$du18==0 & ludu_merge$lu19==ludu_merge$lu18)
-table(ludu_merge$lu19)
+channel <- odbcDriverConnect('driver={SQL Server}; server=sql2014b8; database=RM; trusted_connection=true')
 
-#save out file where land use was expected to change and did not
-write.csv(ludu_merge, 'M:\\Technical Services\\QA Documents\\Projects\\LUDU 2019\\results\\Test#9 lu to du checks 2018-2019.csv', row.names = FALSE)
+mgra14<- sqlQuery(channel, "SELECT [OBJECTID]
+      ,[MGRA]
+      ,[CT10]
+      ,[CT10BG]
+      ,[SRA]
+      ,[MSA]
+      ,[City]
+      ,[ZIP]
+      ,[Sphere]
+      ,[CPA]
+      ,[CPASG]
+      ,[TAZ]
+      ,[Council]
+      ,[Super]
+      ,[LUZ]
+      ,[Elem]
+      ,[Unif]
+      ,[High]
+      ,[Coll]
+      ,[Transit]
+      FROM [RM].[dbo].[MGRA14]")
 
-#check that no records exists for du on gq lu types
-no_gq <- sqlQuery(channel, 
-                  "SELECT [OBJECTID]
-        ,[subParcel]
-        ,[parcelID]
-        ,[apn8]
-        ,[lu]
-        ,[du]
-        ,[genOwnID]
-        ,[MGRA14]
-        ,[regionID]
-    FROM [WS].[dbo].[LUDU2019DRAFT]
-    where DU > 0 AND LU IN (1401,1402,1403,1404,1409)"
-)
 
-#check that no records exists for du on hotel, motel, resort lu types
-no_hotel <- sqlQuery(channel, 
-                     "SELECT [OBJECTID]
-        ,[subParcel]
-        ,[parcelID]
-        ,[apn8]
-        ,[lu]
-        ,[du]
-        ,[genOwnID]
-        ,[MGRA14]
-        ,[regionID]
-    FROM [WS].[dbo].[LUDU2019DRAFT]
-    where DU > 0 AND LU IN (1501,1502,1503)"
-)
+length(unique(mgra14$MGRA))- length(unique(ludu$MGRA14))  # 24 mgras missing 
 
-#check that no records exists for du on vacant lu types
-no_vacant <- sqlQuery(channel, 
-                      "SELECT [OBJECTID]
-        ,[subParcel]
-        ,[parcelID]
-        ,[apn8]
-        ,[lu]
-        ,[du]
-        ,[genOwnID]
-        ,[MGRA14]
-        ,[regionID]
-    FROM [WS].[dbo].[LUDU2019DRAFT]
-    where DU > 0 AND LU IN (9101)"
-)
+mis_mgras<- mgra14%>%
+  filter(!MGRA %in% ludu$MGRA)
+
+
+write.csv(mis_mgras, "C:\\Users\\psi\\OneDrive - San Diego Association of Governments\\QA\\QA\\QA\\2020-41 LUDU Update\\missing_mgra.csv", row.names = FALSE)
+
+
+### Test 14: LC Keys
+
+length(unique(ludu$LCKey))
+unique(nchar(ludu$LCKey))
+range(ludu$LCKey)
+
+
+### Additional check: duplicate rows based on values in all columns
+
+dup_rows<- ludu[duplicated(ludu[,1:ncol(ludu)]),]   # no duplicate rows
+
+
+
+
 
 
