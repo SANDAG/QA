@@ -116,4 +116,4 @@ y$jurisdiction<- ifelse(is.na(y$jurisdiction_2), y$jurisdiction_1, "Mixed")
 #  by=c("jurisdiction", "yr", "rac1p","ptype","pstudent", "pemploy","age_rc")]
 
 #saveout merged table
-write.csv(y, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-44 Regional Forecast AQC//Results//PowerBI//syn_persons_jur.csv")
+write.csv(y, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2020//2020-44 Regional Forecast AQC//Results//PowerBI//mgra_input_jur.csv")
