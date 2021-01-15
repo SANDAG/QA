@@ -45,7 +45,6 @@ WHERE series =14"
 
 odbcClose(channel)
 
-
 mgra_np_job<- mgra_np%>%
   select(mgra,yr, emp_total)%>%
   group_by(mgra, yr)%>%    
@@ -211,6 +210,24 @@ write.csv(cond7.jobs_sd, "C:\\Users\\psi\\OneDrive - San Diego Association of Go
 
 
 
+### Test for PowerBI- jobs by type Lemon Grove
+
+mgra_np_jur<- merge(mgra_np, dim_mgra, by = "mgra", all= TRUE)
+
+mgra_job_jur<- mgra_np_jur%>%
+  group_by(jurisdiction, yr)%>%
+  summarise_at(vars(emp_fed_mil), sum)
+
+mgra_enroll_jur<- mgra_np_jur%>%
+  group_by(jurisdiction, yr)%>%
+  summarise_at(vars(enrollgradekto8, enrollgrade9to12, collegeenroll, 
+                    othercollegeenroll, adultschenrl), sum)
 
 
+write.csv(mgra_enroll_jur, "C:\\Users\\psi\\OneDrive - San Diego Association of Governments\\QA\\QA\\QA\\2020-44 Regional Forecast AQC\\Results\\enrollment_jur.csv")
 
+
+colnames(mgra_np_jur)
+
+
+mgra_np_jur_dup<- as.data.frame(duplicated(mgra_np_jur$))
