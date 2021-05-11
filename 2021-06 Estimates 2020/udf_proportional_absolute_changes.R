@@ -2,7 +2,7 @@
 #Parameters: dataset, geographyid (ex. region, jurisdiction, zip), and categoryid (ex. age_group_id)
 #Author: Kelsie Telson
 
-age_est_test_prop <- function(dataset, geographyid) { 
+est_test_prop <- function(dataset, geographyid) { 
   
   require("dplyr")
   
@@ -59,7 +59,7 @@ age_est_test_prop <- function(dataset, geographyid) {
   
 }
 
-age_est_test_abso <- function(dataset, geographyid, categoryid) { 
+est_test_abso <- function(dataset, geographyid, categoryid) { 
   
   require("dplyr")
   
