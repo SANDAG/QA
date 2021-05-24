@@ -50,18 +50,30 @@ mgra_dim <- data.table::as.data.table(
                   stringsAsFactors = FALSE),
   stringsAsFactors = FALSE)
 
+ethn_dim <- data.table::as.data.table(
+  RODBC::sqlQuery(channel,
+                  paste0("SELECT [ethnicity_id]
+                  ,[short_name]
+                         FROM [demographic_warehouse].[dim].[ethnicity]"),
+                  stringsAsFactors = FALSE),
+  stringsAsFactors = FALSE)
+
 #merge geographies into data table
 ethn_2020 <- merge(ethn_2020,
                   mgra_dim,
                   by= "mgra_id")
 
-rm(mgra_dim)
+ethn_2020 <- merge(ethn_2020,
+                   ethn_dim,
+                  by= "ethnicity_id")
+
+rm(mgra_dim,ethn_dim)
 
 
 ##Step 1: Create data tables for each geography
 ethn_2020_reg<- ethn_2020[ ,list(
   population=sum(population)),
-  by=c("yr_id","ethnicity_id")]
+  by=c("yr_id","ethnicity_id","short_name")]
 
 ethn_2020_reg<- ethn_2020_reg %>% 
   pivot_wider(names_from= yr_id,
@@ -71,7 +83,7 @@ ethn_2020_reg$region_id <- "San Diego County"
 
 ethn_2020_jur <- ethn_2020[, list(
   population = sum(population)),
-  by = c("yr_id","jurisdiction", "jurisdiction_id", "ethnicity_id")]
+  by = c("yr_id","jurisdiction", "jurisdiction_id", "ethnicity_id","short_name")]
 
 ethn_2020_jur<- ethn_2020_jur %>% 
   pivot_wider(names_from= yr_id,
@@ -79,7 +91,7 @@ ethn_2020_jur<- ethn_2020_jur %>%
 
 ethn_2020_cpa <- ethn_2020[, list(
   population = sum(population)),
-  by = c("yr_id","cpa", "cpa_id", "ethnicity_id")]
+  by = c("yr_id","cpa", "cpa_id", "ethnicity_id","short_name")]
 
 ethn_2020_cpa<- ethn_2020_cpa %>% 
   pivot_wider(names_from= yr_id,
@@ -87,7 +99,7 @@ ethn_2020_cpa<- ethn_2020_cpa %>%
 
 ethn_2020_zip <- ethn_2020[, list(
   population = sum(population)),
-  by = c("yr_id","zip", "ethnicity_id")]
+  by = c("yr_id","zip", "ethnicity_id","short_name")]
 
 ethn_2020_zip<- ethn_2020_zip %>% 
   pivot_wider(names_from= yr_id,
@@ -95,44 +107,82 @@ ethn_2020_zip<- ethn_2020_zip %>%
 
 
 ##Step 2: Apply test functions and review results
-test_prop_reg<-est_test_prop(ethn_2020_reg,"region_id") #0 records flagged
-test_prop_jur<-est_test_prop(ethn_2020_jur,"jurisdiction_id") #0 records flagged
-test_prop_cpa<-est_test_prop(ethn_2020_cpa,"cpa_id") #12 records flagged
-test_prop_zip<-est_test_prop(ethn_2020_zip,"zip") #14 records flagged
+test_prop_reg<-est_test_prop_5(ethn_2020_reg,"region_id") #0 records flagged
+test_prop_jur<-est_test_prop_5(ethn_2020_jur,"jurisdiction_id") #0 records flagged
+test_prop_cpa<-est_test_prop_5(ethn_2020_cpa,"cpa_id") #12 records flagged
+test_prop_zip<-est_test_prop_5(ethn_2020_zip,"zip") #14 records flagged
 
-test_abso_reg<-est_test_abso(ethn_2020_reg,"region_id","ethnicity_id") #0 records flagged
-test_abso_jur<-est_test_abso(ethn_2020_jur,"jurisdiction_id","ethnicity_id") #103 records flagged
-test_abso_cpa<-est_test_abso(ethn_2020_cpa,"cpa_id","ethnicity_id") #556 records flagged
-test_abso_zip<-est_test_abso(ethn_2020_zip,"zip","ethnicity_id") #737 records flagged
+test_abso_reg<-est_test_abso_5(ethn_2020_reg,"region_id","ethnicity_id") #0 records flagged
+test_abso_jur<-est_test_abso_5(ethn_2020_jur,"jurisdiction_id","ethnicity_id") #103 records flagged
+test_abso_cpa<-est_test_abso_5(ethn_2020_cpa,"cpa_id","ethnicity_id") #556 records flagged
+test_abso_zip<-est_test_abso_5(ethn_2020_zip,"zip","ethnicity_id") #737 records flagged
 
+test_prop_reg_10<-est_test_prop_10(ethn_2020_reg,"region_id") #0 records flagged
+test_prop_jur_10<-est_test_prop_10(ethn_2020_jur,"jurisdiction_id") #0 records flagged
+test_prop_cpa_10<-est_test_prop_10(ethn_2020_cpa,"cpa_id") #0 records flagged
+test_prop_zip_10<-est_test_prop_10(ethn_2020_zip,"zip") #0 records flagged
+
+test_abso_reg_10<-est_test_abso_10(ethn_2020_reg,"region_id","ethnicity_id") #0 records flagged
+test_abso_jur_10<-est_test_abso_10(ethn_2020_jur,"jurisdiction_id","ethnicity_id") #62 records flagged
+test_abso_cpa_10<-est_test_abso_10(ethn_2020_cpa,"cpa_id","ethnicity_id") #447 records flagged
+test_abso_zip_10<-est_test_abso_10(ethn_2020_zip,"zip","ethnicity_id") #550 records flagged
 
 ##Step 3: Save out flagged records
 wb1 = createWorkbook()
 headerStyle<- createStyle(fontSize = 12 ,textDecoration = "bold")
 
-PropReg = addWorksheet(wb1, "Prop_Reg")
-writeData(wb1, "Prop_Reg", test_prop_reg)
+PropReg_5 = addWorksheet(wb1, "Prop_Reg_5")
+writeData(wb1, "Prop_Reg_5", test_prop_reg)
 
-PropJur = addWorksheet(wb1, "Prop_Jur")
-writeData(wb1, "Prop_Jur", test_prop_jur)
+PropJur_5 = addWorksheet(wb1, "Prop_Jur_5")
+writeData(wb1, "Prop_Jur_5", test_prop_jur)
 
-PropCPA = addWorksheet(wb1, "Prop_CPA")
-writeData(wb1, "Prop_CPA", test_prop_cpa)
+PropCPA_5 = addWorksheet(wb1, "Prop_CPA_5")
+writeData(wb1, "Prop_CPA_5", test_prop_cpa)
 
-PropZIP = addWorksheet(wb1, "Prop_ZIP")
-writeData(wb1, "Prop_ZIP", test_prop_zip)
+PropZIP_5 = addWorksheet(wb1, "Prop_ZIP_5")
+writeData(wb1, "Prop_ZIP_5", test_prop_zip)
 
-AbsoReg = addWorksheet(wb1, "Abso_Reg")
-writeData(wb1, "Abso_Reg", test_abso_reg)
+AbsoReg_5 = addWorksheet(wb1, "Abso_Reg_5")
+writeData(wb1, "Abso_Reg_5", test_abso_reg)
 
-AbsoJur = addWorksheet(wb1, "Abso_Jur")
-writeData(wb1, "Abso_Jur", test_abso_jur)
+AbsoJur_5 = addWorksheet(wb1, "Abso_Jur_5")
+writeData(wb1, "Abso_Jur_5", test_abso_jur)
 
-AbsoCPA = addWorksheet(wb1, "Abso_CPA")
-writeData(wb1, "Abso_CPA", test_abso_cpa)
+AbsoCPA_5 = addWorksheet(wb1, "Abso_CPA_5")
+writeData(wb1, "Abso_CPA_5", test_abso_cpa)
 
-AbsoZIP = addWorksheet(wb1, "Abso_ZIP")
-writeData(wb1, "Abso_ZIP", test_abso_zip)
+AbsoZIP_5 = addWorksheet(wb1, "Abso_ZIP_5")
+writeData(wb1, "Abso_ZIP_5", test_abso_zip)
 
-saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//ethn_Est2020.xlsx")
+
+
+PropReg_10 = addWorksheet(wb1, "Prop_Reg_10")
+writeData(wb1, "Prop_Reg_10", test_prop_reg_10)
+
+PropJur_10 = addWorksheet(wb1, "Prop_Jur_10")
+writeData(wb1, "Prop_Jur_10", test_prop_jur_10)
+
+PropCPA_10 = addWorksheet(wb1, "Prop_CPA_10")
+writeData(wb1, "Prop_CPA_10", test_prop_cpa_10)
+
+PropZIP_10 = addWorksheet(wb1, "Prop_ZIP_10")
+writeData(wb1, "Prop_ZIP_10", test_prop_zip_10)
+
+AbsoReg_10 = addWorksheet(wb1, "Abso_Reg_10")
+writeData(wb1, "Abso_Reg_10", test_abso_reg_10)
+
+AbsoJur_10 = addWorksheet(wb1, "Abso_Jur_10")
+writeData(wb1, "Abso_Jur_10", test_abso_jur_10)
+
+AbsoCPA_10 = addWorksheet(wb1, "Abso_CPA_10")
+writeData(wb1, "Abso_CPA_10", test_abso_cpa_10)
+
+AbsoZIP_10 = addWorksheet(wb1, "Abso_ZIP_10")
+writeData(wb1, "Abso_ZIP_10", test_abso_zip_10)
+
+saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//ethn_Est2020.xlsx", overwrite = TRUE)
+
+#clean up
+rm(list = ls())
 
