@@ -1,4 +1,5 @@
 #Purpose: 2021-06 Estimates for 2020 - Household Income
+#Note: Version 2 of Estimates Run
 #Author: Kelsie Telson
 
 ## Step 0: Set up
