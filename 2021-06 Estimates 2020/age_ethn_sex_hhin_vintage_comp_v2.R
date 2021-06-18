@@ -418,7 +418,7 @@ conditionalFormatting(wb1, sheet = "Reg", cols = 2:ncol(age_reg), rows=2:nrow(ag
 conditionalFormatting(wb1, sheet = "Jur", cols = 3:ncol(age_jur), rows=2:nrow(age_jur), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb1, sheet = "CPA", cols = 3:ncol(age_cpa), rows=2:nrow(age_cpa), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb1, sheet = "ZIP", cols = 3:ncol(age_zip), rows=2:nrow(age_zip), rule = "<-10", style = cellStyle2)
-saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//age_vintage.xlsx", overwrite = TRUE)
+saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//age_vintage.xlsx", overwrite = TRUE)
 
 
 wb2 = createWorkbook()
@@ -453,7 +453,7 @@ conditionalFormatting(wb2, sheet = "Reg", cols = 2:ncol(ethn_reg), rows=2:nrow(e
 conditionalFormatting(wb2, sheet = "Jur", cols = 3:ncol(ethn_jur), rows=2:nrow(ethn_jur), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb2, sheet = "CPA", cols = 3:ncol(ethn_cpa), rows=2:nrow(ethn_cpa), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb2, sheet = "ZIP", cols = 3:ncol(ethn_zip), rows=2:nrow(ethn_zip), rule = "<-10", style = cellStyle2)
-saveWorkbook(wb2, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//ethnicity_vintage.xlsx", overwrite = TRUE)
+saveWorkbook(wb2, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//ethnicity_vintage.xlsx", overwrite = TRUE)
 
 
 wb3 = createWorkbook()
@@ -488,7 +488,7 @@ conditionalFormatting(wb3, sheet = "Reg", cols = 2:ncol(sex_reg), rows=2:nrow(se
 conditionalFormatting(wb3, sheet = "Jur", cols = 3:ncol(sex_jur), rows=2:nrow(sex_jur), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb3, sheet = "CPA", cols = 3:ncol(sex_cpa), rows=2:nrow(sex_cpa), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb3, sheet = "ZIP", cols = 3:ncol(sex_zip), rows=2:nrow(sex_zip), rule = "<-10", style = cellStyle2)
-saveWorkbook(wb3, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//sex_vintage.xlsx", overwrite = TRUE)
+saveWorkbook(wb3, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//sex_vintage.xlsx", overwrite = TRUE)
 
 
 wb4 = createWorkbook()
@@ -523,6 +523,6 @@ conditionalFormatting(wb4, sheet = "Reg", cols = 2:ncol(hhinc_reg), rows=2:nrow(
 conditionalFormatting(wb4, sheet = "Jur", cols = 3:ncol(hhinc_jur), rows=2:nrow(hhinc_jur), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb4, sheet = "CPA", cols = 3:ncol(hhinc_cpa), rows=2:nrow(hhinc_cpa), rule = "<-10", style = cellStyle2)
 conditionalFormatting(wb4, sheet = "ZIP", cols = 3:ncol(hhinc_zip), rows=2:nrow(hhinc_zip), rule = "<-10", style = cellStyle2)
-saveWorkbook(wb4, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//hhinc_vintage.xlsx", overwrite = TRUE)
+saveWorkbook(wb4, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//hhinc_vintage.xlsx", overwrite = TRUE)
 
 

@@ -111,12 +111,12 @@ sex_2020_zip<- sex_2020_zip %>%
 test_prop_reg<-est_test_prop_5(sex_2020_reg,"region_id") #0 records flagged
 test_prop_jur<-est_test_prop_5(sex_2020_jur,"jurisdiction_id") #0 records flagged
 test_prop_cpa<-est_test_prop_5(sex_2020_cpa,"cpa_id") #4 records flagged
-test_prop_zip<-est_test_prop_5(sex_2020_zip,"zip") #6 records flagged
+test_prop_zip<-est_test_prop_5(sex_2020_zip,"zip") #2 records flagged
 
 test_abso_reg<-est_test_abso_5(sex_2020_reg,"region_id","sex_id") #0 records flagged
-test_abso_jur<-est_test_abso_5(sex_2020_jur,"jurisdiction_id","sex_id") #1 records flagged
-test_abso_cpa<-est_test_abso_5(sex_2020_cpa,"cpa_id","sex_id") #63 records flagged
-test_abso_zip<-est_test_abso_5(sex_2020_zip,"zip","sex_id") #64 records flagged
+test_abso_jur<-est_test_abso_5(sex_2020_jur,"jurisdiction_id","sex_id") #2 records flagged
+test_abso_cpa<-est_test_abso_5(sex_2020_cpa,"cpa_id","sex_id") #85 records flagged
+test_abso_zip<-est_test_abso_5(sex_2020_zip,"zip","sex_id") #99 records flagged
 
 
 test_prop_reg_10<-est_test_prop_10(sex_2020_reg,"region_id") #0 records flagged
@@ -126,8 +126,8 @@ test_prop_zip_10<-est_test_prop_10(sex_2020_zip,"zip") #2 records flagged
 
 test_abso_reg_10<-est_test_abso_10(sex_2020_reg,"region_id","sex_id") #0 records flagged
 test_abso_jur_10<-est_test_abso_10(sex_2020_jur,"jurisdiction_id","sex_id") #1 records flagged
-test_abso_cpa_10<-est_test_abso_10(sex_2020_cpa,"cpa_id","sex_id") #33 records flagged
-test_abso_zip_10<-est_test_abso_10(sex_2020_zip,"zip","sex_id") #35 records flagged
+test_abso_cpa_10<-est_test_abso_10(sex_2020_cpa,"cpa_id","sex_id") #38 records flagged
+test_abso_zip_10<-est_test_abso_10(sex_2020_zip,"zip","sex_id") #34 records flagged
 
 ##Step 3: Save out flagged records
 wb1 = createWorkbook()
@@ -183,7 +183,7 @@ writeData(wb1, "Abso_CPA_10", test_abso_cpa_10)
 AbsoZIP_10 = addWorksheet(wb1, "Abso_ZIP_10")
 writeData(wb1, "Abso_ZIP_10", test_abso_zip_10)
 
-saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//sex_Est2020.xlsx", overwrite = TRUE)
+saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//sex_Est2020_v2.xlsx", overwrite = TRUE)
 
 #clean up
 rm(list = ls())

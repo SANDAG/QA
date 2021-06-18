@@ -110,26 +110,26 @@ age_2020_zip<- age_2020_zip %>%
 
 ##Step 2: Apply test functions and review results
 test_prop_reg<-est_test_prop_5(age_2020_reg,"region_id") #0 records flagged
-test_prop_jur<-est_test_prop_5(age_2020_jur,"jurisdiction_id") #0 records flagged
-test_prop_cpa<-est_test_prop_5(age_2020_cpa,"cpa_id") #13 records flagged
-test_prop_zip<-est_test_prop_5(age_2020_zip,"zip") #9 records flagged
+test_prop_jur<-est_test_prop_5(age_2020_jur,"jurisdiction_id") #1 records flagged
+test_prop_cpa<-est_test_prop_5(age_2020_cpa,"cpa_id") #16 records flagged
+test_prop_zip<-est_test_prop_5(age_2020_zip,"zip") #8 records flagged
 
 test_abso_reg<-est_test_abso_5(age_2020_reg,"region_id","age_group_id") #6 records flagged
-test_abso_jur<-est_test_abso_5(age_2020_jur,"jurisdiction_id","age_group_id") #238 records flagged
-test_abso_cpa<-est_test_abso_5(age_2020_cpa,"cpa_id","age_group_id") #1409 records flagged
-test_abso_zip<-est_test_abso_5(age_2020_zip,"zip","age_group_id") #1836 records flagged
+test_abso_jur<-est_test_abso_5(age_2020_jur,"jurisdiction_id","age_group_id") #280 records flagged
+test_abso_cpa<-est_test_abso_5(age_2020_cpa,"cpa_id","age_group_id") #1516 records flagged
+test_abso_zip<-est_test_abso_5(age_2020_zip,"zip","age_group_id") #1977 records flagged
 
 
 
 test_prop_reg_10<-est_test_prop_10(age_2020_reg,"region_id") #0 records flagged
 test_prop_jur_10<-est_test_prop_10(age_2020_jur,"jurisdiction_id") #0 records flagged
-test_prop_cpa_10<-est_test_prop_10(age_2020_cpa,"cpa_id") #3 records flagged
-test_prop_zip_10<-est_test_prop_10(age_2020_zip,"zip") #2 records flagged
+test_prop_cpa_10<-est_test_prop_10(age_2020_cpa,"cpa_id") #16 records flagged
+test_prop_zip_10<-est_test_prop_10(age_2020_zip,"zip") #8 records flagged
 
 test_abso_reg_10<-est_test_abso_10(age_2020_reg,"region_id","age_group_id") #0 records flagged
-test_abso_jur_10<-est_test_abso_10(age_2020_jur,"jurisdiction_id","age_group_id") #64 records flagged
-test_abso_cpa_10<-est_test_abso_10(age_2020_cpa,"cpa_id","age_group_id") #924 records flagged
-test_abso_zip_10<-est_test_abso_10(age_2020_zip,"zip","age_group_id") #1017 records flagged
+test_abso_jur_10<-est_test_abso_10(age_2020_jur,"jurisdiction_id","age_group_id") #127 records flagged
+test_abso_cpa_10<-est_test_abso_10(age_2020_cpa,"cpa_id","age_group_id") #1182 records flagged
+test_abso_zip_10<-est_test_abso_10(age_2020_zip,"zip","age_group_id") #1392 records flagged
 
 
 ##Step 3: Save out flagged records
@@ -186,7 +186,7 @@ writeData(wb1, "Abso_CPA_10", test_abso_cpa_10)
 AbsoZIP_10 = addWorksheet(wb1, "Abso_ZIP_10")
 writeData(wb1, "Abso_ZIP_10", test_abso_zip_10)
 
-saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//age_Est2020.xlsx", overwrite = TRUE)
+saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//age_Est2020_v2.xlsx", overwrite = TRUE)
 
 
 #clean up

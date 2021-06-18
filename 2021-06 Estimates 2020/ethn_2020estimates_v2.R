@@ -109,24 +109,24 @@ ethn_2020_zip<- ethn_2020_zip %>%
 
 ##Step 2: Apply test functions and review results
 test_prop_reg<-est_test_prop_5(ethn_2020_reg,"region_id") #0 records flagged
-test_prop_jur<-est_test_prop_5(ethn_2020_jur,"jurisdiction_id") #0 records flagged
-test_prop_cpa<-est_test_prop_5(ethn_2020_cpa,"cpa_id") #12 records flagged
-test_prop_zip<-est_test_prop_5(ethn_2020_zip,"zip") #14 records flagged
+test_prop_jur<-est_test_prop_5(ethn_2020_jur,"jurisdiction_id") #1 records flagged
+test_prop_cpa<-est_test_prop_5(ethn_2020_cpa,"cpa_id") #44 records flagged
+test_prop_zip<-est_test_prop_5(ethn_2020_zip,"zip") #51 records flagged
 
 test_abso_reg<-est_test_abso_5(ethn_2020_reg,"region_id","ethnicity_id") #0 records flagged
-test_abso_jur<-est_test_abso_5(ethn_2020_jur,"jurisdiction_id","ethnicity_id") #103 records flagged
-test_abso_cpa<-est_test_abso_5(ethn_2020_cpa,"cpa_id","ethnicity_id") #556 records flagged
-test_abso_zip<-est_test_abso_5(ethn_2020_zip,"zip","ethnicity_id") #737 records flagged
+test_abso_jur<-est_test_abso_5(ethn_2020_jur,"jurisdiction_id","ethnicity_id") #124 records flagged
+test_abso_cpa<-est_test_abso_5(ethn_2020_cpa,"cpa_id","ethnicity_id") #599 records flagged
+test_abso_zip<-est_test_abso_5(ethn_2020_zip,"zip","ethnicity_id") #804 records flagged
 
 test_prop_reg_10<-est_test_prop_10(ethn_2020_reg,"region_id") #0 records flagged
-test_prop_jur_10<-est_test_prop_10(ethn_2020_jur,"jurisdiction_id") #0 records flagged
-test_prop_cpa_10<-est_test_prop_10(ethn_2020_cpa,"cpa_id") #0 records flagged
-test_prop_zip_10<-est_test_prop_10(ethn_2020_zip,"zip") #0 records flagged
+test_prop_jur_10<-est_test_prop_10(ethn_2020_jur,"jurisdiction_id") #1 records flagged
+test_prop_cpa_10<-est_test_prop_10(ethn_2020_cpa,"cpa_id") #8 records flagged
+test_prop_zip_10<-est_test_prop_10(ethn_2020_zip,"zip") #3 records flagged
 
 test_abso_reg_10<-est_test_abso_10(ethn_2020_reg,"region_id","ethnicity_id") #0 records flagged
-test_abso_jur_10<-est_test_abso_10(ethn_2020_jur,"jurisdiction_id","ethnicity_id") #62 records flagged
-test_abso_cpa_10<-est_test_abso_10(ethn_2020_cpa,"cpa_id","ethnicity_id") #447 records flagged
-test_abso_zip_10<-est_test_abso_10(ethn_2020_zip,"zip","ethnicity_id") #550 records flagged
+test_abso_jur_10<-est_test_abso_10(ethn_2020_jur,"jurisdiction_id","ethnicity_id") #84 records flagged
+test_abso_cpa_10<-est_test_abso_10(ethn_2020_cpa,"cpa_id","ethnicity_id") #516 records flagged
+test_abso_zip_10<-est_test_abso_10(ethn_2020_zip,"zip","ethnicity_id") #676 records flagged
 
 ##Step 3: Save out flagged records
 wb1 = createWorkbook()
@@ -182,7 +182,7 @@ writeData(wb1, "Abso_CPA_10", test_abso_cpa_10)
 AbsoZIP_10 = addWorksheet(wb1, "Abso_ZIP_10")
 writeData(wb1, "Abso_ZIP_10", test_abso_zip_10)
 
-saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//ethn_Est2020.xlsx", overwrite = TRUE)
+saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//ethn_Est2020_v2.xlsx", overwrite = TRUE)
 
 #clean up
 rm(list = ls())

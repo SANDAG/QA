@@ -109,26 +109,26 @@ hhinc_2020_zip<- hhinc_2020_zip %>%
 
 
 ##Step 2: Apply test functions and review results
-test_prop_reg<-est_test_prop_5(hhinc_2020_reg,"region_id") #11 records flagged
-test_prop_jur<-est_test_prop_5(hhinc_2020_jur,"jurisdiction_id") #191 records flagged
-test_prop_cpa<-est_test_prop_5(hhinc_2020_cpa,"cpa_id") #754 records flagged
-test_prop_zip<-est_test_prop_5(hhinc_2020_zip,"zip") #1050 records flagged
+test_prop_reg<-est_test_prop_5(hhinc_2020_reg,"region_id") #0 records flagged
+test_prop_jur<-est_test_prop_5(hhinc_2020_jur,"jurisdiction_id") #2 records flagged
+test_prop_cpa<-est_test_prop_5(hhinc_2020_cpa,"cpa_id") #88 records flagged
+test_prop_zip<-est_test_prop_5(hhinc_2020_zip,"zip") #103 records flagged
 
-test_abso_reg<-est_test_abso_5(hhinc_2020_reg,"region_id","income_group_id") #11 records flagged
-test_abso_jur<-est_test_abso_5(hhinc_2020_jur,"jurisdiction_id","income_group_id") #209 records flagged
-test_abso_cpa<-est_test_abso_5(hhinc_2020_cpa,"cpa_id","income_group_id") #857 records flagged
-test_abso_zip<-est_test_abso_5(hhinc_2020_zip,"zip","income_group_id") #1161 records flagged
+test_abso_reg<-est_test_abso_5(hhinc_2020_reg,"region_id","income_group_id") #10 records flagged
+test_abso_jur<-est_test_abso_5(hhinc_2020_jur,"jurisdiction_id","income_group_id") #190 records flagged
+test_abso_cpa<-est_test_abso_5(hhinc_2020_cpa,"cpa_id","income_group_id") #779 records flagged
+test_abso_zip<-est_test_abso_5(hhinc_2020_zip,"zip","income_group_id") #1054 records flagged
 
 
-test_prop_reg_10<-est_test_prop_10(hhinc_2020_reg,"region_id") #6 records flagged
-test_prop_jur_10<-est_test_prop_10(hhinc_2020_jur,"jurisdiction_id") #109 records flagged
-test_prop_cpa_10<-est_test_prop_10(hhinc_2020_cpa,"cpa_id") #444 records flagged
-test_prop_zip_10<-est_test_prop_10(hhinc_2020_zip,"zip") #611 records flagged
+test_prop_reg_10<-est_test_prop_10(hhinc_2020_reg,"region_id") #0 records flagged
+test_prop_jur_10<-est_test_prop_10(hhinc_2020_jur,"jurisdiction_id") #0 records flagged
+test_prop_cpa_10<-est_test_prop_10(hhinc_2020_cpa,"cpa_id") #40 records flagged
+test_prop_zip_10<-est_test_prop_10(hhinc_2020_zip,"zip") #36 records flagged
 
-test_abso_reg_10<-est_test_abso_10(hhinc_2020_reg,"region_id","income_group_id") #11 records flagged
-test_abso_jur_10<-est_test_abso_10(hhinc_2020_jur,"jurisdiction_id","income_group_id") #209 records flagged
-test_abso_cpa_10<-est_test_abso_10(hhinc_2020_cpa,"cpa_id","income_group_id") #857 records flagged
-test_abso_zip_10<-est_test_abso_10(hhinc_2020_zip,"zip","income_group_id") #1161 records flagged
+test_abso_reg_10<-est_test_abso_10(hhinc_2020_reg,"region_id","income_group_id") #10 records flagged
+test_abso_jur_10<-est_test_abso_10(hhinc_2020_jur,"jurisdiction_id","income_group_id") #190 records flagged
+test_abso_cpa_10<-est_test_abso_10(hhinc_2020_cpa,"cpa_id","income_group_id") #779 records flagged
+test_abso_zip_10<-est_test_abso_10(hhinc_2020_zip,"zip","income_group_id") #1054 records flagged
 
 ##Step 3: Save out flagged records
 wb1 = createWorkbook()
@@ -184,7 +184,7 @@ writeData(wb1, "Abso_CPA_10", test_abso_cpa_10)
 AbsoZIP_10 = addWorksheet(wb1, "Abso_ZIP_10")
 writeData(wb1, "Abso_ZIP_10", test_abso_zip_10)
 
-saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-08 Estimates QC//Output//hhinc_Est2020.xlsx", overwrite = TRUE)
+saveWorkbook(wb1, "C://Users//kte//San Diego Association of Governments//SANDAG QA QC - Documents//Projects//2021//2021-35 Estimates 2020_V2 QC//Output//hhinc_Est2020_v2.xlsx", overwrite = TRUE)
 
 #clean up
 rm(list = ls())
