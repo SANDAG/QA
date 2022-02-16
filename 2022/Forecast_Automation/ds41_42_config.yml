@@ -2,7 +2,6 @@ inputs:
     first_ID: "DS35"
     second_ID: "DS41"
     output_path: "example_path"
-    hello: 'hi
 
 DS35:
     DS35_2016: "T:/socioec/Current_Projects/XPEF31/abm_csv/mgra13_based_input2016_01.csv"
