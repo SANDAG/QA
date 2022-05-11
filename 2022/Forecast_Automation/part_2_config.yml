@@ -4,6 +4,11 @@ ID_information:
         second_id: 'DS35'
         comparison: 'True'
         default_folder: './outputs/'
+        
+###########################
+
+# This is a comment
+        
 year_thresholds: 
     taz:  
         value_threshold: 0
