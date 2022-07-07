@@ -21,7 +21,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 HH_type<-read.csv('M:\\Technical Services\\QA Documents\\Projects\\Sub Regional Forecast\\Data Files\\HH_Household_Type\\HH_HHTYPE.csv',stringsAsFactors = FALSE,fileEncoding="UTF-8-BOM")
 
 
-#add y characterto year
+#add y characterto year testes
 HH_type$year<- "y"
 HH_type$yr <- as.factor(paste( HH_type$year, HH_type$yr, sep = ""))
 HH_type$year<- NULL
