@@ -42,7 +42,7 @@
       "column(s)": ["long_name"]
     },
     "income_group_id": {
-      "dim_table": "income_gropu",
+      "dim_table": "income_group",
       "column(s)": ["name"]
     }
   }
