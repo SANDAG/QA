@@ -152,28 +152,27 @@ ORDER BY {mgra_denormalize_col}, yr_id
     # and the function used to aggregate. This information is contained in config["est"]
     agg_list = None
     if(not age_ethnicity):
-        agg_list = config["est"][est_table]
+        agg_list = config["est"][est_table]["aggregations"]
     else:
-        agg_list = config["est"]["age_sex_ethnicity"]
+        agg_list = config["est"]["age_sex_ethnicity"]["aggregations"]
     agg_col = ""
     for aggregation in agg_list:
         agg_col += "{function}({col}) as {col}".format(function=aggregation[1], col=aggregation[0])
         agg_col += ", "
     agg_col = agg_col[:-2] # Remove the trailing comma
     if(debug):
-        if(not age_ethnicity):
-            print(f"{'Aggregation instructions:' : <32}", config["est"][est_table])
-        else:
-            print(f"{'Aggregation instructions:' : <32}", config["est"]["age_sex_ethnicity"])
+        print(f"{'Aggregation instructions:' : <32}", agg_list)
         print()
     
     # The field {joins} is asking for formatted list of INNER JOINs that add on each dim table to
     # the estimates table. This information is contained in config["dim"]
     # TODO: Are there null mgra_id values? May need to change to LEFT JOIN
     # Note, we always want to join on mgra_id, so add that to the list
-    JOIN_COLS = ["mgra_id"] + ID_COLUMNS
-    if(households):
-        JOIN_COLS = ["mgra_id"]
+    JOIN_COLS = None
+    if(not age_ethnicity):
+        JOIN_COLS = config["est"][est_table]["joins"]
+    else:
+        JOIN_COLS = config["est"]["age_sex_ethnicity"]["joins"]
     joins = ""
     for join_col in JOIN_COLS:
         dim_table = config["dim"][join_col]["dim_table"]
@@ -256,7 +255,7 @@ INNER JOIN {DIM_BASE_TABLE.format(dim_table)} as {dim_table} ON
             CAT_COLS = ["long_name"]
             VAL_COLS = ["units"]
         else:
-            VAL_COLS = [col[0] for col in config["est"][est_table]]
+            VAL_COLS = [col[0] for col in config["est"][est_table]["aggregations"]]
 
         # Custom behavior for the age_sex_ethnicity table
         if(est_table == "age_sex_ethnicity"):

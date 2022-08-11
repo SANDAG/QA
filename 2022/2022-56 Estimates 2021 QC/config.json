@@ -1,17 +1,42 @@
 {
   "est": {
-    "age": [["population", "SUM"]],
-    "age_sex_ethnicity": [["population", "SUM"]],
-    "ethnicity": [["population", "SUM"]],
-    "household_income": [["households", "SUM"]],
-    "households": [["households", "SUM"]],
-    "housing": [
-      ["units", "SUM"], 
-      ["unoccupiable", "SUM"], 
-      ["occupied", "SUM"], 
-      ["vacancy", "SUM"]],
-    "population": [["population", "SUM"]],
-    "sex": [["population", "SUM"]]
+    "age": {
+      "joins": ["mgra_id", "age_group_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "age_sex_ethnicity": {
+      "joins": ["mgra_id", "age_group_id", "sex_id", "ethnicity_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "ethnicity": {
+      "joins": ["mgra_id", "ethnicity_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "household_income": {
+      "joins": ["mgra_id", "income_group_id"],
+      "aggregations": [["households", "SUM"]]
+    },
+    "households": {
+      "joins": ["mgra_id"],
+      "aggregations": [["households", "SUM"]]
+    },
+    "housing": {
+      "joins": ["mgra_id", "structure_type_id"],
+      "aggregations": [
+        ["units", "SUM"], 
+        ["unoccupiable", "SUM"], 
+        ["occupied", "SUM"], 
+        ["vacancy", "SUM"]
+      ]
+    },
+    "population": {
+      "joins": ["mgra_id", "housing_type_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "sex": {
+      "joins": ["mgra_id", "sex_id"],
+      "aggregations": [["population", "SUM"]]
+    }
   },
   
   "dim": {
