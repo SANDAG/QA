@@ -64,4 +64,6 @@ class Test_get_table_by_geography():
             assert (table.index.nlevels == 1)
             assert (table.columns.nlevels == 1)
 
+    # TODO: Test that the order categorical variables appear is correct
+
     # TODO: More tests if I can find the time
