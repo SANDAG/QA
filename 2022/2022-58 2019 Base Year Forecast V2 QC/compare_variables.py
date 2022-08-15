@@ -40,7 +40,8 @@ def get_data(folder, filter) -> pd.DataFrame:
     # TODO: Read other file formats?
     return pd.read_csv(filtered_file[0])
 
-def get_data_with_aggregation_levels(folder, geo_list=["mgra", "jurisdiction"]) -> None:
+def get_data_with_aggregation_levels(folder, 
+    geo_list=["mgra", "luz"]) -> dict:
     """Get data and combine with the proper columns of mgra_denormalize for aggregation
     
     Gets region level data by default, and whatever geography levels are present in geo_list. Uses
@@ -55,7 +56,7 @@ def get_data_with_aggregation_levels(folder, geo_list=["mgra", "jurisdiction"]) 
             default, so do not include it here
 
     Returns:
-        dict of pandas.DataFrame: The key is the geography level, and the value is the table
+        dict(pandas.DataFrame): The key is the geography level, and the value is the table
     """
     # Where to pull dimension tables from
     DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16')
@@ -63,7 +64,7 @@ def get_data_with_aggregation_levels(folder, geo_list=["mgra", "jurisdiction"]) 
     # Some configuation to help this function know how to search for the correct files
     # Note, even though there is no larger geography level than "region", we still pull the file
     # so we can compare
-    file_search = {"mgra": "_mgra_", "jurisdiction": "_jur_", "region": "_region_"}
+    file_search = {"mgra": "_mgra_", "jurisdiction": "_jur_", "region": "_region_", "luz": "_luz_"}
 
     # And some more configuration to know how to combine with dim tables and later on aggregate
     # to compare totals between geography levels. So "mgra" would be aggregated to "jurisdiction" 
@@ -71,8 +72,8 @@ def get_data_with_aggregation_levels(folder, geo_list=["mgra", "jurisdiction"]) 
     # TODO: There is likely a better way to format this, where the function could recursively look
     # through the dictionary to derive how aggregation should be done, but that for a later date
     dim_table_columns = {
-        "mgra": ["jurisdiction", "region"],
-        "jurisdiction": ["region"]
+        "mgra": ["region"],
+        "luz": ["region"]
     }
 
     # Store tables at each geography level here
@@ -80,6 +81,7 @@ def get_data_with_aggregation_levels(folder, geo_list=["mgra", "jurisdiction"]) 
 
     # Get the region level table, since we always want that
     geo_level_tables["region"] = get_data(folder, file_search["region"])
+    geo_level_tables["region"]["region"] = "San Diego"
 
     # Do this for every geography level requested (typically only "mgra" and "jurisdiction", but 
     # could be extended to include "taz", "cpa", etc.).
@@ -89,25 +91,40 @@ def get_data_with_aggregation_levels(folder, geo_list=["mgra", "jurisdiction"]) 
         # Get the table
         geo_level_tables[geo] = get_data(folder, file_search[geo])
 
-        print(geo_level_tables[geo])
+        # # Combine with the correct columns of the dim table
+        # agg_cols = ", ".join(dim_table_columns[geo])
+        # # BUG: query needs "WHERE series=?"
+        # # BUG: series=15 IS NOT IN mgra_denormalize yet
+        # query = textwrap.dedent(f"""\
+        #     SELECT {geo}, {agg_cols}
+        #     FROM [demographic_warehouse].[dim].[mgra_denormalize]
+        #     """)
+        # dim_table = pd.read_sql_query(query, con=DDAM)
 
-        # Combine with the correct columns of the dim table
-        agg_cols = ", ".join(dim_table_columns[geo])
-        # BUG: query needs "WHERE series=?"
-        # BUG: series=15 IS NOT IN mgra_denormalize yet
+        # Due to the above bug, MGRA15 data will be pulled from [sql2014b8].[GeoDepot].[gis].[MGRA15]
+        # instead
         query = textwrap.dedent(f"""\
-            SELECT {geo}, {agg_cols}
-            FROM [demographic_warehouse].[dim].[mgra_denormalize]
+            SELECT [MGRA], [Name], [LUZ]
+            FROM [GeoDepot].[gis].[MGRA15] as MGRA15
+            LEFT JOIN [GeoDepot].[gis].[CITIES] as cities ON
+                MGRA15.City = cities.City
             """)
-        dim_table = pd.read_sql_query(query, con=DDAM)
-        geo_level_tables[geo] = pd.merge(geo_level_tables[geo], dim_table, 
-            on=geo)
+        SQL2014B8 = sql.create_engine("mssql+pymssql://sql2014b8")
+        dim_table = pd.read_sql_query(query, con=SQL2014B8)
+        dim_table = dim_table.rename({"MGRA": "mgra", "Name": "jurisdiction", "LUZ": "luz"}, axis=1)
+        dim_table["region"] = "San Diego"
+        dim_table = dim_table[[geo] + dim_table_columns[geo]].drop_duplicates(ignore_index=True)
 
-        return
+        # The luz file has geography as luz_id, and not luz. Change to keep our merge the same
+        if(geo == "luz"):
+            geo_level_tables[geo] = geo_level_tables[geo].rename({"luz_id": "luz"}, axis=1)
+
+        geo_level_tables[geo] = pd.merge(geo_level_tables[geo], dim_table, 
+            how="left", on=geo)
 
     return geo_level_tables
 
-def check_geography_aggregations(df_dict, geo_list=["mgra", "jurisdiction"]) -> None:
+def check_geography_aggregations(df_dict, geo_list=["mgra", "luz"]) -> None:
     """Take the outputs of get_data_with_aggregation_levels and check that values match up
     
     Args:
@@ -120,8 +137,8 @@ def check_geography_aggregations(df_dict, geo_list=["mgra", "jurisdiction"]) -> 
     # Yes this is copy pasted from the previous funciton, and yes it is awlful code design, but I am
     # currently too lazy to do this correctly
     dim_table_columns = {
-        "mgra": ["jurisdiction", "region"],
-        "jurisdiction": ["region"]
+        "mgra": ["region"],
+        "luz": ["region"]
     }
     
     # Basically, we want to check for the input geography levels each aggregation
@@ -150,11 +167,17 @@ def check_geography_aggregations(df_dict, geo_list=["mgra", "jurisdiction"]) -> 
             # percentage
             columns_of_interest = [agg_col, "hs", "hh", "hhs", "vacancy", "vacancy_rate", "hhp"]
 
+            # Also, we want to check employment values
+            columns_of_interest += [emp_cat for emp_cat in aggregated if "emp_" in emp_cat]
+
+            # print(aggregated, df_dict[agg_col])
+
             # Check the values match up
             print(aggregated[columns_of_interest])
             print(df_dict[agg_col][columns_of_interest])
+            print(aggregated[columns_of_interest] == df_dict[agg_col][columns_of_interest])
 
-            return
+            print()
 
 if(__name__ == "__main__"):
     
