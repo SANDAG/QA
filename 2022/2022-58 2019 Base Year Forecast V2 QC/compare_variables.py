@@ -173,9 +173,15 @@ def check_geography_aggregations(df_dict, geo_list=["mgra", "luz"]) -> None:
             # print(aggregated, df_dict[agg_col])
 
             # Check the values match up
-            print(aggregated[columns_of_interest])
-            print(df_dict[agg_col][columns_of_interest])
-            print(aggregated[columns_of_interest] == df_dict[agg_col][columns_of_interest])
+            check_results = aggregated[columns_of_interest] == df_dict[agg_col][columns_of_interest]
+            pd.set_option('display.max_colwidth', None)
+            pd.set_option("display.max_columns", None)
+            if(check_results.to_numpy().sum() != check_results.shape[0] * check_results.shape[1]):
+                print(aggregated[columns_of_interest])
+                print(df_dict[agg_col][columns_of_interest])
+                print(check_results)
+            else:
+                print("No errors")
 
             print()
 
