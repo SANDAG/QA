@@ -1,53 +1,58 @@
-# Eric Liu
-# 
-# Functions which can be used to generate csv files from estimates and dimensions tables. To use, 
-# simply put the following import at the top of your code "import estimates_automation as ea"
-#
-# For details on what does what, just refer to the individual functions.
-# 
-# There is some automated testing of the functions in the file "test_estimates_automation.py", but 
-# it is very sparse. I would love to add more tests if I can find the time
-#
-# Note, I'm pretty sure this code can be used for both estimates and forecasts, at which point the
-# file would change to "forecasts_estimates_automation.py". I would love to find a way to put in
-# a bunch of iron related puns (fe=iron)
-#
-# Updated: August 10, 2022
+"""Functions to return/save various Estimates tables.
 
+In a general sense, the functions in this file all create tables directly using Estimates data from
+[DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they create any
+kind of derived output such as diff files.
+"""
 ###########
 # Imports #
 ###########
 
+import pathlib
+import yaml
+
 import pandas as pd
+import sqlalchemy as sql
 
 #############
 # Functions #
 #############
 
-def get_table_by_geography(connection, config, est_table, geo_level, 
-    est_vintage="2020_06",
-    pivot=False, 
-    debug=False):
-    """
-    Get the input estimates table grouped by the input geography level. Because I hate dealing
-    with multi-indexes of any kind, every table returned from this function (whether pivoted
-    or not) will never have a multi-index or a multi-column
+def get_config(file=pathlib.Path("./config.yaml")):
+    """Get and return the request config file. Default is config.yaml."""
+    with open(file, "r") as config_file:
+        return yaml.safe_load(config_file)
 
-    :param connection:  The connection to the relevant SQL server (AFAIK always DDAMWSWL16)
-    :param config:      The config file. See "./config.json" for details
-    :param est_table:   The name of the estimates table. This is the part after "dw_"
-    :param geo_level:   The geography level to group by. This is a string input corresponding to one
-                        of the column names of [demographic_warehouse].[dim].[mgra_denormalize]. For
-                        example, this variable could contain "sra", "college", or "jurisdiction"
-    :param est_vintage: Which estimates table to pull from. See the variable EST_BASE_TABLE for
-                        more details on how this variable is used
-    :param pivot:       By default, False. If True, change the format of the table from being tall
-                        to wide. For more details, see the bottom of the function for exactly what 
-                        is going on
-    :param debug:       By default, False. If True, then print out diagnostic statements including
-                        the complete SQL query used
-    :returns:           Dataframe containing the requested table grouped by the geography level
+def get_table_by_geography(est_vintage, est_table, geo_level, pivot=False, debug=False):
+    """Get the input estimates table grouped by the input geography level.
+    
+    This function will return the requested Estimates table from the requested vintage. The relevant
+    joins will be made on the base table as specified in the default config file. The returned table
+    will by zero indexed and have no multi-columns.
+
+    Args:
+        est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this
+            variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
+        est_table (str): The Estimates table to pull from. In DDAMWSQL16, this variable corresponds
+            to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]"
+        geo_level (str): The geography level to aggregate by. This can be any of the columns in the
+            DDAMWSQL16 table [demographic_warehouse].[dim].[mgra_denormalize]. For example, you 
+            could input "region", "jurisdiction", "mgra", etc.
+        pivot (bool): Default False. If True, return the table in wide format instead of tall
+        debug (bool): Default False. If True, print out diagnostic print statements during execution
+            including the complete SQL query used
+
+    Returns:
+        pd.DataFrame: The requested Estimates table grouped by the geography level
     """
+    # It is assumed that the Estimates table will always come from DDAMWSQL16
+    # NOTE: This uses desktop authentication so I'm fairly confident to run this fuction you would
+    # need to be in the office or on VPN, but I'm not sure. Someone want to test it out?
+    DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
+
+    # Store the config locally 
+    config = get_config()
+
     # This variable changes the behavior of the function if the age_ethnicity table is requested.
     # This table does not exist in the estimates table, rather it is the age_sex_ethnicity table
     # grouped by age and ethnicity.
@@ -64,7 +69,7 @@ def get_table_by_geography(connection, config, est_table, geo_level,
     # If we want debug, output all function inputs and the two above derived function inputs
     if(debug):
         print("*** BEGIN FUNCTION INPUTS ***")
-        print(f"{'connection' : <32}", connection)
+        print(f"{'connection' : <32}", DDAM)
         print(f"{'config' : <32}", config)
         print(f"{'est_table' : <32}", est_table)
         print(f"{'geo_level' : <32}", geo_level)
@@ -119,7 +124,7 @@ ORDER BY {mgra_denormalize_col}, yr_id
     COLUMNS = pd.read_sql_query(f"""
         SELECT TOP(0) *
         FROM {est_base_table}
-    """, con=connection).columns
+    """, con=DDAM).columns
     if(debug):
         print(f"{'Columns in estimates table:' : <32}", list(COLUMNS))
         print()
@@ -221,7 +226,7 @@ INNER JOIN {DIM_BASE_TABLE.format(dim_table)} as {dim_table} ON
         print("*** END FULL QUERY ***")
 
     # Get the table into pandas
-    table = pd.read_sql_query(query, con=connection)
+    table = pd.read_sql_query(query, con=DDAM)
 
     # If the age_ethnicity table was requested (and not the age_sex_ethnicity table which was
     # pulled from SQL), then aggregate to remove the sex category
@@ -322,28 +327,28 @@ INNER JOIN {DIM_BASE_TABLE.format(dim_table)} as {dim_table} ON
     # Return the table
     return table
 
-def consolidate(connection, config,
-    est_vintage="2020_06",
+def consolidate(est_vintage,
     geo_list=["region", "jurisdiction", "cpa"], 
     est_table_list=["age", "ethnicity", "household_income", "households", "housing", "population", "sex"],
     save=False,
     save_folder=None):
-    """
-    Conoslidate the input estimates tables column wise for each input geography. This function 
-    returns one dataframe per geography level, as opposed to combining everything together
+    """Create consolidated files with all Estimates table for each geography level.
 
-    :param connection:      The connection to the relevant SQL server (AFAIK always DDAMWSWL16)
-    :param config:          The config file. See "./config.json" for details
-    :param est_vintage:     Which estimates table to pull from. See the variable EST_BASE_TABLE in 
-                            the function get_table_by_geography for more details
-    :param geo_list:        The geographies to cosolidate along.
-    :param est_table_list:  Whcih estimates tables we want to consolidate
-    :param save:            False by default. If False, then only return the consolidated tables. If 
-                            True, then use save_folder to save the consolidated tables and return
-                            the tables
-    :param save_folder:     The folder in which to save consolidated files. Only used if save=True
-    :returns:               A list containing the consolidated tables (dataframes) in the order of 
-                            geo_list
+    This function returns one pd.DataFrame per input geography level, as opposed to combining 
+    everything together.
+
+    Args:
+        est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
+            variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
+        geo_list (List of str): The geographies to cosolidate along. 
+        est_table_list (List of str): Which estimates tables we want to consolidate
+        save (bool): False by default. If False, then only return the consolidated tables. If 
+            True, then use save_folder to save the consolidated tables and return the tables
+        save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
+            pathlib.Path object
+
+    Returns:
+        List of pd.DataFrame: A list containing the consolidated tables in the order of geo_list
     """
     # Store each cosolidated table by geography level here
     combined_tables = []
@@ -359,45 +364,7 @@ def consolidate(connection, config,
         for est_table_name in est_table_list:
 
             # Get the estimate table
-            est_table = get_table_by_geography(connection, config, est_table_name, geo, 
-                est_vintage=est_vintage, pivot=True)
-
-            # AS OF UPDATE 8/10/2022, THE FUNCTION get_table_by_geography SHOULD ALWAYS RETURN
-            # TABLES WHICH HAVE NO MULTI-INDICIS NOR MULTI-COLUMNS. THUS, THE FOLLOWING 
-            # TRANSFORMATIONS ARE NO LONGER NECESSARY
-
-            # # Do some transformations to align the format with what we want in the csv
-            # # Similar to in get_table_by_geography, we have different behavior for the households
-            # # table as we ignore the column household_size_id. As a result, the table returned by
-            # # get_table_by_geography is already in the correct format
-            # est_table = est_table.reset_index()
-            # if(est_table_name != "households"):
-            #     # TODO: Possible bug when consolidating age_sex_ethncity table relating to usage
-            #     # of hardcoded number 2 below
-            #     est_table.columns = est_table.columns.get_level_values(0)[:2].append(
-            #         est_table.columns.get_level_values(1)[2:])
-                
-            #     # Due to the odd format of the housing pivot table, different processing needs to be
-            #     # done
-            #     if(est_table_name == "housing"):
-            #         # Specifically, the above column manipulation loses information about # of 
-            #         # units, unoccupiable, occupied, and vacancy. This table can be best found in 
-            #         # the unpivoted version of the table
-            #         housing_unpivot = get_table_by_geography(connection, config, est_table_name, geo, 
-            #             est_name=est_name, pivot=False)
-
-            #         # Since the type of housing information is already contained in ths pivot table,
-            #         # we can drop that column
-            #         housing_unpivot = housing_unpivot.drop("long_name", axis=1)
-
-            #         # Sum up values for each distinct geo, yr_id combination
-            #         housing_unpivot = housing_unpivot.groupby([geo, "yr_id"]).sum()
-
-            #         # The groupby results in a multi-index, remove it
-            #         housing_unpivot = housing_unpivot.reset_index(drop=False)
-
-            #         # Join the four additional columns to the original estimates table
-            #         est_table = est_table.merge(housing_unpivot, how="left", on=[geo, "yr_id"], sort=False)
+            est_table = get_table_by_geography(est_vintage, est_table_name, geo, pivot=True)
 
             # Add the transformed estimate table to our list of tables
             est_tables.append(est_table)
@@ -421,29 +388,30 @@ def consolidate(connection, config,
     # Return all the combined tables
     return combined_tables
 
-def individual(connection, config,
-    est_vintage="2020_06",
+def individual(est_vintage,
     geo_list=["region", "jurisdiction", "cpa"], 
     est_table_list=["age", "ethnicity", "household_income", "age_ethnicity", "age_sex_ethnicity"],
     save=False,
     save_folder=None):
-    """
+    """Create individual files for each unique conbination of Estimate table and geography level.
+
     Generate individual estimates tables for each input geography. This function returns one
     dataframe for each geography level / estimate table. Because of the way looping is done, the 
     order of dfs is first geo_level each estimate table, second geo_level each estimate table, etc.
 
-    :param connection:      The connection to the relevant SQL server (AFAIK always DDAMWSWL16)
-    :param config:          The config file. See "./config.json" for details
-    :param est_vintage:     Which estimates table to pull from. See the variable EST_BASE_TABLE in 
-                            the function get_table_by_geography for more details
-    :param geo_list:        The desired geographies
-    :param est_table_list:  The desired estimates tables
-    :param save:            False by default. If False, then only return the individual tables. If 
-                            True, then use save_folder to save the individual tables and return
-                            the tables
-    :param save_folder:     The folder in which to save individual files. Only used if save=True
-    :returns:               A list containing the individual tables (dataframes) in the order of 
-                            geo_list x (est_table_list + eth_by_age)
+    Args:
+        est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
+            variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
+        geo_list (List of str): The geographies to cosolidate along. 
+        est_table_list (List of str): Which estimates tables we want to consolidate
+        save (bool): False by default. If False, then only return the consolidated tables. If 
+            True, then use save_folder to save the consolidated tables and return the tables
+        save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
+            pathlib.Path object
+
+    Returns:
+        List of pd.DataFrame: A list containing the individual tables in the order of geo_list and
+            est_table_list.
     """
     # Store each individual table by geography level x est_table_list here
     individual_tables = []
@@ -455,53 +423,7 @@ def individual(connection, config,
         for est_table_name in est_table_list:
 
             # Get the estimate table
-            est_table = get_table_by_geography(connection, config, est_table_name, geo, 
-                est_vintage=est_vintage, pivot=True)
-
-            # AS OF UPDATE 8/10/2022, THE FUNCTION get_table_by_geography SHOULD ALWAYS RETURN
-            # TABLES WHICH HAVE NO MULTI-INDICIS NOR MULTI-COLUMNS. THUS, THE FOLLOWING 
-            # TRANSFORMATIONS ARE NO LONGER NECESSARY
-
-            # # Do some transformations to align the format with what we want in the csv
-            # # Similar to in get_table_by_geography, we have different behavior for the households
-            # # table as we ignore the column household_size_id. As a result, the table returned by
-            # # get_table_by_geography is already in the correct format
-            # est_table = est_table.reset_index()
-            # if(est_table_name != "households"):
-            #     # Due to the odd format of the housing pivot table, different processing needs to be
-            #     # done
-            #     if(est_table_name == "housing"):
-            #         print(est_table)
-            #         # TODO: Possible bug when consolidating age_sex_ethncity table relating to usage
-            #         # of hardcoded number 2 below
-            #         est_table.columns = est_table.columns.get_level_values(0)[:2].append(
-            #             est_table.columns.get_level_values(1)[2:])
-
-            #         print(est_table)
-
-            #         # Specifically, the above column manipulation loses information about # of 
-            #         # units, unoccupiable, occupied, and vacancy. This table can be best found in 
-            #         # the unpivoted version of the table
-            #         housing_unpivot = get_table_by_geography(connection, config, est_table_name, geo, 
-            #             est_name=est_name, pivot=False)
-
-            #         # Since the type of housing information is already contained in ths pivot table,
-            #         # we can drop that column
-            #         housing_unpivot = housing_unpivot.drop("long_name", axis=1)
-
-            #         # Sum up values for each distinct geo, yr_id combination
-            #         housing_unpivot = housing_unpivot.groupby([geo, "yr_id"]).sum()
-
-            #         # The groupby results in a multi-index, remove it
-            #         housing_unpivot = housing_unpivot.reset_index(drop=False)
-
-            #         # Join the four additional columns to the original estimates table
-            #         est_table = est_table.merge(housing_unpivot, how="left", on=[geo, "yr_id"], sort=False)
-            #     else:
-            #         column_name_pivot_point = list(est_table.columns.get_level_values(0)).index(
-            #             config["est"][est_table_name][0][0])
-            #         est_table.columns = est_table.columns.get_level_values(0)[:column_name_pivot_point].append(
-            #             est_table.columns.get_level_values(1)[column_name_pivot_point:])
+            est_table = get_table_by_geography(est_vintage, est_table_name, geo, pivot=True)
 
             # Store the individual table
             individual_tables.append(est_table)
@@ -511,29 +433,6 @@ def individual(connection, config,
                 # Save each table using the geography level to distinguish
                 file_name = f"{est_vintage}_{est_table_name}_{geo}_QA.csv"
                 est_table.to_csv(save_folder / file_name, index=False)
-
-        # # Check if we additionally want to get ethnicity broken down by only age (not gender)
-        # if(eth_by_age):
-        #     # Get the age_sex_ethnicity table
-        #     est_table = get_table_by_geography(connection, config, "age_sex_ethnicity", geo, 
-        #         est_vintage=est_vintage, pivot=True).reset_index()
-
-        #     # Do the same transforms
-        #     column_name_pivot_point = list(est_table.columns.get_level_values(0)).index("population")
-        #     est_table.columns = est_table.columns.get_level_values(0)[:column_name_pivot_point].append(
-        #         est_table.columns.get_level_values(1)[column_name_pivot_point:])
-
-        #     # Group by every categorical variable except sex
-        #     est_table = est_table.groupby([geo, "yr_id", "name"]).sum().reset_index()
-
-        #     # Store the individual table
-        #     individual_tables.append(est_table)
-
-        #     # Save the table if requested
-        #     if(save):
-        #         # Save each table using the geography level to distinguish
-        #         file_name = f"{est_vintage}_age_ethnicity_{geo}_QA.csv"
-        #         est_table.to_csv(save_folder / file_name, index=False)
             
     # Return all the combined tables
     return individual_tables
