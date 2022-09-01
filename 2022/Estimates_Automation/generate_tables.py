@@ -42,7 +42,7 @@ class EstimatesTables():
 
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this
-                variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
+                variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
             est_table (str): The Estimates table to pull from. In DDAMWSQL16, this variable corresponds
                 to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]"
             geo_level (str): The geography level to aggregate by. This can be any of the columns in the
@@ -349,7 +349,7 @@ class EstimatesTables():
 
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
-                variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
+                variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
             geo_list (List of str): The geographies to cosolidate along. 
             est_table_list (List of str): Which estimates tables we want to consolidate
             save (bool): False by default. If False, then only return the consolidated tables. If 
@@ -411,7 +411,7 @@ class EstimatesTables():
 
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
-                variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
+                variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
             geo_list (List of str): The geographies to cosolidate along. 
             est_table_list (List of str): Which estimates tables we want to consolidate
             save (bool): False by default. If False, then only return the consolidated tables. If 

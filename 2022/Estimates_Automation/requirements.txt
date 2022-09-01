@@ -1,4 +1,9 @@
+# Required for general functionality
 pathlib
 pandas
 sqlalchemy
 yaml
+
+# Required to auto-generate documentation
+# See README.md for instructions
+lazydocs
