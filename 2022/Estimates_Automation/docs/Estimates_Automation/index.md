@@ -3,5 +3,5 @@ Module Estimates_Automation
 
 Sub-modules
 -----------
-* Estimates_Automation.compare_variables
-* Estimates_Automation.estimates_automation
+* Estimates_Automation.generate_tables
+* Estimates_Automation.perform_checks
