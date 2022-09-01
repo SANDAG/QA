@@ -1,0 +1,28 @@
+<!-- markdownlint-disable -->
+
+# API Overview
+
+## Modules
+
+- [`generate_tables`](./generate_tables.md#module-generate_tables): Functions to return/save various Estimates tables.
+- [`perform_checks`](./perform_checks.md#module-perform_checks): TODO: One line description
+
+## Classes
+
+- [`generate_tables.DiffFiles`](./generate_tables.md#class-difffiles): TODO: One line description
+- [`generate_tables.EstimatesTables`](./generate_tables.md#class-estimatestables): Functions to return/save various Estimates tables.
+- [`perform_checks.DOFPopulation`](./perform_checks.md#class-dofpopulation): TODO: One line description
+- [`perform_checks.DOFProportion`](./perform_checks.md#class-dofproportion): TODO: One line description
+- [`perform_checks.InternalConsistency`](./perform_checks.md#class-internalconsistency): TODO: One line description
+- [`perform_checks.NullValues`](./perform_checks.md#class-nullvalues): TODO: One line description
+- [`perform_checks.ThresholdAnalysis`](./perform_checks.md#class-thresholdanalysis): TODO: One line description
+- [`perform_checks.VintageComparisons`](./perform_checks.md#class-vintagecomparisons): TODO: One line description
+
+## Functions
+
+- No functions
+
+
+---
+
+_This file was automatically generated via [lazydocs](https://github.com/ml-tooling/lazydocs)._
