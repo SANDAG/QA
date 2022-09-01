@@ -18,7 +18,7 @@ import sqlalchemy as sql
 # Functions #
 #############
 
-def get_config(file=pathlib.Path("./config.yaml")):
+def _get_config(file=pathlib.Path("./config.yaml")):
     """Get and return the request config file. Default is config.yaml."""
     with open(file, "r") as config_file:
         return yaml.safe_load(config_file)
@@ -51,7 +51,7 @@ def get_table_by_geography(est_vintage, est_table, geo_level, pivot=False, debug
     DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
 
     # Store the config locally 
-    config = get_config()
+    config = _get_config()
 
     # This variable changes the behavior of the function if the age_ethnicity table is requested.
     # This table does not exist in the estimates table, rather it is the age_sex_ethnicity table

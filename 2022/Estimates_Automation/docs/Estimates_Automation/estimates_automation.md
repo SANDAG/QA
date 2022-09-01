@@ -1,5 +1,5 @@
-Module estimates_automation
-===========================
+Module Estimates_Automation.estimates_automation
+================================================
 Functions to return/save various Estimates tables.
 
 In a general sense, the functions in this file all create tables directly using Estimates data from
@@ -8,30 +8,6 @@ kind of derived output such as diff files.
 
 Functions
 ---------
-
-    
-`consolidate(est_vintage, geo_list=['region', 'jurisdiction', 'cpa'], est_table_list=['age', 'ethnicity', 'household_income', 'households', 'housing', 'population', 'sex'], save=False, save_folder=None)`
-:   Create consolidated files with all Estimates table for each geography level.
-    
-    This function returns one pd.DataFrame per input geography level, as opposed to combining 
-    everything together.
-    
-    Args:
-        est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
-            variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
-        geo_list (List of str): The geographies to cosolidate along. 
-        est_table_list (List of str): Which estimates tables we want to consolidate
-        save (bool): False by default. If False, then only return the consolidated tables. If 
-            True, then use save_folder to save the consolidated tables and return the tables
-        save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
-            pathlib.Path object
-    
-    Returns:
-        List of pd.DataFrame: A list containing the consolidated tables in the order of geo_list
-
-    
-`get_config(file=WindowsPath('config.yaml'))`
-:   Get and return the request config file. Default is config.yaml.
 
     
 `get_table_by_geography(est_vintage, est_table, geo_level, pivot=False, debug=False)`
@@ -55,6 +31,26 @@ Functions
     
     Returns:
         pd.DataFrame: The requested Estimates table grouped by the geography level
+
+    
+`consolidate(est_vintage, geo_list=['region', 'jurisdiction', 'cpa'], est_table_list=['age', 'ethnicity', 'household_income', 'households', 'housing', 'population', 'sex'], save=False, save_folder=None)`
+:   Create consolidated files with all Estimates table for each geography level.
+    
+    This function returns one pd.DataFrame per input geography level, as opposed to combining 
+    everything together.
+    
+    Args:
+        est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
+            variable corresponds to YYYY_MM in the table: "[estimates].[est_YYYY_MM]"
+        geo_list (List of str): The geographies to cosolidate along. 
+        est_table_list (List of str): Which estimates tables we want to consolidate
+        save (bool): False by default. If False, then only return the consolidated tables. If 
+            True, then use save_folder to save the consolidated tables and return the tables
+        save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
+            pathlib.Path object
+    
+    Returns:
+        List of pd.DataFrame: A list containing the consolidated tables in the order of geo_list
 
     
 `individual(est_vintage, geo_list=['region', 'jurisdiction', 'cpa'], est_table_list=['age', 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'], save=False, save_folder=None)`
