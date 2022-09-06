@@ -44,7 +44,7 @@ class InternalConsistency():
         "luz": ["region"],
     }
 
-    def _get_data_with_aggregation_level(self, folder, table_name, geo):
+    def _get_data_with_aggregation_level(self, folder, vintage, geo, table_name):
         """Get data and combine with the proper columns of mgra_denormalize for aggregation.
         
         Gets region level data by default, and whatever geography levels are present in geo_list. 
@@ -54,10 +54,11 @@ class InternalConsistency():
 
         Args:
             folder (pathlib.Path): The folder in which data can be found.
+            vintage (str): The vintage of Estimates table to pull from. 
+            geo (str): The geography level to get data for and add aggregation columns onto
             table_name (str): The name of the Estimates table to get. Because it is assumed that
                 the saved tables are created by the file generate_tables.py, this can be any of
                 "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
-            geo (str): The geography level to get data for and add aggregation columns onto
 
         Returns:
             pd.DataFrame: The table contains data at the input geography level, with additional 
@@ -72,7 +73,7 @@ class InternalConsistency():
         # dim_table_columns would need to updated
 
         # Get the table
-        geo_table = get_table(folder, table_name, geo)
+        geo_table = f.load(folder, vintage, geo, table_name, "csv")
 
         # # Combine with the correct columns of the dim table
         # agg_cols = ", ".join(dim_table_columns[geo])
@@ -108,11 +109,12 @@ class InternalConsistency():
 
         return geo_table
 
-    def check_geography_aggregations(self, folder, geo_list=["mgra", "luz"]):
+    def check_geography_aggregations(self, folder, vintage, geo_list=["mgra", "luz"]):
         """Take the outputs of get_data_with_aggregation_levels and check that values match up.
         
         Args:
             folder (pathlib.Path): The folder in which data can be found.
+            vintage (str): The vintage of Estimates table to pull from. 
             geo_list (list): The list of geographies to aggregate from. Note that region is included 
                 by default, so do not include it here.
             
@@ -122,7 +124,7 @@ class InternalConsistency():
         # Get the table at each geography level
         geo_tables = {}
         for geo in geo_list:
-            geo_tables[geo] = self._get_data_with_aggregation_level(folder, geo)
+            geo_tables[geo] = self._get_data_with_aggregation_level(folder, vintage, geo, "consolidated")
 
         # Check each geography level at the specified aggregation levels
         for agg_col in self.geography_aggregation[geo]:

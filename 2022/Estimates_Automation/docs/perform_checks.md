@@ -8,42 +8,10 @@ Classes/functions to run various checks on Estimates tables.
 The functions in this file run checks on Estimates tables. These functions can only pull data from saved files. By default, they output only print statements, but there is an option to save a  table containing rows with errors at some location. For more details, see the individual  classes/functions. 
 
 
----
-
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L23"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-## <kbd>function</kbd> `get_table`
-
-```python
-get_table(folder, table, geo)
-```
-
-Get the requested table from the input folder. 
-
-
-
-**Args:**
- 
- - <b>`folder`</b> (pathlib.Path):  The folder in which to search for data. 
- - <b>`table`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity") 
- - <b>`geo`</b> (str):  The geography level of the table to get. Due to the way generate_tables.py names  files, table and geo will be combined as f"{table}_{geo}" 
-
-
-
-**Returns:**
- 
- - <b>`pd.DataFrame`</b>:  The found file as a df. 
-
-
-
-**Raises:**
- 
- - <b>`FileNotFoundError`</b>:  When either too many files were found or no files were found. 
-
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L61"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L26"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `InternalConsistency`
 Functions to run internal consistency checks. 
@@ -61,12 +29,12 @@ For the purposes of this class, internal consistency checks mean checking if agg
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L146"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L112"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_geography_aggregations`
 
 ```python
-check_geography_aggregations(folder, geo_list=['mgra', 'luz'])
+check_geography_aggregations(folder, vintage, geo_list=['mgra', 'luz'])
 ```
 
 Take the outputs of get_data_with_aggregation_levels and check that values match up. 
@@ -76,6 +44,7 @@ Take the outputs of get_data_with_aggregation_levels and check that values match
 **Args:**
  
  - <b>`folder`</b> (pathlib.Path):  The folder in which data can be found. 
+ - <b>`vintage`</b> (str):  The vintage of Estimates table to pull from.  
  - <b>`geo_list`</b> (list):  The list of geographies to aggregate from. Note that region is included   by default, so do not include it here. 
 
 
@@ -86,19 +55,19 @@ Take the outputs of get_data_with_aggregation_levels and check that values match
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L218"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L185"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `NullValues`
 Function to check for any null values. 
 
-For the purposes of this function, null value checks mean checking if there are any columns where there are null values present. 
+For the purposes of this function, null value checks mean checking each and every columns to see if there are any null values present. 
 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L224"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L192"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `spot_nulls`
 
@@ -118,6 +87,8 @@ Gets region level data by default, and whatever geography levels are present in 
  - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity") 
  - <b>`geo`</b> (str):  The geography level to get data for and add aggregation columns onto 
 
+
+
 **Returns:**
  
  - <b>`List`</b>:  the list contains column names that contain null values along with the string "Null values present in the following columns:" 
@@ -125,7 +96,7 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L251"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L220"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
 TODO: One line description. 
@@ -138,34 +109,49 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L264"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L233"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
-TODO: One line description. 
+Calculates year-on-year% changes and flags if the changes are more than 5%. 
 
-TODO: Long form description. 
+For the purposes of this class, threshold analysis checks mean checking if between any two versions, the changes in values differ by more than 5%. For example, flagging if total population in certain region  changes by more than 5%. 
 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L270"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L241"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `yearly_change`
 
 ```python
-yearly_change(df, col, region_level)
+yearly_change(folder, table_name, geo, col)
 ```
 
+Get data and check for yearly changes in values. 
+
+Gets region level data by default, and whatever geography levels are present in geo_list.  Then checks to see if there exists any columns where difference in values is larger than 5%. 
 
 
 
+**Args:**
+ 
+ - <b>`folder`</b> (pathlib.Path):  The folder in which data can be found. 
+ - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity") 
+ - <b>`geo`</b> (str):  The geography level to get data for and add aggregation columns onto 
+ - <b>`col`</b> (str):  The column name to choose to check for changes > 5% 
+
+
+
+**Returns:**
+ 
+ - <b>`List`</b>:  the list contains years where the yearly changes > 5% 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L285"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L280"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 TODO: One line description. 
@@ -178,7 +164,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L298"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L293"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 TODO: One line description. 

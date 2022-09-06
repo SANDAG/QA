@@ -16,14 +16,13 @@
 - [`perform_checks.DOFProportion`](./perform_checks.md#class-dofproportion): TODO: One line description.
 - [`perform_checks.InternalConsistency`](./perform_checks.md#class-internalconsistency): Functions to run internal consistency checks.
 - [`perform_checks.NullValues`](./perform_checks.md#class-nullvalues): Function to check for any null values.
-- [`perform_checks.ThresholdAnalysis`](./perform_checks.md#class-thresholdanalysis): TODO: One line description.
+- [`perform_checks.ThresholdAnalysis`](./perform_checks.md#class-thresholdanalysis): Calculates year-on-year% changes and flags if the changes are more than 5%.
 - [`perform_checks.VintageComparisons`](./perform_checks.md#class-vintagecomparisons): TODO: One line description.
 
 ## Functions
 
 - [`functions.load`](./functions.md#function-load): Get the input dataframe(s) according to the other inputs.
 - [`functions.save`](./functions.md#function-save): Save the input dataframe(s) according to the other inputs.
-- [`perform_checks.get_table`](./perform_checks.md#function-get_table): Get the requested table from the input folder.
 
 
 ---
