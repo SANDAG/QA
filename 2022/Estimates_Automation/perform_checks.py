@@ -1,28 +1,38 @@
-"""TODO: One line description
+"""Classes/functions to run various checks on Estimates tables.
 
-TODO: Long form description
+The functions in this file run checks on Estimates tables. By default, they pull from saved files,
+but there is an option to download a fresh copy of the files from [DDAMWSQL16].[estimates]. By 
+default, they output only print statements, but there is an option to save a table containing rows 
+with errors at some location. For more details, see the individual classes/functions.
 """
 
 ###########
 # Imports #
 ###########
 
+import pathlib
+import textwrap
+
 import pandas as pd
+import sqlalchemy as sql
 
 ########################################
 # Check 1: Internal Consistency Checks #
 ########################################
 
 class InternalConsistency():
-    """TODO: One line description
+    """Functions to run internal consistency checks.
     
-    TODO: Long form description
+    For the purposes of this class, internal consistency checks mean checking if aggregated values
+    match up when aggregating to/from different geography levels. For example, checking if the total
+    population variable, when aggregated from mgra --> region, matches up with the values at the 
+    region level.
     """
 
     # TODO: Refactor the following functions to have a consistent interface and docstring style
     
     def get_data(self, folder, filter):
-        """Finds the best match file in the input folder and returns it as a DataFrame
+        """Find the best match file in the input folder and returns it as a DataFrame.
         
         Args:
             folder (pathlib.Path): The folder in which to search for data. Uses pathlib.Path for 
@@ -53,13 +63,13 @@ class InternalConsistency():
         return pd.read_csv(filtered_file[0])
 
     def get_data_with_aggregation_levels(self, folder, geo_list=["mgra", "luz"]):
-        """Get data and combine with the proper columns of mgra_denormalize for aggregation
+        """Get data and combine with the proper columns of mgra_denormalize for aggregation.
         
-        Gets region level data by default, and whatever geography levels are present in geo_list. Uses
-        [demographic_warehouse].[dim].[mgra_denormalize] and a lookup table (defined in the function, 
-        yes I know its bad design) to know which columns to add to each geography level table. For 
-        example, the lookup table tells the fuction to add on "jurisdiction" and "region" columns for
-        the "mgra" geo_level
+        Gets region level data by default, and whatever geography levels are present in geo_list. 
+        Uses [demographic_warehouse].[dim].[mgra_denormalize] and a lookup table (defined in the 
+        function, yes I know its bad design) to know which columns to add to each geography level 
+        table. For example, the lookup table tells the fuction to add on "jurisdiction" and 
+        "region" columns for the "mgra" geo_level.
 
         Args:
             folder (pathlib.Path): The folder in which data can be found
@@ -136,7 +146,7 @@ class InternalConsistency():
         return geo_level_tables
 
     def check_geography_aggregations(df_dict, geo_list=["mgra", "luz"]):
-        """Take the outputs of get_data_with_aggregation_levels and check that values match up
+        """Take the outputs of get_data_with_aggregation_levels and check that values match up.
         
         Args:
             df_dict (dict of pandas.DataFrame): TODO
@@ -201,9 +211,9 @@ class InternalConsistency():
 ########################
 
 class NullValues():
-    """TODO: One line description
+    """TODO: One line description.
     
-    TODO: Long form description
+    TODO: Long form description.
     """
 
     # TODO: Functions to do check 2
@@ -214,9 +224,9 @@ class NullValues():
 #################################
 
 class VintageComparisons():
-    """TODO: One line description
+    """TODO: One line description.
     
-    TODO: Long form description
+    TODO: Long form description.
     """
 
     # TODO: Functions to do check 3
@@ -227,9 +237,9 @@ class VintageComparisons():
 ##############################
 
 class ThresholdAnalysis():
-    """TODO: One line description
+    """TODO: One line description.
     
-    TODO: Long form description
+    TODO: Long form description.
     """
 
     # TODO: Functions to do check 4
@@ -246,9 +256,9 @@ class ThresholdAnalysis():
 ############################################
 
 class DOFPopulation():
-    """TODO: One line description
+    """TODO: One line description.
     
-    TODO: Long form description
+    TODO: Long form description.
     """
 
     # TODO: Functions to do check 6
@@ -259,9 +269,9 @@ class DOFPopulation():
 ######################################
 
 class DOFProportion():
-    """TODO: One line description
+    """TODO: One line description.
     
-    TODO: Long form description
+    TODO: Long form description.
     """
 
     # TODO: Functions to do check 7

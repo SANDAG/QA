@@ -3,27 +3,27 @@
 <a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L0"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 # <kbd>module</kbd> `generate_tables`
-Functions to return/save various Estimates tables. 
+Classes/functions to return/save various Estimates tables. 
 
-In a general sense, the functions in this file all create tables directly using Estimates data from [DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they create any kind of derived output such as diff files. 
+The functions in this file all create tables directly using Estimates data from [DDAMWSQL16].[estimates]. Although the data in the created tables can be analyzed directly for any errors present in raw data, it is recommended that checks are done using the classes/functions in the file "perform_checks.py". 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L23"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L24"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `EstimatesTables`
 Functions to return/save various Estimates tables. 
 
-In a general sense, the functions in this file all create tables directly using Estimates data  from [DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they  create any kind of derived output such as diff files. 
+The functions in this class all create tables directly using Estimates data from  [DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they  create any kind of derived output such as diff files. 
 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L340"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L341"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `consolidate`
 
@@ -59,7 +59,7 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L36"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L37"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_table_by_geography`
 
@@ -82,10 +82,10 @@ This function will return the requested Estimates table from the requested vinta
 **Args:**
  
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this  variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
- - <b>`est_table`</b> (str):  The Estimates table to pull from. In DDAMWSQL16, this variable corresponds  to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]" 
- - <b>`geo_level`</b> (str):  The geography level to aggregate by. This can be any of the columns in the  DDAMWSQL16 table [demographic_warehouse].[dim].[mgra_denormalize]. For example, you   could input "region", "jurisdiction", "mgra", etc. 
+ - <b>`est_table`</b> (str):  The Estimates table to pull from. In DDAMWSQL16, this variable   corresponds to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]" 
+ - <b>`geo_level`</b> (str):  The geography level to aggregate by. This can be any of the columns in   the DDAMWSQL16 table [demographic_warehouse].[dim].[mgra_denormalize]. For example,  you could input "region", "jurisdiction", "mgra", etc. 
  - <b>`pivot`</b> (bool):  Default False. If True, return the table in wide format instead of tall 
- - <b>`debug`</b> (bool):  Default False. If True, print out diagnostic print statements during execution  including the complete SQL query used 
+ - <b>`debug`</b> (bool):  Default False. If True, print out diagnostic print statements during   execution including the complete SQL query used 
 
 
 
@@ -95,7 +95,7 @@ This function will return the requested Estimates table from the requested vinta
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L401"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L402"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `individual`
 
@@ -132,12 +132,12 @@ Generate individual estimates tables for each input geography. This function ret
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L454"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L455"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
-TODO: One line description 
+Functions to return/save various Estimates diff tables. 
 
-TODO: Long form description 
+The functions in this class create diff files either directly from [DDAMWSQL16].[estimates] or from previously saved files. The output diff files will always be returned in case you want to hold them in memory. There is also an option to save the files at the specified location. The diff files can either be absolute change, percentage change, or both. As with the class Esimates Tables, the functions in this file do not run any checks. 
 
 
 

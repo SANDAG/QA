@@ -1,8 +1,9 @@
-"""Functions to return/save various Estimates tables.
+"""Classes/functions to return/save various Estimates tables.
 
-In a general sense, the functions in this file all create tables directly using Estimates data from
-[DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they create any
-kind of derived output such as diff files.
+The functions in this file all create tables directly using Estimates data from
+[DDAMWSQL16].[estimates]. Although the data in the created tables can be analyzed directly for any
+errors present in raw data, it is recommended that checks are done using the classes/functions in
+the file "perform_checks.py".
 """
 
 ###########
@@ -23,8 +24,8 @@ import sqlalchemy as sql
 class EstimatesTables():
     """Functions to return/save various Estimates tables.
 
-    In a general sense, the functions in this file all create tables directly using Estimates data 
-    from [DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they 
+    The functions in this class all create tables directly using Estimates data from 
+    [DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they 
     create any kind of derived output such as diff files.
     """
     
@@ -43,14 +44,14 @@ class EstimatesTables():
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
-            est_table (str): The Estimates table to pull from. In DDAMWSQL16, this variable corresponds
-                to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]"
-            geo_level (str): The geography level to aggregate by. This can be any of the columns in the
-                DDAMWSQL16 table [demographic_warehouse].[dim].[mgra_denormalize]. For example, you 
-                could input "region", "jurisdiction", "mgra", etc.
+            est_table (str): The Estimates table to pull from. In DDAMWSQL16, this variable 
+                corresponds to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]"
+            geo_level (str): The geography level to aggregate by. This can be any of the columns in 
+                the DDAMWSQL16 table [demographic_warehouse].[dim].[mgra_denormalize]. For example,
+                you could input "region", "jurisdiction", "mgra", etc.
             pivot (bool): Default False. If True, return the table in wide format instead of tall
-            debug (bool): Default False. If True, print out diagnostic print statements during execution
-                including the complete SQL query used
+            debug (bool): Default False. If True, print out diagnostic print statements during 
+                execution including the complete SQL query used
 
         Returns:
             pd.DataFrame: The requested Estimates table grouped by the geography level
@@ -452,9 +453,13 @@ class EstimatesTables():
 ##############
 
 class DiffFiles():
-    """TODO: One line description
+    """Functions to return/save various Estimates diff tables.
     
-    TODO: Long form description
+    The functions in this class create diff files either directly from [DDAMWSQL16].[estimates] or
+    from previously saved files. The output diff files will always be returned in case you want
+    to hold them in memory. There is also an option to save the files at the specified location.
+    The diff files can either be absolute change, percentage change, or both. As with the class
+    Esimates Tables, the functions in this file do not run any checks.
     """
 
     # TODO: Functions to generate diff files. 
