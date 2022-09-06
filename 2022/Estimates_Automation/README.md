@@ -12,7 +12,7 @@ Or install using your method of choice. Since lazydocs expects the docstrings to
 
 To run on the linter on all files in the directory, go to the folder "QA/2022/Estimates_Automation" and run in the command line: 
 
-```pydocstyle```
+```pydocstyle --verbose```
 
 Once errors from pydocstyle have been fixed, to actually update documentation, go to the folder "QA/2022/Estimates_Automation" and run in the command line: 
 

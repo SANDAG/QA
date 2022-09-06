@@ -6,4 +6,5 @@ yaml
 
 # Required to auto-generate documentation
 # See README.md for instructions
+pydocstyle
 lazydocs
