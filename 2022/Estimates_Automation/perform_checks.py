@@ -16,43 +16,8 @@ import textwrap
 import pandas as pd
 import sqlalchemy as sql
 
-####################
-# Helper Functions #
-####################
-
-def get_table(folder, table, geo):
-    """Get the requested table from the input folder.
-    
-    Args:
-        folder (pathlib.Path): The folder in which to search for data.
-        table (str): The name of the Estimates table to get. Because it is assumed that
-            the saved tables are created by the file generate_tables.py, this can be any of
-            "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
-        geo (str): The geography level of the table to get. Due to the way generate_tables.py names
-            files, table and geo will be combined as f"{table}_{geo}"
-        
-    Returns:
-        pd.DataFrame: The found file as a df.
-
-    Raises:
-        FileNotFoundError: When either too many files were found or no files were found.
-    """
-    # Get all the files in the provided folder
-    files_found = list(folder.iterdir())
-
-    # Filter the files 
-    filtered_file = [file for file in files_found if f"{table}_{geo}" in file.name]
-
-    # Check that the input filter was fine enough
-    if(len(filtered_file) > 1):
-        raise FileNotFoundError("Too many files found")
-    # Check that the input filter was not too fine
-    if(len(filtered_file) == 0):
-        raise FileNotFoundError("No files found")
-
-    # Load the file into a df and return it
-    # TODO: Read other file formats?
-    return pd.read_csv(filtered_file[0])
+# Local modules
+import functions as f
 
 ########################################
 # Check 1: Internal Consistency Checks #
