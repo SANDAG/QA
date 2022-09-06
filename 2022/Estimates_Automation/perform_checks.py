@@ -216,13 +216,33 @@ class InternalConsistency():
 ########################
 
 class NullValues():
-    """TODO: One line description.
+    """Function to check for any null values.
     
-    TODO: Long form description.
+    For the purposes of this function, null value checks mean checking if there are any columns where there are null values present.
     """
 
-    # TODO: Functions to do check 2
-    pass
+    def spot_nulls(self, folder, table_name, geo):
+        """Get data and check for nulls.
+        
+        Gets region level data by default, and whatever geography levels are present in geo_list. 
+        Then checks to see if there are any null values present
+
+        Args:
+            folder (pathlib.Path): The folder in which data can be found.
+            table_name (str): The name of the Estimates table to get. Because it is assumed that
+                the saved tables are created by the file generate_tables.py, this can be any of
+                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
+            geo (str): The geography level to get data for and add aggregation columns onto
+        Returns:
+            List: the list contains column names that contain null values along with the string "Null values present in the following columns:"
+        """
+        # Get the table
+        geo_table = get_table(folder, table_name, geo)
+
+        # prints and returns columns if it finds any null values
+        if (geo_table.isna().sum() > 0).any():
+            print('Null values present in the following columns:')
+            return geo_table.columns[geo_table.isnull().any()].tolist()
 
 #################################
 # Check 3: Vintage Comparisions #
@@ -247,8 +267,10 @@ class ThresholdAnalysis():
     TODO: Long form description.
     """
 
-    # TODO: Functions to do check 4
-    pass
+    def yearly_change(df, col, region_level): # need to change still
+        df = df.loc[:,~df.columns.isin([region_level])] 
+        pop_change = df.groupby('yr_id').sum().pct_change()[[col]]
+        return pop_change[pop_change[col]>0.05].index.to_list() # returns years that have changes more than 5%
 
 ###########################
 # Check 5: Trend Analysis #
