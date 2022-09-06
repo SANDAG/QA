@@ -20,7 +20,7 @@
 
 ## Functions
 
-- No functions
+- [`perform_checks.get_table`](./perform_checks.md#function-get_table): Gets the requested table from the input folder.
 
 
 ---

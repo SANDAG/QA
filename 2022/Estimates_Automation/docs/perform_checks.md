@@ -8,10 +8,42 @@ Classes/functions to run various checks on Estimates tables.
 The functions in this file run checks on Estimates tables. These functions can only pull data from saved files. By default, they output only print statements, but there is an option to save a  table containing rows with errors at some location. For more details, see the individual  classes/functions. 
 
 
+---
+
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L23"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>function</kbd> `get_table`
+
+```python
+get_table(folder, table, geo)
+```
+
+Gets the requested table from the input folder. 
+
+
+
+**Args:**
+ 
+ - <b>`folder`</b> (pathlib.Path):  The folder in which to search for data. 
+ - <b>`table`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity") 
+ - <b>`geo`</b> (str):  The geography level of the table to get. Due to the way generate_tables.py names  files, table and geo will be combined as f"{table}_{geo}" 
+
+
+
+**Returns:**
+ 
+ - <b>`pd.DataFrame`</b>:  The found file as a df. 
+
+
+
+**Raises:**
+ 
+ - <b>`FileNotFoundError`</b>:  When either too many files were found or no files were found. 
+
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L60"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L61"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `InternalConsistency`
 Functions to run internal consistency checks. 
@@ -29,7 +61,7 @@ For the purposes of this class, internal consistency checks mean checking if agg
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L145"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L146"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_geography_aggregations`
 
@@ -54,7 +86,7 @@ Take the outputs of get_data_with_aggregation_levels and check that values match
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L217"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L218"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `NullValues`
 TODO: One line description. 
@@ -67,7 +99,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L230"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L231"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
 TODO: One line description. 
@@ -80,7 +112,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L243"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L244"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
 TODO: One line description. 
@@ -93,7 +125,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L262"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L263"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 TODO: One line description. 
@@ -106,7 +138,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L275"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L276"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 TODO: One line description. 

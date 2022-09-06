@@ -20,15 +20,16 @@ import sqlalchemy as sql
 # Helper Functions #
 ####################
 
-def _get_table(folder, table, geo):
-    """Find the best match file in the input folder and returns it as a DataFrame.
+def get_table(folder, table, geo):
+    """Gets the requested table from the input folder.
     
     Args:
         folder (pathlib.Path): The folder in which to search for data.
         table (str): The name of the Estimates table to get. Because it is assumed that
             the saved tables are created by the file generate_tables.py, this can be any of
             "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
-        geo (str): The geography level of the table to get 
+        geo (str): The geography level of the table to get. Due to the way generate_tables.py names
+            files, table and geo will be combined as f"{table}_{geo}"
         
     Returns:
         pd.DataFrame: The found file as a df.
@@ -106,7 +107,7 @@ class InternalConsistency():
         # dim_table_columns would need to updated
 
         # Get the table
-        geo_table = _get_table(folder, table_name, geo)
+        geo_table = get_table(folder, table_name, geo)
 
         # # Combine with the correct columns of the dim table
         # agg_cols = ", ".join(dim_table_columns[geo])
