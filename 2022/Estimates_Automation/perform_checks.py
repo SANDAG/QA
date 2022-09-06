@@ -218,7 +218,8 @@ class InternalConsistency():
 class NullValues():
     """Function to check for any null values.
     
-    For the purposes of this function, null value checks mean checking if there are any columns where there are null values present.
+    For the purposes of this function, null value checks mean checking each and every columns
+    to see if there are any null values present.
     """
 
     def spot_nulls(self, folder, table_name, geo):
@@ -233,6 +234,7 @@ class NullValues():
                 the saved tables are created by the file generate_tables.py, this can be any of
                 "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
             geo (str): The geography level to get data for and add aggregation columns onto
+
         Returns:
             List: the list contains column names that contain null values along with the string "Null values present in the following columns:"
         """
@@ -262,15 +264,41 @@ class VintageComparisons():
 ##############################
 
 class ThresholdAnalysis():
-    """TODO: One line description.
+    """Calculates year-on-year% changes and flags if the changes are more than 5%.
     
-    TODO: Long form description.
+    For the purposes of this class, threshold analysis checks mean checking if between any two versions,
+    the changes in values differ by more than 5%. For example, flagging if total population in certain region 
+    changes by more than 5%.
     """
 
-    def yearly_change(df, col, region_level): # need to change still
-        df = df.loc[:,~df.columns.isin([region_level])] 
+    def yearly_change(self, folder, table_name, geo, col):
+        """Get data and check for yearly changes in values.
+        
+        Gets region level data by default, and whatever geography levels are present in geo_list. 
+        Then checks to see if there exists any columns where difference in values is larger than 5%.
+
+        Args:
+            folder (pathlib.Path): The folder in which data can be found.
+            table_name (str): The name of the Estimates table to get. Because it is assumed that
+                the saved tables are created by the file generate_tables.py, this can be any of
+                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
+            geo (str): The geography level to get data for and add aggregation columns onto
+            col (str): The column name to choose to check for changes > 5%
+            
+        Returns:
+            List: the list contains years where the yearly changes > 5%
+        """
+        # Get the table
+        geo_table = get_table(folder, table_name, geo)
+
+        # Excluding the geography level column
+        df = geo_table.loc[:,~df.columns.isin([geo])]
+
+        # NumPy function calculates the percent change for us
         pop_change = df.groupby('yr_id').sum().pct_change()[[col]]
-        return pop_change[pop_change[col]>0.05].index.to_list() # returns years that have changes more than 5%
+
+        # Since we grouped by `yr_id`, returns a list of years where yearly changes in the specified column is more than 5% 
+        return pop_change[pop_change[col]>0.05].index.to_list()
 
 ###########################
 # Check 5: Trend Analysis #
