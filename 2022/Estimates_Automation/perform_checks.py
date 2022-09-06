@@ -189,7 +189,7 @@ class NullValues():
     to see if there are any null values present.
     """
 
-    def spot_nulls(self, folder, table_name, geo):
+    def spot_nulls(self, folder, vintage, geo, table_name):
         """Get data and check for nulls.
         
         Gets region level data by default, and whatever geography levels are present in geo_list. 
@@ -206,7 +206,8 @@ class NullValues():
             List: the list contains column names that contain null values along with the string "Null values present in the following columns:"
         """
         # Get the table
-        geo_table = get_table(folder, table_name, geo)
+        geo_table = f.load(folder, vintage, geo, table_name, "csv")
+
 
         # prints and returns columns if it finds any null values
         if (geo_table.isna().sum() > 0).any():
@@ -238,7 +239,7 @@ class ThresholdAnalysis():
     changes by more than 5%.
     """
 
-    def yearly_change(self, folder, table_name, geo, col):
+    def yearly_change(self, folder, vintage, geo, table_name, col):
         """Get data and check for yearly changes in values.
         
         Gets region level data by default, and whatever geography levels are present in geo_list. 
@@ -256,7 +257,7 @@ class ThresholdAnalysis():
             List: the list contains years where the yearly changes > 5%
         """
         # Get the table
-        geo_table = get_table(folder, table_name, geo)
+        geo_table = f.load(folder, vintage, geo, table_name, "csv")
 
         # Excluding the geography level column
         df = geo_table.loc[:,~df.columns.isin([geo])]
@@ -291,10 +292,56 @@ class DOFPopulation():
 ######################################
 
 class DOFProportion():
-    """TODO: One line description.
-    
-    TODO: Long form description.
-    """
+    """Compares the proportion of groups in total pop between DOF and Estimates at Regional Level
 
-    # TODO: Functions to do check 7
-    pass
+    Comparison is across different groups like household income, age, gender, ethnicity, ethnicity by age, ethnicity by gender by age.
+    """
+    def shares(df, threshold_dict): # Calvin's code copied and pasted; need to make changes still
+        """Get data and compare the proportion changes between DOF and Estimates.
+        
+        Checks at region level whether there exists any columns where proportion of groups is different.
+        Args:
+            folder (pathlib.Path): The folder in which data can be found.
+            table_name (str): The name of the Estimates table to get. Because it is assumed that
+                the saved tables are created by the file generate_tables.py, this can be any of
+                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
+            geo (str): The geography level to get data for and add aggregation columns onto
+            col (str): The column name to choose to check for changes > 5%
+            
+        Returns:
+            List: the list contains years where the yearly changes > 5%
+        """
+
+        """
+        input: multi-index dataframe (index = (geo_level, year)), columns to check threshold in,
+        value threshold (numeric), percentage threshold (numeric value in {0,1})
+        
+        output: rows of the input multi-index dataframe with yearly differences outside the
+        designated threshold (inclusive)
+        """
+        
+        # Add column values and divides each column by total to get the proportion breakdown
+        df = df[threshold_dict.keys()]
+        df.loc[:, 'Total'] = df[threshold_dict.keys()].sum(axis=1)
+            
+        shares = df[threshold_dict.keys()].div(df['Total'], axis=0) * 100
+        
+        years = list(df.index.get_level_values(1).unique()) # List of the unique years 
+        year_diffs = {}
+
+        # Creating a dictionary of the differences, just naming conventions
+        index=0
+        while index < len(years)-1:
+            year_diffs[years[index+1]] = f"{str(years[index])}-{str(years[index+1])}"
+            index+=1
+        
+        # Group together MGRA and subtract newer year from older year. Rename the index according to the year_diffs dataframe. Then drop rows where every value is NA (Which will be all rows for 2016)    
+        renamed_df = shares.groupby(level=0).diff().rename(index=year_diffs).dropna(how='all')
+
+        # Subsets dataframe by column, checks to see if the value is greater than the threshold and returns true or false depending on if the threshold was crossed. 
+        condition = pd.DataFrame([abs(renamed_df[key]) >= val for key, val in threshold_dict.items()]).T.all(axis=1)
+        
+        renamed_df['Flag'] = condition
+        
+        return renamed_df
+    
