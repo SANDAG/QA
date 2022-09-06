@@ -17,6 +17,9 @@ import textwrap
 import pandas as pd
 import sqlalchemy as sql
 
+# Local modules
+import functions as f
+
 ####################
 # Estimates Tables #
 ####################
@@ -392,9 +395,7 @@ class EstimatesTables():
 
             # Save the table if requested
             if(save):
-                # Save each table using the geography level to distinguish
-                file_name = f"{est_vintage}_consolidated_{geo}_QA.csv"
-                combined_table.to_csv(save_folder / file_name, index=False)
+                f.save(combined_table, save_folder, est_vintage, geo, "consolidated")
                 
         # Return all the combined tables
         return combined_tables
@@ -441,9 +442,7 @@ class EstimatesTables():
 
                 # Save the table if requested
                 if(save):
-                    # Save each table using the geography level to distinguish
-                    file_name = f"{est_vintage}_{est_table_name}_{geo}_QA.csv"
-                    est_table.to_csv(save_folder / file_name, index=False)
+                    f.save(est_table, save_folder, est_vintage, geo, est_table_name)
                 
         # Return all the combined tables
         return individual_tables

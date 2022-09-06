@@ -21,7 +21,7 @@ import sqlalchemy as sql
 ####################
 
 def get_table(folder, table, geo):
-    """Gets the requested table from the input folder.
+    """Get the requested table from the input folder.
     
     Args:
         folder (pathlib.Path): The folder in which to search for data.

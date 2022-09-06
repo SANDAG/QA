@@ -11,7 +11,7 @@ The functions in this file all create tables directly using Estimates data from 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L24"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L27"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `EstimatesTables`
 Functions to return/save various Estimates tables. 
@@ -23,7 +23,7 @@ The functions in this class all create tables directly using Estimates data from
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L341"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L344"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `consolidate`
 
@@ -59,7 +59,7 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L37"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L40"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_table_by_geography`
 
@@ -95,7 +95,7 @@ This function will return the requested Estimates table from the requested vinta
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L402"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L403"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `individual`
 
@@ -132,7 +132,7 @@ Generate individual estimates tables for each input geography. This function ret
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L455"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L454"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 

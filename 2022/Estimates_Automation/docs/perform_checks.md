@@ -18,7 +18,7 @@ The functions in this file run checks on Estimates tables. These functions can o
 get_table(folder, table, geo)
 ```
 
-Gets the requested table from the input folder. 
+Get the requested table from the input folder. 
 
 
 

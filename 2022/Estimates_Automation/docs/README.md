@@ -4,6 +4,7 @@
 
 ## Modules
 
+- [`functions`](./functions.md#module-functions): Helper functions which are generally useful in all parts of Estimates Automation.
 - [`generate_tables`](./generate_tables.md#module-generate_tables): Classes/functions to return/save various Estimates tables.
 - [`perform_checks`](./perform_checks.md#module-perform_checks): Classes/functions to run various checks on Estimates tables.
 
@@ -20,7 +21,9 @@
 
 ## Functions
 
-- [`perform_checks.get_table`](./perform_checks.md#function-get_table): Gets the requested table from the input folder.
+- [`functions.load`](./functions.md#function-load): Get the input dataframe(s) according to the other inputs.
+- [`functions.save`](./functions.md#function-save): Save the input dataframe(s) according to the other inputs.
+- [`perform_checks.get_table`](./perform_checks.md#function-get_table): Get the requested table from the input folder.
 
 
 ---
