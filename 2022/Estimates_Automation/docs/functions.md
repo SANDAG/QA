@@ -32,7 +32,7 @@ Diff files should be saved in the folder f"{base_folder}/diff/".
 
 **Args:**
  
- - <b>`dfs`</b> (pd.DataFrame or dict of pd.DataFRame):  The table(s) to save. If one df is input,  then it will be saved as a csv file. If a dict of table(s) is input, then it will  be saved as an xlsx file, with each key of the dict being a sheet name, and the value  of the dict being the sheet. Note that since Python 3.6, dictionaries maintain insertion  order 
+ - <b>`dfs`</b> (pd.DataFrame or dict of pd.DataFrame):  The table(s) to save. If one df is input,  then it will be saved as a csv file. If a dict of table(s) is input, then it will  be saved as an xlsx file, with each key of the dict being a sheet name, and the value  of the dict being the sheet. Note that since Python 3.6, dictionaries maintain insertion  order 
  - <b>`base_folder`</b> (pathlib.Path):  The folder to save data into. See the function description for  acceptable values 
  - <b>`vintage`</b> (str):  The vintage of the data. 
  - <b>`geo`</b> (str):  The geography level of the data. 
@@ -57,7 +57,7 @@ Diff files should be saved in the folder f"{base_folder}/diff/".
 ## <kbd>function</kbd> `load`
 
 ```python
-load(base_folder, vintage, geo, table)
+load(base_folder, vintage, geo, table, extension)
 ```
 
 Get the input dataframe(s) according to the other inputs. 
@@ -72,6 +72,7 @@ See the save function for information on the file structure
  - <b>`vintage`</b> (str):  The vintage of the data. 
  - <b>`geo`</b> (str):  The geography level of the data. 
  - <b>`table`</b> (str):  The name of the table. This will typically be the name of an estimates table   such as "population" or "ethnicity" 
+ - <b>`extension`</b> (str):  The extension of the file. Typically "csv", very rarely "xlsx" 
 
 
 
@@ -83,8 +84,6 @@ See the save function for information on the file structure
 
 **Raises:**
  
- - <b>`FileNotFoundError`</b>:  The combination of function inputs does not uniquely identify a file 
- - <b>`FileNotFoundError`</b>:  The combination of function inputs uniquely identifies more than one  file 
  - <b>`IOError`</b>:  The uniquely identified file has an unknown file extension 
 
 

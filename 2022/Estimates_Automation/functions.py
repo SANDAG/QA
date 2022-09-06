@@ -28,7 +28,7 @@ def save(dfs, base_folder, vintage, geo, table):
     Diff files should be saved in the folder f"{base_folder}/diff/".
 
     Args:
-        dfs (pd.DataFrame or dict of pd.DataFRame): The table(s) to save. If one df is input,
+        dfs (pd.DataFrame or dict of pd.DataFrame): The table(s) to save. If one df is input,
             then it will be saved as a csv file. If a dict of table(s) is input, then it will
             be saved as an xlsx file, with each key of the dict being a sheet name, and the value
             of the dict being the sheet. Note that since Python 3.6, dictionaries maintain insertion
@@ -61,15 +61,15 @@ def save(dfs, base_folder, vintage, geo, table):
     # If a List of pd.DataFrame is input, then save as xlsx
     elif(isinstance(dfs, dict)):
         file_name += "xlsx"
-        writer = pd.ExcelWriter(base_folder / file_name)
-        for name, table in dfs.items():
-            table.to_excel(writer, sheet_name=name, index=False)
+        with pd.ExcelWriter(base_folder / file_name) as writer:
+            for name, table in dfs.items():
+                table.to_excel(writer, sheet_name=name, index=False)
     
     # Raise an error if dfs is an unknown type
     else:
         raise TypeError("dfs must be pd.DataFrame or dict")
 
-def load(base_folder, vintage, geo, table):
+def load(base_folder, vintage, geo, table, extension):
     """Get the input dataframe(s) according to the other inputs.
     
     See the save function for information on the file structure
@@ -81,6 +81,7 @@ def load(base_folder, vintage, geo, table):
         geo (str): The geography level of the data.
         table (str): The name of the table. This will typically be the name of an estimates table 
             such as "population" or "ethnicity"
+        extension (str): The extension of the file. Typically "csv", very rarely "xlsx"
 
     Returns:
         dfs (pd.DataFrame or Dict of pd.DataFrame): The table(s) found. The input values should
@@ -88,32 +89,19 @@ def load(base_folder, vintage, geo, table):
             If the file is a .xlsx, then a Dict of pd.DataFrame will be returned.
 
     Raises:
-        FileNotFoundError: The combination of function inputs does not uniquely identify a file
-        FileNotFoundError: The combination of function inputs uniquely identifies more than one
-            file
         IOError: The uniquely identified file has an unknown file extension
     """
     # Get all the files in the provided folder
-    files_found = list(base_folder.iterdir())
-
-    # Filter the files 
-    filtered_file = [file for file in files_found if f"QA_{vintage}_{geo}_{table}" in file.name]
-
-    # Check that the input filter was fine enough
-    if(len(filtered_file) > 1):
-        raise FileNotFoundError("Too many files found")
-    # Check that the input filter was not too fine
-    if(len(filtered_file) == 0):
-        raise FileNotFoundError("No files found")
+    file = base_folder / f"QA_{vintage}_{geo}_{table}.{extension}"
 
     # If a csv file was found, then load it
-    if(filtered_file[0].suffix == ".csv"):
-        return pd.read_csv(filtered_file)
+    if(extension == "csv"):
+        return pd.read_csv(file)
 
     # If an xlsx file was found, then load it
-    if(filtered_file[0].suffix == ".xlsx"):
-        return pd.read_excel(filtered_file, sheet_name=None)
+    elif(extension == "xlsx"):
+        return pd.read_excel(file, sheet_name=None)
     
     # Raise an error if dfs has an unknown file extension
     else:
-        raise FileNotFoundError(f"{filtered_file} has an unknown file extension")
+        raise FileNotFoundError(f"{file} has an unknown file extension")

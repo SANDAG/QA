@@ -46,8 +46,8 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
 **Args:**
  
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this   variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
- - <b>`geo_list`</b> (List of str):  The geographies to cosolidate along.  
- - <b>`est_table_list`</b> (List of str):  Which estimates tables we want to consolidate 
+ - <b>`geo_list`</b> (list of str):  The geographies to cosolidate along.  
+ - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate 
  - <b>`save`</b> (bool):  False by default. If False, then only return the consolidated tables. If   True, then use save_folder to save the consolidated tables and return the tables 
  - <b>`save_folder`</b> (pathlib.Path):  None by default. If save=True, then the folder to save in as a   pathlib.Path object 
 
@@ -118,8 +118,8 @@ Generate individual estimates tables for each input geography. This function ret
 **Args:**
  
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this   variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
- - <b>`geo_list`</b> (List of str):  The geographies to cosolidate along.  
- - <b>`est_table_list`</b> (List of str):  Which estimates tables we want to consolidate 
+ - <b>`geo_list`</b> (list of str):  The geographies to cosolidate along.  
+ - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate 
  - <b>`save`</b> (bool):  False by default. If False, then only return the consolidated tables. If   True, then use save_folder to save the consolidated tables and return the tables 
  - <b>`save_folder`</b> (pathlib.Path):  None by default. If save=True, then the folder to save in as a   pathlib.Path object 
 
@@ -141,6 +141,40 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 
 
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L464"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `create_diff_tables`
+
+```python
+create_diff_tables(
+    old_vintage,
+    new_vintage,
+    raw_data_folder=WindowsPath('data/raw_data'),
+    geo_list=['region', 'jurisdiction', 'cpa'],
+    est_table_list=['age', 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
+    save=True,
+    save_folder=WindowsPath('data/diff')
+)
+```
+
+Create diff files from the old vintage to the new vintage................. 
+
+This function will create and save diff files for each unique combination of geo_list and  est_table_list. The saved diff files will be in the xlsx format with three sheets. The first sheet contains the old vintage data, the second sheet contains the new vintage data, and the third sheet contains (new vintage data - old vintage data), also know as the change from old vintage to new vintage. 
+
+
+
+**Args:**
+ 
+ - <b>`old_vintage`</b> (str):  The old vintage to compare with 
+ - <b>`new_vintage`</b> (str):  The new vintage to compare with. 
+ - <b>`raw_data_folder`</b> (pathlib.Path):  pathlib.Path("./data/raw_data/") by default. The   location where raw data has been saved. It is expected that the files are saved  using functions.save in order to keep file formats consistent 
+ - <b>`geo_list`</b> (list of str):  The geographies to create diff files for.  
+ - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to create diff files.  Becasue of the unique way file names are generated, a valid item of this list is  "consolidated" 
+ - <b>`save`</b> (bool):  True by default. If True, then use save_folder to save the diff files. At  this time, False has no functionality, but this may change later 
+ - <b>`save_folder`</b> (pathlib.Path):  pathlib.Path("./data/diff/") by default. The location to   save diff files 
 
 
 

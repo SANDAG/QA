@@ -354,8 +354,8 @@ class EstimatesTables():
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
-            geo_list (List of str): The geographies to cosolidate along. 
-            est_table_list (List of str): Which estimates tables we want to consolidate
+            geo_list (list of str): The geographies to cosolidate along. 
+            est_table_list (list of str): Which estimates tables we want to consolidate
             save (bool): False by default. If False, then only return the consolidated tables. If 
                 True, then use save_folder to save the consolidated tables and return the tables
             save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
@@ -414,8 +414,8 @@ class EstimatesTables():
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
-            geo_list (List of str): The geographies to cosolidate along. 
-            est_table_list (List of str): Which estimates tables we want to consolidate
+            geo_list (list of str): The geographies to cosolidate along. 
+            est_table_list (list of str): Which estimates tables we want to consolidate
             save (bool): False by default. If False, then only return the consolidated tables. If 
                 True, then use save_folder to save the consolidated tables and return the tables
             save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
@@ -461,7 +461,64 @@ class DiffFiles():
     Esimates Tables, the functions in this file do not run any checks.
     """
 
-    # TODO: Functions to generate diff files. 
-    # IMO, the function should have the option to save/not save (see consolidate or individual 
-    # above) and the option to generate fresh files or read saved files
-    pass
+    def create_diff_tables(self, old_vintage, new_vintage, 
+        raw_data_folder=pathlib.Path("./data/raw_data/"),
+        geo_list=['region', 'jurisdiction', 'cpa'],
+        est_table_list=['age', 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
+        save=True,
+        save_folder=pathlib.Path("./data/diff/")):
+        """Create diff files from the old vintage to the new vintage.................
+
+        This function will create and save diff files for each unique combination of geo_list and 
+        est_table_list. The saved diff files will be in the xlsx format with three sheets. The first
+        sheet contains the old vintage data, the second sheet contains the new vintage data, and the
+        third sheet contains (new vintage data - old vintage data), also know as the change from
+        old vintage to new vintage.
+
+        Args:
+            old_vintage (str): The old vintage to compare with
+            new_vintage (str): The new vintage to compare with.
+            raw_data_folder (pathlib.Path): pathlib.Path("./data/raw_data/") by default. The 
+                location where raw data has been saved. It is expected that the files are saved
+                using functions.save in order to keep file formats consistent
+            geo_list (list of str): The geographies to create diff files for. 
+            est_table_list (list of str): Which estimates tables we want to create diff files.
+                Becasue of the unique way file names are generated, a valid item of this list is
+                "consolidated"
+            save (bool): True by default. If True, then use save_folder to save the diff files. At
+                this time, False has no functionality, but this may change later
+            save_folder (pathlib.Path): pathlib.Path("./data/diff/") by default. The location to 
+                save diff files
+        """
+        # Get the files that correspond to each vintage
+        for geo in geo_list:
+            for est_table in est_table_list:
+                old_vintage_df = f.load(raw_data_folder, old_vintage, geo, est_table, "csv")
+                new_vintage_df = f.load(raw_data_folder, new_vintage, geo, est_table, "csv")
+
+                # Create the diff df
+                # TODO: I cannot for the life of my figure out how to do a subtract when there
+                # are string columns in a non-hacky way. Please help :(
+                # diff_df = new_vintage_df - old_vintage_df
+                diff_df = pd.DataFrame(columns=old_vintage_df.columns)
+                for col_name, _ in diff_df.items():
+                    try:
+                        if(col_name == "yr_id"):
+                            raise BaseException
+                        diff_df[col_name] = new_vintage_df[col_name] - old_vintage_df[col_name]
+                    except:
+                        diff_df[col_name] = new_vintage_df[col_name]
+
+                # Put the three dfs into a Dict for saving as a xlsx
+                # Since Python 3.6, dictionaries are ordered based on the order in which key/values
+                # were entered in.
+                save_dict = {}
+                save_dict[old_vintage] = old_vintage_df
+                save_dict[new_vintage] = new_vintage_df
+                save_dict[f"{new_vintage}-{old_vintage}"] = diff_df
+
+                # Save using the generic function
+                if(save):
+                    f.save(save_dict, save_folder, f"{new_vintage}-{old_vintage}", geo, est_table)
+                else:
+                    raise NotImplementedError("save=False has no functionality.")
