@@ -134,6 +134,50 @@ Generate individual estimates tables for each input geography. This function ret
 
 <a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L454"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
+## <kbd>class</kbd> `CA_DOF`
+Functions to get CA Department of Finance population estimates. 
+
+Unfourtunately, CA DOF does not have an API endpoint, so some manual work needs to be done. First, you need to go here: https://dof.ca.gov/forecasting/demographics/estimates/ and  look at the section titled "E-5 Population and Housing Estimates for Cities, Counties, and the  State". For the years of data you want, click on the relvant links (For years that end in 0  like 2020, use the higher range (2020- rather than -2020)). Download the Excel sheets that are "Organized by Geography". DO NOT USE THE "Cities, Counties, and the State" EXCEL FILES. I would recommend you save these files in "./data/raw_data/", but it is up to you as long as you provide the correct paths. 
+
+
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L510"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `get_CA_DOF_data`
+
+```python
+get_CA_DOF_data(
+    raw_folder=WindowsPath('data/raw_data'),
+    save_folder=WindowsPath('data/CA_DOF'),
+    years=range(2010, 2022),
+    geo_list=['region', 'jurisdiction']
+)
+```
+
+Get and save CA DOF data for each input year and geography level. 
+
+
+
+**Args:**
+ 
+ - <b>`raw_folder`</b> (pathlib.Path):  The location where raw CA DOF data is stored. See the class  description for more details. 
+ - <b>`save_folder`</b> (pathlb.Path):  The location where transformed CA DOF data should be saved.  Currently, this function will only save, there is no option for returning data. 
+ - <b>`years`</b> (list of int):  The years of CA DOF data to pull. It is recommended that you pull  all available data, which corresponds to the years 2010-current year. 
+ - <b>`geo_list`</b> (list of str):  The geography levels to split by. Each distinct geography level  will have its own file. 
+
+
+
+**Returns:**
+ None 
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L591"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
 
@@ -144,7 +188,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L464"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L601"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 

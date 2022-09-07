@@ -447,6 +447,143 @@ class EstimatesTables():
         # Return all the combined tables
         return individual_tables
 
+############################################
+# CA Department of Finance Population Data #
+############################################
+
+class CA_DOF():
+    """Functions to get CA Department of Finance population estimates.
+    
+    Unfourtunately, CA DOF does not have an API endpoint, so some manual work needs to be done.
+    First, you need to go here: https://dof.ca.gov/forecasting/demographics/estimates/ and 
+    look at the section titled "E-5 Population and Housing Estimates for Cities, Counties, and the 
+    State". For the years of data you want, click on the relvant links (For years that end in 0 
+    like 2020, use the higher range (2020- rather than -2020)). Download the Excel sheets that are
+    "Organized by Geography". DO NOT USE THE "Cities, Counties, and the State" EXCEL FILES. I would
+    recommend you save these files in "./data/raw_data/", but it is up to you as long as you provide
+    the correct paths.
+    """
+
+    def _get_CA_DOF_files(self, folder=pathlib.Path("./data/raw_data/"), files=[2010, 2020]):
+        """Get the requested CA DOF file paths.
+        
+        Get the requested CA DOF files from the input folder. It is assumed that the files have 
+        already been manually downloaded and put into the input folder. It is also assumed that 
+        the downloaded files match the general format of starting with f"E-5_{year}" where {year} is
+        the input files minus the trailing zero.
+
+        Args:
+            folder (pathlib.Path): The folder in which CA DOF data has been dowloaded to. This is
+                assumed to be "./data/raw_data/", but can be changed to whatever.
+            files (list of int): Although called files, in reality a list of the base years we 
+                want. For example, the file which contains 2010-2020 data in reality has a base year
+                of 2010 and contains estimates for 2011-2020. The file which contains 2020-current
+                year data in reality has a base year of 2020 and contains estimates for 2021-
+                current year.
+
+        Returns:
+            dict of pathlib.Path: The file locations where specific base years of data can be found.
+                The key is the base year (2010, 2020, etc.) and the value is the path to the data.
+
+        Raises:
+            FileNotFoundError: No files found in the folder for a given year
+            FileNotFoundError: Too many files found in the folder for a given year
+        """
+        # Get the files that match for each requested years
+        DOF_files = {}
+        for year in files:
+            # The glob string is not regex, see https://docs.python.org/3/library/fnmatch.html
+            year_matching_files = list(folder.glob(f"E-5-{year//10}*.xlsx"))
+            
+            # Make sure that we only match one file for each year
+            if(len(year_matching_files) == 0):
+                raise FileNotFoundError(f"No files found for {year} in {folder}")
+            if(len(year_matching_files) > 1):
+                raise FileNotFoundError(f"Too many files found for {year}: {year_matching_files}")
+
+            # Store the file path to be returned later
+            DOF_files[year] = year_matching_files[0]
+
+        # Return the file paths
+        return DOF_files
+
+    def get_CA_DOF_data(self, 
+        raw_folder=pathlib.Path("./data/raw_data/"), 
+        save_folder=pathlib.Path("./data/CA_DOF/"),
+        years=range(2010, 2022),
+        geo_list=["region", "jurisdiction"]):
+        """Get and save CA DOF data for each input year and geography level.
+        
+        Args:
+            raw_folder (pathlib.Path): The location where raw CA DOF data is stored. See the class
+                description for more details.
+            save_folder (pathlb.Path): The location where transformed CA DOF data should be saved.
+                Currently, this function will only save, there is no option for returning data.
+            years (list of int): The years of CA DOF data to pull. It is recommended that you pull
+                all available data, which corresponds to the years 2010-current year.
+            geo_list (list of str): The geography levels to split by. Each distinct geography level
+                will have its own file.
+
+        Returns:
+            None
+        """
+        # Get the base years of data we want. For example, if the year 2015 was requested, that 
+        # would correspond to a base year of 2010.
+        base_years = sorted(list(set([(year // 10) * 10 for year in years])))
+
+        # Use the helper function to get the paths of the files we want
+        data_paths = self._get_CA_DOF_files(folder=raw_folder, files=base_years)
+        
+        # Store data here
+        all_data = []
+
+        # Get the data
+        for _, path in data_paths.items():
+            df = pd.read_excel(path, sheet_name="E-5 by Geography", header=2)
+
+            # Remove extra leading/trailing whitespace from string columns
+            df["County"] = df["County"].str.strip()
+            df["City"] = df["City"].str.strip()
+
+            # Create a year column from the date column
+            df["Year"] = pd.DatetimeIndex(df["Date"]).year
+            df = df.drop("Date", axis=1)
+
+            # Reorder columns
+            cols = list(df.columns)
+            df = df[cols[:2] + [cols[-1]] + cols[2:-1]]
+
+            # Rename columns to more descriptive names. Since the columns in DOF data and Estimates
+            # do not exactly line up, column names will not be synced up
+            df = df.rename({
+                "Total": "Total Population", 
+                "Total2": "Households",
+                "Household": "Household Population"}, axis=1)
+
+            # Store the data in all_data
+            all_data.append(df)
+
+        # Combine all data together
+        DOF_data = pd.concat(all_data)
+
+        # Split the data into each geo_level
+        DOF_by_geo = {}
+        for geo in geo_list:
+            geo_df = DOF_data.copy(deep=True)
+            if(geo == "region"):
+                geo_df = geo_df[(geo_df["County"] == "San Diego") & (geo_df["City"] == "County Total")]
+            else:
+                geo_df = geo_df[geo_df["County"] == "San Diego"]
+            
+            # For both geo levels, sorting is the same
+            geo_df = geo_df.sort_values(["County", "City", "Year"], ascending=[True, True, True]).reset_index(drop=True)
+
+            DOF_by_geo[geo] = geo_df
+
+        # Save the data
+        for geo, data in DOF_by_geo.items():
+            f.save(data, save_folder, "DOF", geo, "")
+
 ##############
 # Diff Files #
 ##############

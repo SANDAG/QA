@@ -72,7 +72,7 @@ For the purposes of this function, null value checks mean checking each and ever
 ### <kbd>method</kbd> `spot_nulls`
 
 ```python
-spot_nulls(folder, table_name, geo)
+spot_nulls(folder, vintage, geo, table_name)
 ```
 
 Get data and check for nulls. 
@@ -96,7 +96,7 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L220"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L221"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
 TODO: One line description. 
@@ -109,7 +109,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L233"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L234"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
 Calculates year-on-year% changes and flags if the changes are more than 5%. 
@@ -121,12 +121,12 @@ For the purposes of this class, threshold analysis checks mean checking if betwe
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L241"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L242"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `yearly_change`
 
 ```python
-yearly_change(folder, table_name, geo, col)
+yearly_change(folder, vintage, geo, table_name, col)
 ```
 
 Get data and check for yearly changes in values. 
@@ -151,7 +151,7 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L280"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L281"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 TODO: One line description. 
@@ -164,15 +164,42 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L293"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L294"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
-TODO: One line description. 
+Compares the proportion of groups in total pop between DOF and Estimates at Regional Level 
 
-TODO: Long form description. 
+Comparison is across different groups like household income, age, gender, ethnicity, ethnicity by age, ethnicity by gender by age. 
 
 
 
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L299"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `shares`
+
+```python
+shares(df, threshold_dict)
+```
+
+Get data and compare the proportion changes between DOF and Estimates. 
+
+Checks at region level whether there exists any columns where proportion of groups is different. 
+
+**Args:**
+ 
+ - <b>`folder`</b> (pathlib.Path):  The folder in which data can be found. 
+ - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity") 
+ - <b>`geo`</b> (str):  The geography level to get data for and add aggregation columns onto 
+ - <b>`col`</b> (str):  The column name to choose to check for changes > 5% 
+
+
+
+**Returns:**
+ 
+ - <b>`List`</b>:  the list contains years where the yearly changes > 5% 
 
 
 
