@@ -126,6 +126,9 @@ class InternalConsistency():
         for geo in geo_list:
             geo_tables[geo] = self._get_data_with_aggregation_level(folder, vintage, geo, "consolidated")
 
+        # Add on the region level table
+        geo_tables["region"] = f.load(folder, vintage, "region", "consolidated")
+
         # Check each geography level at the specified aggregation levels
         for agg_col in self._geography_aggregation[geo]:
             # Let the user know what we are aggregating to/from and what we are comparing to
@@ -136,7 +139,7 @@ class InternalConsistency():
             # aggregate to multiple geography levels and we don't want to modify the original table
             # BUG: Not all variables should be aggregated with a simple sum, some of them (like 
             # household size) are averages.
-            aggregated = geo_tables[geo].copy(deep=True).groupby(agg_col).sum().reset_index()
+            aggregated = geo_tables[geo].copy(deep=True).groupby([agg_col, "yr_id"]).sum().reset_index()
 
             # NOTE: The current generation code does not have hhs nor vacancy_rate
             # # The hacky fix to the above bug
@@ -158,9 +161,9 @@ class InternalConsistency():
             # Print out error stuff if the number of True values is less than the number of cells.
             # Or in other words, print out error stuff if at least one cell is False
             if(check_results.to_numpy().sum() != check_results.shape[0] * check_results.shape[1]):
-                print(aggregated)
-                print(geo_tables[agg_col])
-                print(check_results)
+                error_rows = ((check_results.sum(axis=1) - check_results.shape[1]) != 0)
+                print(aggregated.loc[error_rows])
+                print(geo_tables[agg_col].loc[error_rows])
             else:
                 print("No errors")
 
@@ -195,7 +198,6 @@ class NullValues():
         """
         # Get the table
         geo_table = f.load(folder, vintage, geo, table_name)
-
 
         # prints and returns columns if it finds any null values
         if (geo_table.isna().sum() > 0).any():
@@ -280,14 +282,25 @@ class DOFPopulation():
 ######################################
 
 class DOFProportion():
-    """Compares the proportion of groups in total pop between DOF and Estimates at Regional Level
+    """Compares the proportion of groups in total pop between DOF and Estimates at Regional Level.
 
-    Comparison is across different groups like household income, age, gender, ethnicity, ethnicity by age, ethnicity by gender by age.
+    Comparison is across different groups like household income, age, gender, ethnicity, ethnicity 
+    by age, ethnicity by gender by age.
     """
+
     def shares(df, threshold_dict): # Calvin's code copied and pasted; need to make changes still
         """Get data and compare the proportion changes between DOF and Estimates.
         
         Checks at region level whether there exists any columns where proportion of groups is different.
+
+        TODO: Below is Calvin's documentation, format as a Google-style docstring
+
+        input: multi-index dataframe (index = (geo_level, year)), columns to check threshold in,
+        value threshold (numeric), percentage threshold (numeric value in {0,1})
+        
+        output: rows of the input multi-index dataframe with yearly differences outside the
+        designated threshold (inclusive)
+
         Args:
             folder (pathlib.Path): The folder in which data can be found.
             table_name (str): The name of the Estimates table to get. Because it is assumed that
@@ -299,15 +312,6 @@ class DOFProportion():
         Returns:
             List: the list contains years where the yearly changes > 5%
         """
-
-        """
-        input: multi-index dataframe (index = (geo_level, year)), columns to check threshold in,
-        value threshold (numeric), percentage threshold (numeric value in {0,1})
-        
-        output: rows of the input multi-index dataframe with yearly differences outside the
-        designated threshold (inclusive)
-        """
-        
         # Add column values and divides each column by total to get the proportion breakdown
         df = df[threshold_dict.keys()]
         df.loc[:, 'Total'] = df[threshold_dict.keys()].sum(axis=1)

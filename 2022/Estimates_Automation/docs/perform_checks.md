@@ -55,7 +55,7 @@ Take the outputs of get_data_with_aggregation_levels and check that values match
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L185"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L176"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `NullValues`
 Function to check for any null values. 
@@ -67,7 +67,7 @@ For the purposes of this function, null value checks mean checking each and ever
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L192"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L183"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `spot_nulls`
 
@@ -96,7 +96,7 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L221"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L211"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
 TODO: One line description. 
@@ -109,7 +109,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L234"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L224"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
 Calculates year-on-year% changes and flags if the changes are more than 5%. 
@@ -121,7 +121,7 @@ For the purposes of this class, threshold analysis checks mean checking if betwe
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L242"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L232"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `yearly_change`
 
@@ -151,7 +151,7 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L281"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L271"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 TODO: One line description. 
@@ -164,19 +164,19 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L294"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L284"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
-Compares the proportion of groups in total pop between DOF and Estimates at Regional Level 
+Compares the proportion of groups in total pop between DOF and Estimates at Regional Level. 
 
-Comparison is across different groups like household income, age, gender, ethnicity, ethnicity by age, ethnicity by gender by age. 
+Comparison is across different groups like household income, age, gender, ethnicity, ethnicity  by age, ethnicity by gender by age. 
 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L299"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L291"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `shares`
 
@@ -187,6 +187,14 @@ shares(df, threshold_dict)
 Get data and compare the proportion changes between DOF and Estimates. 
 
 Checks at region level whether there exists any columns where proportion of groups is different. 
+
+TODO: Below is Calvin's documentation, format as a Google-style docstring 
+
+input: multi-index dataframe (index = (geo_level, year)), columns to check threshold in, value threshold (numeric), percentage threshold (numeric value in {0,1}) 
+
+output: rows of the input multi-index dataframe with yearly differences outside the designated threshold (inclusive) 
+
+
 
 **Args:**
  

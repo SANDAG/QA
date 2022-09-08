@@ -4,6 +4,8 @@
 # Imports #
 ###########
 
+import textwrap
+
 import pandas as pd
 
 #############
@@ -96,9 +98,13 @@ def load(load_folder, *args):
     # Find the file(s) in load_folder which are identified by *args
     files = list(load_folder.glob(f"QA_{'_'.join(args)}.*"))
     if(len(files) == 0):
-        raise FileNotFoundError(f"No files found for the glob string \"QA_{'_'.join(args)}.*\"")
+        raise FileNotFoundError(textwrap.dedent(f"""\
+            No files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}
+            """))
     if(len(files) > 1):
-        raise FileNotFoundError(f"Too many files found for the glob string \"QA_{'_'.join(args)}.*\"")
+        raise FileNotFoundError(textwrap.dedent(f"""\
+            Too many files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}
+            """))
     file_name = files[0]
     
     # If a csv file was found, then load it
