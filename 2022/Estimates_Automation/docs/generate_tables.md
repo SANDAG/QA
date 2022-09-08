@@ -204,7 +204,7 @@ create_diff_tables(
 )
 ```
 
-Create diff files from the old vintage to the new vintage................. 
+Create diff files from the old vintage to the new vintage. 
 
 This function will create and save diff files for each unique combination of geo_list and  est_table_list. The saved diff files will be in the xlsx format with three sheets. The first sheet contains the old vintage data, the second sheet contains the new vintage data, and the third sheet contains (new vintage data - old vintage data), also know as the change from old vintage to new vintage. 
 
@@ -219,6 +219,17 @@ This function will create and save diff files for each unique combination of geo
  - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to create diff files.  Becasue of the unique way file names are generated, a valid item of this list is  "consolidated" 
  - <b>`save`</b> (bool):  True by default. If True, then use save_folder to save the diff files. At  this time, False has no functionality, but this may change later 
  - <b>`save_folder`</b> (pathlib.Path):  pathlib.Path("./data/diff/") by default. The location to   save diff files 
+
+
+
+**Returns:**
+ None 
+
+
+
+**Raises:**
+ 
+ - <b>`NotImplementedError`</b>:  Raised if save=False. If this function is not saving files, then  it is literally doing nothing 
 
 
 

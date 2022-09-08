@@ -13,7 +13,7 @@
 - [`generate_tables.CA_DOF`](./generate_tables.md#class-ca_dof): Functions to get CA Department of Finance population estimates.
 - [`generate_tables.DiffFiles`](./generate_tables.md#class-difffiles): Functions to return/save various Estimates diff tables.
 - [`generate_tables.EstimatesTables`](./generate_tables.md#class-estimatestables): Functions to return/save various Estimates tables.
-- [`perform_checks.DOFPopulation`](./perform_checks.md#class-dofpopulation): TODO: One line description.
+- [`perform_checks.DOFPopulation`](./perform_checks.md#class-dofpopulation): Check that the total population of the region is within 1.5% of CA DOF population.
 - [`perform_checks.DOFProportion`](./perform_checks.md#class-dofproportion): Compares the proportion of groups in total pop between DOF and Estimates at Regional Level.
 - [`perform_checks.InternalConsistency`](./perform_checks.md#class-internalconsistency): Functions to run internal consistency checks.
 - [`perform_checks.NullValues`](./perform_checks.md#class-nullvalues): Function to check for any null values.

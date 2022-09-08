@@ -154,17 +154,45 @@ Gets region level data by default, and whatever geography levels are present in 
 <a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L271"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
-TODO: One line description. 
+Check that the total population of the region is within 1.5% of CA DOF population. 
 
-TODO: Long form description. 
 
+
+**Attributes:**
+ 
+ - <b>`threshold`</b> (float):  The percentage we can go above/below CA DOF population numbers. If the   value of this variable is (for example) 1.5%, that means that our population numbers  must be less than DOF + 1.5% and must be greater than DOF - 1.5% 
 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L284"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L286"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `region_DOF_population_comparison`
+
+```python
+region_DOF_population_comparison(DOF_folder, raw_folder, vintage)
+```
+
+Check that the total population of the region is within 1.5% of CA DOF population. 
+
+As written in SB 375 on p. 23-24, our population numbers need to be within a RANGE of 3% of CA DOF population numbers. We interpret RANGE to be plus or minus 1.5%. 
+
+
+
+**Attributes:**
+  DOF_folder (pathlib.Path):  raw_folder (pathlib.Path):  vintage (str): 
+
+
+
+**Returns:**
+  None 
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L362"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups in total pop between DOF and Estimates at Regional Level. 
@@ -176,7 +204,7 @@ Comparison is across different groups like household income, age, gender, ethnic
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L291"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L369"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `shares`
 

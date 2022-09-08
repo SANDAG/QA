@@ -25,7 +25,7 @@ def save(dfs, save_folder, *args):
     f"{base_folder}/raw_data/".
 
     In the case of CA DOF tables, *args should contain DOF and geography level, in that order. DOF
-    files should be saved in the folder f"{base_folder}/DOF/".
+    files should be saved in the folder f"{base_folder}/CA_DOF/".
 
     In the case of diff tables, *args should contain vintage, geography level, and table name
     in that order. vintage should contain both vintages (ex. "2021_01-2020_06") and {table} should 

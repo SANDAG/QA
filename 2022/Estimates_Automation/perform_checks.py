@@ -269,13 +269,91 @@ class ThresholdAnalysis():
 ############################################
 
 class DOFPopulation():
-    """TODO: One line description.
+    """Check that the total population of the region is within 1.5% of CA DOF population.
     
-    TODO: Long form description.
+    Attributes:
+        threshold (float): The percentage we can go above/below CA DOF population numbers. If the 
+            value of this variable is (for example) 1.5%, that means that our population numbers
+            must be less than DOF + 1.5% and must be greater than DOF - 1.5%
     """
 
-    # TODO: Functions to do check 6
-    pass
+    threshold = 1.5
+
+    def _abs_percent_change(self, df, baseline, comparison):
+        """Compute the absolute percent change in the input df between the baseline and comparison columns."""
+        return abs(100 * (df[comparison] - df[baseline]) / df[baseline])
+
+    def region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage):
+        """Check that the total population of the region is within 1.5% of CA DOF population.
+        
+        As written in SB 375 on p. 23-24, our population numbers need to be within a RANGE of 3% of
+        CA DOF population numbers. We interpret RANGE to be plus or minus 1.5%.
+
+        Attributes:
+            DOF_folder (pathlib.Path):
+            raw_folder (pathlib.Path):
+            vintage (str):
+
+        Returns:
+            None
+        """
+        # Print what test is going on
+        print("Running Check 6: DOF Total Population Comparison")
+
+        # Get the two datasets
+        DOF_data = f.load(DOF_folder, "DOF", "region")
+        est_data = f.load(raw_folder, vintage, "region", "population")
+
+        # Clean up the datasets so that they are in the same format with the same years of data
+        # 1. Create new columns as necessary
+        # 2. Rename columns
+        # 3. Select only the relevant columns for comparison
+        
+        # 1. Create new columns as necessary
+        est_data["Est Group Quarters"] = est_data[
+            ["Group Quarters - Military", "Group Quarters - College", "Group Quarters - Other"]].sum(axis=1)
+
+        # 2. Rename columns
+        DOF_data = DOF_data.rename({
+            "Total Population": "DOF Total Population",
+            "Household Population": "DOF Household Population",
+            "Group Quarters": "DOF Group Quarters"}, axis=1)
+        est_data = est_data.rename({
+            "yr_id": "Year",
+            "Total Population": "Est Total Population",
+            "Household Population": "Est Household Population"}, axis=1)
+
+        # 3. Select only the relevant columns for comparison
+        DOF_data = DOF_data[["Year", "DOF Total Population", "DOF Household Population", "DOF Group Quarters"]]
+        est_data = est_data[["Year", "Est Total Population", "Est Household Population", "Est Group Quarters"]]
+
+        # Combine the datasets together and compute the percent difference
+        combined_data = pd.merge(est_data, DOF_data, how="left", on="Year")
+        combined_data["% Total Population"] = \
+            self._abs_percent_change(combined_data, "DOF Total Population", "Est Total Population")
+        combined_data["% Household Population"] = \
+            self._abs_percent_change(combined_data, "DOF Household Population", "Est Household Population")
+        combined_data["% Group Quarters"] = \
+            self._abs_percent_change(combined_data, "DOF Group Quarters", "Est Group Quarters")
+        
+        # Print out the rows that have a percent change larger than the allowed amount
+        error_rows = combined_data[
+            (combined_data["% Total Population"] > self.threshold) | 
+            (combined_data["% Household Population"] > self.threshold) | 
+            (combined_data["% Group Quarters"] > self.threshold)]
+        if(error_rows.shape[0] > 0):
+            print("Errors have occured on the following rows:")
+            print(error_rows)
+        else:
+            print("No errors")
+        print()
+
+if __name__ == "__main__":
+    DOFPopulation().region_DOF_population_comparison(
+        pathlib.Path("data/CA_DOF/"),
+        pathlib.Path("data/raw_data/"),
+        "2020_06"
+    )
 
 ######################################
 # Check 7: DOF Proportion Comparison #

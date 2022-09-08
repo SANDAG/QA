@@ -582,7 +582,7 @@ class CA_DOF():
 
         # Save the data
         for geo, data in DOF_by_geo.items():
-            f.save(data, save_folder, "DOF", geo, "")
+            f.save(data, save_folder, "DOF", geo)
 
 ##############
 # Diff Files #
@@ -604,7 +604,7 @@ class DiffFiles():
         est_table_list=['age', 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
         save=True,
         save_folder=pathlib.Path("./data/diff/")):
-        """Create diff files from the old vintage to the new vintage.................
+        """Create diff files from the old vintage to the new vintage.
 
         This function will create and save diff files for each unique combination of geo_list and 
         est_table_list. The saved diff files will be in the xlsx format with three sheets. The first
@@ -626,6 +626,13 @@ class DiffFiles():
                 this time, False has no functionality, but this may change later
             save_folder (pathlib.Path): pathlib.Path("./data/diff/") by default. The location to 
                 save diff files
+
+        Returns:
+            None
+
+        Raises:
+            NotImplementedError: Raised if save=False. If this function is not saving files, then
+                it is literally doing nothing
         """
         # Get the files that correspond to each vintage
         for geo in geo_list:
