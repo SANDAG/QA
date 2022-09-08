@@ -10,22 +10,29 @@ import pandas as pd
 # Functions #
 #############
 
-def save(dfs, base_folder, vintage, geo, table):
+def save(dfs, save_folder, *args):
     """Save the input dataframe(s) according to the other inputs.
     
-    In general, all files should be saved using the format f"QA_{vintage}_{geo}_{table}.csv". In 
-    diff files, {vintage} should contain both vintages (ex. "2021_01-2020_06") and {table} should 
-    contain the word "diff" (ex. "age_sex_ethnicity_diff"). For all other files, the file name 
-    should be organized with most general category coming first (this should always be "QA") to 
-    most specific category coming last.
+    All files will be saved using the format f"QA_{args[0]}_{args[1]}_{args[2]}_etc.???", where the
+    file extension (???) depends on if a pd.DataFrame was input (csv) or a dictionary of 
+    pd.DataFrame was input (xlsx). In case the requested save folder does not exist, the function 
+    will create the folder and any necessary parent folders. 
+    
+    In the case of general estimates tables, *args should contain vintage, geography level, and
+    table name in that order. Estimates tables should be saved in the folder 
+    f"{base_folder}/raw_data/".
 
-    This function will create the directory if it is not yet created
+    In the case of CA DOF tables, *args should contain DOF and geography level, in that order. DOF
+    files should be saved in the folder f"{base_folder}/DOF/".
 
-    Raw data should be saved in the folder f"{base_folder}/raw_data/".
+    In the case of diff tables, *args should contain vintage, geography level, and table name
+    in that order. vintage should contain both vintages (ex. "2021_01-2020_06") and {table} should 
+    contain the word "diff" (ex. "age_sex_ethnicity_diff"). Diff files should be saved in the 
+    folder f"{base_folder}/diff/".
 
-    DOF data should be saved in the folder f"{base_folder}/DOF/".
-
-    Diff files should be saved in the folder f"{base_folder}/diff/".
+    In the case of any other files you want to save, *args should contain the parts of the file name
+    in order of most general to most specific. For example, each vintage has multiple different 
+    possible geography levels, so vintage should come before geography level in *args
 
     Args:
         dfs (pd.DataFrame or dict of pd.DataFrame): The table(s) to save. If one df is input,
@@ -33,12 +40,10 @@ def save(dfs, base_folder, vintage, geo, table):
             be saved as an xlsx file, with each key of the dict being a sheet name, and the value
             of the dict being the sheet. Note that since Python 3.6, dictionaries maintain insertion
             order
-        base_folder (pathlib.Path): The folder to save data into. See the function description for
-            acceptable values
-        vintage (str): The vintage of the data.
-        geo (str): The geography level of the data.
-        table (str): The name of the table. This will typically be the name of an estimates table 
-            such as "population" or "ethnicity"
+        save_folder (pathlib.Path): The folder to save data into. See the function description for
+            recommended values
+        *args (list of str): The defining characteristics of the file name. In general, *args 
+            should contain the parts of the file name in order of most general to most specific.
 
     Returns:
         None
@@ -46,42 +51,39 @@ def save(dfs, base_folder, vintage, geo, table):
     Raises:
         TypeError: If dfs is not either pd.DataFrame or a dictionary of pd.DataFrame
     """
-    # Make sure the save file exists
-    if(not base_folder.is_dir()):
-         base_folder.mkdir(parents=True)
+    # Make sure the save folder exists
+    if(not save_folder.is_dir()):
+         save_folder.mkdir(parents=True)
 
     # The general format for all files
-    file_name = f"QA_{vintage}_{geo}_{table}."
+    file_name = f"QA_{'_'.join(args)}."
 
     # If a pd.DataFrame is input, then save as csv
     if(isinstance(dfs, pd.DataFrame)):
         file_name += "csv"
-        dfs.to_csv(base_folder / file_name, index=False)
+        dfs.to_csv(save_folder / file_name, index=False)
 
     # If a List of pd.DataFrame is input, then save as xlsx
     elif(isinstance(dfs, dict)):
         file_name += "xlsx"
-        with pd.ExcelWriter(base_folder / file_name) as writer:
+        with pd.ExcelWriter(save_folder / file_name) as writer:
             for name, table in dfs.items():
                 table.to_excel(writer, sheet_name=name, index=False)
     
     # Raise an error if dfs is an unknown type
     else:
-        raise TypeError("dfs must be pd.DataFrame or dict")
+        raise TypeError("dfs must be pd.DataFrame or dict of pd.DataFrame")
 
-def load(base_folder, vintage, geo, table, extension):
+def load(load_folder, *args):
     """Get the input dataframe(s) according to the other inputs.
     
-    See the save function for information on the file structure
+    See the save function for additional information
 
     Args:
-        base_folder (pathlib.Path): The folder to save data into. See the function description for 
-            save for acceptable values
-        vintage (str): The vintage of the data.
-        geo (str): The geography level of the data.
-        table (str): The name of the table. This will typically be the name of an estimates table 
-            such as "population" or "ethnicity"
-        extension (str): The extension of the file. Typically "csv", very rarely "xlsx"
+        load_folder (pathlib.Path): The folder to load data from. See the description for the save 
+            funciton for recommended values
+        *args (list of str): The defining characteristics of the file name. In general, *args 
+            should contain the parts of the file name in order of most general to most specific.
 
     Returns:
         dfs (pd.DataFrame or Dict of pd.DataFrame): The table(s) found. The input values should
@@ -91,17 +93,22 @@ def load(base_folder, vintage, geo, table, extension):
     Raises:
         IOError: The uniquely identified file has an unknown file extension
     """
-    # Get all the files in the provided folder
-    file = base_folder / f"QA_{vintage}_{geo}_{table}.{extension}"
-
+    # Find the file(s) in load_folder which are identified by *args
+    files = list(load_folder.glob(f"QA_{'_'.join(args)}.*"))
+    if(len(files) == 0):
+        raise FileNotFoundError(f"No files found for the glob string \"QA_{'_'.join(args)}.*\"")
+    if(len(files) > 1):
+        raise FileNotFoundError(f"Too many files found for the glob string \"QA_{'_'.join(args)}.*\"")
+    file_name = files[0]
+    
     # If a csv file was found, then load it
-    if(extension == "csv"):
-        return pd.read_csv(file)
+    if(file_name.suffix == ".csv"):
+        return pd.read_csv(file_name)
 
     # If an xlsx file was found, then load it
-    elif(extension == "xlsx"):
-        return pd.read_excel(file, sheet_name=None)
+    elif(file_name.suffix == ".xlsx"):
+        return pd.read_excel(file_name, sheet_name=None)
     
     # Raise an error if dfs has an unknown file extension
     else:
-        raise FileNotFoundError(f"{file} has an unknown file extension")
+        raise FileNotFoundError(f"{file_name} has an unknown file extension")

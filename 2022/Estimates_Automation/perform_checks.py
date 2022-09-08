@@ -38,7 +38,7 @@ class InternalConsistency():
             "mgra" aggregates up to both of those geography levels.
     """
 
-    geography_aggregation = {
+    _geography_aggregation = {
         "mgra": ["jurisdiction", "region"],
         "jurisdiction": ["region"],
         "luz": ["region"],
@@ -73,7 +73,7 @@ class InternalConsistency():
         # dim_table_columns would need to updated
 
         # Get the table
-        geo_table = f.load(folder, vintage, geo, table_name, "csv")
+        geo_table = f.load(folder, vintage, geo, table_name)
 
         # # Combine with the correct columns of the dim table
         # agg_cols = ", ".join(dim_table_columns[geo])
@@ -99,7 +99,7 @@ class InternalConsistency():
         dim_table = pd.read_sql_query(query, con=SQL2014B8)
         dim_table = dim_table.rename({"MGRA": "mgra", "Name": "jurisdiction", "LUZ": "luz"}, axis=1)
         dim_table["region"] = "San Diego"
-        dim_table = dim_table[[geo] + self.geography_aggregation[geo]].drop_duplicates(ignore_index=True)
+        dim_table = dim_table[[geo] + self._geography_aggregation[geo]].drop_duplicates(ignore_index=True)
 
         # The luz file has geography as luz_id, and not luz. Change to keep our merge the same
         if(geo == "luz"):
@@ -127,7 +127,7 @@ class InternalConsistency():
             geo_tables[geo] = self._get_data_with_aggregation_level(folder, vintage, geo, "consolidated")
 
         # Check each geography level at the specified aggregation levels
-        for agg_col in self.geography_aggregation[geo]:
+        for agg_col in self._geography_aggregation[geo]:
             # Let the user know what we are aggregating to/from and what we are comparing to
             print(f"Aggregating {geo} level data to {agg_col} and comparing with {agg_col} csv file")
 
@@ -138,40 +138,28 @@ class InternalConsistency():
             # household size) are averages.
             aggregated = geo_tables[geo].copy(deep=True).groupby(agg_col).sum().reset_index()
 
-            # The hacky fix to the above bug
-            # Note, hhs = household size 
-            #           = total population / number of households 
-            #           = pop / hh
-            # BUG: Why does documentation above use total population (pop) while the code below uses
-            # household population (hhp)? Can someone confirm which of these is correct?
-            aggregated["hhs"] = aggregated["hhp"] / aggregated["hh"]
-            aggregated["vacancy_rate"] = 100 \
-                * (aggregated["vacancy"] - aggregated["unoccupiable"]) \
-                / aggregated["units"]
-
-            # Now that things are aggregated, check the aggregated files with the non-aggregated
-            # geography level file
-            # Note, becuase my checks are limited to only a few columns, select them here
-            # hs = housing structures, hh = total number of households, hhs = household size,
-            # vacant = number of vacant units, vacancy_rate = not actually a rate, but the 
-            # percentage
-            columns_of_interest = [agg_col, "hs", "hh", "hhs", "vacancy", "vacancy_rate", "hhp"]
-
-            # Also, we want to check employment values
-            columns_of_interest += [emp_cat for emp_cat in aggregated if "emp_" in emp_cat]
-
-            # print(aggregated, df_dict[agg_col])
+            # NOTE: The current generation code does not have hhs nor vacancy_rate
+            # # The hacky fix to the above bug
+            # # Note, hhs = household size 
+            # #           = total population / number of households 
+            # #           = pop / hh
+            # # BUG: Why does documentation above use total population (pop) while the code below uses
+            # # household population (hhp)? Can someone confirm which of these is correct?
+            # aggregated["hhs"] = aggregated["hhp"] / aggregated["hh"]
+            # aggregated["vacancy_rate"] = 100 \
+            #     * (aggregated["vacancy"] - aggregated["unoccupiable"]) \
+            #     / aggregated["units"]
 
             # Check the values match up
-            check_results = aggregated[columns_of_interest] == geo_tables[agg_col][columns_of_interest]
+            check_results = (aggregated == geo_tables[agg_col])
             pd.set_option('display.max_colwidth', None)
             pd.set_option("display.max_columns", None)
 
             # Print out error stuff if the number of True values is less than the number of cells.
             # Or in other words, print out error stuff if at least one cell is False
             if(check_results.to_numpy().sum() != check_results.shape[0] * check_results.shape[1]):
-                print(aggregated[columns_of_interest])
-                print(geo_tables[agg_col][columns_of_interest])
+                print(aggregated)
+                print(geo_tables[agg_col])
                 print(check_results)
             else:
                 print("No errors")
@@ -206,7 +194,7 @@ class NullValues():
             List: the list contains column names that contain null values along with the string "Null values present in the following columns:"
         """
         # Get the table
-        geo_table = f.load(folder, vintage, geo, table_name, "csv")
+        geo_table = f.load(folder, vintage, geo, table_name)
 
 
         # prints and returns columns if it finds any null values
@@ -257,7 +245,7 @@ class ThresholdAnalysis():
             List: the list contains years where the yearly changes > 5%
         """
         # Get the table
-        geo_table = f.load(folder, vintage, geo, table_name, "csv")
+        geo_table = f.load(folder, vintage, geo, table_name)
 
         # Excluding the geography level column
         df = geo_table.loc[:,~df.columns.isin([geo])]

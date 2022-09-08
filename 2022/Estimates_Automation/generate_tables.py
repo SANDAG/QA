@@ -630,8 +630,8 @@ class DiffFiles():
         # Get the files that correspond to each vintage
         for geo in geo_list:
             for est_table in est_table_list:
-                old_vintage_df = f.load(raw_data_folder, old_vintage, geo, est_table, "csv")
-                new_vintage_df = f.load(raw_data_folder, new_vintage, geo, est_table, "csv")
+                old_vintage_df = f.load(raw_data_folder, old_vintage, geo, est_table)
+                new_vintage_df = f.load(raw_data_folder, new_vintage, geo, est_table)
 
                 # Create the diff df
                 # TODO: I cannot for the life of my figure out how to do a subtract when there
