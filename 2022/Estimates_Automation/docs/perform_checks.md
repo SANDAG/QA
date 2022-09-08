@@ -182,17 +182,20 @@ As written in SB 375 on p. 23-24, our population numbers need to be within a RAN
 
 
 **Attributes:**
-  DOF_folder (pathlib.Path):  raw_folder (pathlib.Path):  vintage (str): 
+ 
+ - <b>`DOF_folder`</b> (pathlib.Path):  The folder where CA DOF data can be found. Most likely   "./data/CA_DOF/". 
+ - <b>`raw_folder`</b> (pathlib.Path):  The folder where raw Estimates data can be found. Most   likely "./data/raw_data". 
+ - <b>`vintage`</b> (str):  The vintage of Estimates data to compare with DOF data 
 
 
 
 **Returns:**
-  None 
+ None 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L362"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L364"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups in total pop between DOF and Estimates at Regional Level. 
@@ -204,7 +207,7 @@ Comparison is across different groups like household income, age, gender, ethnic
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L369"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L371"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `shares`
 

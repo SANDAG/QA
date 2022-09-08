@@ -290,9 +290,11 @@ class DOFPopulation():
         CA DOF population numbers. We interpret RANGE to be plus or minus 1.5%.
 
         Attributes:
-            DOF_folder (pathlib.Path):
-            raw_folder (pathlib.Path):
-            vintage (str):
+            DOF_folder (pathlib.Path): The folder where CA DOF data can be found. Most likely 
+                "./data/CA_DOF/".
+            raw_folder (pathlib.Path): The folder where raw Estimates data can be found. Most 
+                likely "./data/raw_data".
+            vintage (str): The vintage of Estimates data to compare with DOF data
 
         Returns:
             None
