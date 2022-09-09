@@ -126,10 +126,14 @@ class InternalConsistency():
             save (bool): Default value of False. If True, save the outputs of the check to the input
                 save_location if and only if errors have been found.
             save_location (pathlib.Path): The location to save check results.
+
         Returns:
-            None, but prints out differences if present. Also saves output if requested and errors
-                have been found
+            None, but prints out differences if present . Also saves output if requested and errors
+                have been found.
         """
+        # Print what test is going on
+        print("Running Check 1: Check aggregated values between geography levels")
+
         # Get the table at each geography level
         geo_tables = {}
         for geo in geo_list:
@@ -193,7 +197,9 @@ class NullValues():
     to see if there are any null values present.
     """
 
-    def spot_nulls(self, folder, vintage, geo, table_name):
+    def spot_nulls(self, folder, vintage, geo, table_name,
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
         """Get data and check for nulls.
         
         Gets region level data by default, and whatever geography levels are present in geo_list. 
@@ -201,33 +207,45 @@ class NullValues():
 
         Args:
             folder (pathlib.Path): The folder in which data can be found.
+            vintage (str): The vintage of Estimates table to pull from. 
+            geo (str): The geography level to get data for and add aggregation columns onto.
             table_name (str): The name of the Estimates table to get. Because it is assumed that
                 the saved tables are created by the file generate_tables.py, this can be any of
-                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
-            geo (str): The geography level to get data for and add aggregation columns onto
+                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity").
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): The location to save check results.
 
         Returns:
-            List: the list contains column names that contain null values along with the string "Null values present in the following columns:"
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
         """
+        # Print what test is going on
+        print("Running Check 2: Spot Nulls")
+
         # Get the table
         geo_table = f.load(folder, vintage, geo, table_name)
 
-        # prints and returns columns if it finds any null values
-        if (geo_table.isna().sum() > 0).any():
-            print('Null values present in the following columns:')
-            return geo_table.columns[geo_table.isnull().any()].tolist()
+        # Get rows where null values exist
+        geo_table = geo_table[geo_table.isnull().any(axis=1)]
+
+        # Print out error stuff if there are null values
+        if(geo_table.shape[0] > 0):
+            print("Errors have occured on the following rows:")
+            print(geo_table)
+            # Save if errors and requested
+            if(save):
+                f.save(geo_table, save_location, "C2", vintage, geo, table_name)
+        else:
+            print("No errors")
 
 #################################
 # Check 3: Vintage Comparisions #
 #################################
 
 class VintageComparisons():
-    """TODO: One line description.
-    
-    TODO: Long form description.
-    """
+    """N/A. Done already by generate_tables.DiffFiles."""
 
-    # TODO: Functions to do check 3
     pass
 
 ###############################
@@ -314,7 +332,10 @@ class ThresholdAnalysis():
 # Check 5: Trend Analysis #
 ###########################
 
-# N/A, done in PowerBI
+class TrendAnalysis():
+    """N/A. Done in PowerBI."""
+
+    pass
 
 ############################################
 # Check 6: DOF Total Population Comparison #
@@ -351,7 +372,8 @@ class DOFPopulation():
             save_location (pathlib.Path): The location to save check results.
 
         Returns:
-            None
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
         """
         # Print what test is going on
         print("Running Check 6: DOF Total Population Comparison")

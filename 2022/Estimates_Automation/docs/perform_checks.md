@@ -57,13 +57,15 @@ Take the outputs of get_data_with_aggregation_levels and check that values match
  - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
  - <b>`save_location`</b> (pathlib.Path):  The location to save check results. 
 
+
+
 **Returns:**
- None, but prints out differences if present. Also saves output if requested and errors  have been found 
+ None, but prints out differences if present . Also saves output if requested and errors  have been found. 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L189"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L193"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `NullValues`
 Function to check for any null values. 
@@ -75,12 +77,19 @@ For the purposes of this function, null value checks mean checking each and ever
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L196"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L200"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `spot_nulls`
 
 ```python
-spot_nulls(folder, vintage, geo, table_name)
+spot_nulls(
+    folder,
+    vintage,
+    geo,
+    table_name,
+    save=False,
+    save_location=WindowsPath('data/outputs')
+)
 ```
 
 Get data and check for nulls. 
@@ -92,24 +101,24 @@ Gets region level data by default, and whatever geography levels are present in 
 **Args:**
  
  - <b>`folder`</b> (pathlib.Path):  The folder in which data can be found. 
- - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity") 
- - <b>`geo`</b> (str):  The geography level to get data for and add aggregation columns onto 
+ - <b>`vintage`</b> (str):  The vintage of Estimates table to pull from.  
+ - <b>`geo`</b> (str):  The geography level to get data for and add aggregation columns onto. 
+ - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity"). 
+ - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
+ - <b>`save_location`</b> (pathlib.Path):  The location to save check results. 
 
 
 
 **Returns:**
- 
- - <b>`List`</b>:  the list contains column names that contain null values along with the string "Null values present in the following columns:" 
+ None, but prints out differences if present. Also saves output if requested and errors  have been found. 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L224"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L246"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
-TODO: One line description. 
-
-TODO: Long form description. 
+N/A. Done already by generate_tables.DiffFiles. 
 
 
 
@@ -117,7 +126,7 @@ TODO: Long form description.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L237"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L255"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
 Calculates year-on-year% changes and flags if the changes are more than 5%. 
@@ -129,7 +138,7 @@ For the purposes of this class, threshold analysis checks mean checking if betwe
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L245"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L263"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `yearly_change`
 
@@ -170,7 +179,18 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L323"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L335"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>class</kbd> `TrendAnalysis`
+N/A. Done in PowerBI. 
+
+
+
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L344"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 Check that the total population of the region is within 1.5% of CA DOF population. 
@@ -180,7 +200,7 @@ Check that the total population of the region is within 1.5% of CA DOF populatio
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L330"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L351"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `region_DOF_population_comparison`
 
@@ -213,12 +233,12 @@ As written in SB 375 on p. 23-24, our population numbers need to be within a RAN
 
 
 **Returns:**
- None 
+ None, but prints out differences if present. Also saves output if requested and errors  have been found. 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L414"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L436"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups in total pop between DOF and Estimates at Regional Level. 
@@ -230,7 +250,7 @@ Comparison is across different groups like household income, age, gender, ethnic
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L421"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L443"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `shares`
 
