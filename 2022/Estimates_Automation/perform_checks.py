@@ -217,46 +217,75 @@ class VintageComparisons():
     # TODO: Functions to do check 3
     pass
 
-##############################
-# Check 4: ThresholdAnalysis #
-##############################
+###############################
+# Check 4: Threshold Analysis #
+###############################
 
 class ThresholdAnalysis():
     """Calculates year-on-year% changes and flags if the changes are more than 5%.
     
-    For the purposes of this class, threshold analysis checks mean checking if between any two versions,
-    the changes in values differ by more than 5%. For example, flagging if total population in certain region 
-    changes by more than 5%.
+    For the purposes of this class, threshold analysis checks mean checking if between any two 
+    versions, the changes in values differ by more than 5%. For example, flagging if total 
+    population in the region changes by more than 5% in one year.
     """
 
-    def yearly_change(self, folder, vintage, geo, table_name, col):
+    def yearly_change(self, raw_folder, vintage, geo, table_name, threshold=5):
         """Get data and check for yearly changes in values.
         
         Gets region level data by default, and whatever geography levels are present in geo_list. 
         Then checks to see if there exists any columns where difference in values is larger than 5%.
 
         Args:
-            folder (pathlib.Path): The folder in which data can be found.
+            raw_folder (pathlib.Path): The folder in which raw Estimates data can be found.
+            vintage (str): The vintage of interest.
+            geo (str): The geography level of interest.
             table_name (str): The name of the Estimates table to get. Because it is assumed that
                 the saved tables are created by the file generate_tables.py, this can be any of
-                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
-            geo (str): The geography level to get data for and add aggregation columns onto
-            col (str): The column name to choose to check for changes > 5%
-            
+                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity").
+            col (str): The column name to choose to check for changes.
+            threshold (float): Default value of 5(%). The percentage we can go above/below previous
+                values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
+
         Returns:
             List: the list contains years where the yearly changes > 5%
         """
-        # Get the table
-        geo_table = f.load(folder, vintage, geo, table_name)
+        # Print what test is running
+        print(f"Running Check 4: Yearly Change Threshold Analysis on {f._file_path([vintage, geo, table_name])[:-1]}")
 
-        # Excluding the geography level column
-        df = geo_table.loc[:,~df.columns.isin([geo])]
+        # Get the table
+        geo_table = f.load(raw_folder, vintage, geo, table_name)
 
         # NumPy function calculates the percent change for us
-        pop_change = df.groupby('yr_id').sum().pct_change()[[col]]
+        pop_change = geo_table.groupby([geo, 'yr_id']).sum().pct_change().reset_index(drop=False)
+        pop_change = abs(pop_change[pop_change.select_dtypes(include=["number"]).columns.drop("yr_id")]) * 100
+        columns = pop_change.columns.copy(deep=True)
+        pop_change = pop_change.add_prefix("|% Diff| ")
 
-        # Since we grouped by `yr_id`, returns a list of years where yearly changes in the specified column is more than 5% 
-        return pop_change[pop_change[col]>0.05].index.to_list()
+        # Merge the % change with the original table and order the columns
+        # I'll be honest, I don't know what the "x for y" stuff is doing, I just know it works
+        combined_df = pd.merge(geo_table, pop_change, how="left", left_index=True, right_index=True)
+        column_order = list(geo_table.columns)[:(geo_table.shape[1] - columns.shape[0])] + \
+            [x for y in zip(columns, pop_change.columns) for x in y]
+        combined_df = combined_df[column_order]
+
+        # Create a boolean mask to select rows with errors
+        # Also select the rows before to add context to the percent change
+        error_rows = (pop_change > threshold).any(1)
+        error_rows = error_rows | error_rows.shift(periods=-1)
+
+        # TODO: New feature?
+        # # Create a boolean mask to select columns with errors
+        # # Also select the columns before to add context to the percent change
+        # error_cols = (pop_change > threshold).any(0)
+        # error_cols = error_cols | error_cols.shift(periods=-1)
+
+        # Print the results
+        if(error_rows.sum() < error_rows.shape[0]):
+            print("Errors have occured on the following rows:")
+            print(combined_df[error_rows])
+        else:
+            print("No errors")
+        print()
 
 ###########################
 # Check 5: Trend Analysis #
@@ -269,21 +298,13 @@ class ThresholdAnalysis():
 ############################################
 
 class DOFPopulation():
-    """Check that the total population of the region is within 1.5% of CA DOF population.
-    
-    Attributes:
-        threshold (float): The percentage we can go above/below CA DOF population numbers. If the 
-            value of this variable is (for example) 1.5%, that means that our population numbers
-            must be less than DOF + 1.5% and must be greater than DOF - 1.5%
-    """
-
-    threshold = 1.5
+    """Check that the total population of the region is within 1.5% of CA DOF population."""
 
     def _abs_percent_change(self, df, baseline, comparison):
         """Compute the absolute percent change in the input df between the baseline and comparison columns."""
         return abs(100 * (df[comparison] - df[baseline]) / df[baseline])
 
-    def region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage):
+    def region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage, threshold=1.5):
         """Check that the total population of the region is within 1.5% of CA DOF population.
         
         As written in SB 375 on p. 23-24, our population numbers need to be within a RANGE of 3% of
@@ -293,8 +314,12 @@ class DOFPopulation():
             DOF_folder (pathlib.Path): The folder where CA DOF data can be found. Most likely 
                 "./data/CA_DOF/".
             raw_folder (pathlib.Path): The folder where raw Estimates data can be found. Most 
-                likely "./data/raw_data".
+                likely "./data/raw_data/".
             vintage (str): The vintage of Estimates data to compare with DOF data
+            threshold (float): Default value of 1.5(%). The percentage we can go above/below CA DOF 
+                population numbers. If the value of this variable is (for example) 1.5%, that means 
+                that our population numbers must be less than DOF + 1.5% and must be greater than 
+                DOF - 1.5%
 
         Returns:
             None
@@ -331,31 +356,24 @@ class DOFPopulation():
 
         # Combine the datasets together and compute the percent difference
         combined_data = pd.merge(est_data, DOF_data, how="left", on="Year")
-        combined_data["% Total Population"] = \
+        combined_data["|% Diff| Total Population"] = \
             self._abs_percent_change(combined_data, "DOF Total Population", "Est Total Population")
-        combined_data["% Household Population"] = \
+        combined_data["|% Diff| Household Population"] = \
             self._abs_percent_change(combined_data, "DOF Household Population", "Est Household Population")
-        combined_data["% Group Quarters"] = \
+        combined_data["|% Diff| Group Quarters"] = \
             self._abs_percent_change(combined_data, "DOF Group Quarters", "Est Group Quarters")
         
         # Print out the rows that have a percent change larger than the allowed amount
         error_rows = combined_data[
-            (combined_data["% Total Population"] > self.threshold) | 
-            (combined_data["% Household Population"] > self.threshold) | 
-            (combined_data["% Group Quarters"] > self.threshold)]
+            (combined_data["|% Diff| Total Population"] > threshold) | 
+            (combined_data["|% Diff| Household Population"] > threshold) | 
+            (combined_data["|% Diff| Group Quarters"] > threshold)]
         if(error_rows.shape[0] > 0):
             print("Errors have occured on the following rows:")
             print(error_rows)
         else:
             print("No errors")
         print()
-
-if __name__ == "__main__":
-    DOFPopulation().region_DOF_population_comparison(
-        pathlib.Path("data/CA_DOF/"),
-        pathlib.Path("data/raw_data/"),
-        "2020_06"
-    )
 
 ######################################
 # Check 7: DOF Proportion Comparison #

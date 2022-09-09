@@ -12,6 +12,10 @@ import pandas as pd
 # Functions #
 #############
 
+def _file_path(components):
+    """Return the file path (NO EXTENSION) for saving/loading."""
+    return f"QA_{'_'.join(components)}."
+
 def save(dfs, save_folder, *args):
     """Save the input dataframe(s) according to the other inputs.
     
@@ -58,7 +62,7 @@ def save(dfs, save_folder, *args):
          save_folder.mkdir(parents=True)
 
     # The general format for all files
-    file_name = f"QA_{'_'.join(args)}."
+    file_name = _file_path(args)
 
     # If a pd.DataFrame is input, then save as csv
     if(isinstance(dfs, pd.DataFrame)):
@@ -96,7 +100,7 @@ def load(load_folder, *args):
         IOError: The uniquely identified file has an unknown file extension
     """
     # Find the file(s) in load_folder which are identified by *args
-    files = list(load_folder.glob(f"QA_{'_'.join(args)}.*"))
+    files = list(load_folder.glob(f"{_file_path(args)}*"))
     if(len(files) == 0):
         raise FileNotFoundError(textwrap.dedent(f"""\
             No files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}

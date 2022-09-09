@@ -114,7 +114,7 @@ TODO: Long form description.
 ## <kbd>class</kbd> `ThresholdAnalysis`
 Calculates year-on-year% changes and flags if the changes are more than 5%. 
 
-For the purposes of this class, threshold analysis checks mean checking if between any two versions, the changes in values differ by more than 5%. For example, flagging if total population in certain region  changes by more than 5%. 
+For the purposes of this class, threshold analysis checks mean checking if between any two  versions, the changes in values differ by more than 5%. For example, flagging if total  population in the region changes by more than 5% in one year. 
 
 
 
@@ -126,7 +126,7 @@ For the purposes of this class, threshold analysis checks mean checking if betwe
 ### <kbd>method</kbd> `yearly_change`
 
 ```python
-yearly_change(folder, vintage, geo, table_name, col)
+yearly_change(raw_folder, vintage, geo, table_name, threshold=5)
 ```
 
 Get data and check for yearly changes in values. 
@@ -137,10 +137,12 @@ Gets region level data by default, and whatever geography levels are present in 
 
 **Args:**
  
- - <b>`folder`</b> (pathlib.Path):  The folder in which data can be found. 
- - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity") 
- - <b>`geo`</b> (str):  The geography level to get data for and add aggregation columns onto 
- - <b>`col`</b> (str):  The column name to choose to check for changes > 5% 
+ - <b>`raw_folder`</b> (pathlib.Path):  The folder in which raw Estimates data can be found. 
+ - <b>`vintage`</b> (str):  The vintage of interest. 
+ - <b>`geo`</b> (str):  The geography level of interest. 
+ - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity"). 
+ - <b>`col`</b> (str):  The column name to choose to check for changes. 
+ - <b>`threshold`</b> (float):  Default value of 5(%). The percentage we can go above/below previous  values and still consider it reasonable. Somewhat arbitrarily chosen to be honest. 
 
 
 
@@ -151,28 +153,22 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L271"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L300"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 Check that the total population of the region is within 1.5% of CA DOF population. 
 
 
 
-**Attributes:**
- 
- - <b>`threshold`</b> (float):  The percentage we can go above/below CA DOF population numbers. If the   value of this variable is (for example) 1.5%, that means that our population numbers  must be less than DOF + 1.5% and must be greater than DOF - 1.5% 
-
-
-
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L286"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L307"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `region_DOF_population_comparison`
 
 ```python
-region_DOF_population_comparison(DOF_folder, raw_folder, vintage)
+region_DOF_population_comparison(DOF_folder, raw_folder, vintage, threshold=1.5)
 ```
 
 Check that the total population of the region is within 1.5% of CA DOF population. 
@@ -184,8 +180,9 @@ As written in SB 375 on p. 23-24, our population numbers need to be within a RAN
 **Attributes:**
  
  - <b>`DOF_folder`</b> (pathlib.Path):  The folder where CA DOF data can be found. Most likely   "./data/CA_DOF/". 
- - <b>`raw_folder`</b> (pathlib.Path):  The folder where raw Estimates data can be found. Most   likely "./data/raw_data". 
+ - <b>`raw_folder`</b> (pathlib.Path):  The folder where raw Estimates data can be found. Most   likely "./data/raw_data/". 
  - <b>`vintage`</b> (str):  The vintage of Estimates data to compare with DOF data 
+ - <b>`threshold`</b> (float):  Default value of 1.5(%). The percentage we can go above/below CA DOF   population numbers. If the value of this variable is (for example) 1.5%, that means   that our population numbers must be less than DOF + 1.5% and must be greater than   DOF - 1.5% 
 
 
 
@@ -195,7 +192,7 @@ As written in SB 375 on p. 23-24, our population numbers need to be within a RAN
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L364"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L382"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups in total pop between DOF and Estimates at Regional Level. 
@@ -207,7 +204,7 @@ Comparison is across different groups like household income, age, gender, ethnic
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L371"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L389"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `shares`
 
