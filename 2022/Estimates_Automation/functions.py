@@ -36,6 +36,10 @@ def save(dfs, save_folder, *args):
     contain the word "diff" (ex. "age_sex_ethnicity_diff"). Diff files should be saved in the 
     folder f"{base_folder}/diff/".
 
+    In the case of check outputs, *args should contain the check number, vintage, geography level,
+    and table name in that order. Things may change depending on the specific outputs of the check.
+    Check outputs should be saved in the folder "f{base_folder}/outputs/".
+
     In the case of any other files you want to save, *args should contain the parts of the file name
     in order of most general to most specific. For example, each vintage has multiple different 
     possible geography levels, so vintage should come before geography level in *args
@@ -97,18 +101,19 @@ def load(load_folder, *args):
             If the file is a .xlsx, then a Dict of pd.DataFrame will be returned.
 
     Raises:
-        IOError: The uniquely identified file has an unknown file extension
+        FileNotFoundError: No files found or too many files found. When too many files are found,
+            this is usually becuase two files have the same name but different extension.
+        IOError: The uniquely identified file has an unknown file extension. Supported file 
+            extensions are ".csv" and ".xlsx".
     """
     # Find the file(s) in load_folder which are identified by *args
     files = list(load_folder.glob(f"{_file_path(args)}*"))
     if(len(files) == 0):
         raise FileNotFoundError(textwrap.dedent(f"""\
-            No files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}
-            """))
+            No files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}"""))
     if(len(files) > 1):
         raise FileNotFoundError(textwrap.dedent(f"""\
-            Too many files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}
-            """))
+            Too many files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}"""))
     file_name = files[0]
     
     # If a csv file was found, then load it

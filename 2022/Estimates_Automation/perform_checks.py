@@ -1,9 +1,12 @@
 """Classes/functions to run various checks on Estimates tables.
 
 The functions in this file run checks on Estimates tables. These functions can only pull data
-from saved files. By default, they output only print statements, but there is an option to save a 
-table containing rows with errors at some location. For more details, see the individual 
-classes/functions.
+from saved files. Each function should by default print out the status of the check, such as
+which check is being run and the rows where errors may have occured.
+
+Currently work in progress is the ability to save the outputs of the checks if requested. For 
+which checks currently have this functionality, look for the save=False and save_location=???
+parameters in the function signnature.
 """
 
 ###########
@@ -109,7 +112,10 @@ class InternalConsistency():
 
         return geo_table
 
-    def check_geography_aggregations(self, folder, vintage, geo_list=["mgra", "luz"]):
+    def check_geography_aggregations(self, folder, vintage, 
+        geo_list=["mgra", "luz"],
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
         """Take the outputs of get_data_with_aggregation_levels and check that values match up.
         
         Args:
@@ -117,9 +123,12 @@ class InternalConsistency():
             vintage (str): The vintage of Estimates table to pull from. 
             geo_list (list): The list of geographies to aggregate from. Note that region is included 
                 by default, so do not include it here.
-            
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): The location to save check results.
         Returns:
-            None, but prints out differences if present.
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found
         """
         # Get the table at each geography level
         geo_tables = {}
@@ -164,6 +173,10 @@ class InternalConsistency():
                 error_rows = ((check_results.sum(axis=1) - check_results.shape[1]) != 0)
                 print(aggregated.loc[error_rows])
                 print(geo_tables[agg_col].loc[error_rows])
+                # Save if errors and requested
+                if(save):
+                    f.save(geo_tables[agg_col].loc[error_rows], save_location, "C1", vintage, 
+                        f"{geo}->{agg_col}", "consolidated")
             else:
                 print("No errors")
 
@@ -229,7 +242,10 @@ class ThresholdAnalysis():
     population in the region changes by more than 5% in one year.
     """
 
-    def yearly_change(self, raw_folder, vintage, geo, table_name, threshold=5):
+    def yearly_change(self, raw_folder, vintage, geo, table_name, 
+        threshold=5,
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
         """Get data and check for yearly changes in values.
         
         Gets region level data by default, and whatever geography levels are present in geo_list. 
@@ -245,9 +261,12 @@ class ThresholdAnalysis():
             col (str): The column name to choose to check for changes.
             threshold (float): Default value of 5(%). The percentage we can go above/below previous
                 values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): The location to save check results.
 
         Returns:
-            List: the list contains years where the yearly changes > 5%
+            None
         """
         # Print what test is running
         print(f"Running Check 4: Yearly Change Threshold Analysis on {f._file_path([vintage, geo, table_name])[:-1]}")
@@ -283,6 +302,10 @@ class ThresholdAnalysis():
         if(error_rows.sum() < error_rows.shape[0]):
             print("Errors have occured on the following rows:")
             print(combined_df[error_rows])
+            # Save if errors and requested
+            if(save):
+                f.save(combined_df[error_rows], save_location, f"C4({threshold}%)", vintage, 
+                    geo, table_name)
         else:
             print("No errors")
         print()
@@ -304,7 +327,10 @@ class DOFPopulation():
         """Compute the absolute percent change in the input df between the baseline and comparison columns."""
         return abs(100 * (df[comparison] - df[baseline]) / df[baseline])
 
-    def region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage, threshold=1.5):
+    def region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage, 
+        threshold=1.5,
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
         """Check that the total population of the region is within 1.5% of CA DOF population.
         
         As written in SB 375 on p. 23-24, our population numbers need to be within a RANGE of 3% of
@@ -319,7 +345,10 @@ class DOFPopulation():
             threshold (float): Default value of 1.5(%). The percentage we can go above/below CA DOF 
                 population numbers. If the value of this variable is (for example) 1.5%, that means 
                 that our population numbers must be less than DOF + 1.5% and must be greater than 
-                DOF - 1.5%
+                DOF - 1.5%.
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): The location to save check results.
 
         Returns:
             None
@@ -371,6 +400,9 @@ class DOFPopulation():
         if(error_rows.shape[0] > 0):
             print("Errors have occured on the following rows:")
             print(error_rows)
+            # Save if errors and requested
+            if(save):
+                f.save(error_rows, save_location, f"C6(DOF-{vintage})", "region", "population")
         else:
             print("No errors")
         print()

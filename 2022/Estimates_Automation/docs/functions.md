@@ -26,6 +26,8 @@ In the case of CA DOF tables, *args should contain DOF and geography level, in t
 
 In the case of diff tables, *args should contain vintage, geography level, and table name in that order. vintage should contain both vintages (ex. "2021_01-2020_06") and {table} should  contain the word "diff" (ex. "age_sex_ethnicity_diff"). Diff files should be saved in the  folder f"{base_folder}/diff/". 
 
+In the case of check outputs, *args should contain the check number, vintage, geography level, and table name in that order. Things may change depending on the specific outputs of the check. Check outputs should be saved in the folder "f{base_folder}/outputs/". 
+
 In the case of any other files you want to save, *args should contain the parts of the file name in order of most general to most specific. For example, each vintage has multiple different  possible geography levels, so vintage should come before geography level in *args 
 
 
@@ -50,7 +52,7 @@ In the case of any other files you want to save, *args should contain the parts 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\functions.py#L83"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\functions.py#L87"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `load`
 
@@ -79,7 +81,8 @@ See the save function for additional information
 
 **Raises:**
  
- - <b>`IOError`</b>:  The uniquely identified file has an unknown file extension 
+ - <b>`FileNotFoundError`</b>:  No files found or too many files found. When too many files are found,  this is usually becuase two files have the same name but different extension. 
+ - <b>`IOError`</b>:  The uniquely identified file has an unknown file extension. Supported file   extensions are ".csv" and ".xlsx". 
 
 
 
