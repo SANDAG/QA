@@ -61,6 +61,7 @@ pysandag-master/
 .docx
 .sav
 *.pbix
+.vscode/
 
 # Images #
 ################
