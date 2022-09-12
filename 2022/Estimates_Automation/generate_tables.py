@@ -60,8 +60,8 @@ class EstimatesTables():
             pd.DataFrame: The requested Estimates table grouped by the geography level
         """
         # It is assumed that the Estimates table will always come from DDAMWSQL16
-        # NOTE: This uses desktop authentication so I'm fairly confident to run this fuction you would
-        # need to be in the office or on VPN, but I'm not sure. Someone want to test it out?
+        # NOTE: This uses desktop authentication so I'm fairly confident to run this function you 
+        # would need to be in the office or on VPN, but I'm not sure. Someone want to test it out?
         DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
 
         # Store the config locally 
@@ -282,7 +282,7 @@ class EstimatesTables():
                 CAT_COLS = ["long_name"]
 
             # Before pivoting, get the category order as for whatever reason, pivot_table() seems
-            # to sort automatically, and if you do sort=False it puts the columns in a wierd order...
+            # to sort automatically, and if you do sort=False it puts the columns in a weird order...
             col_order = list(table[CAT_COLS[0]].unique())
 
             # Custom behavior for the population table. Essentially, we want to add on a column
@@ -354,7 +354,7 @@ class EstimatesTables():
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
-            geo_list (list of str): The geographies to cosolidate along. 
+            geo_list (list of str): The geographies to consolidate along. 
             est_table_list (list of str): Which estimates tables we want to consolidate
             save (bool): False by default. If False, then only return the consolidated tables. If 
                 True, then use save_folder to save the consolidated tables and return the tables
@@ -364,7 +364,7 @@ class EstimatesTables():
         Returns:
             List of pd.DataFrame: A list containing the consolidated tables in the order of geo_list
         """
-        # Store each cosolidated table by geography level here
+        # Store each consolidated table by geography level here
         combined_tables = []
 
         # Loop over the geography levels we want to consolidate on
@@ -405,7 +405,7 @@ class EstimatesTables():
         est_table_list=["age", "ethnicity", "household_income", "age_ethnicity", "age_sex_ethnicity"],
         save=False,
         save_folder=None):
-        """Create individual files for each unique conbination of Estimate table and geography level.
+        """Create individual files for each unique combination of Estimate table and geography level.
 
         Generate individual estimates tables for each input geography. This function returns one
         dataframe for each geography level / estimate table. Because of the way looping is done, the 
@@ -414,7 +414,7 @@ class EstimatesTables():
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
-            geo_list (list of str): The geographies to cosolidate along. 
+            geo_list (list of str): The geographies to consolidate along. 
             est_table_list (list of str): Which estimates tables we want to consolidate
             save (bool): False by default. If False, then only return the consolidated tables. If 
                 True, then use save_folder to save the consolidated tables and return the tables
@@ -454,10 +454,10 @@ class EstimatesTables():
 class CA_DOF():
     """Functions to get CA Department of Finance population estimates.
     
-    Unfourtunately, CA DOF does not have an API endpoint, so some manual work needs to be done.
+    Unfortunately, CA DOF does not have an API endpoint, so some manual work needs to be done.
     First, you need to go here: https://dof.ca.gov/forecasting/demographics/estimates/ and 
     look at the section titled "E-5 Population and Housing Estimates for Cities, Counties, and the 
-    State". For the years of data you want, click on the relvant links (For years that end in 0 
+    State". For the years of data you want, click on the relevant links (For years that end in 0 
     like 2020, use the higher range (2020- rather than -2020)). Download the Excel sheets that are
     "Organized by Geography". DO NOT USE THE "Cities, Counties, and the State" EXCEL FILES. I would
     recommend you save these files in "./data/raw_data/", but it is up to you as long as you provide
@@ -473,7 +473,7 @@ class CA_DOF():
         the input files minus the trailing zero.
 
         Args:
-            folder (pathlib.Path): The folder in which CA DOF data has been dowloaded to. This is
+            folder (pathlib.Path): The folder in which CA DOF data has been downloaded to. This is
                 assumed to be "./data/raw_data/", but can be changed to whatever.
             files (list of int): Although called files, in reality a list of the base years we 
                 want. For example, the file which contains 2010-2020 data in reality has a base year
@@ -517,7 +517,7 @@ class CA_DOF():
         Args:
             raw_folder (pathlib.Path): The location where raw CA DOF data is stored. See the class
                 description for more details.
-            save_folder (pathlb.Path): The location where transformed CA DOF data should be saved.
+            save_folder (pathlib.Path): The location where transformed CA DOF data should be saved.
                 Currently, this function will only save, there is no option for returning data.
             years (list of int): The years of CA DOF data to pull. It is recommended that you pull
                 all available data, which corresponds to the years 2010-current year.
@@ -599,7 +599,7 @@ class CA_DOF():
         # Save the data
         for geo, data in DOF_by_geo.items():
             f.save(data, save_folder, "DOF", geo)
-            
+
 ##############
 # Diff Files #
 ##############
@@ -611,7 +611,7 @@ class DiffFiles():
     from previously saved files. The output diff files will always be returned in case you want
     to hold them in memory. There is also an option to save the files at the specified location.
     The diff files can either be absolute change, percentage change, or both. As with the class
-    Esimates Tables, the functions in this file do not run any checks.
+    Estimates Tables, the functions in this file do not run any checks.
     """
 
     def create_diff_tables(self, old_vintage, new_vintage, 
@@ -636,7 +636,7 @@ class DiffFiles():
                 using functions.save in order to keep file formats consistent
             geo_list (list of str): The geographies to create diff files for. 
             est_table_list (list of str): Which estimates tables we want to create diff files.
-                Becasue of the unique way file names are generated, a valid item of this list is
+                Because of the unique way file names are generated, a valid item of this list is
                 "consolidated"
             save (bool): True by default. If True, then use save_folder to save the diff files. At
                 this time, False has no functionality, but this may change later

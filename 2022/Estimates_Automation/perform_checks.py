@@ -2,11 +2,11 @@
 
 The functions in this file run checks on Estimates tables. These functions can only pull data
 from saved files. Each function should by default print out the status of the check, such as
-which check is being run and the rows where errors may have occured.
+which check is being run and the rows where errors may have occurred.
 
 Currently work in progress is the ability to save the outputs of the checks if requested. For 
 which checks currently have this functionality, look for the save=False and save_location=???
-parameters in the function signnature.
+parameters in the function signature.
 """
 
 ###########
@@ -54,7 +54,7 @@ class InternalConsistency():
         Gets region level data by default, and whatever geography levels are present in geo_list. 
         Uses [demographic_warehouse].[dim].[mgra_denormalize] and a lookup table to know which 
         columns to add to each geography level table. For example, the lookup table tells the 
-        fuction to add on "jurisdiction" and "region" columns for the "mgra" geo_level.
+        function to add on "jurisdiction" and "region" columns for the "mgra" geo_level.
 
         Args:
             folder (pathlib.Path): The folder in which data can be found.
@@ -232,7 +232,7 @@ class NullValues():
 
         # Print out error stuff if there are null values
         if(geo_table.shape[0] > 0):
-            print("Errors have occured on the following rows:")
+            print("Errors have occurred on the following rows:")
             print(geo_table)
             # Save if errors and requested
             if(save):
@@ -268,7 +268,7 @@ class NullValues():
         # Print what test is going on
         print("Running Check 2: Spot Nulls")
 
-        # Iternate over each unique table and run the test
+        # Iterate over each unique table and run the test
         for geo in geo_list:
             for est_table in est_table_list:
                 self._spot_null(raw_folder, vintage, geo, est_table, 
@@ -276,7 +276,7 @@ class NullValues():
                     save_location=save_location)
 
 #################################
-# Check 3: Vintage Comparisions #
+# Check 3: Vintage Comparisons #
 #################################
 
 class VintageComparisons():
@@ -354,7 +354,7 @@ class ThresholdAnalysis():
 
         # Print the results
         if(not combined_df[error_rows].empty):
-            print("Errors have occured on the following rows:")
+            print("Errors have occurred on the following rows:")
             print(combined_df[error_rows])
             # Save if errors and requested
             if(save):
@@ -496,7 +496,7 @@ class DOFPopulation():
             (combined_data["|% Diff| Household Population"] > threshold) | 
             (combined_data["|% Diff| Group Quarters"] > threshold)]
         if(error_rows.shape[0] > 0):
-            print("Errors have occured on the following rows:")
+            print("Errors have occurred on the following rows:")
             print(error_rows)
             # Save if errors and requested
             if(save):

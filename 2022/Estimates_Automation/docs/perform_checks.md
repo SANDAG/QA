@@ -5,9 +5,9 @@
 # <kbd>module</kbd> `perform_checks`
 Classes/functions to run various checks on Estimates tables. 
 
-The functions in this file run checks on Estimates tables. These functions can only pull data from saved files. Each function should by default print out the status of the check, such as which check is being run and the rows where errors may have occured. 
+The functions in this file run checks on Estimates tables. These functions can only pull data from saved files. Each function should by default print out the status of the check, such as which check is being run and the rows where errors may have occurred. 
 
-Currently work in progress is the ability to save the outputs of the checks if requested. For  which checks currently have this functionality, look for the save=False and save_location=??? parameters in the function signnature. 
+Currently work in progress is the ability to save the outputs of the checks if requested. For  which checks currently have this functionality, look for the save=False and save_location=??? parameters in the function signature. 
 
 
 

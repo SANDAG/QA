@@ -68,7 +68,7 @@ See the save function for additional information
 
 **Args:**
  
- - <b>`load_folder`</b> (pathlib.Path):  The folder to load data from. See the description for the save   funciton for recommended values 
+ - <b>`load_folder`</b> (pathlib.Path):  The folder to load data from. See the description for the save   function for recommended values 
  - <b>`*args (list of str)`</b>:  The defining characteristics of the file name. In general, *args   should contain the parts of the file name in order of most general to most specific. 
 
 
@@ -81,7 +81,7 @@ See the save function for additional information
 
 **Raises:**
  
- - <b>`FileNotFoundError`</b>:  No files found or too many files found. When too many files are found,  this is usually becuase two files have the same name but different extension. 
+ - <b>`FileNotFoundError`</b>:  No files found or too many files found. When too many files are found,  this is usually because two files have the same name but different extension. 
  - <b>`IOError`</b>:  The uniquely identified file has an unknown file extension. Supported file   extensions are ".csv" and ".xlsx". 
 
 

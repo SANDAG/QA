@@ -46,7 +46,7 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
 **Args:**
  
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this   variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
- - <b>`geo_list`</b> (list of str):  The geographies to cosolidate along.  
+ - <b>`geo_list`</b> (list of str):  The geographies to consolidate along.  
  - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate 
  - <b>`save`</b> (bool):  False by default. If False, then only return the consolidated tables. If   True, then use save_folder to save the consolidated tables and return the tables 
  - <b>`save_folder`</b> (pathlib.Path):  None by default. If save=True, then the folder to save in as a   pathlib.Path object 
@@ -109,7 +109,7 @@ individual(
 )
 ```
 
-Create individual files for each unique conbination of Estimate table and geography level. 
+Create individual files for each unique combination of Estimate table and geography level. 
 
 Generate individual estimates tables for each input geography. This function returns one dataframe for each geography level / estimate table. Because of the way looping is done, the  order of dfs is first geo_level each estimate table, second geo_level each estimate table, etc. 
 
@@ -118,7 +118,7 @@ Generate individual estimates tables for each input geography. This function ret
 **Args:**
  
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this   variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
- - <b>`geo_list`</b> (list of str):  The geographies to cosolidate along.  
+ - <b>`geo_list`</b> (list of str):  The geographies to consolidate along.  
  - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate 
  - <b>`save`</b> (bool):  False by default. If False, then only return the consolidated tables. If   True, then use save_folder to save the consolidated tables and return the tables 
  - <b>`save_folder`</b> (pathlib.Path):  None by default. If save=True, then the folder to save in as a   pathlib.Path object 
@@ -137,7 +137,7 @@ Generate individual estimates tables for each input geography. This function ret
 ## <kbd>class</kbd> `CA_DOF`
 Functions to get CA Department of Finance population estimates. 
 
-Unfourtunately, CA DOF does not have an API endpoint, so some manual work needs to be done. First, you need to go here: https://dof.ca.gov/forecasting/demographics/estimates/ and  look at the section titled "E-5 Population and Housing Estimates for Cities, Counties, and the  State". For the years of data you want, click on the relvant links (For years that end in 0  like 2020, use the higher range (2020- rather than -2020)). Download the Excel sheets that are "Organized by Geography". DO NOT USE THE "Cities, Counties, and the State" EXCEL FILES. I would recommend you save these files in "./data/raw_data/", but it is up to you as long as you provide the correct paths. 
+Unfortunately, CA DOF does not have an API endpoint, so some manual work needs to be done. First, you need to go here: https://dof.ca.gov/forecasting/demographics/estimates/ and  look at the section titled "E-5 Population and Housing Estimates for Cities, Counties, and the  State". For the years of data you want, click on the relevant links (For years that end in 0  like 2020, use the higher range (2020- rather than -2020)). Download the Excel sheets that are "Organized by Geography". DO NOT USE THE "Cities, Counties, and the State" EXCEL FILES. I would recommend you save these files in "./data/raw_data/", but it is up to you as long as you provide the correct paths. 
 
 
 
@@ -164,7 +164,7 @@ Get and save CA DOF data for each input year and geography level.
 **Args:**
  
  - <b>`raw_folder`</b> (pathlib.Path):  The location where raw CA DOF data is stored. See the class  description for more details. 
- - <b>`save_folder`</b> (pathlb.Path):  The location where transformed CA DOF data should be saved.  Currently, this function will only save, there is no option for returning data. 
+ - <b>`save_folder`</b> (pathlib.Path):  The location where transformed CA DOF data should be saved.  Currently, this function will only save, there is no option for returning data. 
  - <b>`years`</b> (list of int):  The years of CA DOF data to pull. It is recommended that you pull  all available data, which corresponds to the years 2010-current year. 
  - <b>`geo_list`</b> (list of str):  The geography levels to split by. Each distinct geography level  will have its own file. 
 
@@ -181,7 +181,7 @@ Get and save CA DOF data for each input year and geography level.
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
 
-The functions in this class create diff files either directly from [DDAMWSQL16].[estimates] or from previously saved files. The output diff files will always be returned in case you want to hold them in memory. There is also an option to save the files at the specified location. The diff files can either be absolute change, percentage change, or both. As with the class Esimates Tables, the functions in this file do not run any checks. 
+The functions in this class create diff files either directly from [DDAMWSQL16].[estimates] or from previously saved files. The output diff files will always be returned in case you want to hold them in memory. There is also an option to save the files at the specified location. The diff files can either be absolute change, percentage change, or both. As with the class Estimates Tables, the functions in this file do not run any checks. 
 
 
 
@@ -216,7 +216,7 @@ This function will create and save diff files for each unique combination of geo
  - <b>`new_vintage`</b> (str):  The new vintage to compare with. 
  - <b>`raw_data_folder`</b> (pathlib.Path):  pathlib.Path("./data/raw_data/") by default. The   location where raw data has been saved. It is expected that the files are saved  using functions.save in order to keep file formats consistent 
  - <b>`geo_list`</b> (list of str):  The geographies to create diff files for.  
- - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to create diff files.  Becasue of the unique way file names are generated, a valid item of this list is  "consolidated" 
+ - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to create diff files.  Because of the unique way file names are generated, a valid item of this list is  "consolidated" 
  - <b>`save`</b> (bool):  True by default. If True, then use save_folder to save the diff files. At  this time, False has no functionality, but this may change later 
  - <b>`save_folder`</b> (pathlib.Path):  pathlib.Path("./data/diff/") by default. The location to   save diff files 
 

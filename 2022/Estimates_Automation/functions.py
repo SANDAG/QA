@@ -91,7 +91,7 @@ def load(load_folder, *args):
 
     Args:
         load_folder (pathlib.Path): The folder to load data from. See the description for the save 
-            funciton for recommended values
+            function for recommended values
         *args (list of str): The defining characteristics of the file name. In general, *args 
             should contain the parts of the file name in order of most general to most specific.
 
@@ -102,7 +102,7 @@ def load(load_folder, *args):
 
     Raises:
         FileNotFoundError: No files found or too many files found. When too many files are found,
-            this is usually becuase two files have the same name but different extension.
+            this is usually because two files have the same name but different extension.
         IOError: The uniquely identified file has an unknown file extension. Supported file 
             extensions are ".csv" and ".xlsx".
     """
