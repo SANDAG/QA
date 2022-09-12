@@ -33,11 +33,15 @@ Estimates Automation depends on a few different packages which can be found in [
 
 ```pip install -r "./requirements.txt"```
 
-If you would prefer using conda or some other package manager, I'm sure you can figure out how to install the requirements
+If you are using Anaconda or any other package manager (venv, etc.), you should first activate the virtual environment then run the above in the command line. I have not tested installing dependencies with conda, so use at your own risk.
 
 ### Running the code
 
 The file [example_usage.ipynb](./example_usage.ipynb) has code already written which can generate all files and run all checks. Open the notebook in your favorite editor and run every cell. Note that Estimates Automation will create the data file structure as defined in Project Overview.
+
+Almost every function signature has a parameter for Estimate vintage, geography level (or levels), and Estimate table (or tables). This makes it easy to run code on different vintages, geography levels, or tables as all you need to do is update the function call in example_usage.ipynb. 
+
+In other function signatures, some of the above parameters may not be necessary and any additional required parameters will be included. Still, updating what code runs on is as simple as updating the function call in example_usage.ipynb with whatever changes you want to make.
 
 NOTE! Downloading Estimates files creates connections to both [DDAMWSQL16] and [sql2014b8]. These connections use Windows Authentication, which means you need to be logged into your SANDAG account and connected to the SANDAG network, whether you are in the office on Ethernet, or through VPN. Although it is possible to pass in username/password through sqlalchemy, I would not recommend it due to the high chance of forgetting to remove them from code and exposing your credentials to the public.
 
