@@ -66,8 +66,8 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
 ```python
 get_table_by_geography(
     est_vintage,
-    est_table,
     geo_level,
+    est_table,
     pivot=False,
     debug=False
 )
@@ -82,8 +82,8 @@ This function will return the requested Estimates table from the requested vinta
 **Args:**
  
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this  variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
- - <b>`est_table`</b> (str):  The Estimates table to pull from. In DDAMWSQL16, this variable   corresponds to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]" 
  - <b>`geo_level`</b> (str):  The geography level to aggregate by. This can be any of the columns in   the DDAMWSQL16 table [demographic_warehouse].[dim].[mgra_denormalize]. For example,  you could input "region", "jurisdiction", "mgra", etc. 
+ - <b>`est_table`</b> (str):  The Estimates table to pull from. In DDAMWSQL16, this variable   corresponds to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]" 
  - <b>`pivot`</b> (bool):  Default False. If True, return the table in wide format instead of tall 
  - <b>`debug`</b> (bool):  Default False. If True, print out diagnostic print statements during   execution including the complete SQL query used 
 

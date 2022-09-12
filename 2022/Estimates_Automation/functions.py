@@ -14,7 +14,7 @@ import pandas as pd
 
 def _file_path(components):
     """Return the file path (NO EXTENSION) for saving/loading."""
-    return f"QA_{'_'.join(components)}."
+    return f"QA_{'_'.join(components)}"
 
 def save(dfs, save_folder, *args):
     """Save the input dataframe(s) according to the other inputs.
@@ -70,12 +70,12 @@ def save(dfs, save_folder, *args):
 
     # If a pd.DataFrame is input, then save as csv
     if(isinstance(dfs, pd.DataFrame)):
-        file_name += "csv"
+        file_name += ".csv"
         dfs.to_csv(save_folder / file_name, index=False)
 
     # If a List of pd.DataFrame is input, then save as xlsx
     elif(isinstance(dfs, dict)):
-        file_name += "xlsx"
+        file_name += ".xlsx"
         with pd.ExcelWriter(save_folder / file_name) as writer:
             for name, table in dfs.items():
                 table.to_excel(writer, sheet_name=name, index=False)
@@ -110,10 +110,10 @@ def load(load_folder, *args):
     files = list(load_folder.glob(f"{_file_path(args)}*"))
     if(len(files) == 0):
         raise FileNotFoundError(textwrap.dedent(f"""\
-            No files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}"""))
+            No files found for the glob string \"{_file_path(args)}*\" in the folder {load_folder}"""))
     if(len(files) > 1):
         raise FileNotFoundError(textwrap.dedent(f"""\
-            Too many files found for the glob string \"QA_{'_'.join(args)}.*\" in the folder {load_folder}"""))
+            Too many files found for the glob string \"{_file_path(args)}*\" in the folder {load_folder}"""))
     file_name = files[0]
     
     # If a csv file was found, then load it

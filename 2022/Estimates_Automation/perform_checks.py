@@ -112,23 +112,31 @@ class InternalConsistency():
 
         return geo_table
 
-    def check_geography_aggregations(self, folder, vintage, 
+    def check_geography_aggregations(self, 
+        vintage="2020_06", 
         geo_list=["mgra", "luz"],
+        est_table="consolidated",
+        raw_folder=pathlib.Path("./data/raw_data/"),
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
         """Take the outputs of get_data_with_aggregation_levels and check that values match up.
         
         Args:
-            folder (pathlib.Path): The folder in which data can be found.
-            vintage (str): The vintage of Estimates table to pull from. 
+            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
             geo_list (list): The list of geographies to aggregate from. Note that region is included 
                 by default, so do not include it here.
+            est_table (str): Default value of "consolidated". The Estimate table to check. This 
+                should basically always be "consolidated", but it is included here in the off chance
+                it is not.
+            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
+                raw Estimates data can be found.
             save (bool): Default value of False. If True, save the outputs of the check to the input
                 save_location if and only if errors have been found.
-            save_location (pathlib.Path): The location to save check results.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
+                check results.
 
         Returns:
-            None, but prints out differences if present . Also saves output if requested and errors
+            None, but prints out differences if present. Also saves output if requested and errors
                 have been found.
         """
         # Print what test is going on
@@ -137,10 +145,10 @@ class InternalConsistency():
         # Get the table at each geography level
         geo_tables = {}
         for geo in geo_list:
-            geo_tables[geo] = self._get_data_with_aggregation_level(folder, vintage, geo, "consolidated")
+            geo_tables[geo] = self._get_data_with_aggregation_level(raw_folder, vintage, geo, est_table)
 
         # Add on the region level table
-        geo_tables["region"] = f.load(folder, vintage, "region", "consolidated")
+        geo_tables["region"] = f.load(raw_folder, vintage, "region", est_table)
 
         # Check each geography level at the specified aggregation levels
         for agg_col in self._geography_aggregation[geo]:
@@ -183,7 +191,6 @@ class InternalConsistency():
                         f"{geo}->{agg_col}", "consolidated")
             else:
                 print("No errors")
-
             print()
 
 ########################
@@ -191,19 +198,12 @@ class InternalConsistency():
 ########################
 
 class NullValues():
-    """Function to check for any null values.
-    
-    For the purposes of this function, null value checks mean checking each and every columns
-    to see if there are any null values present.
-    """
+    """Functions to check for any null values."""
 
-    def spot_nulls(self, folder, vintage, geo, table_name,
+    def _spot_null(self, folder, vintage, geo, table_name,
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
         """Get data and check for nulls.
-        
-        Gets region level data by default, and whatever geography levels are present in geo_list. 
-        Then checks to see if there are any null values present
 
         Args:
             folder (pathlib.Path): The folder in which data can be found.
@@ -220,8 +220,8 @@ class NullValues():
             None, but prints out differences if present. Also saves output if requested and errors
                 have been found.
         """
-        # Print what test is going on
-        print("Running Check 2: Spot Nulls")
+        # Print what file we are checking
+        print(f"Checking {f._file_path([vintage, geo, table_name])}")
 
         # Get the table
         geo_table = f.load(folder, vintage, geo, table_name)
@@ -238,6 +238,41 @@ class NullValues():
                 f.save(geo_table, save_location, "C2", vintage, geo, table_name)
         else:
             print("No errors")
+        print()
+
+    def spot_nulls(self,
+        vintage="2020_06", 
+        geo_list=["region", "jurisdiction"],
+        est_table_list=["household_income", "age_ethnicity", "population"],
+        raw_folder=pathlib.Path("./data/raw_data/"),
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
+        """Check if null values exist in any of the input tables.
+        
+        Args:
+            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
+            geo_list (list): The list of geographies to check.
+            est_table_list (str): The Estimates tables to check.
+            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
+                raw Estimates data can be found.
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
+                check results.
+
+        Returns:
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
+        """
+        # Print what test is going on
+        print("Running Check 2: Spot Nulls")
+
+        # Iternate over each unique table and run the test
+        for geo in geo_list:
+            for est_table in est_table_list:
+                self._spot_null(raw_folder, vintage, geo, est_table, 
+                    save=save, 
+                    save_location=save_location)
 
 #################################
 # Check 3: Vintage Comparisions #
@@ -260,7 +295,7 @@ class ThresholdAnalysis():
     population in the region changes by more than 5% in one year.
     """
 
-    def yearly_change(self, raw_folder, vintage, geo, table_name, 
+    def _yearly_change(self, raw_folder, vintage, geo, table_name, 
         threshold=5,
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
@@ -287,7 +322,7 @@ class ThresholdAnalysis():
             None
         """
         # Print what test is running
-        print(f"Running Check 4: Yearly Change Threshold Analysis on {f._file_path([vintage, geo, table_name])[:-1]}")
+        print(f"Checking file {f._file_path([vintage, geo, table_name])}")
 
         # Get the table
         geo_table = f.load(raw_folder, vintage, geo, table_name)
@@ -317,7 +352,7 @@ class ThresholdAnalysis():
         # error_cols = error_cols | error_cols.shift(periods=-1)
 
         # Print the results
-        if(error_rows.sum() < error_rows.shape[0]):
+        if(not error_rows.empty):
             print("Errors have occured on the following rows:")
             print(combined_df[error_rows])
             # Save if errors and requested
@@ -327,6 +362,43 @@ class ThresholdAnalysis():
         else:
             print("No errors")
         print()
+
+    def check_thresholds(self, 
+        threshold=5,
+        vintage="2020_06", 
+        geo_list=["region", "jurisdiction"],
+        est_table_list=["household_income", "age_ethnicity", "population"],
+        raw_folder=pathlib.Path("./data/raw_data/"),
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
+        """Check if null values exist in any of the input tables.
+        
+        Args:
+            threshold (float): Default value of 5(%). The percentage we can go above/below previous
+                values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
+            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
+            geo_list (list): The list of geographies to check.
+            est_table_list (str): The Estimates tables to check.
+            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
+                raw Estimates data can be found.
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
+                check results.
+
+        Returns:
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
+        """
+        # Print out what test is running
+        print("Running check 4: Threshold Analysis")
+
+        for geo in geo_list:
+            for est_table in est_table_list:
+                self._yearly_change(raw_folder, vintage, geo, est_table, 
+                    threshold=threshold,
+                    save=save,
+                    save_location=save_location)
 
 ###########################
 # Check 5: Trend Analysis #
@@ -348,21 +420,20 @@ class DOFPopulation():
         """Compute the absolute percent change in the input df between the baseline and comparison columns."""
         return abs(100 * (df[comparison] - df[baseline]) / df[baseline])
 
-    def region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage, 
+    def _region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage, geo,
         threshold=1.5,
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
-        """Check that the total population of the region is within 1.5% of CA DOF population.
-        
-        As written in SB 375 on p. 23-24, our population numbers need to be within a RANGE of 3% of
-        CA DOF population numbers. We interpret RANGE to be plus or minus 1.5%.
+        """Check that the total population of the geo is within 1.5% of CA DOF population.
 
         Attributes:
             DOF_folder (pathlib.Path): The folder where CA DOF data can be found. Most likely 
                 "./data/CA_DOF/".
             raw_folder (pathlib.Path): The folder where raw Estimates data can be found. Most 
                 likely "./data/raw_data/".
-            vintage (str): The vintage of Estimates data to compare with DOF data
+            vintage (str): The vintage of Estimates data to compare with DOF data.
+            geo (str): The geography level to check. Due to limitations of CA DOF data, this can 
+                only be "region" or "jurisdiction"
             threshold (float): Default value of 1.5(%). The percentage we can go above/below CA DOF 
                 population numbers. If the value of this variable is (for example) 1.5%, that means 
                 that our population numbers must be less than DOF + 1.5% and must be greater than 
@@ -376,11 +447,11 @@ class DOFPopulation():
                 have been found.
         """
         # Print what test is going on
-        print("Running Check 6: DOF Total Population Comparison")
+        print(f"Checking at the {geo} level")
 
         # Get the two datasets
-        DOF_data = f.load(DOF_folder, "DOF", "region")
-        est_data = f.load(raw_folder, vintage, "region", "population")
+        DOF_data = f.load(DOF_folder, "DOF", geo)
+        est_data = f.load(raw_folder, vintage, geo, "population")
 
         # Clean up the datasets so that they are in the same format with the same years of data
         # 1. Create new columns as necessary
@@ -428,6 +499,46 @@ class DOFPopulation():
         else:
             print("No errors")
         print()
+
+    def check_DOF_population(self, 
+        threshold=1.5,
+        vintage="2020_06", 
+        geo_list=["region", "jurisdiction"],
+        raw_folder=pathlib.Path("./data/raw_data/"),
+        DOF_folder=pathlib.Path("./data/CA_DOF/"),
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
+        """Estimates population values are within a certain threshold of CA DOF population values.
+
+        The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our population 
+        numbers need to be within a RANGE of 3% of CA DOF population numbers. We interpret RANGE to
+        be plus or minus 1.5%.
+        
+        Args:
+            threshold (float): Default value of 5(%). The percentage we can go above/below previous
+                values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
+            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
+            geo_list (list): The list of geographies to check.
+            est_table_list (str): The Estimates tables to check.
+            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
+                raw Estimates data can be found.
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
+                check results.
+
+        Returns:
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
+        """
+        # Print what test is going on
+        print("Running Check 6: DOF Total Population Comparison")
+
+        for geo in geo_list:
+            self._region_DOF_population_comparison(DOF_folder, raw_folder, vintage, geo, 
+                threshold=threshold,
+                save=save,
+                save_location=save_location)
 
 ######################################
 # Check 7: DOF Proportion Comparison #

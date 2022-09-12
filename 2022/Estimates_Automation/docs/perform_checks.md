@@ -37,9 +37,10 @@ For the purposes of this class, internal consistency checks mean checking if agg
 
 ```python
 check_geography_aggregations(
-    folder,
-    vintage,
+    vintage='2020_06',
     geo_list=['mgra', 'luz'],
+    est_table='consolidated',
+    raw_folder=WindowsPath('data/raw_data'),
     save=False,
     save_location=WindowsPath('data/outputs')
 )
@@ -51,61 +52,12 @@ Take the outputs of get_data_with_aggregation_levels and check that values match
 
 **Args:**
  
- - <b>`folder`</b> (pathlib.Path):  The folder in which data can be found. 
- - <b>`vintage`</b> (str):  The vintage of Estimates table to pull from.  
+ - <b>`vintage`</b> (str):  Default value of "2020_06". The vintage of Estimates table to pull from.  
  - <b>`geo_list`</b> (list):  The list of geographies to aggregate from. Note that region is included   by default, so do not include it here. 
+ - <b>`est_table`</b> (str):  Default value of "consolidated". The Estimate table to check. This   should basically always be "consolidated", but it is included here in the off chance  it is not. 
+ - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/raw_data/". The folder in which   raw Estimates data can be found. 
  - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
- - <b>`save_location`</b> (pathlib.Path):  The location to save check results. 
-
-
-
-**Returns:**
- None, but prints out differences if present . Also saves output if requested and errors  have been found. 
-
-
----
-
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L193"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-## <kbd>class</kbd> `NullValues`
-Function to check for any null values. 
-
-For the purposes of this function, null value checks mean checking each and every columns to see if there are any null values present. 
-
-
-
-
----
-
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L200"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `spot_nulls`
-
-```python
-spot_nulls(
-    folder,
-    vintage,
-    geo,
-    table_name,
-    save=False,
-    save_location=WindowsPath('data/outputs')
-)
-```
-
-Get data and check for nulls. 
-
-Gets region level data by default, and whatever geography levels are present in geo_list.  Then checks to see if there are any null values present 
-
-
-
-**Args:**
- 
- - <b>`folder`</b> (pathlib.Path):  The folder in which data can be found. 
- - <b>`vintage`</b> (str):  The vintage of Estimates table to pull from.  
- - <b>`geo`</b> (str):  The geography level to get data for and add aggregation columns onto. 
- - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity"). 
- - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
- - <b>`save_location`</b> (pathlib.Path):  The location to save check results. 
+ - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to save   check results. 
 
 
 
@@ -115,7 +67,53 @@ Gets region level data by default, and whatever geography levels are present in 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L246"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L200"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>class</kbd> `NullValues`
+Functions to check for any null values. 
+
+
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L243"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `spot_nulls`
+
+```python
+spot_nulls(
+    vintage='2020_06',
+    geo_list=['region', 'jurisdiction'],
+    est_table_list=['household_income', 'age_ethnicity', 'population'],
+    raw_folder=WindowsPath('data/raw_data'),
+    save=False,
+    save_location=WindowsPath('data/outputs')
+)
+```
+
+Check if null values exist in any of the input tables. 
+
+
+
+**Args:**
+ 
+ - <b>`vintage`</b> (str):  Default value of "2020_06". The vintage of Estimates table to pull from.  
+ - <b>`geo_list`</b> (list):  The list of geographies to check. 
+ - <b>`est_table_list`</b> (str):  The Estimates tables to check. 
+ - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/raw_data/". The folder in which   raw Estimates data can be found. 
+ - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
+ - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to save   check results. 
+
+
+
+**Returns:**
+ None, but prints out differences if present. Also saves output if requested and errors  have been found. 
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L281"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
 N/A. Done already by generate_tables.DiffFiles. 
@@ -126,7 +124,7 @@ N/A. Done already by generate_tables.DiffFiles.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L255"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L290"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
 Calculates year-on-year% changes and flags if the changes are more than 5%. 
@@ -138,48 +136,45 @@ For the purposes of this class, threshold analysis checks mean checking if betwe
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L263"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L366"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `yearly_change`
+### <kbd>method</kbd> `check_thresholds`
 
 ```python
-yearly_change(
-    raw_folder,
-    vintage,
-    geo,
-    table_name,
+check_thresholds(
     threshold=5,
+    vintage='2020_06',
+    geo_list=['region', 'jurisdiction'],
+    est_table_list=['household_income', 'age_ethnicity', 'population'],
+    raw_folder=WindowsPath('data/raw_data'),
     save=False,
     save_location=WindowsPath('data/outputs')
 )
 ```
 
-Get data and check for yearly changes in values. 
-
-Gets region level data by default, and whatever geography levels are present in geo_list.  Then checks to see if there exists any columns where difference in values is larger than 5%. 
+Check if null values exist in any of the input tables. 
 
 
 
 **Args:**
  
- - <b>`raw_folder`</b> (pathlib.Path):  The folder in which raw Estimates data can be found. 
- - <b>`vintage`</b> (str):  The vintage of interest. 
- - <b>`geo`</b> (str):  The geography level of interest. 
- - <b>`table_name`</b> (str):  The name of the Estimates table to get. Because it is assumed that  the saved tables are created by the file generate_tables.py, this can be any of  "consolidated" or the name of the Estimates table (such as "age" or "ethnicity"). 
- - <b>`col`</b> (str):  The column name to choose to check for changes. 
  - <b>`threshold`</b> (float):  Default value of 5(%). The percentage we can go above/below previous  values and still consider it reasonable. Somewhat arbitrarily chosen to be honest. 
+ - <b>`vintage`</b> (str):  Default value of "2020_06". The vintage of Estimates table to pull from.  
+ - <b>`geo_list`</b> (list):  The list of geographies to check. 
+ - <b>`est_table_list`</b> (str):  The Estimates tables to check. 
+ - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/raw_data/". The folder in which   raw Estimates data can be found. 
  - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
- - <b>`save_location`</b> (pathlib.Path):  The location to save check results. 
+ - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to save   check results. 
 
 
 
 **Returns:**
- None 
+ None, but prints out differences if present. Also saves output if requested and errors  have been found. 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L335"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L407"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `TrendAnalysis`
 N/A. Done in PowerBI. 
@@ -190,7 +185,7 @@ N/A. Done in PowerBI.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L344"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L416"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 Check that the total population of the region is within 1.5% of CA DOF population. 
@@ -200,35 +195,37 @@ Check that the total population of the region is within 1.5% of CA DOF populatio
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L351"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L503"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `region_DOF_population_comparison`
+### <kbd>method</kbd> `check_DOF_population`
 
 ```python
-region_DOF_population_comparison(
-    DOF_folder,
-    raw_folder,
-    vintage,
+check_DOF_population(
     threshold=1.5,
+    vintage='2020_06',
+    geo_list=['region', 'jurisdiction'],
+    raw_folder=WindowsPath('data/raw_data'),
+    DOF_folder=WindowsPath('data/CA_DOF'),
     save=False,
     save_location=WindowsPath('data/outputs')
 )
 ```
 
-Check that the total population of the region is within 1.5% of CA DOF population. 
+Estimates population values are within a certain threshold of CA DOF population values. 
 
-As written in SB 375 on p. 23-24, our population numbers need to be within a RANGE of 3% of CA DOF population numbers. We interpret RANGE to be plus or minus 1.5%. 
+The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our population  numbers need to be within a RANGE of 3% of CA DOF population numbers. We interpret RANGE to be plus or minus 1.5%. 
 
 
 
-**Attributes:**
+**Args:**
  
- - <b>`DOF_folder`</b> (pathlib.Path):  The folder where CA DOF data can be found. Most likely   "./data/CA_DOF/". 
- - <b>`raw_folder`</b> (pathlib.Path):  The folder where raw Estimates data can be found. Most   likely "./data/raw_data/". 
- - <b>`vintage`</b> (str):  The vintage of Estimates data to compare with DOF data 
- - <b>`threshold`</b> (float):  Default value of 1.5(%). The percentage we can go above/below CA DOF   population numbers. If the value of this variable is (for example) 1.5%, that means   that our population numbers must be less than DOF + 1.5% and must be greater than   DOF - 1.5%. 
+ - <b>`threshold`</b> (float):  Default value of 5(%). The percentage we can go above/below previous  values and still consider it reasonable. Somewhat arbitrarily chosen to be honest. 
+ - <b>`vintage`</b> (str):  Default value of "2020_06". The vintage of Estimates table to pull from.  
+ - <b>`geo_list`</b> (list):  The list of geographies to check. 
+ - <b>`est_table_list`</b> (str):  The Estimates tables to check. 
+ - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/raw_data/". The folder in which   raw Estimates data can be found. 
  - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
- - <b>`save_location`</b> (pathlib.Path):  The location to save check results. 
+ - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to save   check results. 
 
 
 
@@ -238,7 +235,7 @@ As written in SB 375 on p. 23-24, our population numbers need to be within a RAN
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L436"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L547"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups in total pop between DOF and Estimates at Regional Level. 
@@ -250,7 +247,7 @@ Comparison is across different groups like household income, age, gender, ethnic
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L443"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L554"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `shares`
 

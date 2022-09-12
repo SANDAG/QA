@@ -37,7 +37,7 @@ class EstimatesTables():
         with open(file, "r") as config_file:
             return yaml.safe_load(config_file)
 
-    def get_table_by_geography(self, est_vintage, est_table, geo_level, pivot=False, debug=False):
+    def get_table_by_geography(self, est_vintage, geo_level, est_table, pivot=False, debug=False):
         """Get the input estimates table grouped by the input geography level.
         
         This function will return the requested Estimates table from the requested vintage. The relevant
@@ -47,11 +47,11 @@ class EstimatesTables():
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
-            est_table (str): The Estimates table to pull from. In DDAMWSQL16, this variable 
-                corresponds to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]"
             geo_level (str): The geography level to aggregate by. This can be any of the columns in 
                 the DDAMWSQL16 table [demographic_warehouse].[dim].[mgra_denormalize]. For example,
                 you could input "region", "jurisdiction", "mgra", etc.
+            est_table (str): The Estimates table to pull from. In DDAMWSQL16, this variable 
+                corresponds to XXXX in the table "[estimates].[est_YYYY_MM].[dw_XXXX]"
             pivot (bool): Default False. If True, return the table in wide format instead of tall
             debug (bool): Default False. If True, print out diagnostic print statements during 
                 execution including the complete SQL query used
@@ -378,7 +378,7 @@ class EstimatesTables():
             for est_table_name in est_table_list:
 
                 # Get the estimate table
-                est_table = self.get_table_by_geography(est_vintage, est_table_name, geo, pivot=True)
+                est_table = self.get_table_by_geography(est_vintage, geo, est_table_name, pivot=True)
 
                 # Add the transformed estimate table to our list of tables
                 est_tables.append(est_table)
@@ -435,7 +435,7 @@ class EstimatesTables():
             for est_table_name in est_table_list:
 
                 # Get the estimate table
-                est_table = self.get_table_by_geography(est_vintage, est_table_name, geo, pivot=True)
+                est_table = self.get_table_by_geography(est_vintage, geo, est_table_name, pivot=True)
 
                 # Store the individual table
                 individual_tables.append(est_table)
