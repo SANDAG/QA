@@ -549,6 +549,11 @@ class CA_DOF():
             df["Year"] = pd.DatetimeIndex(df["Date"]).year
             df = df.drop("Date", axis=1)
 
+            # Remove duplicate years. For example, 2010-2020 includes 2020, but 2020-2030 also 
+            # includes 2020. We should take the year 2020 from the more recent version
+            if(len(base_years) > 1 and (str(base_years[0]) in str(path))):
+                df = df[df["Year"] != 2020]
+
             # Reorder columns
             cols = list(df.columns)
             df = df[cols[:2] + [cols[-1]] + cols[2:-1]]
@@ -575,15 +580,26 @@ class CA_DOF():
             else:
                 geo_df = geo_df[geo_df["County"] == "San Diego"]
             
-            # For both geo levels, sorting is the same
+            # For both geography levels, sorting is the same
             geo_df = geo_df.sort_values(["County", "City", "Year"], ascending=[True, True, True]).reset_index(drop=True)
 
             DOF_by_geo[geo] = geo_df
 
+        # Do some additional cleaning on the jurisdiction level data
+        # 1. Rename the City "Balance of County" to "Unincorporated"
+        # 2. Remove the City(s) "County Total" and "Incorporated"
+        if("jurisdiction" in geo_list):
+            DOF_by_geo["jurisdiction"] = DOF_by_geo["jurisdiction"].replace({
+                "Balance of County": "Unincorporated",
+                "Balance Of County": "Unincorporated"})
+            DOF_by_geo["jurisdiction"] = DOF_by_geo["jurisdiction"][
+                (DOF_by_geo["jurisdiction"]["City"] != "County Total") &
+                (DOF_by_geo["jurisdiction"]["City"] != "Incorporated")]
+
         # Save the data
         for geo, data in DOF_by_geo.items():
             f.save(data, save_folder, "DOF", geo)
-
+            
 ##############
 # Diff Files #
 ##############

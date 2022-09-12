@@ -13,6 +13,7 @@ parameters in the function signnature.
 # Imports #
 ###########
 
+from distutils.log import error
 import pathlib
 import textwrap
 
@@ -352,7 +353,7 @@ class ThresholdAnalysis():
         # error_cols = error_cols | error_cols.shift(periods=-1)
 
         # Print the results
-        if(not error_rows.empty):
+        if(not combined_df[error_rows].empty):
             print("Errors have occured on the following rows:")
             print(combined_df[error_rows])
             # Save if errors and requested
@@ -468,16 +469,20 @@ class DOFPopulation():
             "Household Population": "DOF Household Population",
             "Group Quarters": "DOF Group Quarters"}, axis=1)
         est_data = est_data.rename({
+            "jurisdiction": "City",
+            "region": "City",
             "yr_id": "Year",
             "Total Population": "Est Total Population",
             "Household Population": "Est Household Population"}, axis=1)
 
         # 3. Select only the relevant columns for comparison
-        DOF_data = DOF_data[["Year", "DOF Total Population", "DOF Household Population", "DOF Group Quarters"]]
-        est_data = est_data[["Year", "Est Total Population", "Est Household Population", "Est Group Quarters"]]
+        DOF_data = DOF_data[
+            ["City", "Year", "DOF Total Population", "DOF Household Population", "DOF Group Quarters"]]
+        est_data = est_data[
+            ["City", "Year", "Est Total Population", "Est Household Population", "Est Group Quarters"]]
 
         # Combine the datasets together and compute the percent difference
-        combined_data = pd.merge(est_data, DOF_data, how="left", on="Year")
+        combined_data = pd.merge(est_data, DOF_data, how="left", on=["City", "Year"])
         combined_data["|% Diff| Total Population"] = \
             self._abs_percent_change(combined_data, "DOF Total Population", "Est Total Population")
         combined_data["|% Diff| Household Population"] = \
@@ -539,6 +544,9 @@ class DOFPopulation():
                 threshold=threshold,
                 save=save,
                 save_location=save_location)
+
+if(__name__ == "__main__"):
+    DOFPopulation().check_DOF_population(geo_list=["jurisdiction"])
 
 ######################################
 # Check 7: DOF Proportion Comparison #

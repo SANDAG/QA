@@ -13,7 +13,7 @@ Currently work in progress is the ability to save the outputs of the checks if r
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L29"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L30"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `InternalConsistency`
 Functions to run internal consistency checks. 
@@ -31,7 +31,7 @@ For the purposes of this class, internal consistency checks mean checking if agg
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L115"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L116"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_geography_aggregations`
 
@@ -67,7 +67,7 @@ Take the outputs of get_data_with_aggregation_levels and check that values match
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L200"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L201"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `NullValues`
 Functions to check for any null values. 
@@ -77,7 +77,7 @@ Functions to check for any null values.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L243"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L244"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `spot_nulls`
 
@@ -113,7 +113,7 @@ Check if null values exist in any of the input tables.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L281"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L282"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
 N/A. Done already by generate_tables.DiffFiles. 
@@ -124,7 +124,7 @@ N/A. Done already by generate_tables.DiffFiles.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L290"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L291"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
 Calculates year-on-year% changes and flags if the changes are more than 5%. 
@@ -136,7 +136,7 @@ For the purposes of this class, threshold analysis checks mean checking if betwe
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L366"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L367"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_thresholds`
 
@@ -174,7 +174,7 @@ Check if null values exist in any of the input tables.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L407"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L408"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `TrendAnalysis`
 N/A. Done in PowerBI. 
@@ -185,7 +185,7 @@ N/A. Done in PowerBI.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L416"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L417"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 Check that the total population of the region is within 1.5% of CA DOF population. 
@@ -195,7 +195,7 @@ Check that the total population of the region is within 1.5% of CA DOF populatio
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L503"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L508"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_DOF_population`
 
@@ -235,7 +235,7 @@ The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our pop
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L547"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L555"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups in total pop between DOF and Estimates at Regional Level. 
@@ -247,7 +247,7 @@ Comparison is across different groups like household income, age, gender, ethnic
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L554"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L562"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `shares`
 

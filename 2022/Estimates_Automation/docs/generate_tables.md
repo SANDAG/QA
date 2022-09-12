@@ -176,7 +176,7 @@ Get and save CA DOF data for each input year and geography level.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L591"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L607"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
@@ -188,7 +188,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L601"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L617"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 
