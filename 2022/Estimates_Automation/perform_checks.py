@@ -13,7 +13,6 @@ parameters in the function signature.
 # Imports #
 ###########
 
-from distutils.log import error
 import pathlib
 import textwrap
 
@@ -36,16 +35,28 @@ class InternalConsistency():
     region level.
 
     Attributes:
-        geography_aggregation (dict of List): A dictionary with key equals to a geography level, 
-            and the value equals to a List containing geographies to aggregate to. For example, for
+        _geography_aggregation (dict of list): A dictionary with key equals to a geography level, 
+            and the value equals to a list containing geographies to aggregate to. For example, for
             the key value of "mgra", the value would contain ["jurisdiction", "region"] because 
             "mgra" aggregates up to both of those geography levels.
+        _est_table_by_type (dict of list): A dictionary with key equals to measure type and the
+            value equals to a list of the Estimates tables which have that measure type. For 
+            example, for the key "population", the value would include "age" because the age table
+            breaks down age categories by population.
     """
 
     _geography_aggregation = {
         "mgra": ["jurisdiction", "region"],
         "jurisdiction": ["region"],
         "luz": ["region"],
+    }
+
+    # TODO: Add on more such as "age_sex_ethnicity" or "age_ethnicity". This will require additional
+    # work in check_internal_aggregations as both of those tables cannot be done with a simple
+    # sum across the columns
+    _est_table_by_type = {
+        "population": ["age", "population", "sex"],
+        "households": ["household_income", "households", "housing"],
     }
 
     def _get_data_with_aggregation_level(self, folder, vintage, geo, table_name):
@@ -120,7 +131,7 @@ class InternalConsistency():
         raw_folder=pathlib.Path("./data/raw_data/"),
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
-        """Take the outputs of get_data_with_aggregation_levels and check that values match up.
+        """Check that values match up when aggregating geography levels upwards.
         
         Args:
             vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
@@ -193,6 +204,96 @@ class InternalConsistency():
             else:
                 print("No errors")
             print()
+
+    def check_internal_aggregations(self, 
+        vintage="2020_06", 
+        geo_list=["region", "jurisdiction"],
+        est_table_types=["population", "households"],
+        raw_folder=pathlib.Path("./data/raw_data/"),
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
+        """Check that values match up when aggregating across Estimates tables.
+
+        For example, this function could check that the total population in the San Diego region
+        in 2010 is the same between the tables population, age, and sex.
+        
+        Args:
+            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
+            geo_list (list of str): The list of geographies to aggregate from. Note that region is included 
+                by default, so do not include it here.
+            est_table_types (list of str): Which kinds of Estimates tables to check. Or in other 
+                words, which value is in the cell. For example, the age table contains the age 
+                breakdown by population, while the household_income table contains the household
+                income breakdown by number of households.
+            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
+                raw Estimates data can be found.
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
+                check results.
+
+        Returns:
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
+        """
+        # Print what test we are running
+        print("Running Check 1: Check aggregated values between Estimates tables")
+
+        # Iterate over the kinds of tables we want
+        for est_type in est_table_types:
+            for geo in geo_list:
+                print(f"Checking Estimates tables with {est_type} values at the {geo} level")
+
+                # Get the tables at the specified geography levels
+                tables = {}
+                for table in self._est_table_by_type[est_type]:
+                    try:
+                        tables[table] = f.load(raw_folder, vintage, geo, table)
+                    except FileNotFoundError:
+                        print(f"Could not find {f._file_path(vintage, geo, table)}")
+
+                # Get the total est_type for each table 
+                totals = tables[list(tables.keys())[0]][[geo, "yr_id"]].copy(deep=True)
+                for table_name, table in tables.items():
+                    new_total_col = table.drop([geo, "yr_id"], axis=1)
+
+                    # Custom behavior for certain tables
+                    # TODO: See documentation above self._est_table_by_type
+                    if(table_name == "population"):
+                        household_breakdown = new_total_col.drop(["Total Population"], axis=1)
+                        totals[f"{table_name}_{est_type}_household_breakdown"] = \
+                            household_breakdown.sum(axis=1)
+                        new_total_col = new_total_col[["Total Population"]]
+                    elif(table_name == "housing"):
+                        totals[f"{table_name}_{est_type}_housing_type_breakdown"] = \
+                            new_total_col[["Single Family - Detached", 
+                                "Single Family - Multiple Unit",
+                                "Multifamily",
+                                "Mobile Home",
+                                "Single-family Detached",
+                                "Single-family Attached"]].sum(axis=1) - new_total_col["vacancy"]
+                        new_total_col = new_total_col[["occupied"]]
+
+                    new_total_col = new_total_col.sum(axis=1)
+                    totals[f"{table_name}_{est_type}"] = new_total_col
+
+                # Find the rows where est_type values are not identical across every column
+                totals_compare = totals.drop([geo, "yr_id"], axis=1)
+                mask = ~totals_compare.eq(totals_compare.iloc[:, 0], axis=0).all(1)
+
+                # Print out error stuff and save if requested
+                if(mask.sum() != 0):
+                    print(totals[mask])
+                    # Save if errors and requested
+                    if(save):
+                        f.save(totals[mask], save_location, "C1", vintage,
+                            geo, est_type)
+                else:
+                    print("No errors")
+                print() 
+
+if(__name__ == "__main__"):
+    InternalConsistency().check_internal_aggregations()
 
 ########################
 # Check 2: Null Values #
@@ -513,7 +614,7 @@ class DOFPopulation():
         DOF_folder=pathlib.Path("./data/CA_DOF/"),
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
-        """Estimates population values are within a certain threshold of CA DOF population values.
+        """Check Estimates population are within a certain threshold of CA DOF population values.
 
         The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our population 
         numbers need to be within a RANGE of 3% of CA DOF population numbers. We interpret RANGE to
@@ -545,66 +646,91 @@ class DOFPopulation():
                 save=save,
                 save_location=save_location)
 
-if(__name__ == "__main__"):
-    DOFPopulation().check_DOF_population(geo_list=["jurisdiction"])
-
 ######################################
 # Check 7: DOF Proportion Comparison #
 ######################################
 
 class DOFProportion():
-    """Compares the proportion of groups in total pop between DOF and Estimates at Regional Level.
+    """Compares the proportion of groups between DOF and Estimates."""
 
-    Comparison is across different groups like household income, age, gender, ethnicity, ethnicity 
-    by age, ethnicity by gender by age.
-    """
+    def check_DOF_proportion(self, 
+        threshold=1.5,
+        vintage="2020_06", 
+        geo_list=["region", "jurisdiction"],
+        raw_folder=pathlib.Path("./data/raw_data/"),
+        DOF_folder=pathlib.Path("./data/CA_DOF/"),
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
+        """Check the proportions of groups between Estimates and CA DOF are roughly the same.
 
-    def shares(df, threshold_dict): # Calvin's code copied and pasted; need to make changes still
-        """Get data and compare the proportion changes between DOF and Estimates.
+        TODO
         
-        Checks at region level whether there exists any columns where proportion of groups is different.
-
-        TODO: Below is Calvin's documentation, format as a Google-style docstring
-
-        input: multi-index dataframe (index = (geo_level, year)), columns to check threshold in,
-        value threshold (numeric), percentage threshold (numeric value in {0,1})
-        
-        output: rows of the input multi-index dataframe with yearly differences outside the
-        designated threshold (inclusive)
-
         Args:
-            folder (pathlib.Path): The folder in which data can be found.
-            table_name (str): The name of the Estimates table to get. Because it is assumed that
-                the saved tables are created by the file generate_tables.py, this can be any of
-                "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
-            geo (str): The geography level to get data for and add aggregation columns onto
-            col (str): The column name to choose to check for changes > 5%
-            
+            threshold (float): Default value of 5(%). The percentage we can go above/below previous
+                values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
+            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
+            geo_list (list): The list of geographies to check.
+            est_table_list (str): The Estimates tables to check.
+            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
+                raw Estimates data can be found.
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
+                check results.
+
         Returns:
-            List: the list contains years where the yearly changes > 5%
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
         """
-        # Add column values and divides each column by total to get the proportion breakdown
-        df = df[threshold_dict.keys()]
-        df.loc[:, 'Total'] = df[threshold_dict.keys()].sum(axis=1)
+
+        pass
+
+    # def shares(df, threshold_dict): # Calvin's code copied and pasted; need to make changes still
+    #     """Get data and compare the proportion changes between DOF and Estimates.
+        
+    #     Checks at region level whether there exists any columns where proportion of groups is different.
+
+    #     TODO: Below is Calvin's documentation, format as a Google-style docstring
+
+    #     input: multi-index dataframe (index = (geo_level, year)), columns to check threshold in,
+    #     value threshold (numeric), percentage threshold (numeric value in {0,1})
+        
+    #     output: rows of the input multi-index dataframe with yearly differences outside the
+    #     designated threshold (inclusive)
+
+    #     Args:
+    #         folder (pathlib.Path): The folder in which data can be found.
+    #         table_name (str): The name of the Estimates table to get. Because it is assumed that
+    #             the saved tables are created by the file generate_tables.py, this can be any of
+    #             "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
+    #         geo (str): The geography level to get data for and add aggregation columns onto
+    #         col (str): The column name to choose to check for changes > 5%
             
-        shares = df[threshold_dict.keys()].div(df['Total'], axis=0) * 100
+    #     Returns:
+    #         List: the list contains years where the yearly changes > 5%
+    #     """
+    #     # Add column values and divides each column by total to get the proportion breakdown
+    #     df = df[threshold_dict.keys()]
+    #     df.loc[:, 'Total'] = df[threshold_dict.keys()].sum(axis=1)
+            
+    #     shares = df[threshold_dict.keys()].div(df['Total'], axis=0) * 100
         
-        years = list(df.index.get_level_values(1).unique()) # List of the unique years 
-        year_diffs = {}
+    #     years = list(df.index.get_level_values(1).unique()) # List of the unique years 
+    #     year_diffs = {}
 
-        # Creating a dictionary of the differences, just naming conventions
-        index=0
-        while index < len(years)-1:
-            year_diffs[years[index+1]] = f"{str(years[index])}-{str(years[index+1])}"
-            index+=1
+    #     # Creating a dictionary of the differences, just naming conventions
+    #     index=0
+    #     while index < len(years)-1:
+    #         year_diffs[years[index+1]] = f"{str(years[index])}-{str(years[index+1])}"
+    #         index+=1
         
-        # Group together MGRA and subtract newer year from older year. Rename the index according to the year_diffs dataframe. Then drop rows where every value is NA (Which will be all rows for 2016)    
-        renamed_df = shares.groupby(level=0).diff().rename(index=year_diffs).dropna(how='all')
+    #     # Group together MGRA and subtract newer year from older year. Rename the index according to the year_diffs dataframe. Then drop rows where every value is NA (Which will be all rows for 2016)    
+    #     renamed_df = shares.groupby(level=0).diff().rename(index=year_diffs).dropna(how='all')
 
-        # Subsets dataframe by column, checks to see if the value is greater than the threshold and returns true or false depending on if the threshold was crossed. 
-        condition = pd.DataFrame([abs(renamed_df[key]) >= val for key, val in threshold_dict.items()]).T.all(axis=1)
+    #     # Subsets dataframe by column, checks to see if the value is greater than the threshold and returns true or false depending on if the threshold was crossed. 
+    #     condition = pd.DataFrame([abs(renamed_df[key]) >= val for key, val in threshold_dict.items()]).T.all(axis=1)
         
-        renamed_df['Flag'] = condition
+    #     renamed_df['Flag'] = condition
         
-        return renamed_df
+    #     return renamed_df
     

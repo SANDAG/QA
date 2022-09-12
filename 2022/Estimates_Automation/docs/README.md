@@ -14,7 +14,7 @@
 - [`generate_tables.DiffFiles`](./generate_tables.md#class-difffiles): Functions to return/save various Estimates diff tables.
 - [`generate_tables.EstimatesTables`](./generate_tables.md#class-estimatestables): Functions to return/save various Estimates tables.
 - [`perform_checks.DOFPopulation`](./perform_checks.md#class-dofpopulation): Check that the total population of the region is within 1.5% of CA DOF population.
-- [`perform_checks.DOFProportion`](./perform_checks.md#class-dofproportion): Compares the proportion of groups in total pop between DOF and Estimates at Regional Level.
+- [`perform_checks.DOFProportion`](./perform_checks.md#class-dofproportion): Compares the proportion of groups between DOF and Estimates.
 - [`perform_checks.InternalConsistency`](./perform_checks.md#class-internalconsistency): Functions to run internal consistency checks.
 - [`perform_checks.NullValues`](./perform_checks.md#class-nullvalues): Functions to check for any null values.
 - [`perform_checks.ThresholdAnalysis`](./perform_checks.md#class-thresholdanalysis): Calculates year-on-year% changes and flags if the changes are more than 5%.
