@@ -17,6 +17,7 @@ import pathlib
 import textwrap
 
 import pandas as pd
+import numpy as np
 import sqlalchemy as sql
 
 # Local modules
@@ -292,9 +293,6 @@ class InternalConsistency():
                     print("No errors")
                 print() 
 
-if(__name__ == "__main__"):
-    InternalConsistency().check_internal_aggregations()
-
 ########################
 # Check 2: Null Values #
 ########################
@@ -429,12 +427,33 @@ class ThresholdAnalysis():
         # Get the table
         geo_table = f.load(raw_folder, vintage, geo, table_name)
 
-        # NumPy function calculates the percent change for us
-        pop_change = geo_table.groupby([geo, 'yr_id']).sum().pct_change().reset_index(drop=False)
-        pop_change = abs(pop_change[pop_change.select_dtypes(include=["number"]).columns.drop("yr_id")]) * 100
-        columns = pop_change.columns.copy(deep=True)
-        pop_change = pop_change.add_prefix("|% Diff| ")
+        # Compute the percent change
 
+        # First sort on year
+        sort_order = [geo, "yr_id"]
+        if(table_name == "age_ethnicity"):
+            sort_order.insert(1, "name")
+        elif(table_name == "age_sex_ethnicity"):
+            sort_order.insert(1, "name")
+            sort_order.insert(1, "sex")
+        geo_table = geo_table.sort_values(by=sort_order).reset_index(drop=True)
+        pop_change = geo_table.copy(deep=True)
+
+        # Compute percent change
+        pop_change = pop_change.drop(sort_order + [geo], axis=1)
+        pop_change = abs(pop_change.pct_change()) * 100
+
+        # Find the rows of pop_change that are the base rows (2010 usually) and set to no value
+        min_year = geo_table["yr_id"].min()
+        base_year_rows = (geo_table["yr_id"] == min_year)
+        pop_change[base_year_rows] = np.nan
+
+        # Remember column order for later
+        columns = pop_change.columns.copy(deep=True)
+
+        # Add a prefix to the percent change columns
+        pop_change = pop_change.add_prefix("|% Diff| ")
+        
         # Merge the % change with the original table and order the columns
         # I'll be honest, I don't know what the "x for y" stuff is doing, I just know it works
         combined_df = pd.merge(geo_table, pop_change, how="left", left_index=True, right_index=True)
