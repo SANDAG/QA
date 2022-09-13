@@ -289,7 +289,7 @@ Compares the proportion of groups between DOF and Estimates.
 
 ```python
 check_DOF_proportion(
-    threshold=1.5,
+    threshold=4,
     vintage='2020_06',
     geo_list=['region', 'jurisdiction'],
     raw_folder=WindowsPath('data/raw_data'),
@@ -301,17 +301,17 @@ check_DOF_proportion(
 
 Check the proportions of groups between Estimates and CA DOF are roughly the same. 
 
-TODO 
+Specifically, the groups which are checked are % of population in households vs group quarters, % of households which are single detached vs single attached vs mobile home vs multifamily, and % of households which are occupied vs vacant. If the differences in  percent between Estimates and CA DOF data are greater than the input threshold, then those rows of data will be printed out and saved if requested 
 
 
 
 **Args:**
  
- - <b>`threshold`</b> (float):  Default value of 5(%). The percentage we can go above/below previous  values and still consider it reasonable. Somewhat arbitrarily chosen to be honest. 
+ - <b>`threshold`</b> (float):  Default value of 4(%). The amount of absolute allowable difference  in proportions. For example, if the percent of total population in group quarters   compared between DOF and Estimates is greater than threshold, then that row is   flagged 
  - <b>`vintage`</b> (str):  Default value of "2020_06". The vintage of Estimates table to pull from.  
- - <b>`geo_list`</b> (list):  The list of geographies to check. 
- - <b>`est_table_list`</b> (str):  The Estimates tables to check. 
+ - <b>`geo_list`</b> (list):  The list of geographies to check. This can only contain "region" and  "jurisdiction" due to limitations of DOF data. 
  - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/raw_data/". The folder in which   raw Estimates data can be found. 
+ - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/CA_DOF/". The folder in which   transformed CA DOF data can be found. 
  - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
  - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to save   check results. 
 

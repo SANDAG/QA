@@ -673,7 +673,7 @@ class DOFProportion():
     """Compares the proportion of groups between DOF and Estimates."""
 
     def check_DOF_proportion(self, 
-        threshold=1.5,
+        threshold=4,
         vintage="2020_06", 
         geo_list=["region", "jurisdiction"],
         raw_folder=pathlib.Path("./data/raw_data/"),
@@ -682,16 +682,24 @@ class DOFProportion():
         save_location=pathlib.Path("./data/outputs/")):
         """Check the proportions of groups between Estimates and CA DOF are roughly the same.
 
-        TODO
+        Specifically, the groups which are checked are % of population in households vs group
+        quarters, % of households which are single detached vs single attached vs mobile home vs
+        multifamily, and % of households which are occupied vs vacant. If the differences in 
+        percent between Estimates and CA DOF data are greater than the input threshold, then
+        those rows of data will be printed out and saved if requested
         
         Args:
-            threshold (float): Default value of 5(%). The percentage we can go above/below previous
-                values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
+            threshold (float): Default value of 4(%). The amount of absolute allowable difference
+                in proportions. For example, if the percent of total population in group quarters 
+                compared between DOF and Estimates is greater than threshold, then that row is 
+                flagged
             vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
-            geo_list (list): The list of geographies to check.
-            est_table_list (str): The Estimates tables to check.
+            geo_list (list): The list of geographies to check. This can only contain "region" and
+                "jurisdiction" due to limitations of DOF data.
             raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
                 raw Estimates data can be found.
+            raw_folder (pathlib.Path): Default value of "./data/CA_DOF/". The folder in which 
+                transformed CA DOF data can be found.
             save (bool): Default value of False. If True, save the outputs of the check to the input
                 save_location if and only if errors have been found.
             save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
@@ -701,55 +709,106 @@ class DOFProportion():
             None, but prints out differences if present. Also saves output if requested and errors
                 have been found.
         """
+        # Print what test is going on
+        print("Running Check 7: DOF Categorical Proportion Check")
+
+        # Iterate over the requested geographies
+        for geo in geo_list:
+            # Print what geography level we are checking
+            print(f"Checking {geo} level data")
+
+            # Get Estimates and CA DOF data
+            est_table = f.load(raw_folder, vintage, geo, "consolidated")
+            DOF_table = f.load(DOF_folder, "DOF", geo)
+
+            # Transform Estimates data into the format we want
+            # 1. Create new column to sync up with DOF data format
+            # 2. Select only the columns we want
+            # 3. Sync up column naming
+
+            # 1. Create new column to sync up with DOF data format
+            est_table["Group Quarters"] = est_table[["Group Quarters - Military", 
+                "Group Quarters - College", "Group Quarters - Other"]].sum(axis=1)
+
+            # 2. Select only the columns we want
+            est_table = est_table[[geo, "yr_id", 
+                "Total Population", "Household Population", "Group Quarters", 
+                "households", "Single Family - Detached", "Single Family - Multiple Unit", 
+                    "Multifamily", "Mobile Home",
+                "units", "occupied", "vacancy"]]
+
+            # 3. Sync up column naming
+            est_table = est_table.rename({
+                "yr_id": "Year",
+                "households": "Households",
+                "Single Family - Detached": "Single Detached", 
+                "Single Family - Multiple Unit": "Single Attached",
+                "Mobile Home": "Mobile Homes",
+                "occupied": "Occupied Housing Units",
+                "units": "Housing Units",
+                "vacancy": "Vacant Housing Units"}, axis=1)
+
+            # Transform CA DOF data into the format we want
+            # 1. Create new columns to sync up with Estimates data format
+            # 2. Select only the columns we want
+            # 3. Sync up column naming
+            
+            # 1. Create new columns to sync up with Estimates data format
+            DOF_table["Multifamily"] = DOF_table[["Two to Four", "Five Plus"]].sum(axis=1)
+            DOF_table["Vacant Housing Units"] = (DOF_table["Households"] * DOF_table["Vacancy Rate"]).astype(int)
+            DOF_table["Housing Units"] = DOF_table[["Occupied", "Vacant Housing Units"]].sum(axis=1)
+
+            # 2. Select only the columns we want
+            DOF_geo = "County" if geo == "Region" else "City"
+            DOF_table = DOF_table[[DOF_geo, "Year", 
+                "Total Population", "Household Population", "Group Quarters", 
+                "Households", "Single Detached", "Single Attached", "Multifamily", "Mobile Homes",
+                "Housing Units", "Occupied", "Vacant Housing Units"]]
+
+            # 3. Sync up column naming
+            DOF_table = DOF_table.rename({
+                DOF_geo: geo,
+                "Occupied": "Occupied Housing Units"}, axis=1)
+
+            # Modify both tables to be percentages
+            # In theory, both tables should have the exact same format so this is to prevent 
+            # duplication of code
+            for table in [est_table, DOF_table]:
+                table[["Household Population", "Group Quarters"]] = 100 * \
+                    table[["Household Population", "Group Quarters"]].divide(table["Total Population"], axis=0)
+                table[["Single Detached", "Single Attached", "Multifamily", "Mobile Homes"]] = 100 * \
+                    table[["Single Detached", "Single Attached", "Multifamily", "Mobile Homes"]].divide(table["Households"], axis=0)
+                table[["Occupied Housing Units", "Vacant Housing Units"]] = 100 * \
+                    table[["Occupied Housing Units", "Vacant Housing Units"]].divide(table["Housing Units"], axis=0)
+
+            # Sync up the sorting order
+            # BUG: For God knows what reason, these sorts CANNOT be done inside the above for
+            # loop using the generic variable table. It just doesn't work. Why? I wish I knew :(
+            est_table = est_table.sort_values(by=[geo, "Year"], ascending=[True, True], axis=0)
+            DOF_table = DOF_table.sort_values(by=[geo, "Year"], ascending=[True, True], axis=0)
+
+            # Filter rows of DOF_table to match the years in est_table
+            DOF_table = DOF_table[DOF_table["Year"].isin(pd.unique(est_table["Year"]))].reset_index(drop=True)
+
+            # Get the differences 
+            diff = est_table[[geo, "Year"]].copy(deep=True).join(
+                abs(est_table.iloc[:, 2:] - DOF_table.iloc[:, 2:]))
+
+            # Drop the non percent differences columns
+            diff = diff.drop(["Total Population", "Households", "Housing Units"], axis=1)
+
+            # Find the rows with errors
+            error_rows = (diff.drop([geo, "Year"], axis=1) > threshold).any(1)
+
+            # Print out the rows that have a percent change larger than the allowed amount
+            if(error_rows.sum() != 0):
+                print("Errors have occurred on the following rows:")
+                print(diff[error_rows])
+                # Save if errors and requested
+                if(save):
+                    f.save(diff[error_rows], save_location, f"C7({threshold}%)", f"DOF-{vintage}", geo)
+            else:
+                print("No errors")
+            print()
 
         pass
-
-    # def shares(df, threshold_dict): # Calvin's code copied and pasted; need to make changes still
-    #     """Get data and compare the proportion changes between DOF and Estimates.
-        
-    #     Checks at region level whether there exists any columns where proportion of groups is different.
-
-    #     TODO: Below is Calvin's documentation, format as a Google-style docstring
-
-    #     input: multi-index dataframe (index = (geo_level, year)), columns to check threshold in,
-    #     value threshold (numeric), percentage threshold (numeric value in {0,1})
-        
-    #     output: rows of the input multi-index dataframe with yearly differences outside the
-    #     designated threshold (inclusive)
-
-    #     Args:
-    #         folder (pathlib.Path): The folder in which data can be found.
-    #         table_name (str): The name of the Estimates table to get. Because it is assumed that
-    #             the saved tables are created by the file generate_tables.py, this can be any of
-    #             "consolidated" or the name of the Estimates table (such as "age" or "ethnicity")
-    #         geo (str): The geography level to get data for and add aggregation columns onto
-    #         col (str): The column name to choose to check for changes > 5%
-            
-    #     Returns:
-    #         List: the list contains years where the yearly changes > 5%
-    #     """
-    #     # Add column values and divides each column by total to get the proportion breakdown
-    #     df = df[threshold_dict.keys()]
-    #     df.loc[:, 'Total'] = df[threshold_dict.keys()].sum(axis=1)
-            
-    #     shares = df[threshold_dict.keys()].div(df['Total'], axis=0) * 100
-        
-    #     years = list(df.index.get_level_values(1).unique()) # List of the unique years 
-    #     year_diffs = {}
-
-    #     # Creating a dictionary of the differences, just naming conventions
-    #     index=0
-    #     while index < len(years)-1:
-    #         year_diffs[years[index+1]] = f"{str(years[index])}-{str(years[index+1])}"
-    #         index+=1
-        
-    #     # Group together MGRA and subtract newer year from older year. Rename the index according to the year_diffs dataframe. Then drop rows where every value is NA (Which will be all rows for 2016)    
-    #     renamed_df = shares.groupby(level=0).diff().rename(index=year_diffs).dropna(how='all')
-
-    #     # Subsets dataframe by column, checks to see if the value is greater than the threshold and returns true or false depending on if the threshold was crossed. 
-    #     condition = pd.DataFrame([abs(renamed_df[key]) >= val for key, val in threshold_dict.items()]).T.all(axis=1)
-        
-    #     renamed_df['Flag'] = condition
-        
-    #     return renamed_df
-    
