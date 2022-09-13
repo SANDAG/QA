@@ -1,13 +1,12 @@
 # Python 3.6 intoduced dictionary ordering, which is required to maintain the order that excel
-# sheets in a workbook will be saved in
-python>=3.6
+# sheets in a workbook will be saved in so make sure your python is up to date or >= 3.6
 
 # Required for general functionality
 pathlib
 pandas
 sqlalchemy
 pyyaml
-textwrap
+pymssql
 
 # Required to auto-generate documentation
 # See README.md for instructions
