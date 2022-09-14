@@ -32,6 +32,8 @@ consolidate(
     est_vintage,
     geo_list=['region', 'jurisdiction', 'cpa'],
     est_table_list=['age', 'ethnicity', 'household_income', 'households', 'housing', 'population', 'sex'],
+    get_from_file=False,
+    raw_folder=None,
     save=False,
     save_folder=None
 )
@@ -48,6 +50,8 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this   variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
  - <b>`geo_list`</b> (list of str):  The geographies to consolidate along.  
  - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate 
+ - <b>`get_from_file`</b> (bool):  False by default. If True, then pull data from downloaded files  instead of re-downloading and holding in memory 
+ - <b>`raw_folder`</b> (pathlib.Path):  Where to find pre-downloaded files 
  - <b>`save`</b> (bool):  False by default. If False, then only return the consolidated tables. If   True, then use save_folder to save the consolidated tables and return the tables 
  - <b>`save_folder`</b> (pathlib.Path):  None by default. If save=True, then the folder to save in as a   pathlib.Path object 
 
@@ -95,7 +99,7 @@ This function will return the requested Estimates table from the requested vinta
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L403"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L412"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `individual`
 
@@ -132,7 +136,7 @@ Generate individual estimates tables for each input geography. This function ret
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L454"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L463"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `CA_DOF`
 Functions to get CA Department of Finance population estimates. 
@@ -144,7 +148,7 @@ Unfortunately, CA DOF does not have an API endpoint, so some manual work needs t
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L510"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L519"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_CA_DOF_data`
 
@@ -176,7 +180,7 @@ Get and save CA DOF data for each input year and geography level.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L607"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L616"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
@@ -188,7 +192,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L617"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L626"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 
@@ -219,6 +223,62 @@ This function will create and save diff files for each unique combination of geo
  - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to create diff files.  Because of the unique way file names are generated, a valid item of this list is  "consolidated" 
  - <b>`save`</b> (bool):  True by default. If True, then use save_folder to save the diff files. At  this time, False has no functionality, but this may change later 
  - <b>`save_folder`</b> (pathlib.Path):  pathlib.Path("./data/diff/") by default. The location to   save diff files 
+
+
+
+**Returns:**
+ None 
+
+
+
+**Raises:**
+ 
+ - <b>`NotImplementedError`</b>:  Raised if save=False. If this function is not saving files, then  it is literally doing nothing 
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L699"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>class</kbd> `ProportionFiles`
+Functions to compute categorical distributions within Estimates tables. 
+
+By categorical distributions, we mean (for example) what percentage of the total population is split up between households vs group quarters. Or (for example) what percentage of Female people aged 10 to 14 in Carlsbad in 2010 were Hispanic vs Non-Hispanic, White vs Non-Hispanic, Black vs etc. 
+
+
+
+
+---
+
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L708"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `create_proportion_tables`
+
+```python
+create_proportion_tables(
+    est_vintage,
+    geo_list=['region'],
+    est_table_list=['age', 'sex', 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
+    raw_data_folder=WindowsPath('data/raw_data'),
+    save=True,
+    save_folder=WindowsPath('data/proportion')
+)
+```
+
+Create the row sum and column sum proportion tables. 
+
+Specifically in the row sum tables, the each cell in the row is divided by the sum value in  the row. For the column sum tables, the cells for each year and column name are divided by the sum of those cells. For example, in the age_ethnicity table, we would take the San Diego region, the year 2010, and the column Hispanic. Then we would get the distribution of age groups for San Diego Hispanics in 2010. 
+
+
+
+**Args:**
+ 
+ - <b>`est_vintage`</b> (str):  The vintage to compute proportions for. 
+ - <b>`geo_list`</b> (list of str):  The geographies to create proportion files for.  
+ - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to create proportion files  for. 
+ - <b>`raw_data_folder`</b> (pathlib.Path):  pathlib.Path("./data/raw_data/") by default. The   location where raw Estimates data has been saved 
+ - <b>`save`</b> (bool):  True by default. If True, then use save_folder to save the proportion   files. At this time, False has no functionality, but this may change later 
+ - <b>`save_folder`</b> (pathlib.Path):  pathlib.Path("./data/proportion/") by default. The location  to save proportion files 
 
 
 

@@ -47,8 +47,9 @@ class InternalConsistency():
     """
 
     _geography_aggregation = {
-        "mgra": ["jurisdiction", "region"],
+        "mgra": ["luz", "cpa", "jurisdiction", "region"],
         "jurisdiction": ["region"],
+        "cpa": ["jurisdiction", "region"],
         "luz": ["region"],
     }
 

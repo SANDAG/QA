@@ -32,7 +32,7 @@ For the purposes of this class, internal consistency checks mean checking if agg
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L128"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L129"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_geography_aggregations`
 
@@ -67,7 +67,7 @@ Check that values match up when aggregating geography levels upwards.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L209"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L210"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_internal_aggregations`
 
@@ -105,7 +105,7 @@ For example, this function could check that the total population in the San Dieg
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L300"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L301"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `NullValues`
 Functions to check for any null values. 
@@ -115,7 +115,7 @@ Functions to check for any null values.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L343"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L344"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `spot_nulls`
 
@@ -151,7 +151,7 @@ Check if null values exist in any of the input tables.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L381"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L382"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `VintageComparisons`
 N/A. Done already by generate_tables.DiffFiles. 
@@ -162,7 +162,7 @@ N/A. Done already by generate_tables.DiffFiles.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L390"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L391"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ThresholdAnalysis`
 Calculates year-on-year% changes and flags if the changes are more than 5%. 
@@ -174,7 +174,7 @@ For the purposes of this class, threshold analysis checks mean checking if betwe
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L487"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L488"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_thresholds`
 
@@ -212,7 +212,7 @@ Check if null values exist in any of the input tables.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L528"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L529"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `TrendAnalysis`
 N/A. Done in PowerBI. 
@@ -223,7 +223,7 @@ N/A. Done in PowerBI.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L537"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L538"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFPopulation`
 Check that the total population of the region is within 1.5% of CA DOF population. 
@@ -233,7 +233,7 @@ Check that the total population of the region is within 1.5% of CA DOF populatio
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L628"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L629"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_DOF_population`
 
@@ -273,7 +273,7 @@ The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our pop
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L672"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L673"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups between DOF and Estimates. 
@@ -283,7 +283,7 @@ Compares the proportion of groups between DOF and Estimates.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L675"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L676"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_DOF_proportion`
 

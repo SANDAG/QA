@@ -344,6 +344,8 @@ class EstimatesTables():
     def consolidate(self, est_vintage,
         geo_list=["region", "jurisdiction", "cpa"], 
         est_table_list=["age", "ethnicity", "household_income", "households", "housing", "population", "sex"],
+        get_from_file=False,
+        raw_folder=None,
         save=False,
         save_folder=None):
         """Create consolidated files with all Estimates table for each geography level.
@@ -356,6 +358,9 @@ class EstimatesTables():
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
             geo_list (list of str): The geographies to consolidate along. 
             est_table_list (list of str): Which estimates tables we want to consolidate
+            get_from_file (bool): False by default. If True, then pull data from downloaded files
+                instead of re-downloading and holding in memory
+            raw_folder (pathlib.Path): Where to find pre-downloaded files
             save (bool): False by default. If False, then only return the consolidated tables. If 
                 True, then use save_folder to save the consolidated tables and return the tables
             save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
@@ -378,7 +383,11 @@ class EstimatesTables():
             for est_table_name in est_table_list:
 
                 # Get the estimate table
-                est_table = self.get_table_by_geography(est_vintage, geo, est_table_name, pivot=True)
+                est_table = None
+                if(not get_from_file):
+                    est_table = self.get_table_by_geography(est_vintage, geo, est_table_name, pivot=True)
+                else:
+                    est_table = f.load(raw_folder, est_vintage, geo, est_table_name)
 
                 # Add the transformed estimate table to our list of tables
                 est_tables.append(est_table)
@@ -680,5 +689,89 @@ class DiffFiles():
                 # Save using the generic function
                 if(save):
                     f.save(save_dict, save_folder, f"{new_vintage}-{old_vintage}", geo, est_table)
+                else:
+                    raise NotImplementedError("save=False has no functionality.")
+
+####################
+# Proportion Files #
+####################
+
+class ProportionFiles():
+    """Functions to compute categorical distributions within Estimates tables.
+    
+    By categorical distributions, we mean (for example) what percentage of the total population is
+    split up between households vs group quarters. Or (for example) what percentage of Female people
+    aged 10 to 14 in Carlsbad in 2010 were Hispanic vs Non-Hispanic, White vs Non-Hispanic, Black vs
+    etc.
+    """
+
+    def create_proportion_tables(self, est_vintage, 
+        geo_list=['region'],
+        est_table_list=['age', "sex", 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
+        raw_data_folder=pathlib.Path("./data/raw_data/"),
+        save=True,
+        save_folder=pathlib.Path("./data/proportion/")):
+        """Create the row sum and column sum proportion tables.
+
+        Specifically in the row sum tables, the each cell in the row is divided by the sum value in 
+        the row. For the column sum tables, the cells for each year and column name are divided by
+        the sum of those cells. For example, in the age_ethnicity table, we would take the San
+        Diego region, the year 2010, and the column Hispanic. Then we would get the distribution
+        of age groups for San Diego Hispanics in 2010.
+
+        Args:
+            est_vintage (str): The vintage to compute proportions for.
+            geo_list (list of str): The geographies to create proportion files for. 
+            est_table_list (list of str): Which estimates tables we want to create proportion files
+                for.
+            raw_data_folder (pathlib.Path): pathlib.Path("./data/raw_data/") by default. The 
+                location where raw Estimates data has been saved
+            save (bool): True by default. If True, then use save_folder to save the proportion 
+                files. At this time, False has no functionality, but this may change later
+            save_folder (pathlib.Path): pathlib.Path("./data/proportion/") by default. The location
+                to save proportion files
+
+        Returns:
+            None
+
+        Raises:
+            NotImplementedError: Raised if save=False. If this function is not saving files, then
+                it is literally doing nothing
+        """
+        # Get the files that correspond to each vintage
+        for geo in geo_list:
+            for est_table in est_table_list:
+                table = f.load(raw_data_folder, est_vintage, geo, est_table)
+
+                # Keep track of the key value columns
+                keys = [geo, "yr_id"]
+                if(est_table == "age_ethnicity"):
+                    keys += ["name"]
+                elif(est_table == "age_sex_ethnicity"):
+                    keys += ["name", "sex"]
+
+                # Compute the row wise sums then compute the proportions (actually a percentage 
+                # (note the 100 *), but oh well)
+                row_prop = table.copy(deep=True)
+                row_totals = row_prop.drop(keys, axis=1).sum(axis=1)
+                row_prop.iloc[:,len(keys):] = \
+                    100 * row_prop.iloc[:,len(keys):].divide(row_totals, axis=0) 
+                
+                # Compute the column wise proportions. As stated in the function description, our
+                # populations are considered to be only the grouping geography and year
+                # NOTE: Column wise proportions only make sense when the data is broken down more
+                # than just geography and year. As such, this is only done for age_ethnicity and
+                # age_sex_ethnicity
+                column_prop = None
+                if(est_table == "age_ethnicity" or est_table == "age_sex_ethnicity"):
+                    column_prop = table.copy(deep=True)
+                    column_prop.iloc[:,len(keys):] /= 100 * \
+                        column_prop.groupby([geo, "yr_id"])[column_prop.columns[len(keys):]].transform("sum")
+                
+                # Save using the generic function
+                if(save):
+                    f.save(row_prop, save_folder, est_vintage, geo, f"{est_table}_row_prop")
+                    if(est_table == "age_ethnicity" or est_table == "age_sex_ethnicity"):
+                        f.save(column_prop, save_folder, est_vintage, geo, f"{est_table}_col_prop")
                 else:
                     raise NotImplementedError("save=False has no functionality.")
