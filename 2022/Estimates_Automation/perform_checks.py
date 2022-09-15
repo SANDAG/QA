@@ -107,15 +107,20 @@ class InternalConsistency():
         # BUG: The below query only selects mgra, jurisdiction, and luz. Additional geography
         # levels may need to be added
         query = textwrap.dedent(f"""\
-            SELECT [MGRA], [Name], [LUZ]
+            SELECT [MGRA] as mgra, cities.[Name] as jurisdiction, [LUZ] as luz, cpa.[NAME] as cpa
             FROM [GeoDepot].[gis].[MGRA15] as MGRA15
             LEFT JOIN [GeoDepot].[gis].[CITIES] as cities ON
                 MGRA15.City = cities.City
+            LEFT JOIN [GeoDepot].[gis].[CITYCPA] as cpa ON
+                MGRA15.CPA = cpa.CPA
             """)
         SQL2014B8 = sql.create_engine("mssql+pymssql://sql2014b8")
         dim_table = pd.read_sql_query(query, con=SQL2014B8)
-        dim_table = dim_table.rename({"MGRA": "mgra", "Name": "jurisdiction", "LUZ": "luz"}, axis=1)
         dim_table["region"] = "San Diego"
+
+        # There are a lot of mgras which do not have a corresponding cpa
+        dim_table = dim_table.fillna(value={"cpa": "*Not in a CPA*"})
+
         dim_table = dim_table[[geo] + self._geography_aggregation[geo]].drop_duplicates(ignore_index=True)
 
         # The luz file has geography as luz_id, and not luz. Change to keep our merge the same
@@ -165,47 +170,54 @@ class InternalConsistency():
         geo_tables["region"] = f.load(raw_folder, vintage, "region", est_table)
 
         # Check each geography level at the specified aggregation levels
-        for agg_col in self._geography_aggregation[geo]:
-            # Let the user know what we are aggregating to/from and what we are comparing to
-            print(f"Aggregating {geo} level data to {agg_col} and comparing with {agg_col} csv file")
+        for geo in geo_list:
+            for agg_col in self._geography_aggregation[geo]:
+                # Let the user know what we are aggregating to/from and what we are comparing to
+                print(f"Aggregating {geo} level data to {agg_col} and comparing with {agg_col} csv file")
 
-            # Aggregate the geo_level table to the geography level in agg_col. 
-            # Note, the geography table is copied before aggregating, because sometimes we want to 
-            # aggregate to multiple geography levels and we don't want to modify the original table
-            # BUG: Not all variables should be aggregated with a simple sum, some of them (like 
-            # household size) are averages.
-            aggregated = geo_tables[geo].copy(deep=True).groupby([agg_col, "yr_id"]).sum().reset_index()
+                # Continue with the next geography if cpa is being aggregated to anything
+                if(geo == "cpa"):
+                    print("CPA cannot be aggregated")
+                    print()
+                    continue
 
-            # NOTE: The current generation code does not have hhs nor vacancy_rate
-            # # The hacky fix to the above bug
-            # # Note, hhs = household size 
-            # #           = total population / number of households 
-            # #           = pop / hh
-            # # BUG: Why does documentation above use total population (pop) while the code below uses
-            # # household population (hhp)? Can someone confirm which of these is correct?
-            # aggregated["hhs"] = aggregated["hhp"] / aggregated["hh"]
-            # aggregated["vacancy_rate"] = 100 \
-            #     * (aggregated["vacancy"] - aggregated["unoccupiable"]) \
-            #     / aggregated["units"]
+                # Aggregate the geo_level table to the geography level in agg_col. 
+                # Note, the geography table is copied before aggregating, because sometimes we want to 
+                # aggregate to multiple geography levels and we don't want to modify the original table
+                # BUG: Not all variables should be aggregated with a simple sum, some of them (like 
+                # household size) are averages.
+                aggregated = geo_tables[geo].copy(deep=True).groupby([agg_col, "yr_id"]).sum().reset_index()
 
-            # Check the values match up
-            check_results = (aggregated == geo_tables[agg_col])
-            pd.set_option('display.max_colwidth', None)
-            pd.set_option("display.max_columns", None)
+                # NOTE: The current generation code does not have hhs nor vacancy_rate
+                # # The hacky fix to the above bug
+                # # Note, hhs = household size 
+                # #           = total population / number of households 
+                # #           = pop / hh
+                # # BUG: Why does documentation above use total population (pop) while the code below uses
+                # # household population (hhp)? Can someone confirm which of these is correct?
+                # aggregated["hhs"] = aggregated["hhp"] / aggregated["hh"]
+                # aggregated["vacancy_rate"] = 100 \
+                #     * (aggregated["vacancy"] - aggregated["unoccupiable"]) \
+                #     / aggregated["units"]
 
-            # Print out error stuff if the number of True values is less than the number of cells.
-            # Or in other words, print out error stuff if at least one cell is False
-            if(check_results.to_numpy().sum() != check_results.shape[0] * check_results.shape[1]):
-                error_rows = ((check_results.sum(axis=1) - check_results.shape[1]) != 0)
-                print(aggregated.loc[error_rows])
-                print(geo_tables[agg_col].loc[error_rows])
-                # Save if errors and requested
-                if(save):
-                    f.save(geo_tables[agg_col].loc[error_rows], save_location, "C1", vintage, 
-                        f"{geo}->{agg_col}", "consolidated")
-            else:
-                print("No errors")
-            print()
+                # Check the values match up
+                check_results = (aggregated == geo_tables[agg_col])
+                pd.set_option('display.max_colwidth', None)
+                pd.set_option("display.max_columns", None)
+
+                # Print out error stuff if the number of True values is less than the number of cells.
+                # Or in other words, print out error stuff if at least one cell is False
+                if(check_results.to_numpy().sum() != check_results.shape[0] * check_results.shape[1]):
+                    error_rows = ((check_results.sum(axis=1) - check_results.shape[1]) != 0)
+                    print(aggregated.loc[error_rows])
+                    print(geo_tables[agg_col].loc[error_rows])
+                    # Save if errors and requested
+                    if(save):
+                        f.save(geo_tables[agg_col].loc[error_rows], save_location, "C1", vintage, 
+                            f"{geo}->{agg_col}", "consolidated")
+                else:
+                    print("No errors")
+                print()
 
     def check_internal_aggregations(self, 
         vintage="2020_06", 
@@ -254,6 +266,13 @@ class InternalConsistency():
                     except FileNotFoundError:
                         print(f"Could not find {f._file_path(vintage, geo, table)}")
 
+                # To avoid errors where table geography/year become misaligned, sort
+                for key, table in tables.items():
+                    tables[key] = table.sort_values(
+                        by=[geo, "yr_id"], 
+                        ascending=[True, True], axis=0
+                        ).reset_index(drop=True)
+
                 # Get the total est_type for each table 
                 totals = tables[list(tables.keys())[0]][[geo, "yr_id"]].copy(deep=True)
                 for table_name, table in tables.items():
@@ -285,6 +304,7 @@ class InternalConsistency():
 
                 # Print out error stuff and save if requested
                 if(mask.sum() != 0):
+                    print("Errors found on the following rows:")
                     print(totals[mask])
                     # Save if errors and requested
                     if(save):
@@ -293,6 +313,15 @@ class InternalConsistency():
                 else:
                     print("No errors")
                 print() 
+
+if(__name__ == "__main__"):
+    InternalConsistency().check_internal_aggregations(
+        vintage="2021_01", 
+        geo_list=["cpa"],
+        est_table_types=["households"],
+        raw_folder=pathlib.Path("./data/raw_data/"),
+        save=False,
+        save_location=pathlib.Path("./data/outputs/"))
 
 ########################
 # Check 2: Null Values #

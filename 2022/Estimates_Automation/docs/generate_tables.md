@@ -176,7 +176,7 @@ Due to the limited nature of the checks run on this, this function will only pul
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L567"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L565"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
@@ -188,7 +188,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L577"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L575"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 
@@ -234,7 +234,7 @@ This function will create and save diff files for each unique combination of geo
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L650"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L648"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ProportionFiles`
 Functions to compute categorical distributions within Estimates tables. 
@@ -246,7 +246,7 @@ By categorical distributions, we mean (for example) what percentage of the total
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L659"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L657"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_proportion_tables`
 

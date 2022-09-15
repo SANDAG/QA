@@ -550,8 +550,6 @@ class CA_DOF():
             GROUP BY dof.county_fips_code, dof.fiscal_yr
             ORDER BY dof.county_fips_code, dof.fiscal_yr ASC""")
 
-        print(query)
-
         # Get the data into pandas
         data = pd.read_sql_query(query, con=DDAM)
 
