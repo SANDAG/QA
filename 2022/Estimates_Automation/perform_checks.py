@@ -542,20 +542,17 @@ class DOFPopulation():
         """Compute the absolute percent change in the input df between the baseline and comparison columns."""
         return abs(100 * (df[comparison] - df[baseline]) / df[baseline])
 
-    def _region_DOF_population_comparison(self, DOF_folder, raw_folder, vintage, geo,
+    def region_DOF_population_comparison(self, raw_folder, est_vintage, DOF_vintage,
         threshold=1.5,
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
-        """Check that the total population of the geo is within 1.5% of CA DOF population.
+        """Check that the total population of the region is within 1.5% of CA DOF population.
 
         Attributes:
-            DOF_folder (pathlib.Path): The folder where CA DOF data can be found. Most likely 
-                "./data/CA_DOF/".
-            raw_folder (pathlib.Path): The folder where raw Estimates data can be found. Most 
-                likely "./data/raw_data/".
-            vintage (str): The vintage of Estimates data to compare with DOF data.
-            geo (str): The geography level to check. Due to limitations of CA DOF data, this can 
-                only be "region" or "jurisdiction"
+            raw_folder (pathlib.Path): The folder where raw Estimates data and CA DOF data can be 
+                found. Most likely "./data/raw_data/".
+            est_vintage (str): The vintage of Estimates data to compare with DOF data.
+            DOF_vintage (str): The vintage of DOF data to compare with Estimates data.
             threshold (float): Default value of 1.5(%). The percentage we can go above/below CA DOF 
                 population numbers. If the value of this variable is (for example) 1.5%, that means 
                 that our population numbers must be less than DOF + 1.5% and must be greater than 
@@ -569,102 +566,43 @@ class DOFPopulation():
                 have been found.
         """
         # Print what test is going on
-        print(f"Checking at the {geo} level")
+        print("Running Check 6: Estimates vs DOF Population Values")
 
-        # Get the two datasets
-        DOF_data = f.load(DOF_folder, "DOF", geo)
-        est_data = f.load(raw_folder, vintage, geo, "population")
+        # Parameters used in the function that should never change
+        geo = "region"
+        table = "population"
 
-        # Clean up the datasets so that they are in the same format with the same years of data
-        # 1. Create new columns as necessary
-        # 2. Rename columns
-        # 3. Select only the relevant columns for comparison
-        
-        # 1. Create new columns as necessary
-        est_data["Est Group Quarters"] = est_data[
-            ["Group Quarters - Military", "Group Quarters - College", "Group Quarters - Other"]].sum(axis=1)
+        # Get Estimates and DOF Data
+        est_table = f.load(raw_folder, est_vintage, geo, table)
+        DOF_table = f.load(raw_folder, "DOF", DOF_vintage, geo, table)
 
-        # 2. Rename columns
-        DOF_data = DOF_data.rename({
-            "Total Population": "DOF Total Population",
-            "Household Population": "DOF Household Population",
-            "Group Quarters": "DOF Group Quarters"}, axis=1)
-        est_data = est_data.rename({
-            "jurisdiction": "City",
-            "region": "City",
-            "yr_id": "Year",
-            "Total Population": "Est Total Population",
-            "Household Population": "Est Household Population"}, axis=1)
+        # Sync up table columns
+        est_table = est_table.rename({"yr_id": "Year", "Total Population": "Est Population"}, axis=1)
+        DOF_table = DOF_table.rename({"fiscal_yr": "Year", "population": "DOF Population"}, axis=1)
 
-        # 3. Select only the relevant columns for comparison
-        DOF_data = DOF_data[
-            ["City", "Year", "DOF Total Population", "DOF Household Population", "DOF Group Quarters"]]
-        est_data = est_data[
-            ["City", "Year", "Est Total Population", "Est Household Population", "Est Group Quarters"]]
+        # Keep only the Year and Population columns
+        est_table = est_table[["Year", "Est Population"]]
+        DOF_table = DOF_table[["Year", "DOF Population"]]
 
-        # Combine the datasets together and compute the percent difference
-        combined_data = pd.merge(est_data, DOF_data, how="left", on=["City", "Year"])
-        combined_data["|% Diff| Total Population"] = \
-            self._abs_percent_change(combined_data, "DOF Total Population", "Est Total Population")
-        combined_data["|% Diff| Household Population"] = \
-            self._abs_percent_change(combined_data, "DOF Household Population", "Est Household Population")
-        combined_data["|% Diff| Group Quarters"] = \
-            self._abs_percent_change(combined_data, "DOF Group Quarters", "Est Group Quarters")
-        
-        # Print out the rows that have a percent change larger than the allowed amount
-        error_rows = combined_data[
-            (combined_data["|% Diff| Total Population"] > threshold) | 
-            (combined_data["|% Diff| Household Population"] > threshold) | 
-            (combined_data["|% Diff| Group Quarters"] > threshold)]
-        if(error_rows.shape[0] > 0):
+        # Join the tables
+        combined = est_table.merge(DOF_table, how="left", on="Year")
+
+        # Compute and create the absolute percent difference column
+        combined["|% Difference|"] = abs(100 * \
+            (combined["Est Population"] - combined["DOF Population"]) / (combined["DOF Population"]))
+
+        # Find the rows where there are errors
+        error_rows = (combined["|% Difference|"] > threshold)
+
+        if(error_rows.sum() != 0):
             print("Errors have occurred on the following rows:")
-            print(error_rows)
+            print(combined[error_rows])
             # Save if errors and requested
             if(save):
-                f.save(error_rows, save_location, f"C6(DOF-{vintage})", "region", "population")
+                f.save(combined[error_rows], save_location, f"C6({threshold})", "region", "population")
         else:
             print("No errors")
         print()
-
-    def check_DOF_population(self, 
-        threshold=1.5,
-        vintage="2020_06", 
-        geo_list=["region", "jurisdiction"],
-        raw_folder=pathlib.Path("./data/raw_data/"),
-        DOF_folder=pathlib.Path("./data/CA_DOF/"),
-        save=False,
-        save_location=pathlib.Path("./data/outputs/")):
-        """Check Estimates population are within a certain threshold of CA DOF population values.
-
-        The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our population 
-        numbers need to be within a RANGE of 3% of CA DOF population numbers. We interpret RANGE to
-        be plus or minus 1.5%.
-        
-        Args:
-            threshold (float): Default value of 5(%). The percentage we can go above/below previous
-                values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
-            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
-            geo_list (list): The list of geographies to check.
-            est_table_list (str): The Estimates tables to check.
-            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
-                raw Estimates data can be found.
-            save (bool): Default value of False. If True, save the outputs of the check to the input
-                save_location if and only if errors have been found.
-            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
-                check results.
-
-        Returns:
-            None, but prints out differences if present. Also saves output if requested and errors
-                have been found.
-        """
-        # Print what test is going on
-        print("Running Check 6: DOF Total Population Comparison")
-
-        for geo in geo_list:
-            self._region_DOF_population_comparison(DOF_folder, raw_folder, vintage, geo, 
-                threshold=threshold,
-                save=save,
-                save_location=save_location)
 
 ######################################
 # Check 7: DOF Proportion Comparison #

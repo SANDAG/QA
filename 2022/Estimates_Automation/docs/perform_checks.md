@@ -233,37 +233,33 @@ Check that the total population of the region is within 1.5% of CA DOF populatio
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L629"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L545"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `check_DOF_population`
+### <kbd>method</kbd> `region_DOF_population_comparison`
 
 ```python
-check_DOF_population(
+region_DOF_population_comparison(
+    raw_folder,
+    est_vintage,
+    DOF_vintage,
     threshold=1.5,
-    vintage='2020_06',
-    geo_list=['region', 'jurisdiction'],
-    raw_folder=WindowsPath('data/raw_data'),
-    DOF_folder=WindowsPath('data/CA_DOF'),
     save=False,
     save_location=WindowsPath('data/outputs')
 )
 ```
 
-Check Estimates population are within a certain threshold of CA DOF population values. 
-
-The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our population  numbers need to be within a RANGE of 3% of CA DOF population numbers. We interpret RANGE to be plus or minus 1.5%. 
+Check that the total population of the region is within 1.5% of CA DOF population. 
 
 
 
-**Args:**
+**Attributes:**
  
- - <b>`threshold`</b> (float):  Default value of 5(%). The percentage we can go above/below previous  values and still consider it reasonable. Somewhat arbitrarily chosen to be honest. 
- - <b>`vintage`</b> (str):  Default value of "2020_06". The vintage of Estimates table to pull from.  
- - <b>`geo_list`</b> (list):  The list of geographies to check. 
- - <b>`est_table_list`</b> (str):  The Estimates tables to check. 
- - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/raw_data/". The folder in which   raw Estimates data can be found. 
+ - <b>`raw_folder`</b> (pathlib.Path):  The folder where raw Estimates data and CA DOF data can be   found. Most likely "./data/raw_data/". 
+ - <b>`est_vintage`</b> (str):  The vintage of Estimates data to compare with DOF data. 
+ - <b>`DOF_vintage`</b> (str):  The vintage of DOF data to compare with Estimates data. 
+ - <b>`threshold`</b> (float):  Default value of 1.5(%). The percentage we can go above/below CA DOF   population numbers. If the value of this variable is (for example) 1.5%, that means   that our population numbers must be less than DOF + 1.5% and must be greater than   DOF - 1.5%. 
  - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
- - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to save   check results. 
+ - <b>`save_location`</b> (pathlib.Path):  The location to save check results. 
 
 
 
@@ -273,7 +269,7 @@ The default threshold is 1.5%, because as written in SB 375 on p. 23-24, our pop
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L673"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L611"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DOFProportion`
 Compares the proportion of groups between DOF and Estimates. 
@@ -283,7 +279,7 @@ Compares the proportion of groups between DOF and Estimates.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L676"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\perform_checks.py#L614"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_DOF_proportion`
 

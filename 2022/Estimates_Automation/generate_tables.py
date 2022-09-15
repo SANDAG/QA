@@ -80,6 +80,11 @@ class EstimatesTables():
         # weird transformations when pivoting
         housing = (est_table == "housing")
 
+        # This variable is used to modify the behavior to use chunks for very large tables. 
+        # Specifically, it will be used if asking for age_ethnicity or age_sex_ethnicity at the
+        # mgra level
+        use_chunks = ((geo_level == "mgra") and (est_table in ["age_ethnicity", "age_sex_ethnicity"]))
+
         # If we want debug, output all function inputs and the two above derived function inputs
         if(debug):
             print("*** BEGIN FUNCTION INPUTS ***")
@@ -240,12 +245,24 @@ class EstimatesTables():
             print("*** END FULL QUERY ***")
 
         # Get the table into pandas
-        table = pd.read_sql_query(query, con=DDAM)
+        # NOTE: Use chunksize if asking for age_ethnicity or age_sex_ethnicity at the mgra level
+        table = None
+        if(not use_chunks):
+            table = pd.read_sql_query(query, con=DDAM)
+        else:
+            table = pd.read_sql_query(query, con=DDAM, chunksize=1000)
 
         # If the age_ethnicity table was requested (and not the age_sex_ethnicity table which was
         # pulled from SQL), then aggregate to remove the sex category
         if(age_ethnicity):
-            table = table.groupby([geo_level, "yr_id", "name", "long_name"]).sum().reset_index(drop=False)
+            if(not use_chunks):
+                table = table.groupby(
+                    [geo_level, "yr_id", "name", "long_name"]).sum().reset_index(drop=False)
+            else:
+                for chunk in table:
+                    print("Removing sex column from chunk")
+                    chunk = chunk.groupby(
+                        [geo_level, "yr_id", "name", "long_name"]).sum().reset_index(drop=False)
 
         # Pivot the table if requested
         # Note, due to how the households table is created, it is by default already in pivot table 
@@ -312,11 +329,19 @@ class EstimatesTables():
                 print(f"{'Column order:' : <32}", col_order)
 
             # Pivot the table
-            table = table.pivot_table(
-                index=IND_COLS, 
-                columns=CAT_COLS,
-                values=VAL_COLS,
-                aggfunc=sum) # Not used except for age_sex_ethnicity table
+            if(not use_chunks):
+                table = table.pivot_table(
+                    index=IND_COLS, 
+                    columns=CAT_COLS,
+                    values=VAL_COLS,
+                    aggfunc=sum) # Not used except for age_sex_ethnicity table
+            else:
+                for chunk in table:
+                    chunk = chunk.pivot_table(
+                        index=IND_COLS, 
+                        columns=CAT_COLS,
+                        values=VAL_COLS,
+                        aggfunc=sum) # Not used except for age_sex_ethnicity table
 
             # Custom behavior for the population table. Compute the total population column from the 
             # other columns
@@ -327,12 +352,22 @@ class EstimatesTables():
                     table["population", "Group Quarters - Other"])
 
             # Put the columns back in the correct order
-            table = table.reindex(col_order, axis=1, level=1)
+            if(not use_chunks):
+                table = table.reindex(col_order, axis=1, level=1)
+            else:
+                for chunk in table:
+                    chunk = chunk.reindex(col_order, axis=1, level=1)
 
             # Since I hate multi-indices and multi-columns, undo it 
-            table = table.reset_index(drop=False)
-            table.columns = table.columns.get_level_values(0)[:len(IND_COLS)].append(
-                table.columns.get_level_values(1)[len(IND_COLS):])
+            if(not use_chunks):
+                table = table.reset_index(drop=False)
+                table.columns = table.columns.get_level_values(0)[:len(IND_COLS)].append(
+                    table.columns.get_level_values(1)[len(IND_COLS):])
+            else:
+                for chunk in table:
+                    chunk = chunk.reset_index(drop=False)
+                    chunk.columns = chunk.columns.get_level_values(0)[:len(IND_COLS)].append(
+                        chunk.columns.get_level_values(1)[len(IND_COLS):])
 
             # Add back on the housing value columns 
             if(housing):
@@ -357,7 +392,9 @@ class EstimatesTables():
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
                 variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]"
             geo_list (list of str): The geographies to consolidate along. 
-            est_table_list (list of str): Which estimates tables we want to consolidate
+            est_table_list (list of str): Which estimates tables we want to consolidate. This 
+                function cannot consolidate using the age_ethnicity table nor the 
+                age_sex_ethnicity table 
             get_from_file (bool): False by default. If True, then pull data from downloaded files
                 instead of re-downloading and holding in memory
             raw_folder (pathlib.Path): Where to find pre-downloaded files
@@ -367,10 +404,11 @@ class EstimatesTables():
                 pathlib.Path object
 
         Returns:
-            List of pd.DataFrame: A list containing the consolidated tables in the order of geo_list
+            None
         """
-        # Store each consolidated table by geography level here
-        combined_tables = []
+        # NOTE: Save on memory by not storing/returning anything
+        # # Store each consolidated table by geography level here
+        # combined_tables = []
 
         # Loop over the geography levels we want to consolidate on
         for geo in geo_list:
@@ -398,16 +436,18 @@ class EstimatesTables():
             # Since each of the estimates table has its own version of geo, "yr_id", remove those
             # duplicate columns
             combined_table = combined_table.loc[:, ~combined_table.columns.duplicated()]
-
-            # Store the combined table
-            combined_tables.append(combined_table)
+        
+            # NOTE: Save on memory by not storing/returning anything
+            # # Store the combined table
+            # combined_tables.append(combined_table)
 
             # Save the table if requested
             if(save):
                 f.save(combined_table, save_folder, est_vintage, geo, "consolidated")
-                
-        # Return all the combined tables
-        return combined_tables
+        
+        # NOTE: Save on memory by not storing/returning anything                
+        # # Return all the combined tables
+        # return combined_tables
 
     def individual(self, est_vintage,
         geo_list=["region", "jurisdiction", "cpa"], 
@@ -431,11 +471,11 @@ class EstimatesTables():
                 pathlib.Path object
 
         Returns:
-            List of pd.DataFrame: A list containing the individual tables in the order of geo_list and
-                est_table_list.
+            None
         """
-        # Store each individual table by geography level x est_table_list here
-        individual_tables = []
+        # NOTE: Save on memory by not storing/returning anything
+        # # Store each individual table by geography level x est_table_list here
+        # individual_tables = []
 
         # Loop over the geography levels we want to get individual files on
         for geo in geo_list:
@@ -446,168 +486,79 @@ class EstimatesTables():
                 # Get the estimate table
                 est_table = self.get_table_by_geography(est_vintage, geo, est_table_name, pivot=True)
 
-                # Store the individual table
-                individual_tables.append(est_table)
+                # NOTE: Save on memory by not storing/returning anything
+                # # Store the individual table
+                # individual_tables.append(est_table)
 
                 # Save the table if requested
+                # est_table may be a pd.dataframe split up into chunks, modify the behavior
+                # accordingly
                 if(save):
-                    f.save(est_table, save_folder, est_vintage, geo, est_table_name)
-                
-        # Return all the combined tables
-        return individual_tables
+                    if((geo == "mgra") and (est_table_name in ["age_ethnicity", "age_sex_ethnicity"])):
+                        header=True
+                        for chunk in est_table:
+                            chunk.to_csv(
+                                save_folder / f"{f._file_path(est_vintage, geo, est_table_name)}csv",
+                                header=header,
+                                mode="a")
+                            header=False
+                    else:
+                        f.save(est_table, save_folder, est_vintage, geo, est_table_name)
+
+        # NOTE: Save on memory by not storing/returning anything                
+        # # Return all the combined tables
+        # return individual_tables
 
 ############################################
 # CA Department of Finance Population Data #
 ############################################
 
 class CA_DOF():
-    """Functions to get CA Department of Finance population estimates.
+    """Functions to get CA Department of Finance population estimates from SQL.
     
-    Unfortunately, CA DOF does not have an API endpoint, so some manual work needs to be done.
-    First, you need to go here: https://dof.ca.gov/forecasting/demographics/estimates/ and 
-    look at the section titled "E-5 Population and Housing Estimates for Cities, Counties, and the 
-    State". For the years of data you want, click on the relevant links (For years that end in 0 
-    like 2020, use the higher range (2020- rather than -2020)). Download the Excel sheets that are
-    "Organized by Geography". DO NOT USE THE "Cities, Counties, and the State" EXCEL FILES. I would
-    recommend you save these files in "./data/raw_data/", but it is up to you as long as you provide
-    the correct paths.
+    This class currently only has the functionality of getting region level population data from
+    SQL. At some point, additional functionality will be added that gets population data split by
+    age, sex, and ethnicity.
     """
 
-    def _get_CA_DOF_files(self, folder=pathlib.Path("./data/raw_data/"), files=[2010, 2020]):
-        """Get the requested CA DOF file paths.
-        
-        Get the requested CA DOF files from the input folder. It is assumed that the files have 
-        already been manually downloaded and put into the input folder. It is also assumed that 
-        the downloaded files match the general format of starting with f"E-5_{year}" where {year} is
-        the input files minus the trailing zero.
-
-        Args:
-            folder (pathlib.Path): The folder in which CA DOF data has been downloaded to. This is
-                assumed to be "./data/raw_data/", but can be changed to whatever.
-            files (list of int): Although called files, in reality a list of the base years we 
-                want. For example, the file which contains 2010-2020 data in reality has a base year
-                of 2010 and contains estimates for 2011-2020. The file which contains 2020-current
-                year data in reality has a base year of 2020 and contains estimates for 2021-
-                current year.
-
-        Returns:
-            dict of pathlib.Path: The file locations where specific base years of data can be found.
-                The key is the base year (2010, 2020, etc.) and the value is the path to the data.
-
-        Raises:
-            FileNotFoundError: No files found in the folder for a given year
-            FileNotFoundError: Too many files found in the folder for a given year
-        """
-        # Get the files that match for each requested years
-        DOF_files = {}
-        for year in files:
-            # The glob string is not regex, see https://docs.python.org/3/library/fnmatch.html
-            year_matching_files = list(folder.glob(f"E-5-{year//10}*.xlsx"))
-            
-            # Make sure that we only match one file for each year
-            if(len(year_matching_files) == 0):
-                raise FileNotFoundError(f"No files found for {year} in {folder}")
-            if(len(year_matching_files) > 1):
-                raise FileNotFoundError(f"Too many files found for {year}: {year_matching_files}")
-
-            # Store the file path to be returned later
-            DOF_files[year] = year_matching_files[0]
-
-        # Return the file paths
-        return DOF_files
-
     def get_CA_DOF_data(self, 
-        raw_folder=pathlib.Path("./data/raw_data/"), 
-        save_folder=pathlib.Path("./data/CA_DOF/"),
-        years=range(2010, 2022),
-        geo_list=["region", "jurisdiction"]):
-        """Get and save CA DOF data for each input year and geography level.
+        dof_vintage="2021_07_14",
+        save_folder=pathlib.Path("./data/raw_data/")):
+        """Get and save region level population data from CA DOF.
+
+        Due to the limited nature of the checks run on this, this function will only pull population
+        data at the region level.
         
         Args:
-            raw_folder (pathlib.Path): The location where raw CA DOF data is stored. See the class
-                description for more details.
+            dof_vintage (str): Default value of "2021_07_14". What vintage of dof data to pull from.
+                The input vintage will be used to access a table using the following f string:
+                f"[socioec_data].[ca_dof].[population_proj_{dof_vintage}]"
             save_folder (pathlib.Path): The location where transformed CA DOF data should be saved.
                 Currently, this function will only save, there is no option for returning data.
-            years (list of int): The years of CA DOF data to pull. It is recommended that you pull
-                all available data, which corresponds to the years 2010-current year.
-            geo_list (list of str): The geography levels to split by. Each distinct geography level
-                will have its own file.
 
         Returns:
             None
         """
-        # Get the base years of data we want. For example, if the year 2015 was requested, that 
-        # would correspond to a base year of 2010.
-        base_years = sorted(list(set([(year // 10) * 10 for year in years])))
+        # Create the connection to the SQL server
+        DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
 
-        # Use the helper function to get the paths of the files we want
-        data_paths = self._get_CA_DOF_files(folder=raw_folder, files=base_years)
-        
-        # Store data here
-        all_data = []
+        # The query
+        query = textwrap.dedent(f"""\
+            SELECT dof.county_fips_code, dof.fiscal_yr, SUM(dof.population) as population
+            FROM [socioec_data].[ca_dof].[population_proj_{dof_vintage}] as dof
+            WHERE county_fips_code='06073'
+            GROUP BY dof.county_fips_code, dof.fiscal_yr
+            ORDER BY dof.county_fips_code, dof.fiscal_yr ASC""")
 
-        # Get the data
-        for _, path in data_paths.items():
-            df = pd.read_excel(path, sheet_name="E-5 by Geography", header=2)
+        print(query)
 
-            # Remove extra leading/trailing whitespace from string columns
-            df["County"] = df["County"].str.strip()
-            df["City"] = df["City"].str.strip()
-
-            # Create a year column from the date column
-            df["Year"] = pd.DatetimeIndex(df["Date"]).year
-            df = df.drop("Date", axis=1)
-
-            # Remove duplicate years. For example, 2010-2020 includes 2020, but 2020-2030 also 
-            # includes 2020. We should take the year 2020 from the more recent version
-            if(len(base_years) > 1 and (str(base_years[0]) in str(path))):
-                df = df[df["Year"] != 2020]
-
-            # Reorder columns
-            cols = list(df.columns)
-            df = df[cols[:2] + [cols[-1]] + cols[2:-1]]
-
-            # Rename columns to more descriptive names. Since the columns in DOF data and Estimates
-            # do not exactly line up, column names will not be synced up
-            df = df.rename({
-                "Total": "Total Population", 
-                "Total2": "Households",
-                "Household": "Household Population"}, axis=1)
-
-            # Store the data in all_data
-            all_data.append(df)
-
-        # Combine all data together
-        DOF_data = pd.concat(all_data)
-
-        # Split the data into each geo_level
-        DOF_by_geo = {}
-        for geo in geo_list:
-            geo_df = DOF_data.copy(deep=True)
-            if(geo == "region"):
-                geo_df = geo_df[(geo_df["County"] == "San Diego") & (geo_df["City"] == "County Total")]
-            else:
-                geo_df = geo_df[geo_df["County"] == "San Diego"]
-            
-            # For both geography levels, sorting is the same
-            geo_df = geo_df.sort_values(["County", "City", "Year"], ascending=[True, True, True]).reset_index(drop=True)
-
-            DOF_by_geo[geo] = geo_df
-
-        # Do some additional cleaning on the jurisdiction level data
-        # 1. Rename the City "Balance of County" to "Unincorporated"
-        # 2. Remove the City(s) "County Total" and "Incorporated"
-        if("jurisdiction" in geo_list):
-            DOF_by_geo["jurisdiction"] = DOF_by_geo["jurisdiction"].replace({
-                "Balance of County": "Unincorporated",
-                "Balance Of County": "Unincorporated"})
-            DOF_by_geo["jurisdiction"] = DOF_by_geo["jurisdiction"][
-                (DOF_by_geo["jurisdiction"]["City"] != "County Total") &
-                (DOF_by_geo["jurisdiction"]["City"] != "Incorporated")]
+        # Get the data into pandas
+        data = pd.read_sql_query(query, con=DDAM)
 
         # Save the data
-        for geo, data in DOF_by_geo.items():
-            f.save(data, save_folder, "DOF", geo)
+        # No additional processing needs to be done as the original database is already highly
+        # simplified
+        f.save(data, save_folder, "DOF", dof_vintage, "region", "population")
 
 ##############
 # Diff Files #

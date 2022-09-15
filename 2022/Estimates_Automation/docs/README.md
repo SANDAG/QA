@@ -10,7 +10,7 @@
 
 ## Classes
 
-- [`generate_tables.CA_DOF`](./generate_tables.md#class-ca_dof): Functions to get CA Department of Finance population estimates.
+- [`generate_tables.CA_DOF`](./generate_tables.md#class-ca_dof): Functions to get CA Department of Finance population estimates from SQL.
 - [`generate_tables.DiffFiles`](./generate_tables.md#class-difffiles): Functions to return/save various Estimates diff tables.
 - [`generate_tables.EstimatesTables`](./generate_tables.md#class-estimatestables): Functions to return/save various Estimates tables.
 - [`generate_tables.ProportionFiles`](./generate_tables.md#class-proportionfiles): Functions to compute categorical distributions within Estimates tables.

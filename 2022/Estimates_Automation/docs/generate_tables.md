@@ -23,7 +23,7 @@ The functions in this class all create tables directly using Estimates data from
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L344"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L379"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `consolidate`
 
@@ -49,7 +49,7 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
  
  - <b>`est_vintage`</b> (str):  The vintage of Estimates table to pull from. In DDAMWSQL16, this   variable corresponds to YYYY_MM in the table "[estimates].[est_YYYY_MM]" 
  - <b>`geo_list`</b> (list of str):  The geographies to consolidate along.  
- - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate 
+ - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate. This   function cannot consolidate using the age_ethnicity table nor the   age_sex_ethnicity table  
  - <b>`get_from_file`</b> (bool):  False by default. If True, then pull data from downloaded files  instead of re-downloading and holding in memory 
  - <b>`raw_folder`</b> (pathlib.Path):  Where to find pre-downloaded files 
  - <b>`save`</b> (bool):  False by default. If False, then only return the consolidated tables. If   True, then use save_folder to save the consolidated tables and return the tables 
@@ -58,8 +58,7 @@ This function returns one pd.DataFrame per input geography level, as opposed to 
 
 
 **Returns:**
- 
- - <b>`List of pd.DataFrame`</b>:  A list containing the consolidated tables in the order of geo_list 
+ None 
 
 ---
 
@@ -99,7 +98,7 @@ This function will return the requested Estimates table from the requested vinta
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L412"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L452"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `individual`
 
@@ -130,47 +129,44 @@ Generate individual estimates tables for each input geography. This function ret
 
 
 **Returns:**
- 
- - <b>`List of pd.DataFrame`</b>:  A list containing the individual tables in the order of geo_list and  est_table_list. 
+ None 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L463"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L516"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `CA_DOF`
-Functions to get CA Department of Finance population estimates. 
+Functions to get CA Department of Finance population estimates from SQL. 
 
-Unfortunately, CA DOF does not have an API endpoint, so some manual work needs to be done. First, you need to go here: https://dof.ca.gov/forecasting/demographics/estimates/ and  look at the section titled "E-5 Population and Housing Estimates for Cities, Counties, and the  State". For the years of data you want, click on the relevant links (For years that end in 0  like 2020, use the higher range (2020- rather than -2020)). Download the Excel sheets that are "Organized by Geography". DO NOT USE THE "Cities, Counties, and the State" EXCEL FILES. I would recommend you save these files in "./data/raw_data/", but it is up to you as long as you provide the correct paths. 
+This class currently only has the functionality of getting region level population data from SQL. At some point, additional functionality will be added that gets population data split by age, sex, and ethnicity. 
 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L519"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L524"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_CA_DOF_data`
 
 ```python
 get_CA_DOF_data(
-    raw_folder=WindowsPath('data/raw_data'),
-    save_folder=WindowsPath('data/CA_DOF'),
-    years=range(2010, 2022),
-    geo_list=['region', 'jurisdiction']
+    dof_vintage='2021_07_14',
+    save_folder=WindowsPath('data/raw_data')
 )
 ```
 
-Get and save CA DOF data for each input year and geography level. 
+Get and save region level population data from CA DOF. 
+
+Due to the limited nature of the checks run on this, this function will only pull population data at the region level. 
 
 
 
 **Args:**
  
- - <b>`raw_folder`</b> (pathlib.Path):  The location where raw CA DOF data is stored. See the class  description for more details. 
+ - <b>`dof_vintage`</b> (str):  Default value of "2021_07_14". What vintage of dof data to pull from.  The input vintage will be used to access a table using the following f string:  f"[socioec_data].[ca_dof].[population_proj_{dof_vintage}]" 
  - <b>`save_folder`</b> (pathlib.Path):  The location where transformed CA DOF data should be saved.  Currently, this function will only save, there is no option for returning data. 
- - <b>`years`</b> (list of int):  The years of CA DOF data to pull. It is recommended that you pull  all available data, which corresponds to the years 2010-current year. 
- - <b>`geo_list`</b> (list of str):  The geography levels to split by. Each distinct geography level  will have its own file. 
 
 
 
@@ -180,7 +176,7 @@ Get and save CA DOF data for each input year and geography level.
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L616"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L567"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
@@ -192,7 +188,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L626"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L577"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 
@@ -238,7 +234,7 @@ This function will create and save diff files for each unique combination of geo
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L699"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L650"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ProportionFiles`
 Functions to compute categorical distributions within Estimates tables. 
@@ -250,7 +246,7 @@ By categorical distributions, we mean (for example) what percentage of the total
 
 ---
 
-<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L708"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_Automation\generate_tables.py#L659"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_proportion_tables`
 
