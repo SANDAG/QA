@@ -1,8 +1,8 @@
-# Estimates Automation
+# Estimates QC Automation
 
 ## Project Overview
 
-Estimates Automation is a project which automates the following:
+Estimates QC Automation is a project which automates the following:
 
 1. The creation of wide Estimates tables for whatever vintage/geography/table you want.
 2. The creation of Diff files for whatever vintage/geography/table you want.
@@ -11,17 +11,19 @@ Estimates Automation is a project which automates the following:
 
 All outputs of this project are saved by default using the following file structure:
 ```
-Estimates_Automation
-├───data
-│   ├───raw_data: Where wide Estimates tables will be saved and where CA DOF files should be saved.
-│   ├───diff: Where diff files will be saved.
-│   ├───CA_DOF: Where transformed CA DOF files will be saved.
-│   └───outputs: Where check outputs will be saved.
-└───docs: Where technical documentation is saved.
+Estimates_QC_Automation
+├───data 
+│   ├───raw_data: Where wide Estimates tables will be saved and where CA DOF files 
+│   │             will be saved. 
+│   ├───diff: Where diff files will be saved. 
+│   ├───proportions: Where row/column sum proportion files will be saved. 
+│   └───outputs: Where check outputs will be saved. This folder is not created  
+│                unless there are findings. 
+└───docs: Where technical documentation is saved. 
 ```
 
 ### File Naming Convention
-All files created by Estimates Automation follow the general naming convention of "QA_{vintage}\_{geography level}\_{table name}.{extension}", although exact name may vary depending on circumstances. In general, file naming convention goes from most general to most specific, with naming terms separated by underscores ("_"). For more guidelines, see the docstring for [functions.save](./docs/functions.md#kbdfunctionkbd-save).
+All files created by Estimates QC Automation follow the general naming convention of "QA_{vintage}\_{geography level}\_{table name}.{extension}", although exact name may vary depending on circumstances. In general, file naming convention goes from most general to most specific, with naming terms separated by underscores ("_"). For more guidelines, see the docstring for [functions.save](./docs/functions.md#kbdfunctionkbd-save).
 
 ---
 
@@ -29,27 +31,29 @@ All files created by Estimates Automation follow the general naming convention o
 
 ### Dependencies
 
-Estimates Automation depends on a few different packages which can be found in [requirements.txt](./requirements.txt). To install dependencies, run the following code in your command line:
+Estimates QC Automation requires Python version ≥ 3.6 as well as a few other packages which can be found in [requirements.txt](./requirements.txt). First ensure that your Python version is greater than or equal to 3.6, then install dependencies by running the following code in your command line: 
 
 ```pip install -r "./requirements.txt"```
 
 If you are using Anaconda or any other package manager (venv, etc.), you should first activate the virtual environment then run the above in the command line. I have not tested installing dependencies with conda, so use at your own risk.
 
-### Running the code
+### Running the Notebook
 
-The file [example_usage.ipynb](./example_usage.ipynb) has code already written which can generate all files and run all checks. Open the notebook in your favorite editor and run every cell. Note that Estimates Automation will create the data file structure as defined in Project Overview.
+The file [example_usage.ipynb](./example_usage.ipynb) has code already written which can generate all files and run all checks. Open the notebook in your favorite editor and run every cell. Note that Estimates QC Automation will create the data file structure as defined in Project Overview.
 
-Almost every function signature has a parameter for Estimate vintage, geography level (or levels), and Estimate table (or tables). This makes it easy to run code on different vintages, geography levels, or tables as all you need to do is update the function call in example_usage.ipynb. 
+At the top of the notebook is a section where the primary parameters of the notebook are set. All these parameters use the CAPS_UNDRESCORE variable naming convention. Unless otherwise specified, each function call will use these parameters, making it easy to update what Estimates vintage, tables, and geography to run on. 
 
-In other function signatures, some of the above parameters may not be necessary and any additional required parameters will be included. Still, updating what code runs on is as simple as updating the function call in example_usage.ipynb with whatever changes you want to make.
+In other function signatures, some of the above parameters may not be necessary and any additional required parameters will be included. Still, updating what code runs on is as simple as updating the function call (as opposed to updating the CAPS_UNDERSCORE parameters) in the notebook with whatever changes you want to make. 
 
-NOTE! Downloading Estimates files creates connections to both [DDAMWSQL16] and [sql2014b8]. These connections use Windows Authentication, which means you need to be logged into your SANDAG account and connected to the SANDAG network, whether you are in the office on Ethernet, or through VPN. Although it is possible to pass in username/password through sqlalchemy, I would not recommend it due to the high chance of forgetting to remove them from code and exposing your credentials to the public.
+NOTE: By default, the notebook only creates files and runs checks 1, 2, and 6. Checks 3 and 5 are done by other parts of the code already. Code to run checks 4 and 7 is present but has been commented out. These checks are threshold checks primarily used by QA to investigate potential findings. 
+
+NOTE: Downloading Estimates files creates connections to both [DDAMWSQL16] and [sql2014b8]. These connections use Windows Authentication, which means you need to be logged into your SANDAG account and connected to the SANDAG network, whether you are in the office on Ethernet, or through VPN. Although it is possible to pass in username/password through sqlalchemy, I would not recommend it due to the high chance of forgetting to remove them from code and exposing your credentials to the public.
 
 ---
 
 ## Technical Documentation
 
-All technical documentation can be found in [docs/](./docs/), with the API overview being the file [README.md](./docs/README.md). The README.md file contains a one line description of every file, class, and function present in Estimates Automation. For additional details on any file, class, or function, simply click the link in the name.
+All technical documentation can be found in [docs/](./docs/), with the API overview being the file [README.md](./docs/README.md). The README.md file contains a one line description of every file, class, and function present in Estimates QC Automation. For additional details on any file, class, or function, simply click the link in the name.
 
 ### Updating Technical Documentation
 

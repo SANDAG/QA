@@ -33,16 +33,16 @@ class EstimatesTables():
     """
     
     def _get_config(self, file=pathlib.Path("./config.yaml")):
-        """Get and return the request config file. Default is config.yaml."""
+        """Get and return the config file. Default is config.yaml."""
         with open(file, "r") as config_file:
             return yaml.safe_load(config_file)
 
     def get_table_by_geography(self, est_vintage, geo_level, est_table, pivot=False, debug=False):
         """Get the input estimates table grouped by the input geography level.
         
-        This function will return the requested Estimates table from the requested vintage. The relevant
-        joins will be made on the base table as specified in the default config file. The returned table
-        will by zero indexed and have no multi-columns.
+        This function will return the requested Estimates table from the requested vintage. The 
+        relevant joins will be made on the base table as specified in the default config file. The 
+        returned table will by zero indexed and have no multi-columns/multi-indices.
 
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this
@@ -59,9 +59,11 @@ class EstimatesTables():
         Returns:
             pd.DataFrame: The requested Estimates table grouped by the geography level
         """
-        # It is assumed that the Estimates table will always come from DDAMWSQL16
-        # NOTE: This uses desktop authentication so I'm fairly confident to run this function you 
-        # would need to be in the office or on VPN, but I'm not sure. Someone want to test it out?
+        # It is assumed that the Estimates table will always come from DDAMWSQL16. 
+        # To prevent credentials accidentally being left in code, this connection to DDAMWSQL16 does
+        # not allow you to enter in credentials. Instead, desktop (also know as Windows) 
+        # authentication is used. This means that you must be either on wifi+VPN or on ethernet in
+        # the office.
         DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
 
         # Store the config locally 
@@ -77,15 +79,17 @@ class EstimatesTables():
         households = (est_table == "households")
 
         # This variable is used to deal with the unique behavior of housing table. Used to do some
-        # weird transformations when pivoting
+        # unique transformations when pivoting
         housing = (est_table == "housing")
 
         # This variable is used to modify the behavior to use chunks for very large tables. 
         # Specifically, it will be used if asking for age_ethnicity or age_sex_ethnicity at the
         # mgra level
-        use_chunks = ((geo_level == "mgra") and (est_table in ["age_ethnicity", "age_sex_ethnicity"]))
+        use_chunks = (
+            (geo_level == "mgra") and 
+            (est_table in ["age_ethnicity", "age_sex_ethnicity"]))
 
-        # If we want debug, output all function inputs and the two above derived function inputs
+        # If we want debug, output all function inputs and the above derived function inputs
         if(debug):
             print("*** BEGIN FUNCTION INPUTS ***")
             print(f"{'connection' : <32}", DDAM)
@@ -98,6 +102,7 @@ class EstimatesTables():
             print(f"{'age_ethnicity' : <32}", age_ethnicity)
             print(f"{'households' : <32}", households)
             print(f"{'housing' : <32}", housing)
+            print(f"{'use_chunks' : <32}", use_chunks)
             print("*** END FUNCTION INPUTS ***")
             print()
 
@@ -120,8 +125,8 @@ class EstimatesTables():
             ORDER BY {mgra_denormalize_col}, yr_id, {join_col}
             """)
         if(households):
-            # In the households table, we ignore the hosueholds_size_id column, which means we only have
-            # to join with mgra_denormalize
+            # In the households table, we ignore the hosueholds_size_id column, which means we only
+            # have to join with mgra_denormalize
             query = textwrap.dedent("""\
                 SELECT {mgra_denormalize_col}, yr_id, {agg_col}
                 FROM {est_base_table} as tbl
@@ -148,8 +153,8 @@ class EstimatesTables():
             print(f"{'Columns in estimates table:' : <32}", list(COLUMNS))
             print()
 
-        # From the list of columns, we can find exactly which columns we want to be joining on. These
-        # are the columns which end with "_id" but are not "mgra_id" nor "yr_id"
+        # From the list of columns, we can find exactly which columns we want to be joining on. 
+        # These are the columns which end with "_id" but are not "mgra_id" nor "yr_id"
         ID_COLUMNS = [col for col in COLUMNS if 
             col.endswith("_id") and 
             col != "mgra_id" and 
@@ -164,8 +169,8 @@ class EstimatesTables():
 
         # The field {dim_named_cols} is asking for the (formatted) columns in the dim tables that 
         # contain the long form representations of the ids. For example, in the dim table age_group,
-        # age_group_id=1 corresponds to name="Under 5", so we want the "name" column as it is the most
-        # descriptive
+        # age_group_id=1 corresponds to name="Under 5", so we want the "name" column as it is the 
+        # most descriptive
         dim_named_cols = ""
         if(not households):
             for id_col in ID_COLUMNS:
@@ -188,10 +193,8 @@ class EstimatesTables():
             print(f"{'Aggregation instructions:' : <32}", agg_list)
             print()
         
-        # The field {joins} is asking for formatted list of INNER JOINs that add on each dim table to
-        # the estimates table. This information is contained in config["dim"]
-        # TODO: Are there null mgra_id values? May need to change to LEFT JOIN
-        # Note, we always want to join on mgra_id, so add that to the list
+        # The field {joins} is asking for formatted list of INNER JOINs that add on each dim table 
+        # to the estimates table. This information is contained in config["dim"]
         JOIN_COLS = None
         if(not age_ethnicity):
             JOIN_COLS = config["est"][est_table]["joins"]
@@ -208,8 +211,8 @@ class EstimatesTables():
             print(f"{'Columns to join on:' : <32}", list(JOIN_COLS))
             print()
         
-        # The field {geography_filter} is asking for the conditional where we only get the rows of the 
-        # table where the geography level we are interested in is not NULL
+        # The field {geography_filter} is asking for the conditional where we only get the rows of 
+        # the table where the geography level we are interested in is not NULL
         geography_filter = f"{mgra_denormalize_col} IS NOT NULL"
 
         # The field {join_col} is asking for the column of the estimates table we are joining on in 
@@ -271,8 +274,7 @@ class EstimatesTables():
             # For every table, there are 1-3 categorical columns, and 1-4 value columns. Each unique
             # combination of all categorical columns and one value column will form a new column
 
-            # Some additional weird transformations need to be done on the housing table
-            # TODO: why?
+            # Some additional weird transformations need to be done on the housing table. 
             housing_values_table = None
             if(housing):
                 housing_values_table = table[[geo_level, "yr_id", "units", "unoccupiable", "occupied", 
@@ -280,6 +282,7 @@ class EstimatesTables():
                 table = table[[geo_level, "yr_id", "long_name", "units"]]
 
             # First, create the list of index columns, categorical column(s), and value column(s)
+            # for pivoting
             IND_COLS = [geo_level, "yr_id"]
             CAT_COLS = [config["dim"][col]["column(s)"][0] for col in ID_COLUMNS]
             VAL_COLS = None
@@ -307,12 +310,11 @@ class EstimatesTables():
             if(est_table == "population"):
                 col_order = ["Total Population"] + col_order
 
-            # For god know why, SQL returns the incorrect column order for the table 
+            # BUG: For an unknown reason, SQL returns the incorrect column order for the table 
             # age_sex_ethnicity, but only when the geo_level is region or cpa. So when the geo_level
-            # is jurisdiction, SQL returns the correct order???
-            # Although I really hate to do this, in the interest of time I will just be hardcoding 
-            # the correct column order
-            # TODO: An actual fix for this bug would be pretty cool
+            # is jurisdiction, SQL returns the correct order.
+            # NOTE: This bug was fixed by hardcoding the column order. An actual fix for this 
+            # would likely involve work on the SQL server side.
             if(est_table == "age_sex_ethnicity"):
                 if(debug):
                     print("Manually adjusting column order, see notebook TODO for why")
@@ -321,7 +323,7 @@ class EstimatesTables():
                     "Non-Hispanic, American Indian or Alaska Native", "Non-Hispanic, Other", 
                     "Non-Hispanic, Two or More Races", "Non-Hispanic, Black"]
 
-            # Print how pivoting can be done
+            # Print how pivoting will be done
             if(debug):
                 print(f"{'Pivot index columns:' : <32}", IND_COLS)
                 print(f"{'Pivot categorical columns:' : <32}", CAT_COLS)
@@ -358,7 +360,7 @@ class EstimatesTables():
                 for chunk in table:
                     chunk = chunk.reindex(col_order, axis=1, level=1)
 
-            # Since I hate multi-indices and multi-columns, undo it 
+            # Undo the multi-indices and multi-columns
             if(not use_chunks):
                 table = table.reset_index(drop=False)
                 table.columns = table.columns.get_level_values(0)[:len(IND_COLS)].append(
@@ -384,9 +386,6 @@ class EstimatesTables():
         save=False,
         save_folder=None):
         """Create consolidated files with all Estimates table for each geography level.
-
-        This function returns one pd.DataFrame per input geography level, as opposed to combining 
-        everything together.
 
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
@@ -420,7 +419,7 @@ class EstimatesTables():
             # Loop over every estimate table we want to consolidate
             for est_table_name in est_table_list:
 
-                # Get the estimate table
+                # Get the estimate table from SQL Server or from a saved file
                 est_table = None
                 if(not get_from_file):
                     est_table = self.get_table_by_geography(est_vintage, geo, est_table_name, pivot=True)
@@ -433,8 +432,8 @@ class EstimatesTables():
             # Combine all the transformed estimate tables into one large table
             combined_table = pd.concat(est_tables, axis=1)
 
-            # Since each of the estimates table has its own version of geo, "yr_id", remove those
-            # duplicate columns
+            # Since each of the estimates table has its own version of the columns geo and "yr_id", 
+            # remove those duplicate columns
             combined_table = combined_table.loc[:, ~combined_table.columns.duplicated()]
         
             # NOTE: Save on memory by not storing/returning anything
@@ -455,10 +454,6 @@ class EstimatesTables():
         save=False,
         save_folder=None):
         """Create individual files for each unique combination of Estimate table and geography level.
-
-        Generate individual estimates tables for each input geography. This function returns one
-        dataframe for each geography level / estimate table. Because of the way looping is done, the 
-        order of dfs is first geo_level each estimate table, second geo_level each estimate table, etc.
 
         Args:
             est_vintage (str): The vintage of Estimates table to pull from. In DDAMWSQL16, this 
@@ -615,8 +610,8 @@ class DiffFiles():
                 new_vintage_df = f.load(raw_data_folder, new_vintage, geo, est_table)
 
                 # Create the diff df
-                # TODO: I cannot for the life of my figure out how to do a subtract when there
-                # are string columns in a non-hacky way. Please help :(
+                # TODO: This is done in a very hacky way as I cannot figure out how to do a 
+                # subtract when there are string columns.
                 # diff_df = new_vintage_df - old_vintage_df
                 diff_df = pd.DataFrame(columns=old_vintage_df.columns)
                 for col_name, _ in diff_df.items():

@@ -3,10 +3,6 @@
 The functions in this file run checks on Estimates tables. These functions can only pull data
 from saved files. Each function should by default print out the status of the check, such as
 which check is being run and the rows where errors may have occurred.
-
-Currently work in progress is the ability to save the outputs of the checks if requested. For 
-which checks currently have this functionality, look for the save=False and save_location=???
-parameters in the function signature.
 """
 
 ###########
@@ -30,10 +26,14 @@ import functions as f
 class InternalConsistency():
     """Functions to run internal consistency checks.
     
-    For the purposes of this class, internal consistency checks mean checking if aggregated values
-    match up when aggregating to/from different geography levels. For example, checking if the total
-    population variable, when aggregated from mgra --> region, matches up with the values at the 
-    region level.
+    For the purposes of this class, internal consistency checks mean one of two things:
+    1.  Checking if aggregated values match up when aggregating to/from different geography levels.
+        For example, checking if the total population variable, when aggregated from mgra --> 
+        region, matches up with the values at the region level. 
+    2.  Checking if aggregated values a across Estimates tables match up. For example, checking if
+        the total population of Carlsbad in 2010 is the same when comparing total population vs 
+        total population from the age_sex_ethnicity table vs total population from household/group
+        quarters population vs etc.
 
     Attributes:
         _geography_aggregation (dict of list): A dictionary with key equals to a geography level, 
@@ -104,7 +104,7 @@ class InternalConsistency():
 
         # Due to the above bug, MGRA15 data will be pulled from [sql2014b8].[GeoDepot].[gis].[MGRA15]
         # instead
-        # BUG: The below query only selects mgra, jurisdiction, and luz. Additional geography
+        # BUG: The below query only selects mgra, jurisdiction, luz, and cpa. Additional geography
         # levels may need to be added
         query = textwrap.dedent(f"""\
             SELECT [MGRA] as mgra, cities.[Name] as jurisdiction, [LUZ] as luz, cpa.[NAME] as cpa
@@ -314,21 +314,18 @@ class InternalConsistency():
                     print("No errors")
                 print() 
 
-if(__name__ == "__main__"):
-    InternalConsistency().check_internal_aggregations(
-        vintage="2021_01", 
-        geo_list=["cpa"],
-        est_table_types=["households"],
-        raw_folder=pathlib.Path("./data/raw_data/"),
-        save=False,
-        save_location=pathlib.Path("./data/outputs/"))
-
 ########################
 # Check 2: Null Values #
 ########################
 
 class NullValues():
-    """Functions to check for any null values."""
+    """Functions to check for any null values.
+    
+    At this time, this class only checks for missing data. This class does not have the 
+    functionality to check for missing geographies. For example, this class can find that the total
+    population value is missing for a certain mgra in a certain year, but cannot find that an 
+    entire mgra is missing for a certain year.
+    """
 
     def _spot_null(self, folder, vintage, geo, table_name,
         save=False,
@@ -422,7 +419,8 @@ class ThresholdAnalysis():
     
     For the purposes of this class, threshold analysis checks mean checking if between any two 
     versions, the changes in values differ by more than 5%. For example, flagging if total 
-    population in the region changes by more than 5% in one year.
+    population in the region changes by more than 5% in one year. The threshold value is 
+    configurable, of course.
     """
 
     def _yearly_change(self, raw_folder, vintage, geo, table_name, 
@@ -485,7 +483,8 @@ class ThresholdAnalysis():
         pop_change = pop_change.add_prefix("|% Diff| ")
         
         # Merge the % change with the original table and order the columns
-        # I'll be honest, I don't know what the "x for y" stuff is doing, I just know it works
+        # I'll be honest, I don't know what the "x for y" stuff is doing, I just know it works. 
+        # Essentially, it is merging the columns so that variable and |% Diff| variable alternate
         combined_df = pd.merge(geo_table, pop_change, how="left", left_index=True, right_index=True)
         column_order = list(geo_table.columns)[:(geo_table.shape[1] - columns.shape[0])] + \
             [x for y in zip(columns, pop_change.columns) for x in y]
@@ -522,7 +521,7 @@ class ThresholdAnalysis():
         raw_folder=pathlib.Path("./data/raw_data/"),
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
-        """Check if null values exist in any of the input tables.
+        """Ensure that the yearly change does not exceed a specified threshold.
         
         Args:
             threshold (float): Default value of 5(%). The percentage we can go above/below previous
@@ -568,7 +567,7 @@ class DOFPopulation():
     """Check that the total population of the region is within 1.5% of CA DOF population."""
 
     def _abs_percent_change(self, df, baseline, comparison):
-        """Compute the absolute percent change in the input df between the baseline and comparison columns."""
+        """Compute the absolute percent change between the baseline and comparison columns."""
         return abs(100 * (df[comparison] - df[baseline]) / df[baseline])
 
     def region_DOF_population_comparison(self, raw_folder, est_vintage, DOF_vintage,
@@ -585,7 +584,9 @@ class DOFPopulation():
             threshold (float): Default value of 1.5(%). The percentage we can go above/below CA DOF 
                 population numbers. If the value of this variable is (for example) 1.5%, that means 
                 that our population numbers must be less than DOF + 1.5% and must be greater than 
-                DOF - 1.5%.
+                DOF - 1.5%. The reason a value of 1.5% is used is because on SB375 p.23-24, SANDAG 
+                is required to have population projections within a range of 3% of CA DOF population
+                projections. A range of 3% is equivalent to +/- 1.5%
             save (bool): Default value of False. If True, save the outputs of the check to the input
                 save_location if and only if errors have been found.
             save_location (pathlib.Path): The location to save check results.
@@ -642,26 +643,31 @@ class DOFProportion():
 
     def check_DOF_proportion(self, 
         threshold=4,
-        vintage="2020_06", 
+        est_vintage="2020_06", 
+        DOF_vintage="2021_07_14",
         geo_list=["region", "jurisdiction"],
         raw_folder=pathlib.Path("./data/raw_data/"),
-        DOF_folder=pathlib.Path("./data/CA_DOF/"),
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
         """Check the proportions of groups between Estimates and CA DOF are roughly the same.
+
+        BUG: This function no longer works with the updated CA DOF table format. 
 
         Specifically, the groups which are checked are % of population in households vs group
         quarters, % of households which are single detached vs single attached vs mobile home vs
         multifamily, and % of households which are occupied vs vacant. If the differences in 
         percent between Estimates and CA DOF data are greater than the input threshold, then
-        those rows of data will be printed out and saved if requested
+        those rows of data will be printed out and saved if requested.
         
         Args:
             threshold (float): Default value of 4(%). The amount of absolute allowable difference
                 in proportions. For example, if the percent of total population in group quarters 
                 compared between DOF and Estimates is greater than threshold, then that row is 
                 flagged
-            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
+            est_vintage (str): Default value of "2020_06". The vintage of Estimates table to pull 
+                from. 
+            DOF_vintage (str): Default value of "2021_07_14". The vintage of CA DOF table to pull 
+                from. 
             geo_list (list): The list of geographies to check. This can only contain "region" and
                 "jurisdiction" due to limitations of DOF data.
             raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
@@ -686,8 +692,8 @@ class DOFProportion():
             print(f"Checking {geo} level data")
 
             # Get Estimates and CA DOF data
-            est_table = f.load(raw_folder, vintage, geo, "consolidated")
-            DOF_table = f.load(DOF_folder, "DOF", geo)
+            est_table = f.load(raw_folder, est_vintage, geo, "consolidated")
+            DOF_table = f.load(raw_folder, "DOF", DOF_vintage, geo, "population")
 
             # Transform Estimates data into the format we want
             # 1. Create new column to sync up with DOF data format

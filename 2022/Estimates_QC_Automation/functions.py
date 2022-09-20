@@ -28,13 +28,18 @@ def save(dfs, save_folder, *args):
     table name in that order. Estimates tables should be saved in the folder 
     f"{base_folder}/raw_data/".
 
-    In the case of CA DOF tables, *args should contain DOF and geography level, in that order. DOF
-    files should be saved in the folder f"{base_folder}/CA_DOF/".
+    In the case of CA DOF tables, *args should contain the string "DOF", vintage, geography level,
+    and table name in that order. DOF files should also be saved in the raw data folder 
+    f"{base_folder}/raw_data/".
 
     In the case of diff tables, *args should contain vintage, geography level, and table name
     in that order. vintage should contain both vintages (ex. "2021_01-2020_06") and {table} should 
     contain the word "diff" (ex. "age_sex_ethnicity_diff"). Diff files should be saved in the 
     folder f"{base_folder}/diff/".
+
+    In the case of proportion tables, *args should contain vintage, geography level, table name,
+    and proportion type (col_prop or row_prop) in that order. Proportion files should be saved in 
+    the folder f"{base_folder}/proportion/".
 
     In the case of check outputs, *args should contain the check number, vintage, geography level,
     and table name in that order. Things may change depending on the specific outputs of the check.
