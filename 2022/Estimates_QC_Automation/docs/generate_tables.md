@@ -11,7 +11,7 @@ The functions in this file all create tables directly using Estimates data from 
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L27"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L28"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `EstimatesTables`
 Functions to return/save various Estimates tables. 
@@ -23,7 +23,7 @@ The functions in this class all create tables directly using Estimates data from
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L381"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L382"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `consolidate`
 
@@ -60,7 +60,7 @@ Create consolidated files with all Estimates table for each geography level.
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L40"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L41"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_table_by_geography`
 
@@ -96,7 +96,7 @@ This function will return the requested Estimates table from the requested vinta
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L451"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L452"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `individual`
 
@@ -130,32 +130,32 @@ Create individual files for each unique combination of Estimate table and geogra
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L511"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L512"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `CA_DOF`
 Functions to get CA Department of Finance population estimates from SQL. 
 
-This class currently only has the functionality of getting region level population data from SQL. At some point, additional functionality will be added that gets population data split by age, sex, and ethnicity. 
+This class currently has the functionality of getting region level population data from SQL.  The class outputs two files, one where region level population is split by age/sex/ethnicity in the same format at the saved Estimates tables, and a second file where region level population  is aggregated into total population. 
 
 
 
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L519"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L521"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `get_CA_DOF_data`
+### <kbd>method</kbd> `get_CA_DOF_region_pop`
 
 ```python
-get_CA_DOF_data(
+get_CA_DOF_region_pop(
     dof_vintage='2021_07_14',
     save_folder=WindowsPath('data/raw_data')
 )
 ```
 
-Get and save region level population data from CA DOF. 
+Get and save region level population data from CA DOF both aggregated and dis-aggregated. 
 
-Due to the limited nature of the checks run on this, this function will only pull population data at the region level. 
+Get both total population for the region in each year and total population for the region  split by age/sex/ethnicity in each year. The age/sex/ethnicity categories used are identical to the ones found in [estimates] 
 
 
 
@@ -172,7 +172,7 @@ Due to the limited nature of the checks run on this, this function will only pul
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L560"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L619"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
@@ -184,7 +184,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L570"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L629"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 
@@ -230,7 +230,7 @@ This function will create and save diff files for each unique combination of geo
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L643"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L702"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ProportionFiles`
 Functions to compute categorical distributions within Estimates tables. 
@@ -242,7 +242,7 @@ By categorical distributions, we mean (for example) what percentage of the total
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L652"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L711"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_proportion_tables`
 
