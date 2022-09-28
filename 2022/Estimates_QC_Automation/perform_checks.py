@@ -401,6 +401,83 @@ class NullValues():
                     save=save, 
                     save_location=save_location)
 
+    def spot_missing_values(self,
+        vintage="2020_06", 
+        geo_list=["region", "jurisdiction", "mgra"],
+        est_table_list=["age", "ethnicity"],
+        raw_folder=pathlib.Path("./data/raw_data/"),
+        save=False,
+        save_location=pathlib.Path("./data/outputs/")):
+        """Check that each unique combination of geography and year exist.
+        
+        For example, make sure that all 19 jurisdictions (including un-incorporated) has the correct
+        number of years associated with each jurisdiction. This function will print out errors if 
+        encountered, and will save the error outputs if errors are found.
+
+        Args:
+            vintage (str): Default value of "2020_06". The vintage of Estimates table to pull from. 
+            geo_list (list): The list of geographies to check.
+            est_table_list (str): The Estimates tables to check.
+            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
+                raw Estimates data can be found. Due to the extreme runtime of "mgra", it is 
+                possible that files are not saved locally. In that case, or for any files that are
+                missing, ONLY the geography and year columns will be pulled directly from SQL Server
+            save (bool): Default value of False. If True, save the outputs of the check to the input
+                save_location if and only if errors have been found.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
+                check results.
+
+        Returns:
+            None, but prints out differences if present. Also saves output if requested and errors
+                have been found.
+        """
+        # Print what test is going on
+        print("Running Check 2: Spot Missing Geographies/Years")
+
+        # Create a connection to SQL Server in case data needs to be pulled directly
+        DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
+
+        # Iterate over each unique table and run the test
+        for geo in geo_list:
+            for est_table in est_table_list:
+
+                # Print what file we are checking
+                print(f"Checking {f._file_path([vintage, geo, est_table])}")
+                
+                # Attempt to get the table from the locally saved version
+                table = None
+                try:
+                    table = f.load(raw_folder, vintage, geo, est_table)
+                    table = table[[geo, "yr_id"]]
+
+                # If the table has not been locally saved, then pull ONLY the geography and year
+                # columns from SQL Server
+                except FileNotFoundError:
+                    print("Data is not saved locally, pulling from DDAMWSQL16")
+                    query = textwrap.dedent(f"""\
+                        SELECT {geo}, yr_id
+                        FROM [estimates].[est_{vintage}].[dw_{est_table}] as est
+                        JOIN [demographic_warehouse].[dim].[mgra_denormalize] as mgra_d ON 
+	                        est.mgra_id = mgra_d.mgra_id
+                        GROUP BY {geo}, yr_id
+                        ORDER BY {geo} ASC, yr_id ASC""")
+                    table = pd.read_sql_query(query, con=DDAM)
+
+                # Check the following:
+                # 1. Each geography has the same number of years associated with it
+                # 2. Each year has the same number of geographies associated with it
+                geo_check = (table.groupby(geo).count().nunique() == 1).values[0]
+                year_check = (table.groupby("yr_id").count().nunique() == 1).values[0]
+                
+                # Then print out errors if present
+                if(geo_check and year_check):
+                    print("No Errors")
+                else:
+                    # TODO: Implement printing out errors and saving errors
+                    print("Errors found but not implemented yet")
+
+                print()
+    
 #################################
 # Check 3: Vintage Comparisons #
 #################################
