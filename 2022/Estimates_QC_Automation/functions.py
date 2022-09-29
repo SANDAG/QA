@@ -4,13 +4,20 @@
 # Imports #
 ###########
 
+import yaml
 import textwrap
+import pathlib
 
 import pandas as pd
 
 #############
 # Functions #
 #############
+    
+def _get_config(file=pathlib.Path("./config.yaml")):
+    """Get and return the config file. Default is config.yaml."""
+    with open(file, "r") as config_file:
+        return yaml.safe_load(config_file)
 
 def _file_path(components):
     """Return the file path (NO EXTENSION) for saving/loading."""

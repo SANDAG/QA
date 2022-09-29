@@ -11,7 +11,6 @@ the file "perform_checks.py".
 ###########
 
 import pathlib
-import yaml
 import textwrap
 
 import pandas as pd
@@ -32,11 +31,6 @@ class EstimatesTables():
     [DDAMWSQL16].[estimates]. The functions in this file do not run any checks, nor do they 
     create any kind of derived output such as diff files.
     """
-    
-    def _get_config(self, file=pathlib.Path("./config.yaml")):
-        """Get and return the config file. Default is config.yaml."""
-        with open(file, "r") as config_file:
-            return yaml.safe_load(config_file)
 
     def get_table_by_geography(self, est_vintage, geo_level, est_table, pivot=False, debug=False):
         """Get the input estimates table grouped by the input geography level.
@@ -68,7 +62,7 @@ class EstimatesTables():
         DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
 
         # Store the config locally 
-        config = self._get_config()
+        config = f._get_config()
 
         # This variable changes the behavior of the function if the age_ethnicity table is requested.
         # This table does not exist in the estimates table, rather it is the age_sex_ethnicity table
@@ -106,6 +100,12 @@ class EstimatesTables():
             print(f"{'use_chunks' : <32}", use_chunks)
             print("*** END FUNCTION INPUTS ***")
             print()
+
+        # Make sure that we know which series of mgra_denormalize to use for the input Estimates
+        # vintage
+        if(est_vintage not in config["series"].keys()):
+            raise KeyError(f"{est_vintage} could not be found in config[\"series\"]. You need " \
+                "to update config.yaml or double check your Estimates vintage is correct.")
 
         # The basic format of every table we are looking at. To use, call
         # EST_BASE_TABLE.format(<TABLE NAME>)
@@ -204,10 +204,17 @@ class EstimatesTables():
         joins = ""
         for join_col in JOIN_COLS:
             dim_table = config["dim"][join_col]["dim_table"]
-            joins += textwrap.dedent(f"""\
-                INNER JOIN {DIM_BASE_TABLE.format(dim_table)} as {dim_table} ON
-                    {dim_table}.{join_col} = tbl.{join_col}
-                """)
+            if(join_col != "mgra_id"):
+                joins += textwrap.dedent(f"""\
+                    INNER JOIN {DIM_BASE_TABLE.format(dim_table)} as {dim_table} ON
+                        {dim_table}.{join_col} = tbl.{join_col}
+                    """)
+            else:
+                joins += textwrap.dedent(f"""\
+                    INNER JOIN {DIM_BASE_TABLE.format(dim_table)} as {dim_table} ON
+                        {dim_table}.{join_col} = tbl.{join_col} AND
+                        {dim_table}.series = {config["series"][est_vintage]}
+                    """)
         if(debug):
             print(f"{'Columns to join on:' : <32}", list(JOIN_COLS))
             print()

@@ -109,3 +109,15 @@ dim:
     dim_table: income_group
     column(s):
     - name
+
+# This defines for each estimates vintage, what series of mgra_denormalize to use. This information
+# comes from the columns [series] and [source_system_version] from 
+# [demographic_warehouse].[dim].[datasource]
+series:
+  "2018_02": 14
+  "2018_03": 14
+  "2019_01": 14
+  "2020_03": 14
+  "2020_04": 14
+  "2020_06": 14
+  "2021_01": 14

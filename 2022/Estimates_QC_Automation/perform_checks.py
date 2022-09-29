@@ -84,51 +84,30 @@ class InternalConsistency():
         # Where to pull dimension tables from
         DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16')
 
+        # The config file is needed to tell us what series of mgra_denormalize to use when 
+        # aggregating
+        config = f._get_config()
+
         # Do this for every geography level requested (typically only "mgra" and "jurisdiction", but 
         # could be extended to include "taz", "cpa", etc.).
         # BUG: If additional geography levels are requested, the variables file_search and 
         # dim_table_columns would need to updated
 
-        # Get the table
+        # Get the table we want to add additional geographies to
         geo_table = f.load(folder, vintage, geo, table_name)
 
-        # # Combine with the correct columns of the dim table
-        # agg_cols = ", ".join(dim_table_columns[geo])
-        # # BUG: query needs "WHERE series=?"
-        # # BUG: series=15 IS NOT IN mgra_denormalize yet
-        # query = textwrap.dedent(f"""\
-        #     SELECT {geo}, {agg_cols}
-        #     FROM [demographic_warehouse].[dim].[mgra_denormalize]
-        #     """)
-        # dim_table = pd.read_sql_query(query, con=DDAM)
-
-        # Due to the above bug, MGRA15 data will be pulled from [sql2014b8].[GeoDepot].[gis].[MGRA15]
-        # instead
-        # BUG: The below query only selects mgra, jurisdiction, luz, and cpa. Additional geography
-        # levels may need to be added
-        query = textwrap.dedent(f"""\
-            SELECT [MGRA] as mgra, cities.[Name] as jurisdiction, [LUZ] as luz, cpa.[NAME] as cpa
-            FROM [GeoDepot].[gis].[MGRA15] as MGRA15
-            LEFT JOIN [GeoDepot].[gis].[CITIES] as cities ON
-                MGRA15.City = cities.City
-            LEFT JOIN [GeoDepot].[gis].[CITYCPA] as cpa ON
-                MGRA15.CPA = cpa.CPA
+        # Get those additional geographies
+        geographies = [geo] + self._geography_aggregation[geo]
+        query = textwrap.dedent(f"""
+            SELECT {", ".join(geographies)}
+            FROM [demographic_warehouse].[dim].[mgra_denormalize]
+            WHERE series={config["series"][vintage]}
             """)
-        SQL2014B8 = sql.create_engine("mssql+pymssql://sql2014b8")
-        dim_table = pd.read_sql_query(query, con=SQL2014B8)
-        dim_table["region"] = "San Diego"
+        dim_table = pd.read_sql_query(query, con=DDAM)
 
-        # There are a lot of mgras which do not have a corresponding cpa
-        dim_table = dim_table.fillna(value={"cpa": "*Not in a CPA*"})
-
+        # Combine them together
         dim_table = dim_table[[geo] + self._geography_aggregation[geo]].drop_duplicates(ignore_index=True)
-
-        # The luz file has geography as luz_id, and not luz. Change to keep our merge the same
-        if(geo == "luz"):
-            geo_table = geo_table.rename({"luz_id": "luz"}, axis=1)
-
         geo_table = pd.merge(geo_table, dim_table, how="left", on=geo)
-
         return geo_table
 
     def check_geography_aggregations(self, 
