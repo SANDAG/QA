@@ -715,13 +715,14 @@ class ProportionFiles():
     etc.
     """
 
-    def create_proportion_tables(self, est_vintage, 
+    def create_est_proportion_tables(self, 
+        est_vintage="2021_01", 
         geo_list=['region'],
         est_table_list=['age', "sex", 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
         raw_data_folder=pathlib.Path("./data/raw_data/"),
         save=True,
         save_folder=pathlib.Path("./data/proportion/")):
-        """Create the row sum and column sum proportion tables.
+        """Create the row sum and column sum proportion tables for the input Estimates tables.
 
         Specifically in the row sum tables, the each cell in the row is divided by the sum value in 
         the row. For the column sum tables, the cells for each year and column name are divided by
@@ -730,7 +731,7 @@ class ProportionFiles():
         of age groups for San Diego Hispanics in 2010.
 
         Args:
-            est_vintage (str): The vintage to compute proportions for.
+            est_vintage (str): The Estimates vintage to compute proportions for.
             geo_list (list of str): The geographies to create proportion files for. 
             est_table_list (list of str): Which estimates tables we want to create proportion files
                 for.
@@ -775,8 +776,9 @@ class ProportionFiles():
                 column_prop = None
                 if(est_table == "age_ethnicity" or est_table == "age_sex_ethnicity"):
                     column_prop = table.copy(deep=True)
-                    column_prop.iloc[:,len(keys):] /= 100 * \
+                    column_prop.iloc[:,len(keys):] /= \
                         column_prop.groupby([geo, "yr_id"])[column_prop.columns[len(keys):]].transform("sum")
+                    column_prop.iloc[:,len(keys):] = 100 * column_prop.iloc[:,len(keys):]
                 
                 # Save using the generic function
                 if(save):
@@ -785,3 +787,59 @@ class ProportionFiles():
                         f.save(column_prop, save_folder, est_vintage, geo, f"{est_table}_col_prop")
                 else:
                     raise NotImplementedError("save=False has no functionality.")
+
+    def create_DOF_proportion_table(self, 
+        DOF_vintage="2021_07_14", 
+        raw_data_folder=pathlib.Path("./data/raw_data/"),
+        save=True,
+        save_folder=pathlib.Path("./data/proportion/")):
+        """Create the row sum and column sum proportion table for DOF data.
+
+        See the function create_est_proportion_tables for a description of what row sum and column
+        sum proportion tables are. At this time, DOF data only contains region level population
+        broken down by age/sex/ethnicity.
+
+        Args:
+            DOF_vintage (str): The DFO vintage to compute proportions for.
+            raw_data_folder (pathlib.Path): pathlib.Path("./data/raw_data/") by default. The 
+                location where raw DOF data has been saved
+            save (bool): True by default. If True, then use save_folder to save the proportion 
+                files. At this time, False has no functionality, but this may change later
+            save_folder (pathlib.Path): pathlib.Path("./data/proportion/") by default. The location
+                to save proportion files
+
+        Returns:
+            None
+
+        Raises:
+            NotImplementedError: Raised if save=False. If this function is not saving files, then
+                it is literally doing nothing
+        """
+        # Get the DOF table
+        table = f.load(raw_data_folder, "DOF", DOF_vintage, "region", "age_sex_ethnicity")
+
+        # Keep track of the key value columns
+        keys = ["county_fips_code", "fiscal_yr", "age_group", "sex"]
+
+        # Compute the row wise sums then compute the proportions (actually a percentage (note the 
+        # 100 *), but oh well)
+        row_prop = table.copy(deep=True)
+        row_totals = row_prop.drop(keys, axis=1).sum(axis=1)
+        row_prop.iloc[:,len(keys):] = \
+            100 * row_prop.iloc[:,len(keys):].divide(row_totals, axis=0) 
+                
+        # Compute the column wise proportions. As stated in the function description, our 
+        # populations are considered to be only the grouping geography and year
+        column_prop = None
+        column_prop = table.copy(deep=True)
+        column_prop.iloc[:,len(keys):] /= \
+            column_prop.groupby(["county_fips_code", "fiscal_yr"])[column_prop.columns[len(keys):]].transform("sum")
+        column_prop.iloc[:,len(keys):] = 100 * column_prop.iloc[:,len(keys):]
+                
+        # Save using the generic function
+        if(save):
+            f.save(row_prop, save_folder, "DOF", DOF_vintage, "region", "age_sex_ethnicity", "row_prop")
+            f.save(column_prop, save_folder, "DOF", DOF_vintage, "region", "age_sex_ethnicity", "col_prop")
+        else:
+            raise NotImplementedError("save=False has no functionality.")
+        

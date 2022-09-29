@@ -242,13 +242,52 @@ By categorical distributions, we mean (for example) what percentage of the total
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L718"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L791"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `create_proportion_tables`
+### <kbd>method</kbd> `create_DOF_proportion_table`
 
 ```python
-create_proportion_tables(
-    est_vintage,
+create_DOF_proportion_table(
+    DOF_vintage='2021_07_14',
+    raw_data_folder=WindowsPath('data/raw_data'),
+    save=True,
+    save_folder=WindowsPath('data/proportion')
+)
+```
+
+Create the row sum and column sum proportion table for DOF data. 
+
+See the function create_est_proportion_tables for a description of what row sum and column sum proportion tables are. At this time, DOF data only contains region level population broken down by age/sex/ethnicity. 
+
+
+
+**Args:**
+ 
+ - <b>`DOF_vintage`</b> (str):  The DFO vintage to compute proportions for. 
+ - <b>`raw_data_folder`</b> (pathlib.Path):  pathlib.Path("./data/raw_data/") by default. The   location where raw DOF data has been saved 
+ - <b>`save`</b> (bool):  True by default. If True, then use save_folder to save the proportion   files. At this time, False has no functionality, but this may change later 
+ - <b>`save_folder`</b> (pathlib.Path):  pathlib.Path("./data/proportion/") by default. The location  to save proportion files 
+
+
+
+**Returns:**
+ None 
+
+
+
+**Raises:**
+ 
+ - <b>`NotImplementedError`</b>:  Raised if save=False. If this function is not saving files, then  it is literally doing nothing 
+
+---
+
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L718"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `create_est_proportion_tables`
+
+```python
+create_est_proportion_tables(
+    est_vintage='2021_01',
     geo_list=['region'],
     est_table_list=['age', 'sex', 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
     raw_data_folder=WindowsPath('data/raw_data'),
@@ -257,7 +296,7 @@ create_proportion_tables(
 )
 ```
 
-Create the row sum and column sum proportion tables. 
+Create the row sum and column sum proportion tables for the input Estimates tables. 
 
 Specifically in the row sum tables, the each cell in the row is divided by the sum value in  the row. For the column sum tables, the cells for each year and column name are divided by the sum of those cells. For example, in the age_ethnicity table, we would take the San Diego region, the year 2010, and the column Hispanic. Then we would get the distribution of age groups for San Diego Hispanics in 2010. 
 
@@ -265,7 +304,7 @@ Specifically in the row sum tables, the each cell in the row is divided by the s
 
 **Args:**
  
- - <b>`est_vintage`</b> (str):  The vintage to compute proportions for. 
+ - <b>`est_vintage`</b> (str):  The Estimates vintage to compute proportions for. 
  - <b>`geo_list`</b> (list of str):  The geographies to create proportion files for.  
  - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to create proportion files  for. 
  - <b>`raw_data_folder`</b> (pathlib.Path):  pathlib.Path("./data/raw_data/") by default. The   location where raw Estimates data has been saved 
