@@ -322,11 +322,10 @@ Compares the proportion of groups between DOF and Estimates.
 
 ```python
 check_DOF_proportion(
-    threshold=4,
-    est_vintage='2020_06',
+    threshold=1.5,
+    est_vintage='2021_01',
     DOF_vintage='2021_07_14',
-    geo_list=['region', 'jurisdiction'],
-    raw_folder=WindowsPath('data/raw_data'),
+    prop_folder=WindowsPath('data/proportion'),
     save=False,
     save_location=WindowsPath('data/outputs')
 )
@@ -334,22 +333,22 @@ check_DOF_proportion(
 
 Check the proportions of groups between Estimates and CA DOF are roughly the same. 
 
-BUG: This function no longer works with the updated CA DOF table format.  
+Due to limitations of CA DOF data, the only groups which are checked are population values split by age/sex/ethnicity, both row sum proportions and column sum proportions. If you  don't know what row/column sum proportions are, please refer to the function  create_est_proportion_tables in the file generate_tables.py. 
 
-Specifically, the groups which are checked are % of population in households vs group quarters, % of households which are single detached vs single attached vs mobile home vs multifamily, and % of households which are occupied vs vacant. If the differences in  percent between Estimates and CA DOF data are greater than the input threshold, then those rows of data will be printed out and saved if requested. 
+If the differences in proportion distributions between Estimates and CA DOF data are greater than the input threshold, then those rows of data will be printed out and saved if  requested.  
+
+NOTE: Estimates and CA DOF ethnicity categories overlap nicely, with the exception of  Estimates data having an extra category: "Non-Hispanic, Other". This category is ignored when doing proportion checks. Typically, in Estimates, the "Non-Hispanic, Other" category is a very tiny percentage of the row/column total, so it typically does not effect anything 
 
 
 
 **Args:**
  
- - <b>`threshold`</b> (float):  Default value of 4(%). The amount of absolute allowable difference  in proportions. For example, if the percent of total population in group quarters   compared between DOF and Estimates is greater than threshold, then that row is   flagged 
+ - <b>`threshold`</b> (float):  Default value of 1.5(%). The amount of absolute allowable difference  in proportions. For example, if the percent of total population in group quarters   compared between DOF and Estimates is greater than threshold, then that row is   flagged 
  - <b>`est_vintage`</b> (str):  Default value of "2020_06". The vintage of Estimates table to pull   from.  
  - <b>`DOF_vintage`</b> (str):  Default value of "2021_07_14". The vintage of CA DOF table to pull   from.  
- - <b>`geo_list`</b> (list):  The list of geographies to check. This can only contain "region" and  "jurisdiction" due to limitations of DOF data. 
- - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/raw_data/". The folder in which   raw Estimates data can be found. 
- - <b>`raw_folder`</b> (pathlib.Path):  Default value of "./data/CA_DOF/". The folder in which   transformed CA DOF data can be found. 
+ - <b>`prop_folder`</b> (pathlib.Path):  Default value of "./data/proportion/". The folder in which   proportion data can be found. 
  - <b>`save`</b> (bool):  Default value of False. If True, save the outputs of the check to the input  save_location if and only if errors have been found. 
- - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to save   check results. 
+ - <b>`save_location`</b> (pathlib.Path):  Default value of "./data/outputs/". The location to   save check results. 
 
 
 

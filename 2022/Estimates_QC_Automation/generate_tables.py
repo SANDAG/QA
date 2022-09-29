@@ -548,71 +548,68 @@ class CA_DOF():
         DDAM = sql.create_engine('mssql+pymssql://DDAMWSQL16/')
 
         # The query to get dis-aggregated data
+        # TODO: I'm not sure if the way I did transforming in SQL is the most efficient way. If 
+        # anyone has suggestions to clean up the query, it would be greatly appreciated.
         query = textwrap.dedent(f"""\
-            SELECT *
-            FROM [socioec_data].[ca_dof].[population_proj_{dof_vintage}] as dof
-            WHERE dof.county_fips_code='06073'
-            ORDER BY dof.county_fips_code, dof.fiscal_yr ASC""")
+            SELECT region, yr_id, race_ethnicity, sex, age_group, SUM([population]) as [population] FROM (
+                SELECT 
+                    REPLACE(county_fips_code, '6073', 'San Diego') as region,
+                    fiscal_yr as yr_id,
+                    REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(race_code, 
+                        '1', 'Non-Hispanic, White'), 
+                        '2', 'Non-Hispanic, Black'), 
+                        '3', 'Non-Hispanic, American Indian or Alaska Native'), 
+                        '4', 'Non-Hispanic, Asian'), 
+                        '5', 'Non-Hispanic, Hawaiian or Pacific Islander'), 
+                        '6', 'Non-Hispanic, Two or More Races'), 
+                        '7', 'Hispanic') as race_ethnicity,
+                    REPLACE(REPLACE(sex, 'M', 'Male'), 'F', 'Female') as sex,
+                    CASE
+                        WHEN age < 5 THEN 'Under 5'
+                        WHEN age < 10 THEN '5 to 9'
+                        WHEN age < 15 THEN '10 to 14'
+                        WHEN age < 18 THEN '15 to 17'
+                        WHEN age < 20 THEN '18 and 19'
+                        WHEN age < 25 THEN '20 to 24'
+                        WHEN age < 30 THEN '25 to 29'
+                        WHEN age < 35 THEN '30 to 34'
+                        WHEN age < 40 THEN '35 to 39'
+                        WHEN age < 45 THEN '40 to 44'
+                        WHEN age < 50 THEN '45 to 49'
+                        WHEN age < 55 THEN '50 to 54'
+                        WHEN age < 60 THEN '55 to 59'
+                        WHEN age < 62 THEN '60 and 61'
+                        WHEN age < 65 THEN '62 to 64'
+                        WHEN age < 70 THEN '65 to 69'
+                        WHEN age < 75 THEN '70 to 74'
+                        WHEN age < 80 THEN '75 to 79'
+                        WHEN age < 85 THEN '80 to 84'
+                        ELSE '85 and Older'
+                    END as age_group,
+                    [population]
+                FROM [socioec_data].[ca_dof].[population_proj_2021_07_14] as dof
+                WHERE dof.county_fips_code='06073') as dof
+            GROUP BY region, yr_id, race_ethnicity, sex, age_group
+            ORDER BY region, yr_id, race_ethnicity, sex, age_group
+            """)
 
         # Get the data into pandas
         data = pd.read_sql_query(query, con=DDAM)
 
         # Aggregate the data to remove the age/sex/ethnicity columns and save
         aggregated = (data 
-            .drop(["race_code", "sex", "age"], axis=1) 
-            .groupby(["county_fips_code", "fiscal_yr"]) 
+            .drop(["race_ethnicity", "sex", "age_group"], axis=1) 
+            .groupby(["region", "yr_id"]) 
             .sum() 
             .reset_index(drop=False) 
-            .sort_values(by="fiscal_yr", ascending=True))
+            .sort_values(by="yr_id", ascending=True))
         f.save(aggregated, save_folder, "DOF", dof_vintage, "region", "population")
 
-        # To transform DOF data into a similar (but not identical due to differences in ethnicity
-        # categories) format as our Estimates data, the following needs to be done
-        # 1. sex column needs to have the values "Male" and "Female" instead of "M" and "F"
-        # 2. race_code column needs to be transformed into the names of the races
-        # 3. age column needs to go from actual ages to age groups
-        # 4. Pivot so that ethnicity categories are on top
-
-        # 1. sex column needs to have the values "Male" and "Female" instead of "M" and "F"
-        # A simple replace function suffices
-        data = data.replace({"sex": {"M": "Male", "F": "Female"}})
-
-        # 2. race_code column needs to be transformed into the names of the races
-        # DOF data uses a different race encoding than Estimates which is why a dim table is not 
-        # being used. 
-        # NOTE: Additionally, I don't think the DOF race dim table exist in DDAMWSQL16 anywhere, so
-        # it is custom defined here. The race codes come from the data dictionary:
-        # https://dof.ca.gov/wp-content/uploads/Forecasting/Demographics/Documents/P3_Dictionary.txt
-        # The codes have been modified to match what the Estimates table use
-        # NOTE: Estimates tables include a code "Non-Hispanic, Other" which has no equivalent in
-        # the DOF data. This will be adjusted for later when comparing Estimates and DOF data
-        DOF_race_codes = {
-            1: "Non-Hispanic, White",
-            2: "Non-Hispanic, Black",
-            3: "Non-Hispanic, American Indian or Alaska Native",
-            4: "Non-Hispanic, Asian",
-            5: "Non-Hispanic, Hawaiian or Pacific Islander",
-            6: "Non-Hispanic, Two or More Races",
-            7: "Hispanic",
-        }
-        data = data.replace({"race_code": DOF_race_codes})
-
-        # 3. age column needs to go from actual ages to age groups
-        # Estimates uses age 5 year age groups starting with 0-4 (Under 5), 5-9, 10-14, ..., 85+
-        # age_groups is the text that represents each bin and age_bins determines the bin 
-        # thresholds. For example, age_bins starts with 0, 5, 10, 15, etc. Since in pd.cut, 
-        # right=False, the right edge is not included so we get [0,5), [5,10), [10,15), etc. The
-        # final 999 results in [85,999) which captures people over the age of 85
-        age_groups = ["Under 5"] + [f"{x} to {x+4}" for x in range(5, 85, 5)] + ["85 and Older"]
-        age_bins = list(range(0, 86, 5)) + [999]
-        data["age_group"] = pd.cut(data["age"], bins=age_bins, labels=age_groups, right=False)
-        data = data.drop("age", axis=1)
-
-        # 4. Pivot so that ethnicity categories are on top
+        # Pivot so that ethnicity categories are on top
         data = data.pivot_table(
             values="population", 
-            index=["county_fips_code", "fiscal_yr", "age_group", "sex"],
-            columns=["race_code"],
+            index=["region", "yr_id", "age_group", "sex"],
+            columns=["race_ethnicity"],
             aggfunc=np.sum
         ).reset_index(drop=False)
 
@@ -819,7 +816,7 @@ class ProportionFiles():
         table = f.load(raw_data_folder, "DOF", DOF_vintage, "region", "age_sex_ethnicity")
 
         # Keep track of the key value columns
-        keys = ["county_fips_code", "fiscal_yr", "age_group", "sex"]
+        keys = ["region", "yr_id", "age_group", "sex"]
 
         # Compute the row wise sums then compute the proportions (actually a percentage (note the 
         # 100 *), but oh well)
@@ -833,7 +830,7 @@ class ProportionFiles():
         column_prop = None
         column_prop = table.copy(deep=True)
         column_prop.iloc[:,len(keys):] /= \
-            column_prop.groupby(["county_fips_code", "fiscal_yr"])[column_prop.columns[len(keys):]].transform("sum")
+            column_prop.groupby(["region", "yr_id"])[column_prop.columns[len(keys):]].transform("sum")
         column_prop.iloc[:,len(keys):] = 100 * column_prop.iloc[:,len(keys):]
                 
         # Save using the generic function

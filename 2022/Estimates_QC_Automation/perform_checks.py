@@ -698,25 +698,30 @@ class DOFProportion():
     """Compares the proportion of groups between DOF and Estimates."""
 
     def check_DOF_proportion(self, 
-        threshold=4,
-        est_vintage="2020_06", 
+        threshold=1.5,
+        est_vintage="2021_01", 
         DOF_vintage="2021_07_14",
-        geo_list=["region", "jurisdiction"],
-        raw_folder=pathlib.Path("./data/raw_data/"),
+        prop_folder=pathlib.Path("./data/proportion/"),
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
         """Check the proportions of groups between Estimates and CA DOF are roughly the same.
 
-        BUG: This function no longer works with the updated CA DOF table format. 
+        Due to limitations of CA DOF data, the only groups which are checked are population values
+        split by age/sex/ethnicity, both row sum proportions and column sum proportions. If you 
+        don't know what row/column sum proportions are, please refer to the function 
+        create_est_proportion_tables in the file generate_tables.py.
 
-        Specifically, the groups which are checked are % of population in households vs group
-        quarters, % of households which are single detached vs single attached vs mobile home vs
-        multifamily, and % of households which are occupied vs vacant. If the differences in 
-        percent between Estimates and CA DOF data are greater than the input threshold, then
-        those rows of data will be printed out and saved if requested.
+        If the differences in proportion distributions between Estimates and CA DOF data are greater
+        than the input threshold, then those rows of data will be printed out and saved if 
+        requested. 
+
+        NOTE: Estimates and CA DOF ethnicity categories overlap nicely, with the exception of 
+        Estimates data having an extra category: "Non-Hispanic, Other". This category is ignored
+        when doing proportion checks. Typically, in Estimates, the "Non-Hispanic, Other" category
+        is a very tiny percentage of the row/column total, so it typically does not effect anything
         
         Args:
-            threshold (float): Default value of 4(%). The amount of absolute allowable difference
+            threshold (float): Default value of 1.5(%). The amount of absolute allowable difference
                 in proportions. For example, if the percent of total population in group quarters 
                 compared between DOF and Estimates is greater than threshold, then that row is 
                 flagged
@@ -724,16 +729,12 @@ class DOFProportion():
                 from. 
             DOF_vintage (str): Default value of "2021_07_14". The vintage of CA DOF table to pull 
                 from. 
-            geo_list (list): The list of geographies to check. This can only contain "region" and
-                "jurisdiction" due to limitations of DOF data.
-            raw_folder (pathlib.Path): Default value of "./data/raw_data/". The folder in which 
-                raw Estimates data can be found.
-            raw_folder (pathlib.Path): Default value of "./data/CA_DOF/". The folder in which 
-                transformed CA DOF data can be found.
+            prop_folder (pathlib.Path): Default value of "./data/proportion/". The folder in which 
+                proportion data can be found.
             save (bool): Default value of False. If True, save the outputs of the check to the input
                 save_location if and only if errors have been found.
-            save_location (pathlib.Path): Default value of "./data/outputs/". The location to save 
-                check results.
+            save_location (pathlib.Path): Default value of "./data/outputs/". The location to 
+                save check results.
 
         Returns:
             None, but prints out differences if present. Also saves output if requested and errors
@@ -742,103 +743,63 @@ class DOFProportion():
         # Print what test is going on
         print("Running Check 7: DOF Categorical Proportion Check")
 
-        # Iterate over the requested geographies
-        for geo in geo_list:
-            # Print what geography level we are checking
-            print(f"Checking {geo} level data")
+        # This check should only be run at the region level on the age_sex_ethnicity table
+        geo = "region"
+        table_name = "age_sex_ethnicity"
+
+        # This check should be run on both row sum proportions and column sum proportions
+        for prop_type in ["row_prop", "col_prop"]:
+            print(f"Checking {prop_type} files")
 
             # Get Estimates and CA DOF data
-            est_table = f.load(raw_folder, est_vintage, geo, "consolidated")
-            DOF_table = f.load(raw_folder, "DOF", DOF_vintage, geo, "population")
+            est_table = f.load(prop_folder, est_vintage, geo, table_name, prop_type)
+            DOF_table = f.load(prop_folder, "DOF", DOF_vintage, geo, table_name, prop_type)
 
-            # Transform Estimates data into the format we want
-            # 1. Create new column to sync up with DOF data format
-            # 2. Select only the columns we want
-            # 3. Sync up column naming
+            # Sync up the two tables to have exactly the same format
+            # For Estimates data, just drop the "Non-Hispanic, Other" column
+            est_table = est_table.drop("Non-Hispanic, Other", axis=1)
 
-            # 1. Create new column to sync up with DOF data format
-            est_table["Group Quarters"] = est_table[["Group Quarters - Military", 
-                "Group Quarters - College", "Group Quarters - Other"]].sum(axis=1)
+            # For DOF data, sync up column names
+            DOF_table = DOF_table.rename({"age_group": "name"}, axis=1)
 
-            # 2. Select only the columns we want
-            est_table = est_table[[geo, "yr_id", 
-                "Total Population", "Household Population", "Group Quarters", 
-                "households", "Single Family - Detached", "Single Family - Multiple Unit", 
-                    "Multifamily", "Mobile Home",
-                "units", "occupied", "vacancy"]]
+            # Sort the two tables in the same manner, by region, then year, then age group, then sex
+            key_cols = ["region", "yr_id", "name", "sex"]
+            est_table = est_table.sort_values(
+                by=key_cols,
+                ascending=[True, True, True, True]).reset_index(drop=True)
+            DOF_table = DOF_table.sort_values(
+                by=key_cols,
+                ascending=[True, True, True, True]).reset_index(drop=True)
 
-            # 3. Sync up column naming
-            est_table = est_table.rename({
-                "yr_id": "Year",
-                "households": "Households",
-                "Single Family - Detached": "Single Detached", 
-                "Single Family - Multiple Unit": "Single Attached",
-                "Mobile Home": "Mobile Homes",
-                "occupied": "Occupied Housing Units",
-                "units": "Housing Units",
-                "vacancy": "Vacant Housing Units"}, axis=1)
+            # Make sure the column ordering is the same
+            # Since DOF file generation ensures that ethnicity categories are the exact same text,
+            # we can just set the order of DOF columns to be the same as the Estimates tables 
+            # columns
+            DOF_table = DOF_table[est_table.columns]
 
-            # Transform CA DOF data into the format we want
-            # 1. Create new columns to sync up with Estimates data format
-            # 2. Select only the columns we want
-            # 3. Sync up column naming
-            
-            # 1. Create new columns to sync up with Estimates data format
-            DOF_table["Multifamily"] = DOF_table[["Two to Four", "Five Plus"]].sum(axis=1)
-            DOF_table["Vacant Housing Units"] = (DOF_table["Households"] * DOF_table["Vacancy Rate"]).astype(int)
-            DOF_table["Housing Units"] = DOF_table[["Occupied", "Vacant Housing Units"]].sum(axis=1)
-
-            # 2. Select only the columns we want
-            DOF_geo = "County" if geo == "Region" else "City"
-            DOF_table = DOF_table[[DOF_geo, "Year", 
-                "Total Population", "Household Population", "Group Quarters", 
-                "Households", "Single Detached", "Single Attached", "Multifamily", "Mobile Homes",
-                "Housing Units", "Occupied", "Vacant Housing Units"]]
-
-            # 3. Sync up column naming
-            DOF_table = DOF_table.rename({
-                DOF_geo: geo,
-                "Occupied": "Occupied Housing Units"}, axis=1)
-
-            # Modify both tables to be percentages
-            # In theory, both tables should have the exact same format so this is to prevent 
-            # duplication of code
-            for table in [est_table, DOF_table]:
-                table[["Household Population", "Group Quarters"]] = 100 * \
-                    table[["Household Population", "Group Quarters"]].divide(table["Total Population"], axis=0)
-                table[["Single Detached", "Single Attached", "Multifamily", "Mobile Homes"]] = 100 * \
-                    table[["Single Detached", "Single Attached", "Multifamily", "Mobile Homes"]].divide(table["Households"], axis=0)
-                table[["Occupied Housing Units", "Vacant Housing Units"]] = 100 * \
-                    table[["Occupied Housing Units", "Vacant Housing Units"]].divide(table["Housing Units"], axis=0)
-
-            # Sync up the sorting order
-            # BUG: For God knows what reason, these sorts CANNOT be done inside the above for
-            # loop using the generic variable table. It just doesn't work. Why? I wish I knew :(
-            est_table = est_table.sort_values(by=[geo, "Year"], ascending=[True, True], axis=0)
-            DOF_table = DOF_table.sort_values(by=[geo, "Year"], ascending=[True, True], axis=0)
-
-            # Filter rows of DOF_table to match the years in est_table
-            DOF_table = DOF_table[DOF_table["Year"].isin(pd.unique(est_table["Year"]))].reset_index(drop=True)
-
-            # Get the differences 
-            diff = est_table[[geo, "Year"]].copy(deep=True).join(
-                abs(est_table.iloc[:, 2:] - DOF_table.iloc[:, 2:]))
-
-            # Drop the non percent differences columns
-            diff = diff.drop(["Total Population", "Households", "Housing Units"], axis=1)
+            # Get the absolute difference in proportions between the two
+            diff = abs(est_table.drop(key_cols, axis=1).subtract(DOF_table.drop(key_cols, axis=1)))
 
             # Find the rows with errors
-            error_rows = (diff.drop([geo, "Year"], axis=1) > threshold).any(1)
+            error_rows = (diff > threshold).any(1)
 
-            # Print out the rows that have a percent change larger than the allowed amount
+            # Add the key columns back onto diff
+            diff = pd.concat([est_table[key_cols], diff], axis=1)
+
+            # Print out the rows where the difference in proportions is larger than the threshold
             if(error_rows.sum() != 0):
                 print("Errors have occurred on the following rows:")
                 print(diff[error_rows])
                 # Save if errors and requested
                 if(save):
-                    f.save(diff[error_rows], save_location, f"C7({threshold}%)", f"DOF-{est_vintage}", geo)
+                    f.save({
+                        f"Estimates {est_vintage}": est_table[error_rows],
+                        f"DOF {DOF_vintage}": DOF_table[error_rows],
+                        f"|Diff|": diff[error_rows]
+                    },  save_location, f"C7({threshold}%)", 
+                        f"DOF({DOF_vintage})", f"Est({est_vintage})",
+                        geo, table_name, prop_type)
             else:
                 print("No errors")
             print()
-
-        pass
+            
