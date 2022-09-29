@@ -836,7 +836,7 @@ class DOFProportion():
                 print(diff[error_rows])
                 # Save if errors and requested
                 if(save):
-                    f.save(diff[error_rows], save_location, f"C7({threshold}%)", f"DOF-{vintage}", geo)
+                    f.save(diff[error_rows], save_location, f"C7({threshold}%)", f"DOF-{est_vintage}", geo)
             else:
                 print("No errors")
             print()
