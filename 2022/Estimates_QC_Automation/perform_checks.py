@@ -664,7 +664,7 @@ class DOFPopulation():
 
         # Sync up table columns
         est_table = est_table.rename({"yr_id": "Year", "Total Population": "Est Population"}, axis=1)
-        DOF_table = DOF_table.rename({"fiscal_yr": "Year", "population": "DOF Population"}, axis=1)
+        DOF_table = DOF_table.rename({"yr_id": "Year", "population": "DOF Population"}, axis=1)
 
         # Keep only the Year and Population columns
         est_table = est_table[["Year", "Est Population"]]
@@ -754,6 +754,9 @@ class DOFProportion():
             # Get Estimates and CA DOF data
             est_table = f.load(prop_folder, est_vintage, geo, table_name, prop_type)
             DOF_table = f.load(prop_folder, "DOF", DOF_vintage, geo, table_name, prop_type)
+
+            # DOF data contains forecast years, remove them
+            DOF_table = DOF_table[DOF_table["yr_id"].isin(est_table["yr_id"].unique())]
 
             # Sync up the two tables to have exactly the same format
             # For Estimates data, just drop the "Non-Hispanic, Other" column
