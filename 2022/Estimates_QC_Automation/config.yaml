@@ -121,3 +121,34 @@ series:
   "2020_04": 14
   "2020_06": 14
   "2021_01": 14
+
+pivot_categories:
+    age: |
+        SELECT DISTINCT name
+        FROM [demographic_warehouse].[dim].[age_group]
+        ORDER BY name
+    ethnicity: |
+        SELECT DISTINCT long_name
+        FROM [demographic_warehouse].[dim].[ethnicity]
+        ORDER BY long_name
+    household_income: |
+        SELECT DISTINCT name
+        FROM [demographic_warehouse].[dim].[income_group]
+        WHERE categorization = 10
+            AND constant_dollars_year = 2010
+    housing: |
+        SELECT DISTINCT long_name
+        FROM [demographic_warehouse].[dim].[structure_type]
+        ORDER BY long_name
+    jobs: |
+        SELECT DISTINCT full_name
+        FROM [demographic_warehouse].[dim].[employment_type]
+        ORDER BY full_name
+    population: |
+        SELECT DISTINCT long_name
+        FROM [demographic_warehouse].[dim].[housing_type]
+        ORDER BY long_name
+    sex: |
+        SELECT DISTINCT sex
+        FROM [demographic_warehouse].[dim].[sex]
+        ORDER BY sex

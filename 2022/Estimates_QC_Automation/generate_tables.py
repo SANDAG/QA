@@ -77,13 +77,6 @@ class EstimatesTables():
         # unique transformations when pivoting
         housing = (est_table == "housing")
 
-        # This variable is used to modify the behavior to use chunks for very large tables. 
-        # Specifically, it will be used if asking for age_ethnicity or age_sex_ethnicity at the
-        # mgra level
-        use_chunks = (
-            (geo_level == "mgra") and 
-            (est_table in ["age_ethnicity", "age_sex_ethnicity"]))
-
         # If we want debug, output all function inputs and the above derived function inputs
         if(debug):
             print("*** BEGIN FUNCTION INPUTS ***")
@@ -97,7 +90,6 @@ class EstimatesTables():
             print(f"{'age_ethnicity' : <32}", age_ethnicity)
             print(f"{'households' : <32}", households)
             print(f"{'housing' : <32}", housing)
-            print(f"{'use_chunks' : <32}", use_chunks)
             print("*** END FUNCTION INPUTS ***")
             print()
 
@@ -250,138 +242,89 @@ class EstimatesTables():
                 geography_filter=geography_filter,
                 join_col = join_col
             )
+
+        # TODO: Fix the below hacky solution
+        # For the age_ethnicity table, modify the SQL query to ignore the sex column when grouping
+        if(age_ethnicity):
+            query = query.replace("sex.sex, ", "")
+
+        # Pivot the table if requested by modifying the original query
+        # Note, due to how the households table is created, it is by default already in pivot table 
+        # format
+        if(pivot and not households):
+            
+            # The structure of the pivot query
+            pivot_query = textwrap.dedent("""\
+                SELECT * FROM (
+                    {tall_table_query}
+                    ) as p
+                PIVOT (
+                    SUM([{numeric_column}])
+                    FOR [{pivot_column}] IN (
+                        {pivot_categories}
+                    )
+                ) as pivot_table
+                ORDER BY {key_columns}""")
+
+            # The tall table query is of course, the query we just created. However, ORDER BY is
+            # not allowed in inline queries, so that needs to be removed. Additionally, add on 
+            # padding in from of the query to make printing prettier later on.
+            tall_table_query = query.replace("\n", "\n    ")
+            tall_table_query = tall_table_query.split("ORDER BY")[0]
+
+            # The numeric_column is the name of the column which contains the values. This is
+            # typically something like population or number of households
+            numeric_column = None
+            if(not age_ethnicity):
+                numeric_column = config["est"][est_table]["aggregations"][0][0]
+            else:
+                numeric_column = config["est"]["age_sex_ethnicity"]["aggregations"][0][0]
+
+            # The pivot_column is the name of the column which contains the variable we want to
+            # pivot out, aka the column with the values we want to become new column headers
+            pivot_column = None
+            if(not (age_ethnicity or est_table == "age_sex_ethnicity")):
+                pivot_column = config["dim"][ID_COLUMNS[0]]["column(s)"][0]
+            else:
+                pivot_column = config["dim"]["ethnicity_id"]["column(s)"][0]
+
+            # The pivot_categories contain the actual values of the categorical variables to pivot
+            # out. In other words, the actual names of the new columns. These have to be pulled
+            # from SQL unfortunately, which slows down the function a bit.
+            pivot_categories = None
+            if(not (age_ethnicity or est_table == "age_sex_ethnicity")):
+                pivot_categories = pd.read_sql_query(
+                    config["pivot_categories"][est_table], con=DDAM).values
+            else:
+                pivot_categories = pd.read_sql_query(
+                    config["pivot_categories"]["ethnicity"], con=DDAM).values
+            pivot_categories = [f"[{x[0]}]" for x in pivot_categories]
+            pivot_categories = ", ".join(pivot_categories)
+
+            # The key_columns contains the columns which are not pivoted out. So always geography
+            # and year, and occasionally age group or sex columns for age_sex_ethnicity tables
+            key_columns = f"{geo_level}, yr_id"
+            if(est_table == "age_sex_ethnicity"):
+                key_columns += ", name, sex"
+            elif(age_ethnicity):
+                key_columns += ", name"
+
+            # Construct the pivot query
+            query = pivot_query.format(
+                tall_table_query=tall_table_query,
+                numeric_column=numeric_column,
+                pivot_column=pivot_column,
+                pivot_categories=pivot_categories,
+                key_columns=key_columns)
+
+        # Print out the query
         if(debug):
             print("*** FULL QUERY BELOW ***")
             print(query)
             print("*** END FULL QUERY ***")
 
         # Get the table into pandas
-        # NOTE: Use chunksize if asking for age_ethnicity or age_sex_ethnicity at the mgra level
-        table = None
-        if(not use_chunks):
-            table = pd.read_sql_query(query, con=DDAM)
-        else:
-            table = pd.read_sql_query(query, con=DDAM, chunksize=1000)
-
-        # If the age_ethnicity table was requested (and not the age_sex_ethnicity table which was
-        # pulled from SQL), then aggregate to remove the sex category
-        if(age_ethnicity):
-            if(not use_chunks):
-                table = table.groupby(
-                    [geo_level, "yr_id", "name", "long_name"]).sum().reset_index(drop=False)
-            else:
-                for chunk in table:
-                    print("Removing sex column from chunk")
-                    chunk = chunk.groupby(
-                        [geo_level, "yr_id", "name", "long_name"]).sum().reset_index(drop=False)
-
-        # Pivot the table if requested
-        # Note, due to how the households table is created, it is by default already in pivot table 
-        # format
-        if(pivot and not households):
-            # For every table, there are 1-3 categorical columns, and 1-4 value columns. Each unique
-            # combination of all categorical columns and one value column will form a new column
-
-            # Some additional weird transformations need to be done on the housing table. 
-            housing_values_table = None
-            if(housing):
-                housing_values_table = table[[geo_level, "yr_id", "units", "unoccupiable", "occupied", 
-                    "vacancy"]].copy(deep=True).groupby([geo_level, "yr_id"]).sum()
-                table = table[[geo_level, "yr_id", "long_name", "units"]]
-
-            # First, create the list of index columns, categorical column(s), and value column(s)
-            # for pivoting
-            IND_COLS = [geo_level, "yr_id"]
-            CAT_COLS = [config["dim"][col]["column(s)"][0] for col in ID_COLUMNS]
-            VAL_COLS = None
-            if(age_ethnicity):
-                IND_COLS += ["name"]
-                CAT_COLS = ["long_name"]
-                VAL_COLS = ["population"]
-            elif(housing):
-                CAT_COLS = ["long_name"]
-                VAL_COLS = ["units"]
-            else:
-                VAL_COLS = [col[0] for col in config["est"][est_table]["aggregations"]]
-
-            # Custom behavior for the age_sex_ethnicity table
-            if(est_table == "age_sex_ethnicity"):
-                IND_COLS += ["name", "sex"]
-                CAT_COLS = ["long_name"]
-
-            # Before pivoting, get the category order as for whatever reason, pivot_table() seems
-            # to sort automatically, and if you do sort=False it puts the columns in a weird order...
-            col_order = list(table[CAT_COLS[0]].unique())
-
-            # Custom behavior for the population table. Essentially, we want to add on a column
-            # with total population. Note, this column will be computer later on
-            if(est_table == "population"):
-                col_order = ["Total Population"] + col_order
-
-            # BUG: For an unknown reason, SQL returns the incorrect column order for the table 
-            # age_sex_ethnicity, but only when the geo_level is region or cpa. So when the geo_level
-            # is jurisdiction, SQL returns the correct order.
-            # NOTE: This bug was fixed by hardcoding the column order. An actual fix for this 
-            # would likely involve work on the SQL server side.
-            if(est_table == "age_sex_ethnicity"):
-                if(debug):
-                    print("Manually adjusting column order, see notebook TODO for why")
-                col_order = ["Hispanic", "Non-Hispanic, White", "Non-Hispanic, Asian", 
-                    "Non-Hispanic, Hawaiian or Pacific Islander", 
-                    "Non-Hispanic, American Indian or Alaska Native", "Non-Hispanic, Other", 
-                    "Non-Hispanic, Two or More Races", "Non-Hispanic, Black"]
-
-            # Print how pivoting will be done
-            if(debug):
-                print(f"{'Pivot index columns:' : <32}", IND_COLS)
-                print(f"{'Pivot categorical columns:' : <32}", CAT_COLS)
-                print(f"{'Pivot value columns:' : <32}", VAL_COLS)
-                print(f"{'Column order:' : <32}", col_order)
-
-            # Pivot the table
-            if(not use_chunks):
-                table = table.pivot_table(
-                    index=IND_COLS, 
-                    columns=CAT_COLS,
-                    values=VAL_COLS,
-                    aggfunc=sum) # Not used except for age_sex_ethnicity table
-            else:
-                for chunk in table:
-                    chunk = chunk.pivot_table(
-                        index=IND_COLS, 
-                        columns=CAT_COLS,
-                        values=VAL_COLS,
-                        aggfunc=sum) # Not used except for age_sex_ethnicity table
-
-            # Custom behavior for the population table. Compute the total population column from the 
-            # other columns
-            if(est_table == "population"):
-                table["population", "Total Population"] = (table["population", "Household Population"] + 
-                    table["population", "Group Quarters - Military"] + 
-                    table["population", "Group Quarters - College"] + 
-                    table["population", "Group Quarters - Other"])
-
-            # Put the columns back in the correct order
-            if(not use_chunks):
-                table = table.reindex(col_order, axis=1, level=1)
-            else:
-                for chunk in table:
-                    chunk = chunk.reindex(col_order, axis=1, level=1)
-
-            # Undo the multi-indices and multi-columns
-            if(not use_chunks):
-                table = table.reset_index(drop=False)
-                table.columns = table.columns.get_level_values(0)[:len(IND_COLS)].append(
-                    table.columns.get_level_values(1)[len(IND_COLS):])
-            else:
-                for chunk in table:
-                    chunk = chunk.reset_index(drop=False)
-                    chunk.columns = chunk.columns.get_level_values(0)[:len(IND_COLS)].append(
-                        chunk.columns.get_level_values(1)[len(IND_COLS):])
-
-            # Add back on the housing value columns 
-            if(housing):
-                table = table.merge(housing_values_table, on=[geo_level, "yr_id"])
+        table = pd.read_sql_query(query, con=DDAM)
 
         # Return the table
         return table
@@ -451,16 +394,13 @@ class EstimatesTables():
             # Save the table if requested
             if(save):
                 f.save(combined_table, save_folder, est_vintage, geo, "consolidated")
-        
-        # NOTE: Save on memory by not storing/returning anything                
-        # # Return all the combined tables
-        # return combined_tables
 
     def individual(self, est_vintage,
         geo_list=["region", "jurisdiction", "cpa"], 
         est_table_list=["age", "ethnicity", "household_income", "age_ethnicity", "age_sex_ethnicity"],
         save=False,
-        save_folder=None):
+        save_folder=None,
+        overwrite=False):
         """Create individual files for each unique combination of Estimate table and geography level.
 
         Args:
@@ -470,8 +410,13 @@ class EstimatesTables():
             est_table_list (list of str): Which estimates tables we want to consolidate
             save (bool): False by default. If False, then only return the consolidated tables. If 
                 True, then use save_folder to save the consolidated tables and return the tables
-            save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as a 
-                pathlib.Path object
+            save_folder (pathlib.Path): None by default. If save=True, then the folder to save in as
+                a pathlib.Path object
+            overwrite (bool): False by default. If True, then the function will re-download and save
+                all files, potentially taking an extremely long time especially if mgra is in 
+                geo_list. If False, then the function will only download and save files if they do
+                not exist in the save folder. Additionally, the function will attempt to get the
+                age_sex_ethnicity table from file in order to aggregate to the age_ethnicity table.
 
         Returns:
             None
@@ -486,31 +431,27 @@ class EstimatesTables():
             # Loop over every estimate table we want to get
             for est_table_name in est_table_list:
 
-                # Get the estimate table
-                est_table = self.get_table_by_geography(est_vintage, geo, est_table_name, pivot=True)
+                # If we do not want to overwrite files...
+                est_table = None
+                if(not overwrite):
+                    # Check if the file exists in the save folder already
+                    try:
+                        f.load(save_folder, est_vintage, geo, est_table_name)
+                    # Download the file from SQL Server if the file does not exist
+                    except FileNotFoundError:
+                        est_table = self.get_table_by_geography(
+                            est_vintage, geo, est_table_name, pivot=True)
 
-                # NOTE: Save on memory by not storing/returning anything
-                # # Store the individual table
-                # individual_tables.append(est_table)
+                # If we want to overwrite files, then get it from SQL Server
+                else:
+                    est_table = self.get_table_by_geography(
+                        est_vintage, geo, est_table_name, pivot=True)
 
-                # Save the table if requested
-                # est_table may be a pd.dataframe split up into chunks, modify the behavior
-                # accordingly
-                if(save):
-                    if((geo == "mgra") and (est_table_name in ["age_ethnicity", "age_sex_ethnicity"])):
-                        header=True
-                        for chunk in est_table:
-                            chunk.to_csv(
-                                save_folder / f"{f._file_path(est_vintage, geo, est_table_name)}csv",
-                                header=header,
-                                mode="a")
-                            header=False
-                    else:
-                        f.save(est_table, save_folder, est_vintage, geo, est_table_name)
-
-        # NOTE: Save on memory by not storing/returning anything                
-        # # Return all the combined tables
-        # return individual_tables
+                # Save the table if requested.
+                # If est_table is None, that implies that no overwrite was requested and the file
+                # already exists, so no re-downloading/saving is necessary
+                if(save and (est_table is not None)):
+                    f.save(est_table, save_folder, est_vintage, geo, est_table_name)
 
 ############################################
 # CA Department of Finance Population Data #

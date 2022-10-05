@@ -23,7 +23,7 @@ The functions in this class all create tables directly using Estimates data from
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L389"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L332"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `consolidate`
 
@@ -96,7 +96,7 @@ This function will return the requested Estimates table from the requested vinta
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L459"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L398"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `individual`
 
@@ -106,7 +106,8 @@ individual(
     geo_list=['region', 'jurisdiction', 'cpa'],
     est_table_list=['age', 'ethnicity', 'household_income', 'age_ethnicity', 'age_sex_ethnicity'],
     save=False,
-    save_folder=None
+    save_folder=None,
+    overwrite=False
 )
 ```
 
@@ -120,7 +121,8 @@ Create individual files for each unique combination of Estimate table and geogra
  - <b>`geo_list`</b> (list of str):  The geographies to consolidate along.  
  - <b>`est_table_list`</b> (list of str):  Which estimates tables we want to consolidate 
  - <b>`save`</b> (bool):  False by default. If False, then only return the consolidated tables. If   True, then use save_folder to save the consolidated tables and return the tables 
- - <b>`save_folder`</b> (pathlib.Path):  None by default. If save=True, then the folder to save in as a   pathlib.Path object 
+ - <b>`save_folder`</b> (pathlib.Path):  None by default. If save=True, then the folder to save in as  a pathlib.Path object 
+ - <b>`overwrite`</b> (bool):  False by default. If True, then the function will re-download and save  all files, potentially taking an extremely long time especially if mgra is in   geo_list. If False, then the function will only download and save files if they do  not exist in the save folder. Additionally, the function will attempt to get the  age_sex_ethnicity table from file in order to aggregate to the age_ethnicity table. 
 
 
 
@@ -130,7 +132,7 @@ Create individual files for each unique combination of Estimate table and geogra
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L519"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L460"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `CA_DOF`
 Functions to get CA Department of Finance population estimates from SQL. 
@@ -142,7 +144,7 @@ This class currently has the functionality of getting region level population da
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L528"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L469"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_CA_DOF_region_pop`
 
@@ -172,7 +174,7 @@ Get both total population for the region in each year and total population for t
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L623"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L564"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
@@ -184,7 +186,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L633"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L574"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 
@@ -230,7 +232,7 @@ This function will create and save diff files for each unique combination of geo
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L706"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L647"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ProportionFiles`
 Functions to compute categorical distributions within Estimates tables. 
@@ -242,7 +244,7 @@ By categorical distributions, we mean (for example) what percentage of the total
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L788"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L729"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_DOF_proportion_table`
 
@@ -281,7 +283,7 @@ See the function create_est_proportion_tables for a description of what row sum 
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L715"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L656"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_est_proportion_tables`
 
