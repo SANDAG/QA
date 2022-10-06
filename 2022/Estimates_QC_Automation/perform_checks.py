@@ -36,18 +36,22 @@ class InternalConsistency():
         quarters population vs etc.
 
     Attributes:
-        _geography_aggregation (dict of list): A dictionary with key equals to a geography level, 
+        geography_aggregation (dict of list): A dictionary with key equals to a geography level, 
             and the value equals to a list containing geographies to aggregate to. For example, for
             the key value of "mgra", the value would contain ["jurisdiction", "region"] because 
-            "mgra" aggregates up to both of those geography levels.
+            "mgra" aggregates up to both of those geography levels. NOTE: "luz" or Land Use Zone
+            cannot be added here because "luz" does not exist in 
+            [demographic_warehouse].[dim].[mgra_denormalize]. If you want to add "luz", the 
+            crosswalk has to be pulled from [GeoDepot].[gis].[MGRA##] in sql2014b8 (not 
+            DDAMWSQL16), where ## has the correct MGRA series number.
         _est_table_by_type (dict of list): A dictionary with key equals to measure type and the
             value equals to a list of the Estimates tables which have that measure type. For 
             example, for the key "population", the value would include "age" because the age table
             breaks down age categories by population.
     """
 
-    _geography_aggregation = {
-        "mgra": ["luz", "cpa", "jurisdiction", "region"],
+    geography_aggregation = {
+        "mgra": ["cpa", "jurisdiction", "region"],
         "jurisdiction": ["region"],
         "cpa": ["jurisdiction", "region"],
         "luz": ["region"],
@@ -97,7 +101,11 @@ class InternalConsistency():
         geo_table = f.load(folder, vintage, geo, table_name)
 
         # Get those additional geographies
-        geographies = [geo] + self._geography_aggregation[geo]
+        # NOTE: Due to errors in MGRA Series 13, "mgra" can only be aggregated up to the region 
+        # level. Other geographies are thus removed
+        geographies = [geo] + self.geography_aggregation[geo]
+        if(geo == "mgra"):
+            geographies = ["mgra", "region"]
         query = textwrap.dedent(f"""
             SELECT {", ".join(geographies)}
             FROM [demographic_warehouse].[dim].[mgra_denormalize]
@@ -106,7 +114,7 @@ class InternalConsistency():
         dim_table = pd.read_sql_query(query, con=DDAM)
 
         # Combine them together
-        dim_table = dim_table[[geo] + self._geography_aggregation[geo]].drop_duplicates(ignore_index=True)
+        dim_table = dim_table[geographies].drop_duplicates(ignore_index=True)
         geo_table = pd.merge(geo_table, dim_table, how="left", on=geo)
         return geo_table
 
@@ -150,37 +158,50 @@ class InternalConsistency():
 
         # Check each geography level at the specified aggregation levels
         for geo in geo_list:
-            for agg_col in self._geography_aggregation[geo]:
+            for agg_col in self.geography_aggregation[geo]:
                 # Let the user know what we are aggregating to/from and what we are comparing to
                 print(f"Aggregating {geo} level data to {agg_col} and comparing with {agg_col} csv file")
 
                 # Continue with the next geography if cpa is being aggregated to anything
-                if(geo == "cpa"):
+                # NOTE: This is because for whatever reason, cpa polygons do not line up with 
+                # mgra polygons, at least in MGRA series 13. As a result, the aggregation will
+                # never work.
+                if(geo == "cpa" or agg_col == "cpa"):
                     print("CPA cannot be aggregated")
                     print()
                     continue
 
+                # Due to errors in MGRA Series 13, mgra can ONLY be aggregated up to the region 
+                # level
+                # BUG: This assumes that the mgra series being used is MGRA series 13. This will
+                # need to change when Estimates start using MGRA series 15.
+                if(geo == "mgra" and (not agg_col == "region")):
+                    print(f"MGRA cannot be aggregated to {agg_col} due to errors in MGRA 13")
+                    print(f"If Estimates {vintage} is not using MGRA 13, code needs to be updated")
+                    print()
+                    continue
+
                 # Aggregate the geo_level table to the geography level in agg_col. 
-                # Note, the geography table is copied before aggregating, because sometimes we want to 
-                # aggregate to multiple geography levels and we don't want to modify the original table
-                # BUG: Not all variables should be aggregated with a simple sum, some of them (like 
-                # household size) are averages.
+                # Note, the geography table is copied before aggregating, because sometimes we want 
+                # to aggregate to multiple geography levels and we don't want to modify the original
+                # table
                 aggregated = geo_tables[geo].copy(deep=True).groupby([agg_col, "yr_id"]).sum().reset_index()
 
-                # NOTE: The current generation code does not have hhs nor vacancy_rate
-                # # The hacky fix to the above bug
-                # # Note, hhs = household size 
-                # #           = total population / number of households 
-                # #           = pop / hh
-                # # BUG: Why does documentation above use total population (pop) while the code below uses
-                # # household population (hhp)? Can someone confirm which of these is correct?
-                # aggregated["hhs"] = aggregated["hhp"] / aggregated["hh"]
-                # aggregated["vacancy_rate"] = 100 \
-                #     * (aggregated["vacancy"] - aggregated["unoccupiable"]) \
-                #     / aggregated["units"]
+                # gropupby().sum() drops text columns (such as "region" or "jurisdiction") that are
+                # not the columns to groupby. This means that aggregating from "mgra" to anything
+                # will result in an extra column that makes comparisons fail. Remove that column
+                # and sync up column order
+                table = geo_tables[agg_col].copy(deep=True)
+                if(geo == "mgra"):
+                    aggregated = aggregated.drop("mgra", axis=1)
+                    table = table[aggregated.columns]
 
                 # Check the values match up
-                check_results = (aggregated == geo_tables[agg_col])
+                # print(aggregated)
+                # print(aggregated.columns)
+                # print(geo_tables[agg_col])
+                # print(geo_tables[agg_col].columns)
+                check_results = (aggregated == table)
                 pd.set_option('display.max_colwidth', None)
                 pd.set_option("display.max_columns", None)
 
@@ -189,11 +210,14 @@ class InternalConsistency():
                 if(check_results.to_numpy().sum() != check_results.shape[0] * check_results.shape[1]):
                     error_rows = ((check_results.sum(axis=1) - check_results.shape[1]) != 0)
                     print(aggregated.loc[error_rows])
-                    print(geo_tables[agg_col].loc[error_rows])
+                    print(table.loc[error_rows])
                     # Save if errors and requested
                     if(save):
-                        f.save(geo_tables[agg_col].loc[error_rows], save_location, "C1", vintage, 
-                            f"{geo}->{agg_col}", "consolidated")
+                        f.save({
+                                f"{agg_col} csv": aggregated.loc[error_rows],
+                                f"{geo} to {agg_col}": table.loc[error_rows]
+                            }, save_location, "C1", vintage, 
+                            f"{geo}_to_{agg_col}", "consolidated")
                 else:
                     print("No errors")
                 print()
@@ -292,6 +316,14 @@ class InternalConsistency():
                 else:
                     print("No errors")
                 print() 
+
+if(__name__ == "__main__"):
+    InternalConsistency().check_geography_aggregations(
+        vintage="2021_01",
+        geo_list=["mgra", "jurisdiction"],
+        est_table="consolidated",
+        save=True
+    )
 
 ########################
 # Check 2: Null Values #

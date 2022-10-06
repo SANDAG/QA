@@ -112,7 +112,10 @@ dim:
 
 # This defines for each estimates vintage, what series of mgra_denormalize to use. This information
 # comes from the columns [series] and [source_system_version] from 
-# [demographic_warehouse].[dim].[datasource]
+# [demographic_warehouse].[dim].[datasource].
+# CRITICAL NOTE: THIS IS NOT MGRA SERIES. THIS NUMBER IS FORECAST/ESTIMATE SERIES. F/E SERIES 14
+# CORRESPONDS TO MGRA SERIES 13. F/E SERIES 15 WILL CORRESPOND TO MGRA SERIES 15. MGRA SERIES 14
+# IS NOT USED FOR ANYTHING AS FAR AS I AM AWARE
 series:
   "2018_02": 14
   "2018_03": 14

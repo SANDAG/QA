@@ -352,6 +352,11 @@ class EstimatesTables():
                 left_on=[geo_level, "yr_id"],
                 right_on=[geo_level, "yr_id"])
 
+        # If we are getting the pivoted population table
+        if(pivot and est_table == "population"):
+            table["Total Population"] = table[["Household Population", "Group Quarters - Military", 
+                "Group Quarters - College", "Group Quarters - Other"]].sum(axis=1)
+
         # Return the table
         return table
 

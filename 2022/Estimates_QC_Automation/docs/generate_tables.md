@@ -23,7 +23,7 @@ The functions in this class all create tables directly using Estimates data from
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L332"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L363"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `consolidate`
 
@@ -96,7 +96,7 @@ This function will return the requested Estimates table from the requested vinta
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L398"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L429"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `individual`
 
@@ -132,7 +132,7 @@ Create individual files for each unique combination of Estimate table and geogra
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L460"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L491"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `CA_DOF`
 Functions to get CA Department of Finance population estimates from SQL. 
@@ -144,7 +144,7 @@ This class currently has the functionality of getting region level population da
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L469"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L500"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_CA_DOF_region_pop`
 
@@ -174,7 +174,7 @@ Get both total population for the region in each year and total population for t
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L564"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L595"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `DiffFiles`
 Functions to return/save various Estimates diff tables. 
@@ -186,7 +186,7 @@ The functions in this class create diff files either directly from [DDAMWSQL16].
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L574"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L605"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_diff_tables`
 
@@ -232,7 +232,7 @@ This function will create and save diff files for each unique combination of geo
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L647"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L678"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `ProportionFiles`
 Functions to compute categorical distributions within Estimates tables. 
@@ -244,7 +244,7 @@ By categorical distributions, we mean (for example) what percentage of the total
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L729"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L760"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_DOF_proportion_table`
 
@@ -283,7 +283,7 @@ See the function create_est_proportion_tables for a description of what row sum 
 
 ---
 
-<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L656"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="..\..\..\2022\Estimates_QC_Automation\generate_tables.py#L687"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_est_proportion_tables`
 
