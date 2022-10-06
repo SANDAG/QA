@@ -248,6 +248,13 @@ class EstimatesTables():
         if(age_ethnicity):
             query = query.replace("sex.sex, ", "")
 
+        # Due to issues with pivoting the housing table, it will be done in two queries
+        # instead of one
+        if(est_table == "housing"):
+            unit_status_query = query
+            unit_status_query = unit_status_query.replace(", structure_type.long_name", "")
+            unit_status_query = unit_status_query.replace(", tbl.structure_type_id", "")
+
         # Pivot the table if requested by modifying the original query
         # Note, due to how the households table is created, it is by default already in pivot table 
         # format
@@ -317,14 +324,33 @@ class EstimatesTables():
                 pivot_categories=pivot_categories,
                 key_columns=key_columns)
 
+        # Due to issues with pivoting the housing table, it will be done in two queries
+        # instead of one
+        if(pivot and est_table == "housing"):
+            query = query.replace(
+                ", SUM(unoccupiable) as unoccupiable, SUM(occupied) as occupied, SUM(vacancy) as vacancy", 
+                "")
+
         # Print out the query
         if(debug):
             print("*** FULL QUERY BELOW ***")
             print(query)
+            if(pivot and est_table == "housing"):
+                print()
+                print("*** BEGIN SECOND HOUSING QUERY ***")
+                print(unit_status_query)
             print("*** END FULL QUERY ***")
 
         # Get the table into pandas
         table = pd.read_sql_query(query, con=DDAM)
+        
+        # If we are getting the pivoted housing table,
+        if(pivot and est_table == "housing"):
+            unit_status_table = pd.read_sql_query(unit_status_query, con=DDAM)
+            table = table.merge(unit_status_table,
+                how="left",
+                left_on=[geo_level, "yr_id"],
+                right_on=[geo_level, "yr_id"])
 
         # Return the table
         return table
