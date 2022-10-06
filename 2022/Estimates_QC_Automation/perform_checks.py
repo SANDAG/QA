@@ -317,14 +317,6 @@ class InternalConsistency():
                     print("No errors")
                 print() 
 
-if(__name__ == "__main__"):
-    InternalConsistency().check_geography_aggregations(
-        vintage="2021_01",
-        geo_list=["mgra", "jurisdiction"],
-        est_table="consolidated",
-        save=True
-    )
-
 ########################
 # Check 2: Null Values #
 ########################
@@ -503,16 +495,17 @@ class VintageComparisons():
 ###############################
 
 class ThresholdAnalysis():
-    """Calculates year-on-year% changes and flags if the changes are more than 5%.
+    """Calculates yearly change and flags if the changes are more than some % and some value.
     
     For the purposes of this class, threshold analysis checks mean checking if between any two 
-    versions, the changes in values differ by more than 5%. For example, flagging if total 
-    population in the region changes by more than 5% in one year. The threshold value is 
-    configurable, of course.
+    versions, the changes in values differ by more than 5% and 500. For example, flagging if total 
+    population in the region changes by more than 5% and 500 people in one year. The threshold 
+    values are configurable, of course.
     """
 
     def _yearly_change(self, raw_folder, vintage, geo, table_name, 
-        threshold=5,
+        p_threshold=5,
+        n_threshold=500,
         save=False,
         save_location=pathlib.Path("./data/outputs/")):
         """Get data and check for yearly changes in values.
@@ -528,8 +521,12 @@ class ThresholdAnalysis():
                 the saved tables are created by the file generate_tables.py, this can be any of
                 "consolidated" or the name of the Estimates table (such as "age" or "ethnicity").
             col (str): The column name to choose to check for changes.
-            threshold (float): Default value of 5(%). The percentage we can go above/below previous
-                values and still consider it reasonable. Somewhat arbitrarily chosen to be honest.
+            p_threshold (float): Default value of 5(%). The percentage we can go above/below 
+                previous values and still consider it reasonable. Somewhat arbitrarily chosen to be
+                honest.
+            n_threshold (float): Default value of 500. The amount we can go above/below 
+                previous values and still consider it reasonable. Somewhat arbitrarily chosen to be
+                honest.
             save (bool): Default value of False. If True, save the outputs of the check to the input
                 save_location if and only if errors have been found.
             save_location (pathlib.Path): The location to save check results.
@@ -553,56 +550,70 @@ class ThresholdAnalysis():
             sort_order.insert(1, "name")
             sort_order.insert(1, "sex")
         geo_table = geo_table.sort_values(by=sort_order).reset_index(drop=True)
-        pop_change = geo_table.copy(deep=True)
+        pct_change = geo_table.copy(deep=True)
+        num_change = geo_table.copy(deep=True)
 
         # Compute percent change
-        pop_change = pop_change.drop(sort_order + [geo], axis=1)
-        pop_change = abs(pop_change.pct_change()) * 100
+        pct_change = pct_change.drop(sort_order + [geo], axis=1)
+        pct_change = pct_change.pct_change() * 100
 
-        # Find the rows of pop_change that are the base rows (2010 usually) and set to no value
+        # Compute numeric change
+        num_change = num_change.drop(sort_order + [geo], axis=1)
+        num_change = num_change - num_change.shift(periods=1)
+
+        # Find the rows of pct_change and num_change that are the base rows (2010 usually) and set 
+        # to no value
         min_year = geo_table["yr_id"].min()
         base_year_rows = (geo_table["yr_id"] == min_year)
-        pop_change[base_year_rows] = np.nan
-
-        # Remember column order for later
-        columns = pop_change.columns.copy(deep=True)
-
-        # Add a prefix to the percent change columns
-        pop_change = pop_change.add_prefix("|% Diff| ")
-        
-        # Merge the % change with the original table and order the columns
-        # I'll be honest, I don't know what the "x for y" stuff is doing, I just know it works. 
-        # Essentially, it is merging the columns so that variable and |% Diff| variable alternate
-        combined_df = pd.merge(geo_table, pop_change, how="left", left_index=True, right_index=True)
-        column_order = list(geo_table.columns)[:(geo_table.shape[1] - columns.shape[0])] + \
-            [x for y in zip(columns, pop_change.columns) for x in y]
-        combined_df = combined_df[column_order]
+        pct_change[base_year_rows] = np.nan
+        num_change[base_year_rows] = np.nan
 
         # Create a boolean mask to select rows with errors
+        # Those rows are where the percent change is over the threshold and the numeric change is
+        # over the threshold
         # Also select the rows before to add context to the percent change
-        error_rows = (pop_change > threshold).any(1)
-        error_rows = error_rows | error_rows.shift(periods=-1)
+        error_rows_mask = (
+            (abs(pct_change) > p_threshold) & \
+            (abs(num_change) > n_threshold)
+        ).any(1)
+        error_rows = error_rows_mask | error_rows_mask.shift(periods=-1)
 
-        # TODO: New feature?
-        # # Create a boolean mask to select columns with errors
-        # # Also select the columns before to add context to the percent change
-        # error_cols = (pop_change > threshold).any(0)
-        # error_cols = error_cols | error_cols.shift(periods=-1)
+        # Add the key columns back onto percent change and numeric change
+        pct_change = pd.merge(geo_table[sort_order], pct_change, left_index=True, right_index=True)
+        num_change = pd.merge(geo_table[sort_order], num_change, left_index=True, right_index=True)
+
+        # print(geo_table)
+        # print(pct_change)
+        # print(num_change)
+        # print(error_rows_mask)
+        # print(error_rows)
+
+        # print(error_rows.sum() > 0)
+
+        # return
 
         # Print the results
-        if(not combined_df[error_rows].empty):
+        if(error_rows.sum() > 0):
             print("Errors have occurred on the following rows:")
-            print(combined_df[error_rows])
+            print(geo_table[error_rows])
+            print(pct_change[error_rows])
+            print(num_change[error_rows])
             # Save if errors and requested
             if(save):
-                f.save(combined_df[error_rows], save_location, f"C4({threshold}%)", vintage, 
+                to_save = {
+                    geo: geo_table[error_rows],
+                    "percent_change": pct_change[error_rows],
+                    "numeric_difference": num_change[error_rows],
+                }
+                f.save(to_save, save_location, f"C4({p_threshold}%,{n_threshold})", vintage, 
                     geo, table_name)
         else:
             print("No errors")
         print()
 
     def check_thresholds(self, 
-        threshold=5,
+        p_threshold=5,
+        n_threshold=500,
         vintage="2020_06", 
         geo_list=["region", "jurisdiction"],
         est_table_list=["household_income", "age_ethnicity", "population"],
@@ -634,7 +645,8 @@ class ThresholdAnalysis():
         for geo in geo_list:
             for est_table in est_table_list:
                 self._yearly_change(raw_folder, vintage, geo, est_table, 
-                    threshold=threshold,
+                    p_threshold=p_threshold,
+                    n_threshold=n_threshold,
                     save=save,
                     save_location=save_location)
 

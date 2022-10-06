@@ -18,7 +18,7 @@
 - [`perform_checks.DOFProportion`](./perform_checks.md#class-dofproportion): Compares the proportion of groups between DOF and Estimates.
 - [`perform_checks.InternalConsistency`](./perform_checks.md#class-internalconsistency): Functions to run internal consistency checks.
 - [`perform_checks.NullValues`](./perform_checks.md#class-nullvalues): Functions to check for any null values.
-- [`perform_checks.ThresholdAnalysis`](./perform_checks.md#class-thresholdanalysis): Calculates year-on-year% changes and flags if the changes are more than 5%.
+- [`perform_checks.ThresholdAnalysis`](./perform_checks.md#class-thresholdanalysis): Calculates yearly change and flags if the changes are more than some % and some value.
 - [`perform_checks.TrendAnalysis`](./perform_checks.md#class-trendanalysis): N/A. Done in PowerBI.
 - [`perform_checks.VintageComparisons`](./perform_checks.md#class-vintagecomparisons): N/A. Done already by generate_tables.DiffFiles.
 
