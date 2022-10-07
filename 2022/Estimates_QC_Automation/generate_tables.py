@@ -644,6 +644,18 @@ class DiffFiles():
                 old_vintage_df = f.load(raw_data_folder, old_vintage, geo, est_table)
                 new_vintage_df = f.load(raw_data_folder, new_vintage, geo, est_table)
 
+                # It is possible that the two tables have different years of data. For example, 
+                # the vintage 2020_06 has the years 2010-2020, but the vintage 2021_01 has the 
+                # years 2010-2021. Since the difference between vintages when a year of data does
+                # not exist is meaningless, take only the years in common.
+                old_years = set(old_vintage_df["yr_id"])
+                new_years = set(new_vintage_df["yr_id"])
+                years = old_years.intersection(new_years)
+                old_vintage_df = \
+                    old_vintage_df[old_vintage_df["yr_id"].isin(years)].reset_index(drop=True)
+                new_vintage_df = \
+                    new_vintage_df[new_vintage_df["yr_id"].isin(years)].reset_index(drop=True)
+
                 # Create the diff df
                 # TODO: This is done in a very hacky way as I cannot figure out how to do a 
                 # subtract when there are string columns.

@@ -20,7 +20,7 @@
 - [`perform_checks.NullValues`](./perform_checks.md#class-nullvalues): Functions to check for any null values.
 - [`perform_checks.ThresholdAnalysis`](./perform_checks.md#class-thresholdanalysis): Calculates yearly change and flags if the changes are more than some % and some value.
 - [`perform_checks.TrendAnalysis`](./perform_checks.md#class-trendanalysis): N/A. Done in PowerBI.
-- [`perform_checks.VintageComparisons`](./perform_checks.md#class-vintagecomparisons): N/A. Done already by generate_tables.DiffFiles.
+- [`perform_checks.VintageComparisons`](./perform_checks.md#class-vintagecomparisons): Functions to check that numbers between vintages does not exceed a % and numeric threshold.
 
 ## Functions
 

@@ -486,9 +486,120 @@ class NullValues():
 #################################
 
 class VintageComparisons():
-    """N/A. Done already by generate_tables.DiffFiles."""
+    """Functions to check that numbers between vintages does not exceed a % and numeric threshold."""
 
-    pass
+    def vintage_change(self, 
+        old_vintage="2020_06", 
+        new_vintage="2021_01", 
+        p_threshold=5,
+        n_threshold=500,
+        diff_data_folder=pathlib.Path("./data/diff/"),
+        geo_list=['region', 'jurisdiction'],
+        est_table_list=['age', 'ethnicity', 'household_income', 'age_ethnicity'],
+        save=True,
+        outputs_folder=pathlib.Path("./data/outputs/")):
+        """Get diff data and check for extreme changes in values between vintages.
+
+        Args:
+            old_vintage (str): The old vintage to compare with
+            new_vintage (str): The new vintage to compare with.
+            p_threshold (float): Default value of 5(%). The percentage we can go above/below 
+                previous values and still consider it reasonable. Somewhat arbitrarily chosen to be
+                honest.
+            n_threshold (float): Default value of 500. The amount we can go above/below 
+                previous values and still consider it reasonable. Somewhat arbitrarily chosen to be
+                honest.
+            raw_data_folder (pathlib.Path): pathlib.Path("./data/raw_data/") by default. The 
+                location where raw data has been saved. It is expected that the files are saved
+                using functions.save in order to keep file formats consistent
+            geo_list (list of str): The geographies to create diff files for. 
+            est_table_list (list of str): Which estimates tables we want to create diff files.
+                Because of the unique way file names are generated, a valid item of this list is
+                "consolidated"
+            save (bool): True by default. If True, then use save_folder to save the diff files. At
+                this time, False has no functionality, but this may change later
+            save_folder (pathlib.Path): pathlib.Path("./data/diff/") by default. The location to 
+                save diff files
+
+        Returns:
+            None
+        """
+        # Print out what test is running
+        print("Running check 3: Vintage Comparison")
+        print(f"Checking between {old_vintage} and {new_vintage}")
+        print()
+
+        # Loop over the geographies and Estimates tables
+        for geo in geo_list:
+            for est_table in est_table_list:
+                print(f"Checking the {est_table} Estimates table at the {geo} level")
+
+                # Get the diff file
+                diff = f.load(diff_data_folder, f"{new_vintage}-{old_vintage}", geo, est_table)
+
+                # Load each sheet in the diff file into its own variable, mostly to make
+                # future code look a bit cleaner
+                old_table = diff[old_vintage]
+                new_table = diff[new_vintage]
+                diff_table = diff[f"{new_vintage}-{old_vintage}"]
+
+                # Maintain a list of key columns 
+                key_cols = [geo, "yr_id"]
+                if(est_table == "age_ethnicity"):
+                    key_cols.insert(1, "name")
+                elif(est_table == "age_sex_ethnicity"):
+                    key_cols.insert(1, "name")
+                    key_cols.insert(1, "sex")
+
+                # NOTE: Due to a bug fix in generate_tables.DiffFiles(), this is no longer 
+                # necessary 
+                # # It is possible that the two vintages requested have different years of data.
+                # # Filter each table such that they only have the inner years of data
+                # # For example, 2020_06 has 2010-2020 and 2021_01 has 2010-2021. This filters each
+                # # table down to only 2010-2020
+                # old_years = set(old_table["yr_id"])
+                # new_years = set(new_table["yr_id"])
+                # years = old_years.intersection(new_years)
+                # old_table = old_table[old_table["yr_id"].isin(years)].reset_index(drop=True)
+                # new_table = new_table[new_table["yr_id"].isin(years)].reset_index(drop=True)
+                # diff_table = diff_table[diff_table["yr_id"].isin(years)].reset_index(drop=True)
+
+                # The diff file already contains old_vintage data, new_vintage data, and 
+                # new_vintage - old_vintage data. All we need to do is compute the percent change
+                diff_table = diff_table.drop(key_cols, axis=1)
+                pct_change = 100  * diff_table / old_table.drop(key_cols, axis=1)
+
+                # Create a boolean mask to select rows with errors
+                # Those rows are where the percent change is over the threshold and the numeric 
+                # change is over the threshold
+                error_rows = (
+                    (abs(pct_change) > p_threshold) & \
+                    (abs(diff_table) > n_threshold)
+                ).any(1)
+
+                # Add back on the removed key columns
+                pct_change = pd.merge(new_table[key_cols], pct_change, left_index=True, right_index=True)
+                diff_table = pd.merge(new_table[key_cols], diff_table, left_index=True, right_index=True)
+                
+                # Print the results
+                if(error_rows.sum() > 0):
+                    print("Errors have occurred on the following rows:")
+                    print("Output is too large to print, see output file.")
+
+                    # Save if there are errors and requested
+                    if(save):
+                        to_save = {
+                            old_vintage: old_table[error_rows],
+                            new_vintage: new_table[error_rows],
+                            "percent_change": pct_change[error_rows],
+                            "numeric_difference": diff_table[error_rows],
+                        }
+                        f.save(to_save, outputs_folder, 
+                            f"C3({p_threshold}%,{n_threshold})", f"{new_vintage}-{old_vintage}", 
+                            geo, est_table)
+                else:
+                    print("No errors")
+                print()
 
 ###############################
 # Check 4: Threshold Analysis #
@@ -503,7 +614,7 @@ class ThresholdAnalysis():
     values are configurable, of course.
     """
 
-    def _yearly_change(self, raw_folder, vintage, geo, table_name, 
+    def yearly_change(self, raw_folder, vintage, geo, table_name, 
         p_threshold=5,
         n_threshold=500,
         save=False,
@@ -582,16 +693,6 @@ class ThresholdAnalysis():
         pct_change = pd.merge(geo_table[sort_order], pct_change, left_index=True, right_index=True)
         num_change = pd.merge(geo_table[sort_order], num_change, left_index=True, right_index=True)
 
-        # print(geo_table)
-        # print(pct_change)
-        # print(num_change)
-        # print(error_rows_mask)
-        # print(error_rows)
-
-        # print(error_rows.sum() > 0)
-
-        # return
-
         # Print the results
         if(error_rows.sum() > 0):
             print("Errors have occurred on the following rows:")
@@ -644,7 +745,7 @@ class ThresholdAnalysis():
 
         for geo in geo_list:
             for est_table in est_table_list:
-                self._yearly_change(raw_folder, vintage, geo, est_table, 
+                self.yearly_change(raw_folder, vintage, geo, est_table, 
                     p_threshold=p_threshold,
                     n_threshold=n_threshold,
                     save=save,
