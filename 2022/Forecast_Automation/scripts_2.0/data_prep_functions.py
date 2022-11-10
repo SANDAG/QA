@@ -66,3 +66,11 @@ print(factorial(3))
 
 
 # TODO: Update config file to have persons and household datasets
+
+
+'''
+ideas:
+- Could have that SQL connection setup in a yml file, have a seperate yml file for more input related things 
+
+
+'''
