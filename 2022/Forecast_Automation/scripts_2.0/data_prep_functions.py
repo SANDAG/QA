@@ -14,9 +14,9 @@ print(factorial(3))
 
 # Download and add to a large dataframe
 
-# Rollup the dataframe
+# Rollup the dataframe - to the MGRA level
 
-# Make adjustments to specific, specified columns that need it
+# Make adjustments to specific, specified columns that need it - should work at all levels
 
 # mgra_vacancy_additions
 
@@ -40,7 +40,7 @@ print(factorial(3))
 
 # Download the data function
 
-# DF Comparison Function
+# DF Comparison Function - checking shape and columns and such, returns similar columns
 
 # Check to see if the desired output exists
 
@@ -52,7 +52,7 @@ print(factorial(3))
 
 # Household file path grab
 
-# Number of persons (from households) comparison at MGRA level.
+# Number of persons (from households) at MGRA level.
 
 # Combine with the mgra file (will need other files created) - create the diff and output to J drive
 
@@ -71,6 +71,7 @@ print(factorial(3))
 '''
 ideas:
 - Could have that SQL connection setup in a yml file, have a seperate yml file for more input related things 
+- for functions that take in a dataframe (like the Qc ones, I could have a function that checks in the index has been grouped or not, or have it go in as an argument) - The argument will be asking if the index has been set or not
 
 
 '''
