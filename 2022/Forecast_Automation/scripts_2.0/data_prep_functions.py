@@ -1,22 +1,26 @@
-def factorial(n):
-    if n == 0:
-        return 1
-    else:
-        return n * factorial(n-1)
-
-
-print(factorial(3))
-
+import numpy as np
+import pandas as pd
+import yaml
 
 # -------------------------- Class: Configuration functions
 
-# t_drive_file_paths
+# Download and concatonate files from T drive
 
-# Download and add to a large dataframe
 
-# Rollup the dataframe - to the MGRA level
+def download_and_concat_Tdrive_files(dsid):
+    """Downloads all of the files from T drive for this particular dsid and adds the year"""
 
-# Make adjustments to specific, specified columns that need it - should work at all levels
+    with open('ds_config_2.yml', "r") as yml_file:
+        config = yaml.safe_load(yml_file)
+
+    concatonated_dfs = pd.DataFrame()
+
+    for key, path in config[dsid]['T_Drive_files'].items():
+        temp_df = pd.read_csv(path)
+        temp_df['year'] = key[-4:]
+        concatonated_dfs = pd.concat([concatonated_dfs, temp_df])
+
+    return concatonated_dfs
 
 # mgra_vacancy_additions
 
@@ -27,6 +31,18 @@ print(factorial(3))
 # mgra_ethn_pop_additions
 
 # mgra_sex_pop_additions
+
+# Make adjustments to specific, specified columns that need it - should work at all levels
+
+# Find columns that we want at particular geography levels
+
+
+def wanted_geography_cols(df, wanted_geo_level):
+    """Returns a list of columns that do not include unwanted geography levels."""
+    geography_levels = ['mgra', 'cpa', 'jurisdiction', 'luz_id', 'taz']
+    geography_levels.remove(wanted_geo_level)
+
+    return [col for col in df.columns if col not in geography_levels]
 
 # Roll up to CPA - adjustments will be needed
 
@@ -72,6 +88,8 @@ print(factorial(3))
 ideas:
 - Could have that SQL connection setup in a yml file, have a seperate yml file for more input related things 
 - for functions that take in a dataframe (like the Qc ones, I could have a function that checks in the index has been grouped or not, or have it go in as an argument) - The argument will be asking if the index has been set or not
-
+- if forecast series ID is 14 then don't add anything from SQL or do any rollups, only mgra and region 
+- I still want a complete data dictionary that I can use 
+- Ideally would like to just be able to runthis script and it populates all the aggregated parts, it will check the config file to see if there is some that still need to be done
 
 '''
