@@ -85,21 +85,39 @@ DS42:
     DS42_2050: "T:/socioec/Current_Projects/XPEF36/abm_csv/new_parking/New_mgra_based_input/mgra13_based_input2050_05_np.csv"
     forecast_ID: 14
 
-DS99:
-    DS42_2016: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2016_01_np.csv"
-    DS42_2018: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2018_01_np.csv"
-    DS42_2020: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2020_01_np.csv"
-    DS42_2023: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2023_01_np.csv"
-    DS42_2025: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2025_01_np.csv"
-    DS42_2026: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2026_01_np.csv"
-    DS42_2029: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2029_01_np.csv"
-    DS42_2030: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2030_01_np.csv"
-    DS42_2032: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2032_01_np.csv"
-    DS42_2035: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2035_01_np.csv"
-    DS42_2040: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2040_01_np.csv"
-    DS42_2045: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2045_01_np.csv"
-    DS42_2050: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2050_01_np.csv"
+'46':
+    T_Drive_files:
+        DS42_2016: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2016_01_np.csv"
+        DS42_2018: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2018_01_np.csv"
+        DS42_2020: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2020_01_np.csv"
+        DS42_2023: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2023_01_np.csv"
+        DS42_2025: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2025_01_np.csv"
+        DS42_2026: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2026_01_np.csv"
+        DS42_2029: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2029_01_np.csv"
+        DS42_2030: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2030_01_np.csv"
+        DS42_2032: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2032_01_np.csv"
+        DS42_2035: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2035_01_np.csv"
+        DS42_2040: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2040_01_np.csv"
+        DS42_2045: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2045_01_np.csv"
+        DS42_2050: "T:/socioec/Current_Projects/XPEF40/abm_csv/mgra13_based_input2050_01_np.csv"
+    Household_Files:
+        DS46_households_2016: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2016_01.csv"
+        DS46_households_2018: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2018_01.csv"
+        DS46_households_2020: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2020_01.csv"
+        DS46_households_2023: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2023_01.csv"
+        DS46_households_2025: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2025_01.csv"
+        DS46_households_2026: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2026_01.csv"
+        DS46_households_2029: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2029_01.csv"
+        DS46_households_2030: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2030_01.csv"
+        DS46_households_2032: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2032_01.csv"
+        DS46_households_2035: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2035_01.csv"
+        DS46_households_2040: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2040_01.csv"
+        DS46_households_2045: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2045_01.csv"
+        DS46_households_2050: "T:/socioec/Current_Projects/XPEF40/abm_csv/households_2050_01.csv"
+    Person_Files:
+        DS35_persons_2016: "T:/socioec/Current_Projects/XPEF31/abm_csv/persons_2016_01.csv"
     forecast_ID: 14
+
 
 dof:
     dof_data: "C:/Users/cra/San Diego Association of Governments/SANDAG QA QC - Documents/Projects/2022/2022-01 Regional Forecast DS 41-42/dof_data.xlsx"
