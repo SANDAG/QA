@@ -1,0 +1,11 @@
+Group Quarter vs Non-Group Quarter Information: 
+
+Raw MGRA Files: 
+- HH (Total number of households): does not include GQ 
+- hhp: total household population (exclude gq pop) 
+
+Households file: 
+- unittype
+    - 0 = Non-GQ Households
+    - 1 = GQ Household
+
