@@ -72,7 +72,7 @@ def wanted_geography_cols(df, wanted_geo_level):
 
 # Combine with the mgra file (will need other files created) - create the diff and output to J drive
 
-# Number of households (from households) at MGRA level 
+# Number of households (from households) at MGRA level
 
 # Combine with the MGRA file
 
