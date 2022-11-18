@@ -110,87 +110,53 @@ def population_from_households_dataset(dsid, gq_only, no_gq):
 # Combine with the mgra file (will need other files created) - create the diff -- population
 def population_comparison_houseolds_and_input_files(dsid, gq_only, no_gq, to_jdrive):
     '''Compare MGRA population data to household dataset population data based on gq preference.'''
-    # Bring in input files and process
+    # Input Files
     mgra_data = pd.read_csv(rf'J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv', usecols=[
                             'year', 'mgra', 'pop', 'hhp'])
     mgra_data['gq_pop_input_files'] = mgra_data['pop'] - mgra_data['hhp']
     mgra_data = mgra_data.rename(
         columns={'pop': 'pop_input_files', 'hhp': 'hhp_input_files'})
 
-    if (gq_only == no_gq) & (gq_only == False):
-        # GQ and Non-GQ Person Comparison
-        output = population_from_households_dataset(dsid, gq_only, no_gq).merge(
-            mgra_data, how='left', on=['year', 'mgra'])
-        output = output[['year', 'mgra', 'pop_count_household_file',
-                         'pop_input_files']]
-        output['Diff'] = output['pop_count_household_file'] - \
-            output['pop_input_files']
-        if to_jdrive:
-            output.to_csv(
-                rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_population_comparison_all_DS{dsid}_QA.csv", index=False)
-        return output
+    # Concat and merge
+    output = population_from_households_dataset(dsid, gq_only, no_gq).merge(
+        mgra_data, how='left', on=['year', 'mgra'])
+    output = output[['year', 'mgra',
+                     'pop_count_household_file', 'pop_input_files']]
+    output['Diff'] = output['pop_count_household_file'] - \
+        output['pop_input_files']
 
-    elif gq_only == True:
-        # Just GQ Population Comparison
-        output = population_from_households_dataset(dsid, gq_only, no_gq).merge(
-            mgra_data, how='left', on=['year', 'mgra'])
-        output = output[['year', 'mgra', 'pop_count_household_file',
-                         'gq_pop_input_files']]
-        output['Diff'] = output['pop_count_household_file'] - \
-            output['gq_pop_input_files']
-        if to_jdrive:
-            output.to_csv(
-                rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_population_comparison_GQ_only_DS{dsid}_QA.csv", index=False)
-        return output
+    if (gq_only == no_gq) & (gq_only == False):
+        output_type = 'all'
+    elif gq_only:
+        output_type = 'GQ_only'
     else:
-        # Just Non-GQ Person Comparison
-        output = population_from_households_dataset(dsid, gq_only, no_gq).merge(
-            mgra_data, how='left', on=['year', 'mgra'])
-        output = output[['year', 'mgra', 'pop_count_household_file',
-                         'hhp_input_files']]
-        output['Diff'] = output['pop_count_household_file'] - \
-            output['hhp_input_files']
-        if to_jdrive:
-            output.to_csv(
-                rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_population_comparison_no_GQ_DS{dsid}_QA.csv", index=False)
-        return output
+        output_type = 'no_GQ'
+
+    if to_jdrive:
+        output.to_csv(
+            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_population_comparison_{output_type}_DS{dsid}_QA.csv", index=False)
+
+    return output
 
 # Number of households (from households) at MGRA level -- use the T drie function grabber
 
 
-def number_of_households_from_households_dataset(dsid, gq_only, no_gq):
-    '''Downloads and aggregates number of households data from the households dataset depending on GQ preference.'''
-    # TODO for this one we only need non-GQ, we arn't looking at diffs in any other level
-    # From households file
+def number_of_households_from_households_dataset(dsid):
+    '''Downloads and aggregates number of households data from the households dataset for Non-GQ households.'''
     household_file_all = download_and_concat_Tdrive_files(
         dsid, 'Household_Files')
     household_file_subset = household_file_all[['year', 'mgra', 'hhid']]
     household_file_subset['year'] = pd.to_numeric(
         household_file_subset['year'])
 
-    if (gq_only == no_gq) & (gq_only == False):
-        # GQ and Non-GQ Person Comparison
-        household_count_household_file_all = household_file_subset.groupby(
-            ['year', 'mgra']).count().reset_index()
-        household_count_household_file_all.columns = [
-            'year', 'mgra', 'house_count_household_file']
-        return household_count_household_file_all
-    elif gq_only == True:
-        # Just GQ Population Comparison
-        household_file_gq_only = household_file_subset[household_file_all['unittype'] == 1]
-        household_count_household_file_gq_only = household_file_gq_only.groupby(
-            ['year', 'mgra']).count().reset_index()
-        household_count_household_file_gq_only.columns = [
-            'year', 'mgra', 'house_count_household_file']
-        return household_count_household_file_gq_only
-    else:
-        # Non GQ
-        household_file_no_gq = household_file_subset[household_file_all['unittype'] == 0]
-        household_count_household_file_no_gq = household_file_no_gq.groupby(
-            ['year', 'mgra']).count().reset_index()
-        household_count_household_file_no_gq.columns = [
-            'year', 'mgra', 'house_count_household_file']
-        return household_count_household_file_no_gq
+    # Non-GQ
+    household_file_no_gq = household_file_subset[household_file_all['unittype'] == 0]
+    household_count_household_file_no_gq = household_file_no_gq.groupby(
+        ['year', 'mgra']).count().reset_index()
+    household_count_household_file_no_gq.columns = [
+        'year', 'mgra', 'house_count_household_file']
+
+    return household_count_household_file_no_gq
 
 
 # Combine with the MGRA file -- number of households
@@ -201,7 +167,7 @@ def household_number_comparison_houseolds_and_input_files(dsid, to_jdrive):
                             'year', 'mgra', 'hh'])
     mgra_data = mgra_data.rename(columns={'hh': 'hh_count_input_files'})
 
-    output = number_of_households_from_households_dataset(dsid, gq_only=False, no_gq=True).merge(
+    output = number_of_households_from_households_dataset(dsid).merge(
         mgra_data, how='left', on=['year', 'mgra'])
     output = output[['year', 'mgra',
                      'house_count_household_file', 'hh_count_input_files']]
