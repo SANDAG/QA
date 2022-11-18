@@ -160,6 +160,7 @@ def population_comparison_houseolds_and_input_files(dsid, gq_only, no_gq, to_jdr
 
 def number_of_households_from_households_dataset(dsid, gq_only, no_gq):
     '''Downloads and aggregates number of households data from the households dataset depending on GQ preference.'''
+    # TODO for this one we only need non-GQ, we arn't looking at diffs in any other level
     # From households file
     household_file_all = download_and_concat_Tdrive_files(
         dsid, 'Household_Files')
