@@ -183,7 +183,7 @@ def number_of_households_from_households_dataset(dsid, gq_only, no_gq):
             'year', 'mgra', 'house_count_household_file']
         return household_count_household_file_gq_only
     else:
-        # Just Non-GQ Person Comparison
+        # Non GQ
         household_file_no_gq = household_file_subset[household_file_all['unittype'] == 0]
         household_count_household_file_no_gq = household_file_no_gq.groupby(
             ['year', 'mgra']).count().reset_index()
@@ -193,9 +193,26 @@ def number_of_households_from_households_dataset(dsid, gq_only, no_gq):
 
 
 # Combine with the MGRA file -- number of households
+def household_number_comparison_houseolds_and_input_files(dsid, to_jdrive):
+    '''Compare number of households between input files and households dataset. Only at the 'No GQ' level.'''
+    # Bring in input files and process
+    mgra_data = pd.read_csv(rf'J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv', usecols=[
+                            'year', 'mgra', 'hh'])
+    mgra_data = mgra_data.rename(columns={'hh': 'hh_count_input_files'})
 
+    output = number_of_households_from_households_dataset(dsid, gq_only=False, no_gq=True).merge(
+        mgra_data, how='left', on=['year', 'mgra'])
+    output = output[['year', 'mgra',
+                     'house_count_household_file', 'hh_count_input_files']]
+    output['Diff'] = output['house_count_household_file'] - \
+        output['hh_count_input_files']
+    if to_jdrive:
+        output.to_csv(
+            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_hh_count_comparison_no_GQ_DS{dsid}_QA.csv", index=False)
+    return output
 
 # ------------------------ Class QC Checks
+
 
 # Check to see which aggregate files still need to be created (return a list), comparison with what we have in our config file
 # Could also check which diff files also need to be created
