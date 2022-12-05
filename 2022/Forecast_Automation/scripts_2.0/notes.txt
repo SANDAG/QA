@@ -9,3 +9,8 @@ Households file:
     - 0 = Non-GQ Households
     - 1 = GQ Household
 
+
+
+Other: 
+The diff and both file functions are in the notebook: part1_v2
+
