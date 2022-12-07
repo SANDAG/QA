@@ -205,7 +205,7 @@ def persons_dataset_hhid_population(dsid, year, gq_only):
 
 
 def persons_households_dataset_pop_comparison(dsid, year, gq_only):
-    """This functions joins the persons and household datatogether"""
+    """This functions joins the persons and household data together and compares population figures."""
     persons_df = persons_dataset_hhid_population(dsid, year, gq_only)
     households_df = download_individual_households_file_for_person_comp(
         dsid, year)
