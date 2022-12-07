@@ -168,6 +168,104 @@ def household_number_comparison_houseolds_and_input_files(dsid, to_jdrive):
             rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_hh_count_comparison_no_GQ_DS{dsid}_QA.csv", index=False)
     return output
 
+
+# ------------------------ Class Persons and Household Dataset Checks
+
+
+def download_individual_persons_file(dsid, year):
+    """Downloads an individual person file for one particular year. Year is a string value."""
+
+    with open('ds_config_2.yml', "r") as yml_file:
+        config = yaml.safe_load(yml_file)
+
+    file_path = config[dsid]['Person_Files'][f'DS{dsid}_persons_{year}']
+    return pd.read_csv(file_path, usecols=['hhid', 'miltary'])
+
+
+def download_individual_households_file_for_person_comp(dsid, year):
+    """Downloads an individual person file for one particular year. Year is a string value."""
+
+    with open('ds_config_2.yml', "r") as yml_file:
+        config = yaml.safe_load(yml_file)
+
+    file_path = config[dsid]['Household_Files'][f'DS{dsid}_households_{year}']
+    return pd.read_csv(file_path, usecols=['hhid', 'persons', 'unittype'])
+
+
+def persons_dataset_hhid_population(dsid, year, gq_only):
+    persons_df = download_individual_persons_file(dsid, year)
+
+    if gq_only:
+        persons_df = persons_df[persons_df['miltary'] == 1]
+
+    persons_df = persons_df.groupby('hhid').count()
+    persons_df.columns = ['Persons_Dataset_Pop']
+
+    return persons_df.reset_index()
+
+
+def persons_households_dataset_pop_comparison(dsid, year, gq_only):
+    """This functions joins the persons and household datatogether"""
+    persons_df = persons_dataset_hhid_population(dsid, year, gq_only)
+    households_df = download_individual_households_file_for_person_comp(
+        dsid, year)
+
+    if gq_only:  # This gets handled for persons in the "persons_dataset_hhid_population" function
+        households_df = households_df[households_df['unittype'] == 1]
+
+    # Rename Household df
+    households_df = households_df.rename(
+        columns={'persons': 'Households_Dataset_Pop'})
+
+    # Grab columns of interest
+    persons_df = persons_df[['hhid', 'Persons_Dataset_Pop']]
+    households_df = households_df[['hhid', 'Households_Dataset_Pop']]
+
+    # Combine
+    output = persons_df.merge(households_df, how='left', on='hhid')
+
+    # Diff
+    output['Diff_P_minus_H'] = output['Persons_Dataset_Pop'] - \
+        output['Households_Dataset_Pop']
+
+    # Add year
+    output['year'] = year
+
+    return output
+
+
+def find_individual_years_for_dsid(dsid):
+    "Takes in a dsid and returns a list of years that this dsid covers."
+    with open('ds_config_2.yml', "r") as yml_file:
+        config = yaml.safe_load(yml_file)
+
+    t_drive_file_keys = config[dsid]['T_Drive_files'].keys()
+
+    return [x[-4:] for x in t_drive_file_keys]
+
+
+def aggregate_persons_households_population_comparison(dsid, gq_only, to_jdrive):
+    concatonated_dfs = pd.DataFrame()
+
+    for year in find_individual_years_for_dsid(dsid):
+        temp_df = persons_households_dataset_pop_comparison(
+            dsid, year, gq_only)
+        concatonated_dfs = pd.concat([concatonated_dfs, temp_df])
+        del temp_df
+        print(f"{year} is complete")
+
+    if gq_only:
+        gq_status = 'gq_only'
+    else:
+        gq_status = 'all'
+
+    if to_jdrive:
+        concatonated_dfs.to_csv(
+            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\DS{dsid}_persons_household_population_comparison_{gq_status}_QA.csv", index=False)
+
+    return concatonated_dfs
+
+
 # ------------------------ Class QC Checks
 
 
