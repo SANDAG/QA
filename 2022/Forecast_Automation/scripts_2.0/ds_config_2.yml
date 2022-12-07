@@ -99,7 +99,7 @@ DS38:
 
 
 
-DS42:
+'42':
     T_Drive_files:
         DS42_2016: "T:/socioec/Current_Projects/XPEF36/abm_csv/new_parking/New_mgra_based_input/mgra13_based_input2016_05_np.csv"
         DS42_2018: "T:/socioec/Current_Projects/XPEF36/abm_csv/new_parking/New_mgra_based_input/mgra13_based_input2018_05_np.csv"
@@ -177,6 +177,20 @@ DS42:
         DS35_persons_2016: "T:/socioec/Current_Projects/XPEF31/abm_csv/persons_2016_01.csv"
     forecast_ID: 14
 
-
+'99':
+    T_Drive_files:
+        DS42_2016: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2016_02_np.csv"
+        DS42_2018: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2018_02_np.csv"
+        DS42_2020: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2020_02_np.csv"
+        DS42_2023: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2023_02_np.csv"
+        DS42_2025: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2025_02_np.csv"
+        DS42_2026: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2026_02_np.csv"
+        DS42_2029: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2029_02_np.csv"
+        DS42_2030: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2030_02_np.csv"
+        DS42_2032: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2032_02_np.csv"
+        DS42_2035: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2035_02_np.csv"
+        DS42_2040: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2040_02_np.csv"
+        DS42_2045: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2045_02_np.csv"
+        DS42_2050: "T:/socioec/Current_Projects/XPEF36/abm_csv/mgra13_based_input2050_02_np.csv"
 dof:
     dof_data: "C:/Users/cra/San Diego Association of Governments/SANDAG QA QC - Documents/Projects/2022/2022-01 Regional Forecast DS 41-42/dof_data.xlsx"

@@ -96,7 +96,7 @@ def population_from_households_dataset(dsid, gq_only, no_gq):
 # Combine with the mgra file (will need other files created) - create the diff -- population
 
 
-def population_comparison_houseolds_and_input_files(dsid, gq_only, no_gq, to_jdrive):
+def population_comparison_households_and_input_files(dsid, gq_only, no_gq, to_jdrive):
     '''Compare MGRA population data to household dataset population data based on gq preference.'''
     # Input Files
     mgra_data = pd.read_csv(rf'J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv', usecols=[
