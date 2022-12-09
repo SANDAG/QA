@@ -275,7 +275,7 @@ def aggregate_persons_households_population_comparison(dsid, gq_only, to_jdrive)
 # TODO: Python doesn't like the way that I do this: household_file_subset['year'] = pd.to_numeric(
 '''
 ideas:
-- Could have that SQL connection setup in a yml file, have a seperate yml file for more input related things 
+- Could have that SQL connection setup in a yml file, have a seperate yml file for more input related things (Or just build a function for majority of SQL stuff and I just pass in the query or something?)
 - for functions that take in a dataframe (like the Qc ones, I could have a function that checks in the index has been grouped or not, or have it go in as an argument) - The argument will be asking if the index has been set or not
 - if forecast series ID is 14 then don't add anything from SQL or do any rollups, only mgra and region 
 - I still want a complete data dictionary that I can use 
