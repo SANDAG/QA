@@ -74,7 +74,7 @@ def wanted_geography_cols(df, wanted_geo_level):
 
 
 def population_from_households_dataset(dsid, gq_only, no_gq):
-    '''Downloads and aggregates population data from the households dataset depending on GQ preference.'''
+    '''Downloads and aggregates population data from the households dataset depending on inputted GQ preference.'''
     # From households file
     household_file_all = download_and_concat_Tdrive_files(
         dsid, 'Household_Files')
