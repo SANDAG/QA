@@ -113,7 +113,7 @@ def population_comparison_households_and_input_files(dsid, gq_only, no_gq, to_jd
         mgra_data = mgra_data[['year', 'mgra', 'hhp']]
         output_type = 'no_GQ'
 
-    # Concat and merge
+    # Concatonate and merge
     output = population_from_households_dataset(dsid, gq_only, no_gq).merge(
         mgra_data, how='left', on=['year', 'mgra'])
     output.columns = ['year', 'mgra',
