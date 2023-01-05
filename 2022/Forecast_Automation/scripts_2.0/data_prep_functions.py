@@ -37,13 +37,21 @@ def download_and_concat_Tdrive_files(dsid, desired_data):
 # mgra_sex_pop_additions
 
 # Make adjustments to specific, specified columns that need it - should work at all levels
+# HHS Adjusment
+
+
+def hhs_adjustment(df):
+    """Adjusts hhs values, returns the adjusted dataframe"""
+    df['hhs'] = df['hhp']/df['hh']
+    return df
 
 # Find columns that we want at particular geography levels
 
 
 def wanted_geography_cols(df, wanted_geo_level):
     """Returns a list of columns that do not include unwanted geography levels."""
-    geography_levels = ['mgra', 'cpa', 'jurisdiction', 'luz_id', 'taz']
+    geography_levels = ['mgra', 'cpa',
+                        'jurisdiction', 'luz_id', 'taz', 'region']
     geography_levels.remove(wanted_geo_level)
 
     return [col for col in df.columns if col not in geography_levels]
@@ -53,6 +61,14 @@ def wanted_geography_cols(df, wanted_geo_level):
 # Roll up to Jurisdiction - adjustments will be needed
 
 # Roll up to Region - adjustments will be needed
+
+
+def region_foldup(df):
+    df['region'] = 'San Diego'
+    df = df.groupby(['region', 'year']).sum()
+    df = df[wanted_geography_cols(df, 'region')]
+    df = hhs_adjustment(df)
+    return df
 
 # Potentially doing LUZ and TAZ as well?
 
