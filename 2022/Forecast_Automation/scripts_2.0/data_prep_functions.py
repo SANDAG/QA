@@ -36,6 +36,25 @@ def download_and_concat_Tdrive_files(dsid, desired_data):
 
 # mgra_sex_pop_additions
 
+# MGRA output
+
+
+def mgra_output(dsid, to_jdrive):
+    output = download_and_concat_Tdrive_files(dsid, 'T_Drive_files')
+
+    if to_jdrive:
+        output.to_csv(
+            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv", index=False)
+    return output
+
+
+# Dounload the data function
+def download_ind_file(dsid, geo_level):
+    output = pd.read_csv(
+        rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv")
+
+    return output
+
 # Make adjustments to specific, specified columns that need it - should work at all levels
 # HHS Adjusment
 
@@ -48,11 +67,11 @@ def hhs_adjustment(df):
 # Find columns that we want at particular geography levels
 
 
-def wanted_geography_cols(df, wanted_geo_level):
-    """Returns a list of columns that do not include unwanted geography levels."""
+def wanted_geography_cols(df, geo_level):
+    """This function takes in the dataframe you would like to fold up and the geography level you would like to fold up to. This function then outputs the columns in the dataframe that can be rolled up, dropping other geography specific columns."""
     geography_levels = ['mgra', 'cpa',
                         'jurisdiction', 'luz_id', 'taz', 'region']
-    geography_levels.remove(wanted_geo_level)
+    geography_levels.remove(geo_level)
 
     return [col for col in df.columns if col not in geography_levels]
 
@@ -63,27 +82,116 @@ def wanted_geography_cols(df, wanted_geo_level):
 # Roll up to Region - adjustments will be needed
 
 
-def region_foldup(df):
+def region_foldup(dsid, to_jdrive):
+    """Grabs the specific mgra level file and folds up to region level. Outputs to J drive if specified."""
+    df = download_ind_file(dsid, 'mgra')
     df['region'] = 'San Diego'
     df = df.groupby(['region', 'year']).sum()
     df = df[wanted_geography_cols(df, 'region')]
     df = hhs_adjustment(df)
+
+    if to_jdrive:
+        df.to_csv(
+            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\region_DS{dsid}_ind_QA.csv", index=False)
     return df
 
 # Potentially doing LUZ and TAZ as well?
 
 # -------------------- Class Manipulation Functions:
 
-# Download the data function
+# Common values function
+
+
+def common_values(series1, series2):
+    """Take in two pandas series objects (generally dataframe columns) and outputs a list of the similar values."""
+    series1 = list(set(series1))
+    series2 = list(set(series2))
+
+    common_values = [value for value in series1 if value in series2]
+
+    return common_values
 
 # DF Comparison Function - checking shape and columns and such, returns similar columns
 
 # Check to see if the desired output exists
 
-# Both functions - will house both of the above functions
+# Create Both file
 
-# Diff Functions --- will use the first two functions
 
+def create_both_df(dsid_1, dsid_2, geo_level, to_jdrive):
+    df1 = download_ind_file(dsid_1, geo_level)
+    df2 = download_ind_file(dsid_2, geo_level)
+
+    # Adjust for common years
+    common_years = common_values(df1['year'], df2['year'])
+    df1 = df1[df1['year'].isin(common_years)]
+    df2 = df2[df2['year'].isin(common_years)]
+
+    # Adjust for common geography levels
+    common_geographies = common_values(df1[geo_level], df2[geo_level])
+    df1 = df1[df1[geo_level].isin(common_geographies)]
+    df2 = df2[df2[geo_level].isin(common_geographies)]
+
+    # Set necessary index
+    df1 = df1.set_index(['year', geo_level])
+    df2 = df2.set_index(['year', geo_level])
+
+    # Merge them based on the index
+    output = pd.merge(df1, df2, left_index=True, right_index=True,
+                      how='left', suffixes=(f'_{dsid_1}', f'_{dsid_2}'))
+
+    if to_jdrive:
+        output.to_csv(
+            f"J:/DataScience/DataQuality/QAQC/forecast_automation/mgra_series_13_outputs_CSV_data/both_files/{geo_level}_both_DS{dsid_1}__DS{dsid_2}_QA.csv", index=True)
+
+    return output
+
+
+# Create Diff File
+def create_diff_df(dsid_1, dsid_2, geo_level, to_jdrive):
+    df1 = download_ind_file(dsid_1, geo_level)
+    df2 = download_ind_file(dsid_2, geo_level)
+
+    # Adjust for common years
+    common_years = common_values(df1['year'], df2['year'])
+    df1 = df1[df1['year'].isin(common_years)]
+    df2 = df2[df2['year'].isin(common_years)]
+
+    # Adjust for common geography levels
+    common_geographies = common_values(df1[geo_level], df2[geo_level])
+    df1 = df1[df1[geo_level].isin(common_geographies)]
+    df2 = df2[df2[geo_level].isin(common_geographies)]
+
+    # Remove other geography related columns
+    # It doesn't matter which df goes inside
+    wanted_columns = wanted_geography_cols(df1, geo_level)
+    df1 = df1[wanted_columns]
+    df2 = df2[wanted_columns]
+
+    # Common Columns
+    common_columns = common_values(df1.columns, df2.columns)
+    df1 = df1[common_columns]
+    df2 = df2[common_columns]
+
+    # Set necessary index
+    df1 = df1.set_index(['year', geo_level])
+    df2 = df2.set_index(['year', geo_level])
+
+    # Drop non-numeric columns
+    df1 = df1.select_dtypes(include='number')
+    df2 = df2.select_dtypes(include='number')
+
+    # Ensure columns match up
+    assert sum(~(df1.columns == df2.columns)) == 0
+
+    # Create the diff file
+    output = df1.subtract(df2)
+
+    if to_jdrive:
+        output.to_csv(
+            f"J:/DataScience/DataQuality/QAQC/forecast_automation/mgra_series_13_outputs_CSV_data/diff_files/{geo_level}_diff_DS{dsid_1}_minus_DS{dsid_2}_QA.csv", index=True)
+
+    return output
 # ---------------------- Class Other Outpus
 
 # Number of persons (from households) at MGRA level depending on GQ preference
