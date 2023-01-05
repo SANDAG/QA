@@ -12,5 +12,7 @@ Households file:
 
 
 Other: 
-The diff and both file functions are in the notebook: part1_v2
+- It looks like DS41 has extra columns that other DSIDs do not have, DS41 has: MicroAccessTime, remoteAVparking, refueling_stations. DS35 doesn't have these
+
+
 

@@ -41,7 +41,7 @@ def download_and_concat_Tdrive_files(dsid, desired_data):
 
 def mgra_output(dsid, to_jdrive):
     output = download_and_concat_Tdrive_files(dsid, 'T_Drive_files')
-
+    output.insert(0, 'year', output.pop('year'))
     if to_jdrive:
         output.to_csv(
             rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv", index=False)
@@ -369,6 +369,7 @@ def find_individual_years_for_dsid(dsid):
 
 
 def aggregate_persons_households_population_comparison(dsid, gq_only, to_jdrive):
+    """Compares population numbers between household csv and population csv"""
     concatonated_dfs = pd.DataFrame()
 
     for year in find_individual_years_for_dsid(dsid):
