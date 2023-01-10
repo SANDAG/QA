@@ -15,4 +15,5 @@ Other:
 - It looks like DS41 has extra columns that other DSIDs do not have, DS41 has: MicroAccessTime, remoteAVparking, refueling_stations. DS35 doesn't have these
 
 
-
+Current Status:
+- Right now the old working code for household number comparison betweeen households and input files is commebted out. Right now I am unsure how to get the number of households for GQ from the input files 
