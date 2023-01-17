@@ -247,20 +247,21 @@ def population_comparison_households_and_input_files(dsid, gq_only, no_gq, to_jd
                             'year', 'mgra', 'pop', 'hhp'])
     mgra_data['gq_pop_input_files'] = mgra_data['pop'] - mgra_data['hhp']
 
+    # gq_only = True , no_gq = False
     if (gq_only == no_gq) & (gq_only == False):
-        mgra_data = mgra_data[['year', 'mgra', 'pop']]
+        mgra_data = mgra_data[['mgra', 'year', 'pop']]
         output_type = 'all'
     elif gq_only:
-        mgra_data = mgra_data[['year', 'mgra', 'gq_pop_input_files']]
+        mgra_data = mgra_data[['mgra', 'year', 'gq_pop_input_files']]
         output_type = 'GQ_only'
     else:
-        mgra_data = mgra_data[['year', 'mgra', 'hhp']]
+        mgra_data = mgra_data[['mgra', 'year', 'hhp']]
         output_type = 'no_GQ'
 
     # Concatonate and merge
     output = population_from_households_dataset(dsid, gq_only, no_gq).merge(
         mgra_data, how='left', on=['mgra', 'year'])
-    output.columns = ['mgra', 'year',
+    output.columns = ['year', 'mgra',
                       'pop_count_household_file', 'pop_input_files']
     output['Diff'] = output['pop_count_household_file'] - \
         output['pop_input_files']
