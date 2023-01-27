@@ -48,7 +48,7 @@ def mgra_output(dsid, to_jdrive):
     return output
 
 
-# Dounload the data function
+# Download the data function
 def download_ind_file(dsid, geo_level):
     output = pd.read_csv(
         rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv")
