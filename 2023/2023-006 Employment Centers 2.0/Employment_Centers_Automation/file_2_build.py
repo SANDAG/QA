@@ -22,7 +22,7 @@ def download_and_clean_employment_center_data(conn):
                 [employment_center_name],
                 [tier],
                 [parent]
-            FROM [ws].[employment_centers].[dim_employment_center_2.0]
+            FROM [ws].[employment_centers].[dim_employment_center_2]
             """
     ec_list = pd.read_sql_query(query, conn)
 
@@ -122,9 +122,6 @@ def main():
     return output
 
 
-# output = main()
-# print(output)
-
 def create_output():
     # Get the path to the Downloads folder
     downloads_folder = os.path.join(os.path.expanduser("~"), "Downloads")
@@ -134,7 +131,9 @@ def create_output():
     df = main()
 
     # Write the data frame to a CSV file in the Downloads folder
-    df.to_csv(os.path.join(downloads_folder, "file_2.csv"), index=True)
+    df.to_csv(os.path.join(downloads_folder,
+              "EC_Data_File_2_build.csv"), index=True)
+    print('Output has been placed in your downloads folder')
 
 
 if __name__ == '__main__':
