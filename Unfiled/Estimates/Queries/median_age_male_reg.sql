@@ -1,1 +1,0 @@
-EXECUTE dbo.compute_median_age_male 24, 'region'
