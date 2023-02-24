@@ -1,0 +1,74 @@
+{
+  "est": {
+    "age": {
+      "joins": ["mgra_id", "age_group_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "age_sex_ethnicity": {
+      "joins": ["mgra_id", "age_group_id", "sex_id", "ethnicity_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "ethnicity": {
+      "joins": ["mgra_id", "ethnicity_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "household_income": {
+      "joins": ["mgra_id", "income_group_id"],
+      "aggregations": [["households", "SUM"]]
+    },
+    "households": {
+      "joins": ["mgra_id"],
+      "aggregations": [["households", "SUM"]]
+    },
+    "housing": {
+      "joins": ["mgra_id", "structure_type_id"],
+      "aggregations": [
+        ["units", "SUM"], 
+        ["unoccupiable", "SUM"], 
+        ["occupied", "SUM"], 
+        ["vacancy", "SUM"]
+      ]
+    },
+    "population": {
+      "joins": ["mgra_id", "housing_type_id"],
+      "aggregations": [["population", "SUM"]]
+    },
+    "sex": {
+      "joins": ["mgra_id", "sex_id"],
+      "aggregations": [["population", "SUM"]]
+    }
+  },
+  
+  "dim": {
+    "mgra_id": {
+      "dim_table": "mgra_denormalize",
+      "column(s)": ["region", "sra", "tract", "supervisorial", "college", "cpa", 
+        "jurisdiction", "zip", "secondary", "elementary", "msa", "sdcouncil", "transit",
+        "unified"]
+    },
+    "age_group_id": {
+      "dim_table": "age_group",
+      "column(s)": ["name"]
+    },
+    "sex_id": {
+      "dim_table": "sex",
+      "column(s)": ["sex"]
+    },
+    "ethnicity_id": {
+      "dim_table": "ethnicity",
+      "column(s)": ["long_name"]
+    },
+    "structure_type_id": {
+      "dim_table": "structure_type",
+      "column(s)": ["long_name"]
+    },
+    "housing_type_id": {
+      "dim_table": "housing_type",
+      "column(s)": ["long_name"]
+    },
+    "income_group_id": {
+      "dim_table": "income_group",
+      "column(s)": ["name"]
+    }
+  }
+}

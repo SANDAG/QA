@@ -60,7 +60,24 @@ pysandag-master/
 .sps
 .docx
 .sav
+*.pbix
+.vscode/
 
 # Images #
 ################
 *.png
+.Rproj.user
+*.Rproj
+*.jpg
+
+# ESRI #
+################
+Default.gdb/
+Index/
+*.cfs
+*.del
+*.gen
+*.xml
+*.sde
+*.tbx
+*.aprx
