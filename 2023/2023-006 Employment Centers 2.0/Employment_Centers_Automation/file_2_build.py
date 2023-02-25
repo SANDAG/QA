@@ -133,7 +133,7 @@ def create_output():
     # Write the data frame to a CSV file in the Downloads folder
     df.to_csv(os.path.join(downloads_folder,
               "EC_Data_File_2_build.csv"), index=True)
-    print('Output has been placed in your downloads folder')
+    print('Output has been placed in your downloads folder with the name: EC_Data_File_2_build.csv')
 
 
 if __name__ == '__main__':
