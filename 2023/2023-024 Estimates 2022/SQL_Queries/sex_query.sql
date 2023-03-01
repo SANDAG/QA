@@ -1,5 +1,5 @@
 /****** Script for SelectTopNRows command from SSMS  ******/
-SELECT TOP (1000) [mgra_id]
+SELECT [mgra_id]
       ,[yr_id]
       ,sex_id_table.sex
       ,[population]
