@@ -1,6 +1,6 @@
 /****** Script for SelectTopNRows command from SSMS  ******/
 SELECT 
-	geo_table.cpa
+	geo_table.mgra_id
       ,[yr_id]
       ,household_type_id.name AS 'household_type'
       ,[households]
