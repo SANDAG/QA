@@ -1,0 +1,2 @@
+select * FROM [socioec_data].[ca_dof].[population_housing_estimates]
+where vintage_yr= 2022 AND area_type= 'County' AND area_name = 'San Diego' AND summary_type='Total' AND est_yr IN (2020, 2021, 2022);
