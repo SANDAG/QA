@@ -29,12 +29,12 @@ def geodepot_layer():
 
     query = """
     SELECT
-        [SRA] AS 'SRA_id'
-        ,[MGRA]
+        [SRA] AS 'sra_id'
+        ,[MGRA] AS 'mgra'
         ,[CT20] AS 'census_tract'
         ,[City] AS 'jurisdiction_id'
         ,[CPA] AS 'cpa_id'
-        ,[LUZ]
+        ,[LUZ] AS 'luz'
     FROM [GeoDepot].[gis].[MGRA15]
     """
     return pd.read_sql_query(query, conn)
@@ -73,6 +73,7 @@ def jurisdiction_crosswalk():
     """
     return pd.read_sql_query(query, conn)
 
+
 def sra_crosswalk():
     # Staging Data (SQL)
     conn = pyodbc.connect('Driver={ODBC Driver 17 for SQL Server};'
@@ -81,8 +82,8 @@ def sra_crosswalk():
                           'Trusted_Connection=yes;')
 
     query = """
-    SELECT SRA AS 'SRA_id'
-		,name AS 'SRA'
+    SELECT SRA AS 'sra_id'
+		,name AS 'sra'
     FROM [GeoDepot].[gis].[SRA]
     """
     return pd.read_sql_query(query, conn)
@@ -90,12 +91,15 @@ def sra_crosswalk():
 
 def create_and_merge_all_data():
     output = estimates_mgra_denormalize().merge(
-        geodepot_layer(), how='left', left_on='mgra', right_on='MGRA')
+        geodepot_layer(), how='left', on='mgra')
     output = output.merge(cpa_crosswalk(), how='left',
                           left_on='cpa_id', right_on='cpa_id')
     output = output.merge(jurisdiction_crosswalk(),
                           how='left', on='jurisdiction_id')
     output = output.merge(sra_crosswalk(),
-                          how='left', on='SRA_id')
-    output = output.drop(['cpa_id', 'jurisdiction_id', 'MGRA', 'SRA_id'], axis=1)
+                          how='left', on='sra_id')
+    output = output.drop(
+        ['cpa_id', 'jurisdiction_id', 'sra_id'], axis=1)
+    output['region'] = 'San Diego'
+
     return output
