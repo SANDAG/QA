@@ -1,4 +1,4 @@
-SELECT TOP(100) series_15_denorm.[{geo_level}] AS 'geo_level'
+SELECT series_15_denorm.[{geo_level}] AS 'geo_level'
       ,[yr_id]
       ,SUM([units]) AS 'units'
 	  ,SUM([occupied]) AS 'occupied'

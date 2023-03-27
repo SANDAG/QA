@@ -1,5 +1,5 @@
 /****** Script for SelectTopNRows command from SSMS  ******/
-SELECT TOP(100) series_15_denorm.[{geo_level}] AS 'geo_level'
+SELECT series_15_denorm.[{geo_level}] AS 'geo_level'
       ,[yr_id]
 	  ,age_group_table.name AS 'breakdown_value'
       ,SUM([population]) AS 'value'
