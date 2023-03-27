@@ -9,3 +9,4 @@ SELECT TOP(100) series_15_denorm.[{geo_level}] AS 'geo_level'
   LEFT JOIN [ws].[dbo].[series_15_mgra_denorm] AS series_15_denorm
   ON age_table.mgra_id = series_15_denorm.mgra_id
   GROUP BY series_15_denorm.[{geo_level}], yr_id, age_group_table.name
+  ORDER BY series_15_denorm.[{geo_level}], yr_id, age_group_table.name
