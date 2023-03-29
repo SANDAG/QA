@@ -1,3 +1,20 @@
+with series_15_denorm as
+(
+SELECT [mgra_id]
+      ,denorm_table.[mgra]
+	  ,[tract] AS 'census_tract'
+	  ,[cpa]
+	  ,[jurisdiction]
+	  ,[sra]
+	  ,geo_depot_mgra15.LUZ AS 'luz'
+      ,[region]
+  FROM [demographic_warehouse].[dim].[mgra_denormalize] AS denorm_table
+  LEFT OUTER JOIN OPENQUERY([sql2014b8], 'SELECT [MGRA], [LUZ] FROM [GeoDepot].[gis].[MGRA15]') geo_depot_mgra15
+	ON denorm_table.mgra = geo_depot_mgra15.MGRA
+  WHERE series = 15
+)
+
+
 SELECT
 	series_15_denorm.[{geo_level}] AS 'geo_level'
       ,[yr_id]
@@ -14,7 +31,7 @@ SELECT
   ON age_sex_eth_table.ethnicity_id = eth_table.ethnicity_id
   LEFT JOIN [demographic_warehouse].[dim].[mgra_denormalize] AS mgra_dnorm
   ON age_sex_eth_table.mgra_id = mgra_dnorm.mgra_id
-  LEFT JOIN [ws].[dbo].[series_15_mgra_denorm] AS series_15_denorm
+  LEFT JOIN series_15_denorm
   ON age_sex_eth_table.mgra_id = series_15_denorm.mgra_id
   WHERE yr_id = 2020 OR yr_id = 2021
   GROUP BY series_15_denorm.[{geo_level}], yr_id, age_group_table.name, sex, eth_table.long_name
