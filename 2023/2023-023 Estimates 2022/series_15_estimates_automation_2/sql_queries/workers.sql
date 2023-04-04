@@ -18,6 +18,7 @@ SELECT series_15_denorm.[{geo_level}]
 	,[estimates_year] AS 'yr_id'
       ,SUM([workers_0]) AS 'workers_0'
       ,SUM([workers_1]) AS 'workers_1'
+      ,SUM([workers_2]) AS 'workers_2'
       ,SUM([workers_3plus]) AS 'workers_3plus'
   FROM [estimates].[est_{estimates_version}].[households_workers] AS workers_table
   LEFT JOIN series_15_denorm
