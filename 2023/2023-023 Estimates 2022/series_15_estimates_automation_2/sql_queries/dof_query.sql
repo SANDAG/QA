@@ -3,7 +3,7 @@ est_yr AS 'yr_id',
 total_pop AS 'Total Population',
 household_pop AS 'Household Population',
 group_quarters AS 'Total GQ Population',
-total_hu AS 'Total Households',
+total_hu AS 'units', --this is total housing units
 single_detached AS 'Single Family - Detached',
 -- signle_attached has no connection to our excels
 multiple AS 'Single Family - Multiple Unit',
