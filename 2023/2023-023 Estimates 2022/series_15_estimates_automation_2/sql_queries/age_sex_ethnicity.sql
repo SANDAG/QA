@@ -33,6 +33,6 @@ SELECT
   ON age_sex_eth_table.mgra_id = mgra_dnorm.mgra_id
   LEFT JOIN series_15_denorm
   ON age_sex_eth_table.mgra_id = series_15_denorm.mgra_id
-  WHERE yr_id = 2020 OR yr_id = 2021
+  WHERE yr_id IN (2020, 2021, 2022)
   GROUP BY series_15_denorm.[{geo_level}], yr_id, age_group_table.name, sex, eth_table.long_name
   ORDER BY series_15_denorm.[{geo_level}], yr_id, age_group_table.name, sex, eth_table.long_name
