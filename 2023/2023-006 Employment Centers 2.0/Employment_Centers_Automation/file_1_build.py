@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # Staging Data (SQL)
-conn = pyodbc.connect('Driver={ODBC Driver 17 for SQL Server};'
+conn = pyodbc.connect('Driver={SQL Server};'
                       'Server=DDAMWSQL16.sandag.org;'
                       'Database=ws;'
                       'Trusted_Connection=yes;')
