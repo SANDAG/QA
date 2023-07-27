@@ -8,6 +8,5 @@ SELECT
 	  ,P0020010 AS 'Non-Hispanic, Other'
 	  ,P0020012 AS 'Non-Hispanic, Two or More Races'
 	  ,P0020005 AS 'Non-Hispanic, White'
-	  ,P0010001 AS 'Total Population'
   FROM [census].[decennial].[pl_94_171_2020_ca]
   WHERE SUMLEV = 140 AND GEOCODE LIKE '06073%'
