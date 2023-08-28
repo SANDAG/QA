@@ -1,0 +1,13 @@
+# Local config file
+config.toml
+
+# Data files
+data/
+
+# Python artifacts
+.venv
+*.egg-info
+__pycache__
+
+# VSCode artifacts 
+.vscode

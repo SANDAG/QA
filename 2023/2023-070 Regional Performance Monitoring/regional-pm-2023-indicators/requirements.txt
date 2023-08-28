@@ -1,0 +1,11 @@
+census
+geopandas
+ipykernel
+openpyxl
+pandas
+pylint
+pyodbc
+requests
+sqlalchemy
+tqdm
+us
