@@ -1,0 +1,157 @@
+---
+# This defines for each estimate table, which columns to join on and how
+est:
+  age:
+    joins:
+    - mgra_id
+    - age_group_id
+    aggregations:
+    - - population
+      - SUM
+  age_sex_ethnicity:
+    joins:
+    - mgra_id
+    - age_group_id
+    - sex_id
+    - ethnicity_id
+    aggregations:
+    - - population
+      - SUM
+  ethnicity:
+    joins:
+    - mgra_id
+    - ethnicity_id
+    aggregations:
+    - - population
+      - SUM
+  household_income:
+    joins:
+    - mgra_id
+    - income_group_id
+    aggregations:
+    - - households
+      - SUM
+  households:
+    joins:
+    - mgra_id
+    aggregations:
+    - - households
+      - SUM
+  housing:
+    joins:
+    - mgra_id
+    - structure_type_id
+    aggregations:
+    - - units
+      - SUM
+    - - unoccupiable
+      - SUM
+    - - occupied
+      - SUM
+    - - vacancy
+      - SUM
+  population:
+    joins:
+    - mgra_id
+    - housing_type_id
+    aggregations:
+    - - population
+      - SUM
+  sex:
+    joins:
+    - mgra_id
+    - sex_id
+    aggregations:
+    - - population
+      - SUM
+
+# This defines for each column to join on, where to find the join table and what columns of the join
+# table to keep
+dim:
+  mgra_id:
+    dim_table: mgra_denormalize
+    column(s):
+    - region
+    - sra
+    - tract
+    - supervisorial
+    - college
+    - cpa
+    - jurisdiction
+    - zip
+    - secondary
+    - elementary
+    - msa
+    - sdcouncil
+    - transit
+    - unified
+  age_group_id:
+    dim_table: age_group
+    column(s):
+    - name
+  sex_id:
+    dim_table: sex
+    column(s):
+    - sex
+  ethnicity_id:
+    dim_table: ethnicity
+    column(s):
+    - long_name
+  structure_type_id:
+    dim_table: structure_type
+    column(s):
+    - long_name
+  housing_type_id:
+    dim_table: housing_type
+    column(s):
+    - long_name
+  income_group_id:
+    dim_table: income_group
+    column(s):
+    - name
+
+# This defines for each estimates vintage, what series of mgra_denormalize to use. This information
+# comes from the columns [series] and [source_system_version] from 
+# [demographic_warehouse].[dim].[datasource].
+# CRITICAL NOTE: THIS IS NOT MGRA SERIES. THIS NUMBER IS FORECAST/ESTIMATE SERIES. F/E SERIES 14
+# CORRESPONDS TO MGRA SERIES 13. F/E SERIES 15 WILL CORRESPOND TO MGRA SERIES 15. MGRA SERIES 14
+# IS NOT USED FOR ANYTHING AS FAR AS I AM AWARE
+series:
+  "2018_02": 14
+  "2018_03": 14
+  "2019_01": 14
+  "2020_03": 14
+  "2020_04": 14
+  "2020_06": 14
+  "2021_01": 14
+
+pivot_categories:
+    age: |
+        SELECT DISTINCT name
+        FROM [demographic_warehouse].[dim].[age_group]
+        ORDER BY name
+    ethnicity: |
+        SELECT DISTINCT long_name
+        FROM [demographic_warehouse].[dim].[ethnicity]
+        ORDER BY long_name
+    household_income: |
+        SELECT DISTINCT name
+        FROM [demographic_warehouse].[dim].[income_group]
+        WHERE categorization = 10
+            AND constant_dollars_year = 2010
+    housing: |
+        SELECT DISTINCT long_name
+        FROM [demographic_warehouse].[dim].[structure_type]
+        ORDER BY long_name
+    jobs: |
+        SELECT DISTINCT full_name
+        FROM [demographic_warehouse].[dim].[employment_type]
+        ORDER BY full_name
+    population: |
+        SELECT DISTINCT long_name
+        FROM [demographic_warehouse].[dim].[housing_type]
+        ORDER BY long_name
+    sex: |
+        SELECT DISTINCT sex
+        FROM [demographic_warehouse].[dim].[sex]
+        ORDER BY sex
