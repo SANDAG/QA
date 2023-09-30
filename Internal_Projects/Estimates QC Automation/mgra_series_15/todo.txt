@@ -1,0 +1,4 @@
+Things that need to be done: 
+- Dante to integrate his long format work into this script: https://github.com/SANDAG/QA/blob/master/2023/2023-023%20Estimates%202022/series_15_estimates_automation_2/analysis_long_format.ipynb
+    - Have it output to a J-drive folder so that everyone can use it as is 
+
