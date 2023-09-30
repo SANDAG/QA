@@ -1,0 +1,4 @@
+Things to do: 
+- Add in a function in data_prep_functions to roll up the code to different geography levels. 
+- Move the population_comparison_households_and_input_files to data_prep_functions
+- Ensure all links are up to date, add in all persons and households values 
