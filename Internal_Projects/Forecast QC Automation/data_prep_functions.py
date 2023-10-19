@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import yaml
+import pyodbc
 
 # -------------------------- Class: Configuration functions
 
@@ -43,15 +44,16 @@ def mgra_output(dsid, to_jdrive):
     output = download_and_concat_Tdrive_files(dsid, 'T_Drive_files')
     output.insert(1, 'year', output.pop('year'))
     if to_jdrive:
+        print('outputting')
         output.to_csv(
-            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv", index=False)
+            rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\mgra_DS{dsid}_ind_QA.csv", index=False)
     return output
 
 
 # Download the data function
 def download_ind_file(dsid, geo_level):
     output = pd.read_csv(
-        rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv")
+        rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv")
 
     return output
 
@@ -69,17 +71,56 @@ def hhs_adjustment(df):
 
 def wanted_geography_cols(df, geo_level):
     """This function takes in the dataframe you would like to fold up and the geography level you would like to fold up to. This function then outputs the columns in the dataframe that can be rolled up, dropping other geography specific columns."""
-    geography_levels = ['mgra', 'cpa',
+    geography_levels = ['mgra', 'cpa','luz',
                         'jurisdiction', 'luz_id', 'taz', 'region']
     geography_levels.remove(geo_level)
 
     return [col for col in df.columns if col not in geography_levels]
 
-# Roll up to CPA - adjustments will be needed
+# mgra denormalize 
+def download_mgra_denorm_data(geo_level):
+    conn = pyodbc.connect('Driver={ODBC Driver 17 for SQL Server};'
+                    'Server=DDAMWSQL16.sandag.org;'
+                    'Database=demographic_warehouse;'
+                    'Trusted_Connection=yes;')
+    
+    mgra_denorm_query = '''SELECT [mgra_id]
+      ,denorm_table.[mgra]
+	  ,[tract] AS 'census_tract'
+	  ,[cpa]
+	  ,[jurisdiction]
+	  ,[sra]
+	  ,geo_depot_mgra15.LUZ AS 'luz'
+      ,[region]
+  FROM [demographic_warehouse].[dim].[mgra_denormalize] AS denorm_table
+  LEFT OUTER JOIN OPENQUERY([sql2014b8], 'SELECT [MGRA], [LUZ] FROM [GeoDepot].[gis].[MGRA15]') geo_depot_mgra15
+	ON denorm_table.mgra = geo_depot_mgra15.MGRA
+  WHERE series = 15'''
+    
 
-# Roll up to Jurisdiction - adjustments will be needed
+    return  pd.read_sql_query(mgra_denorm_query, conn)[['mgra', geo_level]]
 
-# Roll up to Region - adjustments will be needed
+# Roll up code: 
+def rollup_data(dsid, geo_level, to_jdrive):
+    df = download_ind_file(dsid=dsid, geo_level='mgra')
+
+    mgra_denorm_table = download_mgra_denorm_data(geo_level=geo_level)
+
+    temp_df = df.merge(mgra_denorm_table, on='mgra', how='left')
+    temp_df = temp_df.drop('mgra', axis=1)
+    temp_df = temp_df.groupby([geo_level, 'year']).sum().reset_index()
+
+    final_output_columns = wanted_geography_cols(df=temp_df, geo_level=geo_level)
+    
+    final_output = temp_df[final_output_columns]
+
+    final_output = hhs_adjustment(final_output)
+    
+    if to_jdrive:
+        final_output.to_csv(
+            rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv", index=False)
+    
+    return final_output 
 
 
 def region_foldup(dsid, to_jdrive):
