@@ -71,19 +71,21 @@ def hhs_adjustment(df):
 
 def wanted_geography_cols(df, geo_level):
     """This function takes in the dataframe you would like to fold up and the geography level you would like to fold up to. This function then outputs the columns in the dataframe that can be rolled up, dropping other geography specific columns."""
-    geography_levels = ['mgra', 'cpa','luz',
+    geography_levels = ['mgra', 'cpa', 'luz',
                         'jurisdiction', 'luz_id', 'taz', 'region']
     geography_levels.remove(geo_level)
 
     return [col for col in df.columns if col not in geography_levels]
 
-# mgra denormalize 
+# mgra denormalize
+
+
 def download_mgra_denorm_data(geo_level):
     conn = pyodbc.connect('Driver={ODBC Driver 17 for SQL Server};'
-                    'Server=DDAMWSQL16.sandag.org;'
-                    'Database=demographic_warehouse;'
-                    'Trusted_Connection=yes;')
-    
+                          'Server=DDAMWSQL16.sandag.org;'
+                          'Database=demographic_warehouse;'
+                          'Trusted_Connection=yes;')
+
     mgra_denorm_query = '''SELECT [mgra_id]
       ,denorm_table.[mgra]
 	  ,[tract] AS 'census_tract'
@@ -96,11 +98,12 @@ def download_mgra_denorm_data(geo_level):
   LEFT OUTER JOIN OPENQUERY([sql2014b8], 'SELECT [MGRA], [LUZ] FROM [GeoDepot].[gis].[MGRA15]') geo_depot_mgra15
 	ON denorm_table.mgra = geo_depot_mgra15.MGRA
   WHERE series = 15'''
-    
 
-    return  pd.read_sql_query(mgra_denorm_query, conn)[['mgra', geo_level]]
+    return pd.read_sql_query(mgra_denorm_query, conn)[['mgra', geo_level]]
 
-# Roll up code: 
+# Roll up code:
+
+
 def rollup_data(dsid, geo_level, to_jdrive):
     df = download_ind_file(dsid=dsid, geo_level='mgra')
 
@@ -110,17 +113,18 @@ def rollup_data(dsid, geo_level, to_jdrive):
     temp_df = temp_df.drop('mgra', axis=1)
     temp_df = temp_df.groupby([geo_level, 'year']).sum().reset_index()
 
-    final_output_columns = wanted_geography_cols(df=temp_df, geo_level=geo_level)
-    
+    final_output_columns = wanted_geography_cols(
+        df=temp_df, geo_level=geo_level)
+
     final_output = temp_df[final_output_columns]
 
     final_output = hhs_adjustment(final_output)
-    
+
     if to_jdrive:
         final_output.to_csv(
             rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv", index=False)
-    
-    return final_output 
+
+    return final_output
 
 
 def region_foldup(dsid, to_jdrive):
@@ -133,7 +137,7 @@ def region_foldup(dsid, to_jdrive):
 
     if to_jdrive:
         df.to_csv(
-            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\region_DS{dsid}_ind_QA.csv", index=True)
+            rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\region_DS{dsid}_ind_QA.csv", index=True)
     return df
 
 # Potentially doing LUZ and TAZ as well?
@@ -184,7 +188,7 @@ def create_both_df(dsid_1, dsid_2, geo_level, to_jdrive):
 
     if to_jdrive:
         output.to_csv(
-            f"J:/DataScience/DataQuality/QAQC/forecast_automation/mgra_series_13_outputs_CSV_data/both_files/{geo_level}_both_DS{dsid_1}__DS{dsid_2}_QA.csv", index=True)
+            f"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\both_files\{geo_level}_both_DS{dsid_1}__DS{dsid_2}_QA.csv", index=True)
 
     return output
 
@@ -194,7 +198,7 @@ def common_columns_names_in_order(df, dsid, geo_level):
     current_headers = df.columns
 
     correct_headers = pd.read_csv(
-        rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv", nrows=0).columns
+        rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv", nrows=0).columns
 
     return [header for header in correct_headers if header in current_headers]
 
@@ -248,7 +252,7 @@ def create_diff_df(dsid_1, dsid_2, geo_level, to_jdrive):
                                                                           geo_level, 'year'])
     if to_jdrive:
         correctly_ordered_columns_df.to_csv(
-            f"J:/DataScience/DataQuality/QAQC/forecast_automation/mgra_series_13_outputs_CSV_data/diff_files/{geo_level}_diff_DS{dsid_1}_minus_DS{dsid_2}_QA.csv", index=True)
+            f"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\diff_files\{geo_level}_diff_DS{dsid_1}_minus_DS{dsid_2}_QA.csv", index=True)
 
     return correctly_ordered_columns_df
 
@@ -284,7 +288,7 @@ def population_from_households_dataset(dsid, gq_only, no_gq):
 def population_comparison_households_and_input_files(dsid, gq_only, no_gq, to_jdrive):
     '''Compare MGRA population data to household dataset population data based on gq preference.'''
     # Input Files
-    mgra_data = pd.read_csv(rf'J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv', usecols=[
+    mgra_data = pd.read_csv(rf'J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\mgra_DS{dsid}_ind_QA.csv', usecols=[
                             'year', 'mgra', 'pop', 'hhp'])
     mgra_data['gq_pop_input_files'] = mgra_data['pop'] - mgra_data['hhp']
 
@@ -309,7 +313,7 @@ def population_comparison_households_and_input_files(dsid, gq_only, no_gq, to_jd
 
     if to_jdrive:
         output.to_csv(
-            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_population_comparison_{output_type}_DS{dsid}_QA.csv", index=False)
+            rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\other_outputs\mgra_households_dataset_population_comparison_{output_type}_DS{dsid}_QA.csv", index=False)
 
     return output
 
@@ -339,7 +343,7 @@ def number_of_households_from_households_dataset(dsid):
 def household_number_comparison_houseolds_and_input_files(dsid, to_jdrive):
     '''Compare number of households between input files and households dataset. Only at the 'No GQ' level.'''
     # Bring in input files and process
-    mgra_data = pd.read_csv(rf'J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\aggregated_data\mgra_DS{dsid}_ind_QA.csv', usecols=[
+    mgra_data = pd.read_csv(rf'J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\mgra_DS{dsid}_ind_QA.csv', usecols=[
                             'year', 'mgra', 'hh'])
     mgra_data = mgra_data.rename(columns={'hh': 'hh_count_input_files'})
 
@@ -351,7 +355,7 @@ def household_number_comparison_houseolds_and_input_files(dsid, to_jdrive):
         output['hh_count_input_files']
     if to_jdrive:
         output.to_csv(
-            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\mgra_households_dataset_hh_count_comparison_no_GQ_DS{dsid}_QA.csv", index=False)
+            rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\other_outputs\mgra_households_dataset_hh_count_comparison_no_GQ_DS{dsid}_QA.csv", index=False)
     return output
 
 
@@ -448,7 +452,7 @@ def aggregate_persons_households_population_comparison(dsid, gq_only, to_jdrive)
 
     if to_jdrive:
         concatonated_dfs.to_csv(
-            rf"J:\DataScience\DataQuality\QAQC\forecast_automation\mgra_series_13_outputs_CSV_data\other_outputs\DS{dsid}_persons_household_population_comparison_{gq_status}_QA.csv", index=False)
+            rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\other_outputs\DS{dsid}_persons_household_population_comparison_{gq_status}_QA.csv", index=False)
 
     return concatonated_dfs
 
