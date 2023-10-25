@@ -71,7 +71,7 @@ def hhs_adjustment(df):
 
 def wanted_geography_cols(df, geo_level):
     """This function takes in the dataframe you would like to fold up and the geography level you would like to fold up to. This function then outputs the columns in the dataframe that can be rolled up, dropping other geography specific columns."""
-    geography_levels = ['mgra', 'cpa', 'luz', 'LUZ', 'census_tract', 'sra',
+    geography_levels = ['mgra', 'cpa', 'luz', 'LUZ', 'census_tract', 'zip', 'sra',
                         'jurisdiction', 'luz_id', 'taz', 'region']
     geography_levels.remove(geo_level)
 
@@ -90,6 +90,7 @@ def download_mgra_denorm_data(geo_level):
       ,denorm_table.[mgra]
 	  ,[tract] AS 'census_tract'
 	  ,[cpa]
+      ,taz
 	  ,[jurisdiction]
 	  ,[sra]
 	  ,geo_depot_mgra15.LUZ AS 'luz'
@@ -106,6 +107,9 @@ def download_mgra_denorm_data(geo_level):
 
 def rollup_data(dsid, geo_level, to_jdrive):
     df = download_ind_file(dsid=dsid, geo_level='mgra')
+    # This is so in the merge we with mgradenormalize we don't get something like 'taz_x' and 'taz_y'
+    columns_to_drop = ['taz', 'luz', 'LUZ']
+    df = df.drop([col for col in columns_to_drop if col in df.columns], axis=1)
 
     mgra_denorm_table = download_mgra_denorm_data(geo_level=geo_level)
 
@@ -125,22 +129,6 @@ def rollup_data(dsid, geo_level, to_jdrive):
             rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\{geo_level}_DS{dsid}_ind_QA.csv", index=False)
 
     return final_output
-
-
-def region_foldup(dsid, to_jdrive):
-    """Grabs the specific mgra level file and folds up to region level. Outputs to J drive if specified."""
-    df = download_ind_file(dsid, 'mgra')
-    df['region'] = 'San Diego'
-    df = df.groupby(['region', 'year']).sum()
-    df = df[wanted_geography_cols(df, 'region')]
-    df = hhs_adjustment(df)
-
-    if to_jdrive:
-        df.to_csv(
-            rf"J:\DataScience\DataQuality\QAQC\Forecast QC Automation\mgra_series_15\aggregated_data\region_DS{dsid}_ind_QA.csv", index=True)
-    return df
-
-# Potentially doing LUZ and TAZ as well?
 
 # -------------------- Class Manipulation Functions:
 
@@ -458,6 +446,81 @@ def aggregate_persons_households_population_comparison(dsid, gq_only, to_jdrive)
 
 
 # ------------------------ Class QC Checks
+def check_internal_consistency(df):
+    # Define the total and breakdown columns
+    columns_dict = {
+        'pop': ['hhp', 'gq'],
+        'gq': ['gq_civ', 'gq_mil'],
+        'gq_civ': ['gq_civ_college', 'gq_civ_other'],
+        'hs': ['hs_sf', 'hs_mf', 'hs_mh'],
+        'hh': ['hh_sf', 'hh_mf', 'hh_mh'],
+        'emp_tot': ['emp_civ', 'emp_mil'],
+        'emp_civ': ['emp_gov', 'emp_ag_min', 'emp_bus_svcs', 'emp_fin_res_mgm', 'emp_educ', 'emp_hlth', 'emp_ret', 'emp_trn_wrh', 'emp_con', 'emp_utl', 'emp_mnf', 'emp_whl', 'emp_ent', 'emp_accm', 'emp_food', 'emp_oth'],
+        'hh_income': ['i1', 'i2', 'i3', 'i4', 'i5', 'i6', 'i7', 'i8', 'i9', 'i10']
+    }
+
+    inconsistencies = []
+
+    # Loop through the columns and check consistency
+    for total_column, breakdown_columns in columns_dict.items():
+        if total_column == 'hh_units':
+            total_column = 'hh'
+        elif total_column == 'hh_income':
+            total_column = 'hh'
+        expected_value = df[breakdown_columns].sum(axis=1)
+        difference = df[total_column] - expected_value
+
+        # Check if any rows have a difference
+        inconsistent_rows = difference[difference != 0]
+        for index, value in inconsistent_rows.items():
+            inconsistencies.append({
+                # Added 'year' column to the output
+                'year': df['year'].iloc[index],
+                'breakdown_columns': ', '.join(breakdown_columns),
+                'row value': index,
+                'expected': df[total_column].iloc[index],
+                'found': expected_value.iloc[index],
+                'difference': value
+            })
+
+    # If inconsistencies were found, print them as a DataFrame
+    if inconsistencies:
+        print('There are internal inconsistencies - run individually to collect dataframe')
+        inconsistencies_df = pd.DataFrame(inconsistencies)
+        return inconsistencies_df
+    # else:
+        print("Internal consistency has passed!")
+
+
+def validate_df(input_df, regional_control_df):
+    # Group input_df by year and sum the relevant columns
+    grouped_df = input_df.groupby(
+        'year')[['pop', 'gq', 'hh']].sum().reset_index()
+
+    # Merge with the regional_control_df on 'year' to compare the values
+    merged_df = pd.merge(grouped_df, regional_control_df[[
+                         'year', 'pop', 'gq', 'hh']], on='year', how='left', suffixes=('', '_regional'))
+
+    # Check if the values match
+    inconsistencies = []
+    for _, row in merged_df.iterrows():
+        if row['pop'] != row['pop_regional']:
+            inconsistencies.append(
+                (row['year'], 'pop', row['pop'], row['pop_regional']))
+        if row['gq'] != row['gq_regional']:
+            inconsistencies.append(
+                (row['year'], 'gq', row['gq'], row['gq_regional']))
+        if row['hh'] != row['hh_regional']:
+            inconsistencies.append(
+                (row['year'], 'hh', row['hh'], row['hh_regional']))
+
+    if inconsistencies:
+        print("Found inconsistencies:")
+        for year, col, actual, expected in inconsistencies:
+            print(
+                f"Year {year}, Column {col}: Expected {expected}, Found {actual}")
+    else:
+        print("All values match!")
 
 
 # Check to see which aggregate files still need to be created (return a list), comparison with what we have in our config file
