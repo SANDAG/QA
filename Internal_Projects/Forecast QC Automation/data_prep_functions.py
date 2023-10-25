@@ -71,7 +71,7 @@ def hhs_adjustment(df):
 
 def wanted_geography_cols(df, geo_level):
     """This function takes in the dataframe you would like to fold up and the geography level you would like to fold up to. This function then outputs the columns in the dataframe that can be rolled up, dropping other geography specific columns."""
-    geography_levels = ['mgra', 'cpa', 'luz',
+    geography_levels = ['mgra', 'cpa', 'luz', 'LUZ', 'census_tract', 'sra',
                         'jurisdiction', 'luz_id', 'taz', 'region']
     geography_levels.remove(geo_level)
 
